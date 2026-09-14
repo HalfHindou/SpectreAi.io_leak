@@ -1,0 +1,439 @@
+/* CalendarMiniPanel — Command Center calendar tab. Compact: next event +
+   agenda + thesis. Glass surfaces, near-invisible borders, mono numbers. */
+
+.ccal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 2px;
+}
+
+/* ── Toolbar: view toggle + date nav ── */
+.ccal-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ccal-views {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+.ccal-view-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 5px 13px;
+  border-radius: 8px;
+  font-family: 'SF Pro Display', -apple-system, Inter, sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  transition: color 160ms ease, background 160ms ease;
+}
+.ccal-view-btn:hover { color: var(--text-secondary, rgba(245, 245, 247, 0.75)); }
+.ccal-view-btn.is-active {
+  color: var(--text-primary, #f5f5f7);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.ccal-datenav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ccal-nav-arrow {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary, rgba(245, 245, 247, 0.65));
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+.ccal-nav-arrow:hover { background: rgba(255, 255, 255, 0.07); color: var(--text-primary, #f5f5f7); border-color: rgba(255, 255, 255, 0.1); }
+.ccal-date-label {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #f5f5f7);
+  min-width: 92px;
+  text-align: center;
+}
+.ccal-today-btn {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.55));
+  cursor: pointer;
+  padding: 5px 11px;
+  border-radius: 8px;
+  font-family: 'SF Pro Display', -apple-system, Inter, sans-serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: background 150ms ease, color 150ms ease;
+}
+.ccal-today-btn:hover { background: rgba(255, 255, 255, 0.07); color: var(--text-primary, #f5f5f7); }
+
+.ccal-calview { min-height: 200px; }
+
+/* ── NEXT EVENT (hero) ── */
+/* JUST RELEASED — the print that already landed, above the countdown to the
+   next one. Deliberately quieter than .ccal-next: it's context, not the ask. */
+.ccal-landed {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  padding: 9px 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ccal-landed:hover { border-color: rgba(255, 255, 255, 0.09); }
+
+.ccal-landed__label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--cal-past-ink-dim);
+  flex-shrink: 0;
+}
+
+.ccal-landed__name {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--cal-past-ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ccal-landed__actual {
+  font-size: 13px;
+  margin-left: auto;
+}
+
+.ccal-landed__ago {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--cal-past-ink-dim);
+  flex-shrink: 0;
+}
+
+.ccal-landed__vs {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--cal-past-ink-dim);
+  flex-shrink: 0;
+}
+
+.app-day-mode .ccal-landed {
+  background: rgba(15, 23, 42, 0.02);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.ccal-next {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.018) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  padding: 13px 14px;
+  cursor: pointer;
+  transition: border-color 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ccal-next:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px);
+}
+
+.ccal-next__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.ccal-next__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--text-muted, rgba(245, 245, 247, 0.4));
+}
+
+.ccal-next__impact {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+.ccal-next__impact--critical { color: #fca5a5; background: rgba(239, 68, 68, 0.14); }
+.ccal-next__impact--high { color: #fcd34d; background: rgba(245, 158, 11, 0.14); }
+.ccal-next__impact--medium { color: rgba(245, 245, 247, 0.6); background: rgba(255, 255, 255, 0.06); }
+.ccal-next__impact--low { color: rgba(245, 245, 247, 0.45); background: rgba(255, 255, 255, 0.04); }
+
+.ccal-next__name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'SF Pro Display', -apple-system, Inter, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary, #f5f5f7);
+  line-height: 1.25;
+}
+.ccal-next__flag { font-size: 14px; flex-shrink: 0; }
+
+.ccal-next__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.ccal-next__when {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.7));
+}
+.ccal-next__when--urgent { color: #fca5a5; }
+.ccal-next__when--live { color: var(--bull-bright, #34d399); }
+
+.ccal-next__vals {
+  display: inline-flex;
+  gap: 10px;
+}
+.ccal-next__val {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.55));
+}
+.ccal-next__val em {
+  font-style: normal;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  margin-right: 2px;
+}
+
+/* ── AGENDA ── */
+.ccal-agenda__label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--text-muted, rgba(245, 245, 247, 0.4));
+  margin-bottom: 4px;
+}
+.ccal-agenda__list { list-style: none; margin: 0; padding: 0; }
+.ccal-agenda__row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 6px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+.ccal-agenda__row:hover { background: rgba(255, 255, 255, 0.035); }
+
+.ccal-agenda__time {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  min-width: 78px;
+  flex-shrink: 0;
+}
+.ccal-agenda__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ccal-agenda__dot--critical { background: var(--bear, #ef4444); box-shadow: 0 0 6px rgba(239, 68, 68, 0.4); }
+.ccal-agenda__dot--high { background: #f59e0b; box-shadow: 0 0 6px rgba(245, 158, 11, 0.3); }
+.ccal-agenda__dot--medium { background: rgba(245, 245, 247, 0.3); }
+.ccal-agenda__dot--low { background: rgba(245, 245, 247, 0.15); }
+
+.ccal-agenda__name {
+  flex: 1;
+  min-width: 0;
+  font-family: 'SF Pro Display', -apple-system, Inter, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.72));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ccal-agenda__flag { font-size: 12px; flex-shrink: 0; opacity: 0.85; }
+
+/* ── THE THESIS ── */
+.ccal-thesis {
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+.ccal-thesis__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+.ccal-thesis__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--text-muted, rgba(245, 245, 247, 0.4));
+}
+.ccal-thesis__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--bull, #10b981);
+}
+.ccal-thesis__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--bull, #10b981);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+  animation: ccal-pulse 2.4s ease-in-out infinite;
+}
+@keyframes ccal-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.ccal-thesis__body {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 14.5px;
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.78));
+  margin: 0 0 10px;
+  /* Clamp to keep the tab compact; the full thesis is on the calendar page. */
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ccal-thesis__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: 'SF Pro Display', -apple-system, Inter, sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.6));
+  transition: color 150ms ease, gap 150ms ease;
+}
+.ccal-thesis__cta:hover { color: var(--text-primary, #f5f5f7); gap: 9px; }
+
+.ccal-empty {
+  padding: 24px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted, rgba(245, 245, 247, 0.4));
+}
+
+/* ── Skeleton ── */
+.ccal-skeleton {
+  height: 16px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: ccal-shimmer 1.8s infinite;
+}
+.ccal-skeleton--hero { height: 84px; margin-bottom: 4px; }
+@keyframes ccal-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* ═══ Day mode ═══ */
+.app-day-mode .ccal-next {
+  background: linear-gradient(150deg, #ffffff 0%, #f8fafc 100%);
+  border-color: rgba(0, 0, 0, 0.07);
+}
+.app-day-mode .ccal-next:hover { border-color: rgba(0, 0, 0, 0.12); }
+.app-day-mode .ccal-next__name { color: #0f172a; }
+.app-day-mode .ccal-next__when { color: #334155; }
+.app-day-mode .ccal-next__label,
+.app-day-mode .ccal-agenda__label,
+.app-day-mode .ccal-thesis__label { color: #94a3b8; }
+.app-day-mode .ccal-agenda__name { color: #334155; }
+.app-day-mode .ccal-agenda__row:hover { background: rgba(0, 0, 0, 0.03); }
+.app-day-mode .ccal-thesis { border-top-color: rgba(0, 0, 0, 0.07); }
+.app-day-mode .ccal-thesis__body { color: #334155; }
+.app-day-mode .ccal-thesis__cta { color: #475569; }
+.app-day-mode .ccal-thesis__cta:hover { color: #0f172a; }
+.app-day-mode .ccal-views { background: rgba(0, 0, 0, 0.04); border-color: rgba(0, 0, 0, 0.07); }
+.app-day-mode .ccal-view-btn { color: #64748b; }
+.app-day-mode .ccal-view-btn.is-active { color: #0f172a; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.app-day-mode .ccal-date-label { color: #0f172a; }
+.app-day-mode .ccal-nav-arrow,
+.app-day-mode .ccal-today-btn { background: #ffffff; border-color: rgba(0,0,0,0.08); color: #475569; }
+.app-day-mode .ccal-nav-arrow:hover,
+.app-day-mode .ccal-today-btn:hover { color: #0f172a; background: #f1f5f9; }
+
+/* Mobile — same shape as the leverage heatmap's switch: a shrink-to-fit desktop
+   pill leaves a third of the row empty on a 390px phone (241px of control in a
+   386px row, measured 08-03). Full-width segmented control instead. */
+@media (max-width: 768px) {
+  .ccal-views { display: flex; width: 100%; }
+  .ccal-view-btn { flex: 1 1 0; min-height: 32px; font-size: 11.5px; padding: 4px 6px; }
+  .ccal-views { padding: 2px; gap: 2px; }
+  /* see the app-store-ready touch-floor note in liq-heatmap-panel.css */
+  .ccal-views .ccal-view-btn { min-height: 32px !important; height: 32px; }
+}

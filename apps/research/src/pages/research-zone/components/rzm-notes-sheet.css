@@ -1,0 +1,419 @@
+/* ────────────────────────────────────────────────────────────────────────────
+   RzmNotesSheet — mobile bottom-sheet for Research Zone chart notes.
+   Terminal/minimal, warm-white chrome, colour only on per-note accents.
+   Prefix: rzns-   System sans, 16px inputs, 44px targets.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.rzns-root {
+  position: fixed;
+  inset: 0;
+  z-index: 6000;
+  pointer-events: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+}
+
+.rzns-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transition: opacity 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rzns-root.rzns-open { pointer-events: auto; }
+.rzns-root.rzns-open .rzns-scrim { opacity: 1; }
+
+/* ── Sheet ─────────────────────────────────────────────────────────────────── */
+.rzns-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 82vh;
+  max-height: 82dvh;
+  display: flex;
+  flex-direction: column;
+  background: #09090b;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.6);
+  transform: translateY(100%);
+  transition: transform 360ms cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.rzns-root.rzns-open .rzns-sheet { transform: translateY(0); }
+
+/* ── Header (also the drag-to-dismiss surface) ─────────────────────────────── */
+/* `touch-action: none` so the browser can't read the dismiss drag as a page
+   pull and fire its own pull-to-refresh. JS touch events fire either way. */
+.rzns-header {
+  flex: 0 0 auto;
+  padding: 8px 12px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  touch-action: none;
+  cursor: grab;
+}
+
+.rzns-grabber {
+  width: 36px;
+  height: 4px;
+  margin: 0 auto 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.rzns-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rzns-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.rzns-title-main {
+  font-size: 16px;
+  font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+}
+.rzns-title-sym {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+.rzns-title-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.6);
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  padding: 1px 7px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rzns-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  transition: color 200ms ease, background 200ms ease;
+}
+.rzns-close:active { background: rgba(255, 255, 255, 0.06); color: #f5f5f7; }
+
+/* ── Body ──────────────────────────────────────────────────────────────────── */
+.rzns-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  /* Don't chain the scroll to the page at either end - overscrolling at the
+     top is what triggers the browser's pull-to-refresh. */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rzns-num { font-variant-numeric: tabular-nums; }
+
+/* ── Add CTA ───────────────────────────────────────────────────────────────── */
+.rzns-add-cta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  color: #f5f5f7;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 200ms ease, border-color 200ms ease;
+}
+.rzns-add-cta:active { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.2); }
+.rzns-add-cta-plus {
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1;
+  color: rgba(245, 245, 247, 0.7);
+}
+.rzns-add-cta-at {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.5);
+}
+
+/* ── Composer ──────────────────────────────────────────────────────────────── */
+.rzns-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.rzns-composer-anchor {
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.5);
+}
+.rzns-composer-anchor .rzns-num { color: rgba(245, 245, 247, 0.75); font-weight: 600; }
+
+.rzns-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 76px;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  color: #f5f5f7;
+  font-family: inherit;
+  font-size: 16px; /* prevents iOS zoom-on-focus */
+  line-height: 1.4;
+  outline: none;
+  transition: border-color 200ms ease;
+}
+.rzns-textarea::placeholder { color: rgba(245, 245, 247, 0.32); }
+.rzns-textarea:focus { border-color: rgba(255, 255, 255, 0.18); }
+
+.rzns-picker-row { display: flex; }
+.rzns-icons {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.rzns-icons::-webkit-scrollbar { display: none; }
+
+.rzns-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  transition: color 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+.rzns-icon-btn svg { width: 20px; height: 20px; }
+.rzns-icon-btn.is-active {
+  color: var(--rzns-accent, #10B981);
+  border-color: var(--rzns-accent, #10B981);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.rzns-colors {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.rzns-color-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3) inset;
+  transition: transform 160ms ease, border-color 160ms ease;
+}
+.rzns-color-btn.is-active {
+  border-color: #f5f5f7;
+  transform: scale(1.08);
+}
+
+.rzns-composer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rzns-counter {
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.4);
+  margin-right: auto;
+}
+
+.rzns-btn {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 180ms ease, color 180ms ease, border-color 180ms ease, opacity 180ms ease;
+}
+.rzns-btn--ghost {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(245, 245, 247, 0.7);
+}
+.rzns-btn--ghost:active { background: rgba(255, 255, 255, 0.05); }
+.rzns-btn--primary {
+  background: #f5f5f7;
+  color: #09090b;
+}
+.rzns-btn--primary:disabled { opacity: 0.4; cursor: default; }
+
+/* ── List ──────────────────────────────────────────────────────────────────── */
+.rzns-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rzns-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.rzns-item-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  margin-top: 1px;
+}
+.rzns-item-icon svg { width: 18px; height: 18px; }
+
+.rzns-item-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.rzns-item-text {
+  font-size: 14px;
+  line-height: 1.4;
+  color: #f5f5f7;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.rzns-item-meta {
+  margin-top: 4px;
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.45);
+}
+
+.rzns-item-delete {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: -8px -8px -8px 0;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.4);
+  cursor: pointer;
+  transition: color 180ms ease, background 180ms ease;
+}
+.rzns-item-delete:active { color: #EF4444; background: rgba(239, 68, 68, 0.1); }
+
+/* ── Empty ─────────────────────────────────────────────────────────────────── */
+.rzns-empty {
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.4);
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Day mode
+   ──────────────────────────────────────────────────────────────────────────── */
+.rzns-root.app-day-mode .rzns-sheet {
+  background: #ffffff;
+  border-top-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.18);
+}
+.rzns-root.app-day-mode .rzns-header { border-bottom-color: rgba(0, 0, 0, 0.06); }
+.rzns-root.app-day-mode .rzns-grabber { background: rgba(0, 0, 0, 0.18); }
+.rzns-root.app-day-mode .rzns-title-main { color: #0f172a; }
+.rzns-root.app-day-mode .rzns-title-sym { color: #64748b; }
+.rzns-root.app-day-mode .rzns-title-count { color: #475569; background: rgba(0, 0, 0, 0.06); }
+.rzns-root.app-day-mode .rzns-close { color: #64748b; }
+.rzns-root.app-day-mode .rzns-close:active { background: rgba(0, 0, 0, 0.05); color: #0f172a; }
+
+.rzns-root.app-day-mode .rzns-add-cta {
+  border-color: rgba(0, 0, 0, 0.14);
+  background: rgba(0, 0, 0, 0.015);
+  color: #0f172a;
+}
+.rzns-root.app-day-mode .rzns-add-cta:active { background: rgba(0, 0, 0, 0.04); }
+.rzns-root.app-day-mode .rzns-add-cta-plus { color: #475569; }
+.rzns-root.app-day-mode .rzns-add-cta-at { color: #64748b; }
+
+.rzns-root.app-day-mode .rzns-composer {
+  border-color: rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.015);
+}
+.rzns-root.app-day-mode .rzns-composer-anchor { color: #64748b; }
+.rzns-root.app-day-mode .rzns-composer-anchor .rzns-num { color: #0f172a; }
+.rzns-root.app-day-mode .rzns-textarea {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: #f8f9fa;
+  color: #0f172a;
+}
+.rzns-root.app-day-mode .rzns-textarea::placeholder { color: rgba(15, 23, 42, 0.35); }
+.rzns-root.app-day-mode .rzns-textarea:focus { border-color: rgba(0, 0, 0, 0.25); }
+.rzns-root.app-day-mode .rzns-icon-btn {
+  border-color: rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.02);
+  color: #64748b;
+}
+.rzns-root.app-day-mode .rzns-color-btn.is-active { border-color: #0f172a; }
+.rzns-root.app-day-mode .rzns-counter { color: #94a3b8; }
+.rzns-root.app-day-mode .rzns-btn--ghost { border-color: rgba(0, 0, 0, 0.12); color: #475569; }
+.rzns-root.app-day-mode .rzns-btn--ghost:active { background: rgba(0, 0, 0, 0.04); }
+.rzns-root.app-day-mode .rzns-btn--primary { background: #0f172a; color: #ffffff; }
+
+.rzns-root.app-day-mode .rzns-item {
+  border-color: rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.015);
+}
+.rzns-root.app-day-mode .rzns-item-text { color: #0f172a; }
+.rzns-root.app-day-mode .rzns-item-meta { color: #64748b; }
+.rzns-root.app-day-mode .rzns-item-delete { color: #94a3b8; }
+.rzns-root.app-day-mode .rzns-empty { color: #94a3b8; }
+
+/* ── Reduced motion ────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .rzns-scrim,
+  .rzns-sheet { transition: none; }
+}

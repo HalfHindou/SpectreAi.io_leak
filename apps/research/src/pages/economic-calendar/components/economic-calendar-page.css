@@ -1,0 +1,535 @@
+/**
+ * EconomicCalendarPage — Spectre premium recipe.
+ * Multi-layered shadows, gradient backgrounds, bell-curve dividers, shine sweep.
+ */
+
+.ec-page {
+  padding: var(--sp-6) var(--sp-6) var(--sp-8);
+  /* 2026-06-10: 1400px left huge dead gutters on wide screens and squeezed
+     the month grid. 2026-06-11: 1760px still left dead margins both sides
+     (Sunny: "we got space, hard to read") — go wider. */
+  max-width: 2080px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+/* ===================================================
+   Blur Entrance Animation
+   =================================================== */
+@keyframes ec-blur-entrance {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+/* ===================================================
+   2-Column Layout (Desktop sidebar)
+   =================================================== */
+.ec-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+@media (min-width: 1200px) {
+  .ec-layout {
+    grid-template-columns: 1fr 384px;
+    gap: var(--sp-5);
+  }
+}
+
+.ec-layout__main {
+  min-width: 0;
+}
+
+/* Right column wrapper: Inflation & Jobs Watch stacked above the sticky
+   IntelSidebar. At <1200px the grid collapses to one column and this whole
+   block drops below the calendar (never above it). */
+.ec-layout__side {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+/* ===================================================
+   Calendar Panel — Premium glass card
+   =================================================== */
+.ec-panel {
+  background:
+    linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent) top center / 80% 1px no-repeat,
+    linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 16px;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: var(--sp-6);
+  animation: ec-blur-entrance 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 80ms;
+}
+
+
+/* ===================================================
+   Panel top bar — tabs + date nav + event count
+   =================================================== */
+.ec-panel__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-2) var(--sp-3);
+  gap: var(--sp-3);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+  /* blur 20→12: this bar is position:sticky over the dense scrollable calendar
+     body, so the backdrop re-composites every scroll frame. 12px keeps the
+     frosted-glass look (the gradient bg + saturate carry it) at a lower
+     per-frame cost. Same fix class as the header A1 (40→18). */
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border-radius: 16px 16px 0 0;
+}
+
+/* Bell-curve gradient divider */
+.ec-panel__bar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 15%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.04) 85%, transparent 100%);
+}
+
+/* ---- View Tabs ---- */
+.ec-panel__tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.ec-panel__tab {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 450;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.ec-panel__tab:hover {
+  color: var(--text-secondary);
+  background: rgba(255,255,255,0.04);
+}
+
+.ec-panel__tab--active {
+  background: rgba(255,255,255,0.08);
+  color: #f5f5f7;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+/* ---- Date Navigation (center) ---- */
+.ec-panel__nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+}
+
+.ec-panel__arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.ec-panel__arrow:hover {
+  color: var(--text-secondary);
+  border-color: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.ec-panel__arrow:active {
+  transform: scale(0.95);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.ec-panel__date {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 0;
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  padding: 0 4px;
+}
+
+.ec-panel__today {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.04);
+  color: rgba(245,245,247,0.6);
+  cursor: pointer;
+  transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.ec-panel__today:hover {
+  color: #f5f5f7;
+  border-color: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.08);
+}
+
+.ec-panel__today:active {
+  transform: scale(0.97);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* ---- Search ---- */
+.ec-panel__search {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ec-panel__search-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.ec-panel__search-btn:hover {
+  color: var(--text-secondary);
+  border-color: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+}
+
+.ec-panel__search--open .ec-panel__search-btn {
+  color: #f5f5f7;
+  border-color: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+}
+
+.ec-panel__search-input {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 450;
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 5px 10px;
+  width: 160px;
+  outline: none;
+  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.02em;
+}
+
+.ec-panel__search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.ec-panel__search-input:focus {
+  border-color: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  width: 200px;
+}
+
+.ec-panel__search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 150ms ease;
+  flex-shrink: 0;
+}
+
+.ec-panel__search-clear:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--text-secondary);
+}
+
+/* ---- Event count ---- */
+.ec-panel__count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  padding-right: var(--sp-1);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Panel body (calendar view content) */
+.ec-panel__body {
+  padding: var(--sp-4);
+}
+
+/* ===================================================
+   View Transition (crossfade between Day/Week/Month)
+   =================================================== */
+.ec-view-transition {
+  position: relative;
+}
+
+.ec-view-transition--exit {
+  animation: ec-view-exit 150ms ease-out forwards;
+}
+
+.ec-view-transition--enter {
+  animation: ec-view-enter 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes ec-view-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes ec-view-exit {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* ===================================================
+   Staggered entrance animation for page sections
+   =================================================== */
+.ec-page > *:nth-child(1) { animation-delay: 0ms; }
+.ec-page > *:nth-child(2) { animation-delay: 40ms; }
+.ec-page > *:nth-child(3) { animation-delay: 80ms; }
+.ec-page > *:nth-child(4) { animation-delay: 120ms; }
+.ec-page > *:nth-child(5) { animation-delay: 160ms; }
+.ec-page > *:nth-child(6) { animation-delay: 200ms; }
+.ec-page > *:nth-child(7) { animation-delay: 240ms; }
+.ec-page > *:nth-child(8) { animation-delay: 280ms; }
+
+/* ===================================================
+   Day Mode
+   =================================================== */
+.app-day-mode .ec-panel {
+  background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.88) 100%);
+  border-color: rgba(0,0,0,0.06);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.app-day-mode .ec-panel__bar::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.04) 15%, rgba(0,0,0,0.06) 50%, rgba(0,0,0,0.04) 85%, transparent 100%);
+}
+
+.app-day-mode .ec-panel__tabs {
+  background: rgba(0,0,0,0.02);
+  border-color: rgba(0,0,0,0.04);
+}
+
+.app-day-mode .ec-panel__tab {
+  color: #94a3b8;
+}
+
+.app-day-mode .ec-panel__tab:hover {
+  color: #475569;
+  background: rgba(0,0,0,0.03);
+}
+
+.app-day-mode .ec-panel__tab--active {
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9);
+}
+
+.app-day-mode .ec-panel__arrow {
+  border-color: rgba(0,0,0,0.06);
+  color: #94a3b8;
+}
+
+.app-day-mode .ec-panel__arrow:hover {
+  border-color: rgba(0,0,0,0.12);
+  color: #475569;
+  background: rgba(0,0,0,0.03);
+}
+
+.app-day-mode .ec-panel__date {
+  color: #0f172a;
+}
+
+.app-day-mode .ec-panel__today {
+  border-color: rgba(0,0,0,0.06);
+  color: #94a3b8;
+}
+
+.app-day-mode .ec-panel__today:hover {
+  border-color: rgba(0,0,0,0.12);
+  color: #475569;
+  background: rgba(0,0,0,0.03);
+}
+
+.app-day-mode .ec-panel__bar {
+  background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.88) 100%);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.app-day-mode .ec-panel__search-btn {
+  border-color: rgba(0,0,0,0.06);
+  color: #94a3b8;
+}
+
+.app-day-mode .ec-panel__search-btn:hover {
+  border-color: rgba(0,0,0,0.12);
+  color: #475569;
+  background: rgba(0,0,0,0.03);
+}
+
+.app-day-mode .ec-panel__search--open .ec-panel__search-btn {
+  color: #0f172a;
+  border-color: rgba(0,0,0,0.12);
+  background: rgba(0,0,0,0.06);
+}
+
+.app-day-mode .ec-panel__search-input {
+  color: #0f172a;
+  background: rgba(0,0,0,0.03);
+  border-color: rgba(0,0,0,0.08);
+}
+
+.app-day-mode .ec-panel__search-input::placeholder {
+  color: #94a3b8;
+}
+
+.app-day-mode .ec-panel__search-input:focus {
+  border-color: rgba(0,0,0,0.15);
+  background: rgba(0,0,0,0.04);
+}
+
+.app-day-mode .ec-panel__search-clear {
+  background: rgba(0,0,0,0.06);
+  color: #94a3b8;
+}
+
+.app-day-mode .ec-panel__search-clear:hover {
+  background: rgba(0,0,0,0.1);
+  color: #475569;
+}
+
+.app-day-mode .ec-panel__count {
+  color: #94a3b8;
+}
+
+/* ===================================================
+   Responsive
+   =================================================== */
+@media (max-width: 768px) {
+  .ec-page {
+    padding: var(--sp-4);
+    padding-top: 80px;
+    padding-bottom: 100px;
+  }
+
+  .ec-panel {
+    border-radius: 14px;
+  }
+
+  .ec-panel__bar {
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+  }
+
+  .ec-panel__nav {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: center;
+  }
+
+  .ec-panel__search-input {
+    width: 120px;
+  }
+
+  .ec-panel__search-input:focus {
+    width: 140px;
+  }
+
+  .ec-panel__body {
+    padding: var(--sp-2);
+  }
+
+  .ec-panel__tab {
+    padding: 5px 12px;
+    font-size: 10px;
+  }
+
+  .ec-panel__date {
+    font-size: 11px;
+  }
+}

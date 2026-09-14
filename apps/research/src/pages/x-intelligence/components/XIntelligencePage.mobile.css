@@ -1,0 +1,300 @@
+/* ============================================================
+   X INTELLIGENCE (force-graph) — MOBILE
+   Keeps the canvas as the interface; floating glass panels
+   become bottom sheets that sit above the mobile bottom nav.
+   Shell: fixed mobile header (52px) + bottom nav (76px).
+   Prefix for new mobile-only elements: xig-
+   See .claude/rules/mobile-design-system.md
+   ============================================================ */
+
+@media (max-width: 768px) {
+  /* ---- Page box: pin between the fixed header and bottom nav ---- */
+  .xi-page--mobile {
+    position: fixed;
+    top: calc(var(--m-header-h, 52px) + env(safe-area-inset-top, 0px));
+    left: 0;
+    right: 0;
+    bottom: calc(var(--m-bottom-nav-h, 76px) + env(safe-area-inset-bottom, 0px));
+    width: 100%;
+    height: auto;
+    overflow: hidden;
+  }
+  /* Canvas already fills inset:0 — nothing to change. */
+
+  /* ============ Landing (no project selected) ============ */
+  .xi-page--mobile .xi-landing {
+    padding: 16px 12px calc(env(safe-area-inset-bottom, 0px) + 24px);
+    align-items: flex-start;
+  }
+  .xi-page--mobile .xi-landing__content {
+    width: 100%;
+    padding-top: 24px;
+  }
+  .xi-page--mobile .xi-landing__icon { transform: scale(0.85); }
+  .xi-page--mobile .xi-landing__title {
+    font-size: 1.625rem;
+    letter-spacing: -0.02em;
+  }
+  .xi-page--mobile .xi-landing__subtitle {
+    font-size: 0.8125rem;
+    padding: 0 8px;
+  }
+  .xi-page--mobile .xi-landing__search { width: 100%; }
+
+  /* Trending: 2-col grid → single-column token-list rows on void */
+  .xi-page--mobile .xi-trending { max-width: 100%; }
+  .xi-page--mobile .xi-trending__grid {
+    grid-template-columns: 1fr;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+  }
+  .xi-page--mobile .xi-trending__card {
+    background: transparent;
+    padding: 12px 6px;
+    min-height: 56px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.045);
+  }
+  .xi-page--mobile .xi-trending__card:last-child { border-bottom: none; }
+  .xi-page--mobile .xi-trending__avatar,
+  .xi-page--mobile .xi-trending__avatar-fallback,
+  .xi-page--mobile .xi-trending__skeleton-avatar {
+    width: 40px;
+    height: 40px;
+  }
+  .xi-page--mobile .xi-trending__name { font-size: 0.9375rem; font-weight: 600; }
+  .xi-page--mobile .xi-trending__mentions {
+    font-variant-numeric: tabular-nums;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  }
+  /* Landing light-pillar blur is GPU-heavy — cap it on mobile */
+  .xi-page--mobile .xi-landing::before { filter: blur(28px); }
+
+  /* ============ Surface toggle (Bubbles / Chart) ============ */
+  .xi-page--mobile .xi-surface-toggle {
+    top: 10px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    z-index: 30;
+  }
+
+  /* ============ Search-to-navigate overlay ============ */
+  .xi-page--mobile .xi-search {
+    width: calc(100% - 24px);
+    left: 12px;
+    right: 12px;
+    top: 10px;
+    z-index: 30;
+  }
+
+  /* ============ Flight controls — compact, above bottom nav ============ */
+  .xi-page--mobile .xi-controls {
+    bottom: 16px;
+    right: 12px;
+    gap: 2px;
+    padding: 4px;
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    z-index: 32;
+  }
+  /* Trim power-user buttons on mobile — keep zoom / reset / fullscreen / list */
+  .xi-page--mobile .xi-controls__btn--adv,
+  .xi-page--mobile .xi-controls__separator--adv {
+    display: none;
+  }
+  .xi-page--mobile .xi-controls__btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* ============ Legend — hide (no room, low value on phone) ============ */
+  .xi-page--mobile .xi-legend { display: none; }
+
+  /* ============ Shared bottom-sheet frame (filter / entity / crawl) ============ */
+  .xi-page--mobile .xi-filter,
+  .xi-page--mobile .xi-sidebar,
+  .xi-page--mobile .xi-crawl {
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: calc(var(--m-bottom-nav-h, 76px) + env(safe-area-inset-bottom, 0px));
+    width: 100%;
+    max-width: 100%;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-left: none;
+    border-right: none;
+    /* mobile blur budget */
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    z-index: 40;
+  }
+  /* Grab handle on every sheet */
+  .xi-page--mobile .xi-filter::before,
+  .xi-page--mobile .xi-sidebar::before,
+  .xi-page--mobile .xi-crawl::before {
+    content: '';
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 4px;
+    border-radius: var(--radius-full);
+    background: rgba(245, 245, 247, 0.18);
+    z-index: 3;
+  }
+
+  /* ---- Filter panel sheet ---- */
+  .xi-page--mobile .xi-filter {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-top: 20px;
+    transform: translateY(0);
+    transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .xi-page--mobile .xi-filter--collapsed {
+    transform: translateY(110%);
+  }
+  /* Filter open/close toggle pill — bottom-left, above nav */
+  .xi-page--mobile .xi-filter-toggle {
+    left: 12px;
+    right: auto;
+    top: auto;
+    bottom: 16px;
+    z-index: 32;
+    min-height: 44px;
+  }
+
+  /* ---- Entity sidebar sheet (slides up on tap) ---- */
+  .xi-page--mobile .xi-sidebar {
+    max-height: 74vh;
+    padding: 22px 16px calc(env(safe-area-inset-bottom, 0px) + 20px);
+    transform: translateY(100%);
+  }
+  .xi-page--mobile .xi-sidebar--open {
+    transform: translateY(0);
+    animation: xigSheetUp 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .xi-page--mobile .xi-sidebar::after { display: none; }
+  .xi-page--mobile .xi-sidebar__metrics {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  /* ---- Crawl dashboard sheet (opens via launcher) ---- */
+  .xi-page--mobile .xi-crawl {
+    max-height: 74vh;
+    overflow-y: auto;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+    animation: xigSheetUp 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .xi-crawl__close {
+    margin-left: auto;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    border: none;
+    color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+    cursor: pointer;
+  }
+  .xi-crawl__close:active { transform: scale(0.92); }
+
+  @keyframes xigSheetUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  /* ============ Scrim behind any open sheet ============ */
+  .xig-scrim {
+    position: fixed;
+    inset: 0;
+    bottom: calc(var(--m-bottom-nav-h, 76px) + env(safe-area-inset-bottom, 0px));
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 38;
+    animation: xigScrimIn 200ms ease;
+  }
+  @keyframes xigScrimIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ============ Mobile crawl-dashboard launcher ============ */
+  .xig-crawl-launch {
+    position: fixed;
+    left: 12px;
+    bottom: 16px;
+    z-index: 32;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 14px;
+    border-radius: 9999px;
+    background: rgba(13, 15, 18, 0.86);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-primary, #f5f5f7);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32);
+  }
+  .xig-crawl-launch:active { transform: scale(0.96); }
+
+  /* ============ List view overlay — full screen between chrome ============ */
+  .xi-page--mobile .xi-listview {
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    border-radius: 0;
+    z-index: 45;
+  }
+  .xi-page--mobile .xi-listview__header { padding: 12px 14px; }
+  /* Mention/connection bar columns are dense — let the table scroll sideways */
+  .xi-page--mobile .xi-listview__table-wrap { overflow-x: auto; }
+  .xi-page--mobile .xi-listview__table { min-width: 560px; }
+
+  /* ============ Project loading overlay ============ */
+  .xi-page--mobile .xi-project-loading { padding: 24px; text-align: center; }
+}
+
+/* ---- narrow phones ---- */
+@media (max-width: 380px) {
+  .xi-page--mobile .xi-landing__title { font-size: 1.4rem; }
+  .xi-page--mobile .xi-controls__btn { width: 42px; height: 42px; }
+}
+
+/* ============================================================
+   DAY MODE — mobile-only elements
+   ============================================================ */
+@media (max-width: 768px) {
+  .app.app-day-mode .xig-scrim {
+    background: rgba(15, 23, 42, 0.35);
+  }
+  .app.app-day-mode .xig-crawl-launch {
+    background: rgba(255, 255, 255, 0.92);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #0f172a;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  }
+  .app.app-day-mode .xi-page--mobile .xi-crawl__close {
+    background: rgba(0, 0, 0, 0.06);
+    color: #475569;
+  }
+  .app.app-day-mode .xi-page--mobile .xi-filter::before,
+  .app.app-day-mode .xi-page--mobile .xi-sidebar::before,
+  .app.app-day-mode .xi-page--mobile .xi-crawl::before {
+    background: rgba(15, 23, 42, 0.18);
+  }
+  .app.app-day-mode .xi-page--mobile .xi-trending__card {
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+  }
+}

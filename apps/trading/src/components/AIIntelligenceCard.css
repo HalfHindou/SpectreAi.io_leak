@@ -1,0 +1,376 @@
+/**
+ * AIIntelligenceCard.css — visual-first intelligence readout.
+ *
+ * Surface: featured glass tile with gradient-lime border (per OL plan
+ * §4.8 — this is one of the few "featured" tiles on the page).
+ * Reveal: a one-shot lime scan-line sweep on first intersect.
+ */
+
+.aic-reveal {
+  display: block;
+}
+
+.aic {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-4) var(--sp-5);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 4%, transparent), transparent 60%),
+    var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* gradient-lime border (featured) */
+.aic::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--accent) 36%, transparent) 0%,
+      rgba(255, 255, 255, 0.08) 28%,
+      rgba(255, 255, 255, 0.04) 72%,
+      color-mix(in srgb, var(--accent) 18%, transparent) 100%);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.aic > * { position: relative; z-index: 1; }
+
+/* --- Scan-line --- */
+
+.aic-scanline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 28px;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--accent) 28%, transparent) 0%,
+    color-mix(in srgb, var(--accent) 10%, transparent) 60%,
+    transparent 100%);
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  transform: translateY(0);
+  animation: aic-scan var(--dur-enter, 480ms) var(--ease-out) 80ms 1 forwards;
+}
+
+@keyframes aic-scan {
+  0%   { opacity: 0;    transform: translateY(0); }
+  10%  { opacity: 0.9;  }
+  85%  { opacity: 0.9;  }
+  100% { opacity: 0;    transform: translateY(420px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aic-scanline { animation: none; opacity: 0; }
+}
+.app[data-reduced-motion="true"] .aic-scanline { animation: none; opacity: 0; }
+
+/* --- Header --- */
+
+.aic-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.aic-eyebrow-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.aic-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-bright);
+  filter: drop-shadow(0 0 6px var(--accent-glow));
+}
+
+.aic-eyebrow {
+  font-family: var(--font-body);
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.aic-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid var(--glass-border);
+}
+
+.aic-live--on {
+  color: var(--accent-bright);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.aic-live--analyzing {
+  color: var(--text-3);
+}
+
+.aic-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+  animation: aic-live-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes aic-live-pulse {
+  0%, 100% { opacity: 1;   }
+  50%      { opacity: 0.4; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aic-live-dot { animation: none; }
+}
+.app[data-reduced-motion="true"] .aic-live-dot { animation: none; }
+
+.aic-updated {
+  font-family: var(--font-mono);
+  font-size: var(--t-caption);
+  color: var(--text-3);
+}
+
+/* --- Gauge row --- */
+
+.aic-gauge-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-2) 0 var(--sp-3);
+}
+
+/* --- Score chip row --- */
+
+.aic-chip-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--sp-2);
+}
+
+/* --- Callouts --- */
+
+.aic-callouts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.aic-callout-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+
+.aic-callout-label {
+  font-family: var(--font-body);
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding-top: 4px;
+  min-width: 60px;
+}
+
+.aic-callout-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.aic-callout-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  font-family: var(--font-body);
+  font-size: var(--t-caption);
+  font-weight: 500;
+  border-radius: var(--r-pill);
+  letter-spacing: 0;
+}
+
+.aic-callout-chip--mint {
+  color: var(--up);
+  background: color-mix(in srgb, var(--up) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--up) 30%, transparent);
+}
+
+.aic-callout-chip--mint::before { content: '✓'; font-size: 0.75em; }
+
+.aic-callout-chip--coral {
+  color: var(--down);
+  background: color-mix(in srgb, var(--down) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--down) 30%, transparent);
+}
+
+.aic-callout-chip--coral::before { content: '!'; font-size: 0.85em; font-weight: 700; }
+
+/* --- Tags --- */
+
+.aic-tags {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.aic-tag {
+  font-family: var(--font-body);
+  font-size: var(--t-caption);
+  letter-spacing: 0.02em;
+  color: var(--text-2);
+  padding: 3px 10px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-pill);
+  background: var(--glass-fill);
+}
+
+/* --- Prose --- */
+
+.aic-prose p {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--t-body);
+  line-height: 1.55;
+  color: var(--text-2);
+}
+
+.aic-expand {
+  margin-top: 6px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: var(--t-caption);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--accent-bright);
+  cursor: pointer;
+}
+
+.aic-expand:hover {
+  color: var(--accent);
+}
+
+/* --- Empty --- */
+
+.aic-empty {
+  font-family: var(--font-body);
+  font-size: var(--t-caption);
+  color: var(--text-3);
+  text-align: center;
+  padding: var(--sp-3) 0;
+}
+
+/* Official-links fallback (shown when the backend has no AI narrative) */
+.aic-links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: var(--sp-1);
+}
+
+.aic-links-label {
+  font-family: var(--font-body);
+  font-size: var(--t-caption);
+  letter-spacing: 0.02em;
+  color: var(--text-3);
+}
+
+.aic-links-row {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.aic-link {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: var(--t-caption);
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+  text-decoration: none;
+  padding: 3px 10px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-pill);
+  background: var(--glass-fill);
+  transition: border-color 140ms ease, color 140ms ease;
+}
+
+.aic-link:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* --- Day mode --- */
+
+body.theme-light .aic {
+  background:
+    linear-gradient(180deg, rgba(164, 224, 0, 0.06), transparent 60%),
+    rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+body.theme-light .aic-eyebrow,
+body.theme-light .aic-updated,
+body.theme-light .aic-callout-label,
+body.theme-light .aic-links-label,
+body.theme-light .aic-empty { color: #475569; }
+
+body.theme-light .aic-link { color: #1e293b; }
+
+body.theme-light .aic-prose p { color: #1e293b; }
+
+body.theme-light .aic-tag {
+  color: #334155;
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+/* --- Responsive --- */
+
+@media (max-width: 1100px) {
+  .aic-chip-row {
+    grid-template-columns: 1fr;
+  }
+}

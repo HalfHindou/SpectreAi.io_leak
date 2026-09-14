@@ -1,0 +1,1089 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Watchlists — MOBILE
+   Prefix: wlm- (WatchListMobile)
+
+   FULL-BLEED, NO CARDS. This page used to be a stack of inset compartments: a
+   white header card, a 2x2 grid of bordered stat tiles (~430px of screen before
+   the first token appeared) and 64px rows. The landing page and Top Coins
+   already dropped that language — content runs edge to edge, sections are told
+   apart by hairlines, and the only material on the page is a whisper tint on
+   the header bands. This file brings /watchlists in line.
+
+   The token row is the SAME anatomy as `mobile-token-list` (the Top Coins
+   list): one grid template, ~50px pitch, 22px logo, SYMBOL over MARKET CAP,
+   price, spark over 24h%. Minus rank and star (a watchlist has neither), plus
+   the swipe rails.
+
+   🪤 app-store-ready.css puts `min-height: var(--touch-min)` (38px) on every
+   `[role="button"]:not(.x *):not(.y *)` — that branch is (0,3,0), so the row
+   (which carries role="button") needs (0,4,0) and doubles its own class to get
+   there. Same file has `[class*="-list"] { gap: 8px }` at (0,1,0), which ties
+   `.wlm-token-list` and would silently add 8px to every row pitch.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  /* ============================================
+     PAGE — break out of the 8px `.page-layout__content` gutter so the bands
+     reach the screen edges. `padding: 0` also kills the layout's safety-net
+     `> *:first-child { padding-top: 52px + inset }`; the container below owns
+     the header clearance.
+     ============================================ */
+  .watchlists-page.wl-mobile {
+    padding: 0 !important;
+    margin-left: -8px !important;
+    margin-right: -8px !important;
+    width: calc(100% + 16px) !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Hide desktop wrapper on mobile */
+  .wl-desktop-wrapper {
+    display: none !important;
+  }
+
+  /* ============================================
+     CONTAINER
+     ============================================ */
+  .wlm-container {
+    /* rank-less variant of the mtl grid: logo | identity | price | trend */
+    --wlm-grid: 22px minmax(0, 1fr) 80px 80px;
+    --wlm-gap: 6px;
+    --wlm-pad: 16px;
+    --wlm-logo: 22px;
+    --wlm-row-h: 50px;
+    --wlm-spark-h: 26px;
+    --wlm-hair: rgba(255, 255, 255, 0.055);
+    --wlm-hair-soft: rgba(255, 255, 255, 0.035);
+    --wlm-tint: rgba(255, 255, 255, 0.022);
+
+    /* ONE offset drives both the container's top padding AND the sticky
+       header's stop line — they must never disagree, see the standalone note
+       below. Inherited, so the header just reads it. */
+    --wlm-top-offset: calc(var(--m-header-h, 52px) + var(--app-safe-top, env(safe-area-inset-top, 0px)));
+
+    display: flex;
+    flex-direction: column;
+    padding: var(--wlm-top-offset) 0
+             calc(var(--m-bottom-nav-h, 76px) + var(--app-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--m-lg, 16px))
+             0;
+    min-height: 100dvh;
+  }
+
+  /* PWA / homescreen (standalone) — the whole "150px of dead space" bug.
+     TWO offsets double-counted the notch there, and both had to go:
+
+     1. `.app-main-content` ALREADY pays env(safe-area-inset-top) in standalone
+        (mobile-2026.css), so the container adding it again pushed the page down
+        by a second notch. (Same fix the welcome page carries for
+        `.welcome-mobile-content`.)
+     2. In standalone `.app-main-content` also flips to `overflow-y: auto`, i.e.
+        it becomes THE scroller — and a sticky offset resolves against the
+        scroller's CONTENT box, which already starts below its own inset
+        padding. `top: 52px + inset` therefore PUSHED the header down another
+        inset instead of docking it under the app header (sticky moves an
+        element DOWN when its flow position sits above the threshold).
+        Measured: header at y=170 with the app header ending at y=111.
+
+     One inherited `--wlm-top-offset` fixes both at once and cannot drift.
+     Both selectors: the JS class is the reliable one on iOS, the media query
+     covers Android TWA where the class script may not have run yet. */
+  .app.pwa-standalone .wlm-container,
+  .app.pwa-standalone .wlm-container .wlm-header {
+    --wlm-top-offset: var(--m-header-h, 52px);
+  }
+
+  @media (display-mode: standalone) {
+    .wlm-container,
+    .wlm-container .wlm-header {
+      --wlm-top-offset: var(--m-header-h, 52px);
+    }
+  }
+
+  /* ============================================
+     HEADER — a band, not a card. Sticky under the fixed mobile header, opaque
+     enough to mask the rows scrolling behind it, hairline at the bottom.
+     ============================================ */
+  .wlm-header {
+    position: sticky;
+    top: var(--wlm-top-offset);
+    z-index: 5;
+    padding: 10px var(--wlm-pad) 9px;
+    background: rgba(9, 9, 11, 0.94);
+    backdrop-filter: blur(8px) saturate(150%);
+    -webkit-backdrop-filter: blur(8px) saturate(150%);
+    border-bottom: 1px solid var(--wlm-hair);
+  }
+
+  .wlm-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .wlm-title {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text-primary, #f5f5f7);
+    letter-spacing: -0.022em;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .wlm-stats-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 3px;
+  }
+
+  .wlm-stat {
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.005em;
+    color: rgba(245, 245, 247, 0.36);
+  }
+
+  .wlm-stat.positive { color: var(--bull, #10B981); }
+  .wlm-stat.negative { color: var(--bear, #EF4444); }
+
+  .wlm-stat-sep {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: rgba(245, 245, 247, 0.15);
+    flex-shrink: 0;
+  }
+
+  /* ============================================
+     WATCHLIST CHIPS — horizontal scroll band
+     ============================================ */
+  .wlm-tabs-strip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    padding: 7px var(--wlm-pad);
+    border-bottom: 1px solid var(--wlm-hair-soft);
+  }
+
+  .wlm-tabs-strip::-webkit-scrollbar { display: none; }
+
+  .wlm-container .wlm-tabs-strip .wlm-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    height: 26px;
+    min-height: 26px;
+    padding: 0 9px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    color: rgba(245, 245, 247, 0.5);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.005em;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition: all var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  }
+
+  .wlm-container .wlm-tabs-strip .wlm-tab.active {
+    color: #f5f5f7;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .wlm-container .wlm-tabs-strip .wlm-tab:active { transform: scale(0.95); }
+
+  .wlm-tab-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+  }
+
+  .wlm-tab-count {
+    font-size: 10px;
+    opacity: 0.5;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .wlm-container .wlm-tabs-strip .wlm-tab-add {
+    width: 26px;
+    min-width: 26px;
+    padding: 0;
+    justify-content: center;
+    color: rgba(245, 245, 247, 0.35);
+  }
+
+  /* ============================================
+     STAT STRIP — four reads on one hairline-separated row. No boxes.
+     First/last cells keep the 16px screen inset so the labels line up with the
+     token rows below.
+     ============================================ */
+  .wlm-statstrip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    background: var(--wlm-tint);
+    border-bottom: 1px solid var(--wlm-hair);
+  }
+
+  .wlm-ss-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    padding: 7px 8px 8px;
+    border-left: 1px solid var(--wlm-hair-soft);
+  }
+  .wlm-ss-cell:first-child { border-left: none; padding-left: var(--wlm-pad); }
+  .wlm-ss-cell:last-child { padding-right: var(--wlm-pad); }
+
+  .wlm-ss-label,
+  .wlm-ss-value,
+  .wlm-ss-sub {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .wlm-ss-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+    line-height: 1.2;
+    color: rgba(245, 245, 247, 0.3);
+  }
+
+  .wlm-ss-value {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.018em;
+    font-variant-numeric: tabular-nums;
+    color: #f5f5f7;
+  }
+  .wlm-ss-value.positive { color: var(--bull, #10B981); }
+  .wlm-ss-value.negative { color: var(--bear, #EF4444); }
+
+  .wlm-ss-sub {
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+    color: rgba(245, 245, 247, 0.3);
+  }
+  .wlm-ss-sub.positive { color: var(--bull, #10B981); }
+  .wlm-ss-sub.negative { color: var(--bear, #EF4444); }
+
+  /* ============================================
+     TOOLBAR — filters + actions, same band language
+     ============================================ */
+  .wlm-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px var(--wlm-pad);
+    border-bottom: 1px solid var(--wlm-hair-soft);
+  }
+
+  .wlm-view-toggle {
+    display: flex;
+    gap: 5px;
+    min-width: 0;
+  }
+
+  .wlm-container .wlm-view-toggle .wlm-toggle-pill {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    height: 26px;
+    min-height: 26px;
+    padding: 0 9px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    color: rgba(245, 245, 247, 0.5);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.005em;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition: all var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  }
+
+  .wlm-container .wlm-view-toggle .wlm-toggle-pill.active {
+    color: #f5f5f7;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .wlm-container .wlm-view-toggle .wlm-toggle-pill:active { transform: scale(0.95); }
+
+  .wlm-actions {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+
+  /* 30px visual chip, 44px hit box via the ::after overlay — a 44px painted
+     square next to 26px pills reads as a mis-sized control. */
+  /* Same glass chip as the toggle pills beside them — bare icons next to
+     bordered pills is what read as "the buttons look weird" over a wallpaper. */
+  .wlm-container .wlm-actions .wlm-action-btn {
+    position: relative;
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    min-height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    color: rgba(245, 245, 247, 0.5);
+    border-radius: 8px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: color var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  }
+  .wlm-container .wlm-actions .wlm-action-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+  }
+  .wlm-container .wlm-actions .wlm-action-btn svg { width: 16px; height: 16px; }
+  .wlm-container .wlm-actions .wlm-action-btn:active {
+    color: rgba(245, 245, 247, 0.85);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  /* ============================================
+     SEARCH — a row in the stack, not a floating field
+     ============================================ */
+  .wlm-search-container {
+    position: relative;
+    padding: 0;
+  }
+
+  .wlm-search-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 var(--wlm-pad);
+    min-height: 44px;
+    background: none;
+    border: none;
+    border-radius: 0;
+    border-bottom: 1px solid var(--wlm-hair);
+  }
+
+  .wlm-search-icon {
+    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+    color: rgba(245, 245, 247, 0.28);
+  }
+
+  .wlm-container .wlm-search-wrapper .wlm-search-input {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    min-height: 44px;
+    background: none;
+    border: none;
+    border-radius: 0;
+    outline: none;
+    color: var(--text-primary, #f5f5f7);
+    font-family: inherit;
+    font-size: 16px;
+    letter-spacing: -0.005em;
+  }
+
+  .wlm-search-input::placeholder {
+    color: rgba(245, 245, 247, 0.6);
+  }
+
+  .wlm-container .wlm-search-wrapper .wlm-search-clear {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(245, 245, 247, 0.45);
+    border-radius: 50%;
+    cursor: pointer;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* The dropdown IS an overlay, so it keeps its own material. */
+  .wlm-search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 8px;
+    right: 8px;
+    background: rgba(18, 18, 22, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--m-card-radius-lg, 14px);
+    max-height: 50vh;
+    overflow-y: auto;
+    z-index: 100;
+    backdrop-filter: var(--m-blur-heavy, blur(12px)) saturate(160%);
+    -webkit-backdrop-filter: var(--m-blur-heavy, blur(12px)) saturate(160%);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 0.5px 0 rgba(255, 255, 255, 0.06);
+    overscroll-behavior: contain;
+  }
+
+  .wlm-search-loading {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .wlm-search-shimmer {
+    height: 44px;
+    border-radius: var(--m-card-radius, 10px);
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  .wlm-container .wlm-search-dropdown .wlm-search-result {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 8px var(--wlm-pad);
+    border: none;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    text-align: left;
+    min-height: 48px;
+    border-bottom: 1px solid var(--wlm-hair-soft);
+  }
+
+  .wlm-search-result:last-child { border-bottom: none; }
+  .wlm-search-result:active { background: rgba(255, 255, 255, 0.04); }
+
+  .wlm-sr-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .wlm-sr-logo {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    object-fit: cover;
+  }
+
+  .wlm-sr-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+
+  .wlm-sr-symbol {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.012em;
+    color: #f5f5f7;
+  }
+
+  .wlm-sr-name {
+    font-size: 11px;
+    color: rgba(245, 245, 247, 0.36);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+  }
+
+  .wlm-sr-spark {
+    flex-shrink: 0;
+    opacity: 0.75;
+    margin: 0 8px 0 auto;
+    display: flex;
+    align-items: center;
+    width: 48px;
+  }
+
+  .wlm-sr-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+    flex-shrink: 0;
+  }
+
+  .wlm-sr-price {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.018em;
+    color: #f5f5f7;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .wlm-sr-change {
+    font-size: 11px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .wlm-sr-change.positive { color: var(--bull, #10B981); }
+  .wlm-sr-change.negative { color: var(--bear, #EF4444); }
+
+  .wlm-search-empty {
+    padding: 20px;
+    text-align: center;
+    color: rgba(245, 245, 247, 0.28);
+    font-size: 12px;
+  }
+
+  /* ============================================
+     TOKEN LIST — the mtl row anatomy
+     🪤 `[class*="-list"] { gap: 8px }` (app-store-ready.css, (0,1,0)) TIES
+     `.wlm-token-list` and would add 8px to every row pitch. The container step
+     buys the tie.
+     ============================================ */
+  .wlm-container .wlm-token-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* Swipeable row needs an opaque bg so the action rails stay hidden behind it */
+  .wlm-token-list .swipeable-row-content {
+    background: var(--bg-void, #09090b);
+  }
+
+  /* Rails are sized for a 64px row; this one is 50px. */
+  .wlm-token-list .swipeable-row-action {
+    min-width: 64px;
+    padding: 6px 12px;
+    gap: 2px;
+    font-size: 0.6875rem;
+  }
+  .wlm-token-list .swipeable-row-action-icon { width: 18px; height: 18px; }
+  .wlm-token-list .swipeable-row-action-icon svg { width: 17px; height: 17px; }
+
+  /* 🪤 doubled class = (0,4,0), the bar set by app-store-ready's
+     `[role="button"]:not(…):not(…)` touch-target floor (38px min-height AND
+     min-width — the min-width would also blow out the grid). */
+  .wlm-container .wlm-token-list .wlm-row.wlm-row {
+    display: grid;
+    grid-template-columns: var(--wlm-grid);
+    gap: var(--wlm-gap);
+    align-items: center;
+    min-height: var(--wlm-row-h);
+    padding: 4px var(--wlm-pad);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    border-bottom: 1px solid var(--wlm-hair-soft);
+    transition: background var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  }
+
+  .wlm-container .wlm-token-list .wlm-row:active { background: rgba(255, 255, 255, 0.035); }
+  .wlm-container .wlm-token-list .wlm-row:focus { outline: none; }
+  .wlm-container .wlm-token-list .wlm-row:focus-visible {
+    outline: 2px solid rgba(245, 245, 247, 0.25);
+    outline-offset: -2px;
+  }
+
+  .wlm-row-logo {
+    width: var(--wlm-logo);
+    height: var(--wlm-logo);
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.06);
+  }
+  /* Logos arrive over ~180ms instead of snapping on at full opacity. The box
+     already reserves its space and paints a neutral disc, so nothing moves —
+     this only softens the on/off that reads as icons flashing while a long
+     list settles. No attribute (helper not wired) = fully visible. */
+  .wlm-row-logo img[data-settled="0"] { opacity: 0; }
+  .wlm-row-logo img {
+    transition: opacity 180ms ease;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+  .wlm-row-fallback {
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(245, 245, 247, 0.72);
+  }
+
+  .wlm-row-id {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    overflow: hidden;
+  }
+
+  .wlm-row-sym {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.012em;
+    color: #f5f5f7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Pinned marker — a dot, not a left-edge accent bar. */
+  .wlm-row-pin {
+    width: 4px;
+    height: 4px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--amber, #F59E0B);
+  }
+
+  .wlm-row-mcap {
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.005em;
+    font-variant-numeric: tabular-nums;
+    color: rgba(245, 245, 247, 0.36);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .wlm-row-price {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.018em;
+    font-variant-numeric: tabular-nums;
+    color: #f5f5f7;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* The star column that sits between price and trend in `mtl` doesn't exist
+     here, so the spark would butt straight against the price. 10px of inner
+     padding buys the same breathing room without a phantom column. */
+  .wlm-row-trend {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+    min-width: 0;
+    padding-left: 10px;
+  }
+
+  .wlm-row-spark {
+    width: 100%;
+    height: var(--wlm-spark-h);
+  }
+  .wlm-row-spark .mini-sparkline-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  /* MiniSparkline ships a gaussian glow + an end-of-series dot for the desktop
+     table. At 26px in a 50px row that reads as a neon smear next to the price —
+     `mtl` draws a plain 1.5px line. CSS `filter` overrides the SVG presentation
+     attribute, so the glow comes off without forking the component. */
+  .wlm-row-spark .mini-sparkline-svg path { filter: none; }
+  .wlm-row-spark .mini-sparkline-dot { display: none; }
+  .wlm-row-spark .mini-sparkline-empty {
+    width: 100% !important;
+    height: var(--wlm-spark-h) !important;
+  }
+
+  .wlm-row-chg {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.005em;
+    font-variant-numeric: tabular-nums;
+  }
+  .wlm-row-chg.positive { color: var(--bull, #10B981); }
+  .wlm-row-chg.negative { color: var(--bear, #EF4444); }
+  .wlm-row-chg-arrow { flex-shrink: 0; }
+
+  /* ============================================
+     EMPTY STATE
+     ============================================ */
+  .wlm-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--m-lg, 16px);
+    padding: 60px var(--m-xl, 20px);
+    text-align: center;
+  }
+
+  .wlm-empty-text {
+    font-size: 13px;
+    color: rgba(245, 245, 247, 0.3);
+    margin: 0;
+  }
+
+  .wlm-empty-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    min-height: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    color: rgba(245, 245, 247, 0.65);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .wlm-empty-btn:active {
+    background: rgba(255, 255, 255, 0.09);
+    color: #f5f5f7;
+  }
+
+  /* ============================================
+     WIDTH TIERS — the grid is the only thing that changes (mirrors mtl)
+     ============================================ */
+  @media (max-width: 359px) {
+    .wlm-container {
+      --wlm-grid: 20px minmax(0, 1fr) 70px 68px;
+      --wlm-gap: 5px;
+      --wlm-pad: 12px;
+      --wlm-logo: 20px;
+      --wlm-row-h: 46px;
+      --wlm-spark-h: 22px;
+    }
+    .wlm-row-sym { font-size: 13px; }
+    .wlm-row-mcap { font-size: 10.5px; }
+    .wlm-row-price { font-size: 12.5px; }
+    .wlm-row-chg { font-size: 11px; }
+    .wlm-ss-value { font-size: 13px; }
+  }
+
+  @media (min-width: 430px) {
+    .wlm-container {
+      --wlm-grid: 24px minmax(0, 1fr) 90px 90px;
+      --wlm-gap: 7px;
+      --wlm-pad: 18px;
+      --wlm-logo: 24px;
+      --wlm-row-h: 52px;
+      --wlm-spark-h: 28px;
+    }
+  }
+
+  /* ============================================
+     MODALS - mobile overrides
+     ============================================ */
+  .manage-list-overlay,
+  .delete-confirm-overlay,
+  .wl-create-overlay,
+  .watchlists-import-overlay {
+    padding: var(--m-lg, 16px);
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .manage-list-modal,
+  .delete-confirm-modal,
+  .wl-create-modal,
+  .watchlists-import-modal {
+    max-width: calc(100vw - 32px);
+    padding: var(--m-lg, 16px);
+    background: rgba(18, 18, 22, 0.98);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--m-card-radius-lg, 14px);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), inset 0 0.5px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  /* Import modal - polish for mobile */
+  .watchlists-import-modal-title {
+    font-size: var(--m-text-lg, 1rem);
+  }
+
+  .watchlists-import-modal-hint {
+    font-size: var(--m-text-sm, 0.75rem);
+    color: rgba(245, 245, 247, 0.45);
+    line-height: 1.45;
+    margin-bottom: var(--m-sm, 8px);
+  }
+
+  .watchlists-import-tabs {
+    margin: 0 0 var(--m-sm, 8px) 0;
+    background: rgba(255, 255, 255, 0.04);
+    border: 0.5px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .watchlists-import-tab {
+    padding: 8px 12px;
+    font-size: var(--m-text-sm, 0.75rem);
+    min-height: 36px;
+  }
+
+  .watchlists-import-input,
+  .watchlists-import-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0 0 var(--m-sm, 8px) 0;
+    background: rgba(255, 255, 255, 0.03);
+    border: 0.5px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--m-card-radius, 10px);
+  }
+
+  .watchlists-import-textarea {
+    font-size: var(--m-text-sm, 0.75rem);
+    line-height: 1.5;
+    min-height: 110px;
+  }
+
+  /* Smaller CA placeholder so the full address stays readable */
+  .watchlists-import-textarea::placeholder {
+    font-size: var(--m-text-xs, 0.6875rem);
+    line-height: 1.5;
+    color: rgba(245, 245, 247, 0.22);
+  }
+
+  .watchlists-import-modal-actions {
+    gap: var(--m-sm, 8px);
+    margin-top: var(--m-md, 12px);
+  }
+
+  .watchlists-import-cancel-btn,
+  .watchlists-import-submit-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 10px 14px;
+    font-size: var(--m-text-sm, 0.75rem);
+    border-radius: var(--m-card-radius, 10px);
+    min-height: 40px;
+  }
+
+  /* Day mode import modal tweaks */
+  .app.app-day-mode .watchlists-import-overlay {
+    background: rgba(15, 23, 42, 0.35);
+  }
+  .app.app-day-mode .watchlists-import-modal {
+    background: #ffffff;
+    border-color: rgba(15, 23, 42, 0.08);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+  }
+  .app.app-day-mode .watchlists-import-modal-hint { color: rgba(15, 23, 42, 0.5); }
+  .app.app-day-mode .watchlists-import-tabs {
+    background: rgba(15, 23, 42, 0.04);
+    border-color: rgba(15, 23, 42, 0.06);
+  }
+  .app.app-day-mode .watchlists-import-input,
+  .app.app-day-mode .watchlists-import-textarea {
+    background: rgba(15, 23, 42, 0.03);
+    border-color: rgba(15, 23, 42, 0.08);
+    color: #0f172a;
+  }
+  .app.app-day-mode .watchlists-import-textarea::placeholder { color: rgba(15, 23, 42, 0.3); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DAY MODE — same full-bleed treatment, slate on paper. The header band and
+   the stat strip carry a slate wash between hairlines; everything else sits on
+   the page background.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  .app.app-day-mode .wlm-container {
+    --wlm-hair: rgba(15, 23, 42, 0.08);
+    --wlm-hair-soft: rgba(15, 23, 42, 0.05);
+    --wlm-tint: rgba(15, 23, 42, 0.028);
+  }
+
+  .app.app-day-mode .wlm-header {
+    background: rgba(248, 249, 250, 0.94);
+  }
+  .app.app-day-mode .wlm-title { color: #0f172a; }
+  .app.app-day-mode .wlm-stat { color: rgba(15, 23, 42, 0.45); }
+  .app.app-day-mode .wlm-stat.positive { color: var(--bull, #10B981); }
+  .app.app-day-mode .wlm-stat.negative { color: var(--bear, #EF4444); }
+  .app.app-day-mode .wlm-stat-sep { background: rgba(15, 23, 42, 0.18); }
+
+  /* Watchlist chips */
+  .app.app-day-mode .wlm-container .wlm-tabs-strip .wlm-tab {
+    color: #64748b;
+    background: linear-gradient(135deg, #ffffff 0%, #f4f6f9 100%);
+    border-color: rgba(15, 23, 42, 0.09);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+  .app.app-day-mode .wlm-container .wlm-tabs-strip .wlm-tab.active {
+    color: #0f172a;
+    background: linear-gradient(135deg, #eef2f7 0%, #e2e8f0 100%);
+    border-color: rgba(15, 23, 42, 0.16);
+  }
+  .app.app-day-mode .wlm-container .wlm-tabs-strip .wlm-tab-add { color: #94a3b8; }
+
+  /* Stat strip */
+  .app.app-day-mode .wlm-ss-label { color: #94a3b8; }
+  .app.app-day-mode .wlm-ss-value { color: #0f172a; }
+  .app.app-day-mode .wlm-ss-sub { color: #94a3b8; }
+  .app.app-day-mode .wlm-ss-value.positive,
+  .app.app-day-mode .wlm-ss-sub.positive { color: var(--bull, #10B981); }
+  .app.app-day-mode .wlm-ss-value.negative,
+  .app.app-day-mode .wlm-ss-sub.negative { color: var(--bear, #EF4444); }
+
+  /* Toolbar */
+  .app.app-day-mode .wlm-container .wlm-view-toggle .wlm-toggle-pill {
+    color: #64748b;
+    background: linear-gradient(135deg, #ffffff 0%, #f4f6f9 100%);
+    border-color: rgba(15, 23, 42, 0.09);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+  .app.app-day-mode .wlm-container .wlm-view-toggle .wlm-toggle-pill.active {
+    color: #0f172a;
+    background: linear-gradient(135deg, #eef2f7 0%, #e2e8f0 100%);
+    border-color: rgba(15, 23, 42, 0.16);
+  }
+  .app.app-day-mode .wlm-container .wlm-actions .wlm-action-btn {
+    color: #64748b;
+    background: linear-gradient(135deg, #ffffff 0%, #f4f6f9 100%);
+    border-color: rgba(15, 23, 42, 0.09);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+  .app.app-day-mode .wlm-container .wlm-actions .wlm-action-btn:active { color: #0f172a; }
+
+  /* Search */
+  .app.app-day-mode .wlm-search-icon { color: #94a3b8; }
+  /* 🪤 app-store-ready.css washes EVERY day-mode input with
+     `background: rgba(0,0,0,0.03) !important` — on a full-bleed search row that
+     painted a rounded grey pill back into the band. !important is the only way
+     past !important. */
+  .app.app-day-mode .wlm-container .wlm-search-wrapper .wlm-search-input {
+    color: #0f172a;
+    background: none !important;
+  }
+  .app.app-day-mode .wlm-search-input::placeholder { color: #64748b; }
+  .app.app-day-mode .wlm-container .wlm-search-wrapper .wlm-search-clear {
+    background: rgba(15, 23, 42, 0.06);
+    color: #64748b;
+  }
+  .app.app-day-mode .wlm-search-dropdown {
+    background: rgba(255, 255, 255, 0.98);
+    border-color: rgba(15, 23, 42, 0.08);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+  }
+  .app.app-day-mode .wlm-sr-symbol { color: #0f172a; }
+  .app.app-day-mode .wlm-sr-name { color: #94a3b8; }
+  .app.app-day-mode .wlm-sr-price { color: #0f172a; }
+  .app.app-day-mode .wlm-search-result:active { background: rgba(15, 23, 42, 0.03); }
+  .app.app-day-mode .wlm-search-empty { color: #94a3b8; }
+  .app.app-day-mode .wlm-search-shimmer {
+    background: linear-gradient(90deg, transparent 0%, rgba(15, 23, 42, 0.06) 50%, transparent 100%);
+    background-size: 200% 100%;
+  }
+
+  /* Token rows */
+  .app.app-day-mode .wlm-token-list .swipeable-row-content {
+    background: #f8f9fa;
+  }
+  .app.app-day-mode .wlm-container .wlm-token-list .wlm-row:active {
+    background: rgba(15, 23, 42, 0.025);
+  }
+  .app.app-day-mode .wlm-row-logo { background: rgba(15, 23, 42, 0.06); }
+  .app.app-day-mode .wlm-row-fallback { color: #475569; }
+  .app.app-day-mode .wlm-row-sym { color: #0f172a; }
+  .app.app-day-mode .wlm-row-mcap { color: #64748b; }
+  .app.app-day-mode .wlm-row-price { color: #0f172a; }
+  .app.app-day-mode .wlm-row-pin { background: #D97706; }
+
+  /* Empty state */
+  .app.app-day-mode .wlm-empty-text { color: #94a3b8; }
+  .app.app-day-mode .wlm-empty-btn {
+    background: linear-gradient(135deg, #ffffff 0%, #f4f6f9 100%);
+    border-color: rgba(15, 23, 42, 0.09);
+    color: #475569;
+  }
+  .app.app-day-mode .wlm-empty-btn:active {
+    background: #eef2f7;
+    color: #0f172a;
+  }
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  .wlm-search-shimmer,
+  .wlm-tab,
+  .wlm-toggle-pill,
+  .wlm-row,
+  .wlm-action-btn {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .wlm-search-wrapper:focus-within { box-shadow: inset 0 -2px 0 var(--text-primary); }
+}

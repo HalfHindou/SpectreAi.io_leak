@@ -1,0 +1,1131 @@
+/**
+ * NavigationSidebar – Refined Dark UI
+ * Clean minimal design with subtle borders and smooth interactions
+ */
+
+/* =========================================
+   SIDEBAR CONTAINER
+   ========================================= */
+.navigation-sidebar {
+  position: fixed;
+  left: 0;
+  top: 70px;
+  bottom: 0;
+  width: 220px;
+  /* Opaque background instead of blur(20px) over rgba(0.97). The 3 %
+     transparency was invisible against the app's near-black void anyway,
+     but the backdrop-filter forced the GPU to re-blur whatever scrolled
+     behind the sidebar on every frame — which is what made the watchlist
+     and the nav itself feel laggy when scrolling the table. */
+  background: #08080c;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: var(--font-body, 'Inter', -apple-system, sans-serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow: hidden;
+}
+
+/* Collapsed state */
+.navigation-sidebar.collapsed {
+  width: 64px;
+}
+
+/* =========================================
+   CONTENT AREA
+   Flex column with a scrollable middle (the nav list).
+   Toggle + Mission Control are pinned top/bottom, never shrink.
+   min-height: 0 on the scroll child is critical — without it,
+   the default min-height: auto prevents the nav from shrinking
+   below its content size and kills the scroll region entirely.
+   ========================================= */
+.navigation-sidebar-content {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 0;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+/* =========================================
+   TOGGLE BUTTON
+   ========================================= */
+.navigation-sidebar-toggle-wrapper {
+  flex-shrink: 0;
+  padding: 4px 10px 12px;
+  margin-bottom: 4px;
+}
+
+.navigation-sidebar-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.navigation-sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.navigation-sidebar-toggle svg {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  color: rgba(255, 255, 255, 0.35);
+  transition: color 0.2s ease;
+}
+
+.navigation-sidebar-toggle:hover svg {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.navigation-sidebar-toggle-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =========================================
+   NAVIGATION LIST
+   Scrollable middle region of the sidebar.
+   flex: 1 1 0 + min-height: 0 allows this to shrink below
+   its natural content height and activate overflow scrolling.
+   ========================================= */
+.navigation-sidebar-nav {
+  flex: 1 1 0;
+  min-height: 0;
+  padding: 0 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
+    }
+
+.navigation-sidebar-nav::-webkit-scrollbar {
+  width: 3px;
+}
+
+.navigation-sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.navigation-sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+}
+
+.navigation-sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.app.app-day-mode .navigation-sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.navigation-sidebar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.navigation-sidebar-item {
+  margin: 0;
+}
+
+/* =========================================
+   CATEGORY HEADERS & DIVIDERS
+   ========================================= */
+
+/* Category header — expanded mode (thin uppercase label) */
+.nav-category-header {
+  padding: 16px 12px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.25);
+  user-select: none;
+  list-style: none;
+}
+
+/* Thin divider — collapsed mode (between category groups) */
+.nav-category-divider {
+  height: 1px;
+  margin: 8px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  list-style: none;
+}
+
+/* =========================================
+   NAVIGATION LINKS
+   ========================================= */
+.navigation-sidebar-link {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 13px;
+  font-weight: 450;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.navigation-sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Active state */
+.navigation-sidebar-link.active {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Active indicator line */
+.navigation-sidebar-link.active::after {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.5px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 0 2px 2px 0;
+}
+
+/* =========================================
+   ICONS
+   ========================================= */
+.navigation-sidebar-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+  opacity: 0.65;
+  transition: all 0.15s ease;
+}
+
+.navigation-sidebar-icon svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.75;
+}
+
+.navigation-sidebar-link:hover .navigation-sidebar-icon {
+  opacity: 0.9;
+}
+
+.navigation-sidebar-link.active .navigation-sidebar-icon {
+  opacity: 1;
+}
+
+/* =========================================
+   LABELS
+   ========================================= */
+.navigation-sidebar-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.01em;
+}
+
+/* =========================================
+   BADGES (NEW, RWA, etc)
+   ========================================= */
+.navigation-sidebar-badge {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+  background: rgba(245, 245, 247, 0.08);
+  color: #f5f5f7;
+  border: 1px solid rgba(245, 245, 247, 0.12);
+}
+/* Coming Soon — quiet borderless micro-label, matches the muted uppercase
+   category-header language (no pill box, so it reads as a status not an alert) */
+.navigation-sidebar-badge.nav-badge-coming-soon {
+  font-size: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 0;
+  background: none;
+  border: none;
+  color: rgba(245, 245, 247, 0.35);
+}
+.app.app-day-mode .navigation-sidebar-badge.nav-badge-coming-soon {
+  color: rgba(15, 23, 42, 0.42);
+  background: none;
+  border: none;
+}
+/* PRO - premium surfaces. Warm-white depth, not a colored neon badge. */
+.navigation-sidebar-badge.nav-badge-pro {
+  background: rgba(245, 245, 247, 0.14);
+  color: #f5f5f7;
+  border-color: rgba(245, 245, 247, 0.22);
+}
+
+/* =========================================
+   COLLAPSED STATE
+   ========================================= */
+.navigation-sidebar.collapsed .navigation-sidebar-label,
+.navigation-sidebar.collapsed .navigation-sidebar-badge {
+  display: none;
+}
+
+.navigation-sidebar.collapsed .navigation-sidebar-link {
+  justify-content: center;
+  padding: 10px;
+  gap: 0;
+}
+
+.navigation-sidebar.collapsed .navigation-sidebar-toggle {
+  justify-content: center;
+  padding: 10px;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto;
+  border-radius: 10px;
+}
+
+.navigation-sidebar.collapsed .navigation-sidebar-toggle-wrapper {
+  padding: 4px 0 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.navigation-sidebar.collapsed .navigation-sidebar-nav {
+  padding: 0 6px;
+}
+
+.navigation-sidebar.collapsed .navigation-sidebar-link.active::after {
+  width: 2px;
+  height: 14px;
+  left: 0;
+}
+
+.navigation-sidebar.collapsed .navigation-sidebar-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.navigation-sidebar.collapsed .navigation-sidebar-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* =========================================
+   MISSION CONTROL TRIGGER
+   Pinned to the bottom of the sidebar, never shrinks.
+   No margin-top: auto — the scrollable nav above owns the
+   remaining space, so this sits directly below it.
+   ========================================= */
+.nav-website-link-wrap {
+  padding: 4px 8px 0;
+}
+
+.nav-website-link {
+  color: rgba(255, 255, 255, 0.4);
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-website-link:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.app.app-day-mode .nav-website-link {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.app.app-day-mode .nav-website-link:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.nav-mission-control-trigger {
+  flex-shrink: 0;
+  padding: 8px 8px 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: inherit;
+}
+
+.nav-mission-btn {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.nav-mission-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* =========================================
+   TOOLTIP (JS-driven, position: fixed)
+   ========================================= */
+.navigation-sidebar-tooltip {
+  position: fixed;
+  z-index: 10000;
+  padding: 6px 12px;
+  background: rgba(18, 18, 24, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: var(--font-glass, system-ui);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.navigation-sidebar-tooltip.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* =========================================
+   MISSION CONTROL OVERLAY — LAUNCHPAD STYLE
+   ========================================= */
+
+/* Fullscreen backdrop — app visible behind, faded transparent */
+.mission-control-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(32px) saturate(1.6) brightness(0.6);
+  -webkit-backdrop-filter: blur(32px) saturate(1.6) brightness(0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: mc-fade-in 0.3s ease;
+  font-family: var(--font-body, 'Inter', -apple-system, sans-serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+@keyframes mc-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Glass container — real frosted glass: the overlay behind already blurs
+   the whole app at 32px, so a translucent panel over it reads as deep glass
+   WITHOUT paying for a second backdrop-filter layer. */
+.mission-control-container {
+  position: relative;
+  width: 92%;
+  max-width: 1000px;
+  max-height: 85vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 40px 40px;
+  border-radius: 24px;
+  background: linear-gradient(
+    135deg,
+    rgba(20, 20, 26, 0.62) 0%,
+    rgba(13, 13, 18, 0.55) 30%,
+    rgba(10, 10, 14, 0.6) 55%,
+    rgba(14, 14, 19, 0.55) 80%,
+    rgba(20, 20, 26, 0.62) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 24px 64px rgba(0, 0, 0, 0.45),
+    0 6px 16px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.03);
+  animation: mc-scale-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+.mission-control-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mission-control-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mission-control-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+
+/* Top gleam highlight — same as header ::before */
+.mc-gleam {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  margin: 0 -40px;
+  pointer-events: none;
+  z-index: 2;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.09) 0%,
+    rgba(255, 255, 255, 0.035) 30%,
+    transparent 100%
+  );
+  opacity: 0.65;
+  border-radius: 24px 24px 0 0;
+}
+
+@keyframes mc-scale-in {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Header with separator */
+.mission-control-header {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -60px 0 28px;
+  padding: 0 0 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mission-control-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+/* Themes — pushed to the right so it sits with Close, not with the title.
+   The header is space-between, so an auto margin is what separates the two
+   groups without restructuring the row. */
+.mission-control-themes {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 13px;
+  margin-left: auto;
+  margin-right: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+}
+
+.mission-control-themes:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* Circular close button */
+.mission-control-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mission-control-close svg {
+  width: 14px;
+  height: 14px;
+}
+
+.mission-control-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* ── Launchpad Grid ── */
+.mc-launchpad {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 28px 16px;
+  justify-items: center;
+  padding: 8px 0;
+}
+
+/* Individual app tile */
+.mc-app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 16px;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
+  color: rgba(255, 255, 255, 0.85);
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+.mc-app-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(245, 245, 247, 0.12);
+  border: 0.5px solid rgba(245, 245, 247, 0.2);
+  color: rgba(245, 245, 247, 0.85);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 2;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.mission-control-overlay.mc-day .mc-app-badge {
+  background: rgba(15, 23, 42, 0.08);
+  border-color: rgba(15, 23, 42, 0.15);
+  color: rgba(15, 23, 42, 0.65);
+}
+
+.mc-app:hover {
+  transform: scale(1.1);
+}
+
+.mc-app:active {
+  transform: scale(0.92);
+}
+
+/* Rounded-square monochrome glass icon */
+.mc-app-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.03) 50%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.25),
+    0 1px 3px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: all 0.2s ease;
+}
+
+/* Glass sheen — top highlight like header */
+.mc-app-icon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0.03) 35%,
+    transparent 60%
+  );
+  pointer-events: none;
+}
+
+/* Icon SVG — white stroke matching sidebar style */
+.mc-app-icon svg {
+  width: 30px;
+  height: 30px;
+  color: rgba(255, 255, 255, 0.75);
+  position: relative;
+  z-index: 1;
+}
+
+.mc-app:hover .mc-app-icon {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.10) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+
+.mc-app:hover .mc-app-icon svg {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* Active state — brighter glass + subtle ring */
+.mc-app.active .mc-app-icon {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.12) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.20);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.15),
+    0 4px 14px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+
+.mc-app.active .mc-app-icon svg {
+  color: #fff;
+}
+
+.mc-app.active:hover .mc-app-icon {
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.20),
+    0 8px 28px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+
+/* App label */
+.mc-app-label {
+  font-size: 11.5px;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Responsive: fewer columns on smaller screens ── */
+@media (max-width: 900px) {
+  .mc-launchpad {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .mc-launchpad {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px 8px;
+  }
+  .mc-app-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+  }
+  .mc-app-icon svg {
+    width: 28px;
+    height: 28px;
+  }
+  .mission-control-container {
+    padding: 0 20px 28px;
+  }
+  .mc-gleam {
+    margin: 0 -20px;
+  }
+}
+
+/* =========================================
+   MOBILE - Hide sidebar
+   ========================================= */
+@media (max-width: 768px) {
+  .navigation-sidebar {
+    display: none !important;
+    width: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+}
+
+/* =========================================
+   DAY MODE — SIDEBAR
+   ========================================= */
+.app.app-day-mode .navigation-sidebar {
+  background: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+.app.app-day-mode .navigation-sidebar-toggle {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  color: #94a3b8;
+}
+
+.app.app-day-mode .navigation-sidebar-toggle:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #475569;
+}
+
+.app.app-day-mode .navigation-sidebar-toggle svg {
+  color: #94a3b8;
+}
+
+.app.app-day-mode .navigation-sidebar-toggle:hover svg {
+  color: #475569;
+}
+
+.app.app-day-mode .navigation-sidebar-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.app.app-day-mode .navigation-sidebar-link {
+  color: #64748b;
+}
+
+.app.app-day-mode .navigation-sidebar-link:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: #1e293b;
+}
+
+.app.app-day-mode .navigation-sidebar-link.active {
+  background: rgba(0, 0, 0, 0.05);
+  color: #0f172a;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.app.app-day-mode .navigation-sidebar-link.active::after {
+  background: #475569;
+}
+
+.app.app-day-mode .navigation-sidebar-icon {
+  opacity: 0.55;
+}
+
+.app.app-day-mode .navigation-sidebar-link:hover .navigation-sidebar-icon {
+  opacity: 0.8;
+}
+
+.app.app-day-mode .navigation-sidebar-link.active .navigation-sidebar-icon {
+  opacity: 0.9;
+}
+
+.app.app-day-mode .navigation-sidebar-tooltip {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #1e293b;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Day mode — category headers & dividers */
+.app.app-day-mode .nav-category-header {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+.app.app-day-mode .nav-category-divider {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Themes sits in the same pinned footer as Mission Control and reads the same
+   — it is a launcher, not a page, so it must not look like a nav item. */
+.nav-themes-btn {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.nav-themes-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Day mode — mission control trigger */
+.app.app-day-mode .nav-mission-control-trigger {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+.app.app-day-mode .nav-mission-btn,
+.app.app-day-mode .nav-themes-btn {
+  color: #94a3b8;
+}
+
+.app.app-day-mode .nav-mission-btn:hover,
+.app.app-day-mode .nav-themes-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #475569;
+}
+
+/* =========================================
+   DAY MODE — MISSION CONTROL (portal, uses .mc-day)
+   ========================================= */
+
+/* Backdrop — app seen through, bright faded */
+.mission-control-overlay.mc-day {
+  background: rgba(255, 255, 255, 0.30);
+  backdrop-filter: blur(32px) saturate(1.4) brightness(1.1);
+  -webkit-backdrop-filter: blur(32px) saturate(1.4) brightness(1.1);
+}
+
+/* Glass container */
+.mission-control-overlay.mc-day .mission-control-container {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.72) 0%,
+    rgba(250, 250, 252, 0.64) 30%,
+    rgba(255, 255, 255, 0.7) 55%,
+    rgba(250, 250, 252, 0.64) 80%,
+    rgba(255, 255, 255, 0.72) 100%
+  );
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.03),
+    0 24px 64px rgba(0, 0, 0, 0.12),
+    0 6px 16px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+/* Gleam — hidden in day mode */
+.mission-control-overlay.mc-day .mc-gleam {
+  opacity: 0;
+}
+
+/* Header */
+.mission-control-overlay.mc-day .mission-control-header {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.mission-control-overlay.mc-day .mission-control-header h2 {
+  color: #0f172a;
+}
+
+/* Close button */
+.mission-control-overlay.mc-day .mission-control-themes {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.1);
+  color: #475569;
+}
+
+.mission-control-overlay.mc-day .mission-control-themes:hover {
+  background: rgba(15, 23, 42, 0.09);
+  border-color: rgba(15, 23, 42, 0.16);
+  color: #0f172a;
+}
+
+.mission-control-overlay.mc-day .mission-control-close {
+  border-color: rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.04);
+  color: #64748b;
+}
+
+.mission-control-overlay.mc-day .mission-control-close:hover {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #1e293b;
+}
+
+/* Labels */
+.mission-control-overlay.mc-day .mc-app-label {
+  color: rgba(0, 0, 0, 0.65);
+  text-shadow: none;
+}
+
+/* Icon tiles — light glass with dark icons */
+.mission-control-overlay.mc-day .mc-app-icon {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.04) 0%,
+    rgba(0, 0, 0, 0.02) 50%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.08),
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.mission-control-overlay.mc-day .mc-app-icon::after {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.15) 35%,
+    transparent 60%
+  );
+}
+
+.mission-control-overlay.mc-day .mc-app-icon svg {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.mission-control-overlay.mc-day .mc-app:hover .mc-app-icon {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.06) 0%,
+    rgba(0, 0, 0, 0.03) 50%,
+    rgba(0, 0, 0, 0.07) 100%
+  );
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.10),
+    0 2px 6px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.mission-control-overlay.mc-day .mc-app:hover .mc-app-icon svg {
+  color: rgba(0, 0, 0, 0.8);
+}
+
+/* Active — stronger glass in day */
+.mission-control-overlay.mc-day .mc-app.active .mc-app-icon {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.07) 0%,
+    rgba(0, 0, 0, 0.03) 50%,
+    rgba(0, 0, 0, 0.08) 100%
+  );
+  border-color: rgba(0, 0, 0, 0.14);
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.08),
+    0 4px 14px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.mission-control-overlay.mc-day .mc-app.active .mc-app-icon svg {
+  color: #0f172a;
+}
+
+.mission-control-overlay.mc-day .mc-app.active:hover .mc-app-icon {
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.10),
+    0 8px 28px rgba(0, 0, 0, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Scrollbar */
+.mission-control-overlay.mc-day .mission-control-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.08);
+}
+.mission-control-overlay.mc-day .mission-control-container {
+  }
+
+/* ─────────────────────────────────────────────────────────────
+   Showcase-embed lock state
+   Fades non-allowed nav entries and disables pointer interaction
+   when the app is iframed from /website2 (?embed=showcase or any
+   cross-frame embed).
+   ───────────────────────────────────────────────────────────── */
+.navigation-sidebar-link.nav-locked {
+  opacity: 0.32;
+  cursor: not-allowed;
+  filter: grayscale(0.4);
+  /* JS onClick already no-ops, but we keep the button clickable so the
+     handler can fire the coming-soon toast. If clicks were to pass
+     through and attempt navigation, the route-level <EmbedGuard /> still
+     blocks mount. */
+}
+.navigation-sidebar-link.nav-locked:hover {
+  background: transparent;
+  opacity: 0.32;
+}
+.navigation-sidebar-link.nav-locked .navigation-sidebar-label {
+  color: inherit;
+}
+.nav-lock-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  color: rgba(245, 245, 247, 0.5);
+  flex-shrink: 0;
+}
+.navigation-sidebar.collapsed .nav-lock-icon {
+  display: none;
+}
+
+/* Mission Control locked cards */
+.mc-app.mc-app-locked {
+  opacity: 0.32;
+  cursor: not-allowed;
+  filter: grayscale(0.4);
+  position: relative;
+}
+.mc-app.mc-app-locked:hover {
+  transform: none;
+  background: transparent;
+}
+.mc-app-lock {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(245, 245, 247, 0.6);
+}

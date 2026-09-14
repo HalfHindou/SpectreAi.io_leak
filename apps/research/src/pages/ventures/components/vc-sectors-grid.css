@@ -1,0 +1,190 @@
+/* Sector Map view — live momentum heatmap + per-fund drill-down. */
+
+.smu-sectors { display: flex; flex-direction: column; padding: 16px 18px 18px; gap: 14px; }
+
+.smu-sectors-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.smu-sectors-headline { display: flex; flex-direction: column; gap: 3px; }
+.smu-sectors-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+.smu-sectors-desc { font-size: 12px; color: rgba(245, 245, 247, 0.42); }
+
+.smu-sectors-controls { display: flex; align-items: center; gap: 16px; }
+
+.smu-tf-toggle {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  background: rgba(9, 9, 11, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+}
+.smu-tf-btn {
+  padding: 5px 12px;
+  border: none;
+  background: none;
+  border-radius: 999px;
+  color: rgba(245, 245, 247, 0.5);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all 180ms ease;
+}
+.smu-tf-btn--active {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.04));
+  color: var(--text-primary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.smu-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: rgba(245, 245, 247, 0.4);
+}
+.smu-legend-bar {
+  width: 84px;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #ef4444, rgba(255, 255, 255, 0.18) 50%, #10b981);
+}
+
+/* ── heatmap grid ─────────────────────────────────────────────────────── */
+.smu-sector-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-content: flex-start;
+}
+.smu-sector-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 15px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), filter 200ms ease, box-shadow 200ms ease;
+  overflow: hidden;
+}
+/* glass sheen over the momentum tint */
+.smu-sector-cell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.06) 0%, transparent 42%);
+  pointer-events: none;
+}
+.smu-sector-cell > * { position: relative; }
+.smu-sector-cell:hover { transform: translateY(-3px); filter: brightness(1.1); box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4); }
+
+.smu-sector-cell-top { display: flex; align-items: baseline; gap: 10px; }
+.smu-sector-cell-name { font-size: 17px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.01em; }
+.smu-sector-cell-mom { font-size: 14px; font-weight: 600; font-family: var(--font-mono); color: rgba(245, 245, 247, 0.7); }
+.smu-sector-cell-mom.is-bull { color: var(--bull-bright); }
+.smu-sector-cell-mom.is-bear { color: #fca5a5; }
+
+.smu-sector-cell-meta { font-size: 11px; color: rgba(245, 245, 247, 0.55); font-family: var(--font-mono); }
+.smu-sector-cell-funds { margin-top: auto; }
+
+.smu-sector-cell-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.smu-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 10.5px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: rgba(245, 245, 247, 0.72);
+}
+
+/* ── drill-down ───────────────────────────────────────────────────────── */
+.smu-drill { display: flex; flex-direction: column; gap: 14px; }
+.smu-drill-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.smu-drill-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px 7px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.7);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all 180ms ease;
+}
+.smu-drill-back:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-primary); }
+.smu-drill-id { display: flex; align-items: baseline; gap: 12px; }
+.smu-drill-name { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+.smu-drill-meta { font-size: 12px; color: rgba(245, 245, 247, 0.5); font-family: var(--font-mono); }
+.smu-drill-meta .is-bull { color: var(--bull-bright); }
+.smu-drill-meta .is-bear { color: var(--bear); }
+.smu-drill-chips { display: inline-flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+
+.smu-drill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+  gap: 12px;
+}
+.smu-fund-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  min-height: 120px;
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), filter 180ms ease;
+}
+.smu-fund-card:hover { transform: translateY(-2px); filter: brightness(1.1); }
+.smu-fund-card-top { display: flex; align-items: center; gap: 11px; }
+.smu-fund-card-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.smu-fund-card-name { font-size: 14px; font-weight: 600; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.smu-fund-card-sub { font-size: 11px; color: rgba(245, 245, 247, 0.55); font-family: var(--font-mono); }
+.smu-fund-card-perf {
+  margin-top: auto;
+  font-size: 26px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  letter-spacing: -0.02em;
+  color: rgba(245, 245, 247, 0.7);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.smu-fund-card-perf.is-bull { color: var(--bull-bright); }
+.smu-fund-card-perf.is-bear { color: #fca5a5; }
+.smu-fund-card-tf { font-size: 11px; font-weight: 500; color: rgba(245, 245, 247, 0.4); letter-spacing: 0; }
+
+.smu-sectors-empty { padding: 40px; text-align: center; color: rgba(245, 245, 247, 0.4); font-size: 13px; }
+
+@media (max-width: 700px) {
+  .smu-sectors-head { flex-direction: column; }
+  .smu-sector-cell { flex-basis: 100% !important; }
+}

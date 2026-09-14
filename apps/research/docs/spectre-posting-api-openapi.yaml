@@ -1,0 +1,263 @@
+openapi: 3.0.3
+info:
+  title: Spectre Posting API
+  description: Generate and publish crypto content (X/Twitter, Telegram, headlines) via Spectre. Pro tone, non-AI sounding, no overpromises.
+  version: 0.1.0
+  contact:
+    name: Spectre AI
+
+servers:
+  - url: http://localhost:3001/api/v1
+    description: Local dev
+  - url: /api/v1
+    description: Relative (same host)
+
+tags:
+  - name: posts
+    description: Create and query posts
+  - name: health
+    description: Service health
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+paths:
+  /health:
+    get:
+      tags: [health]
+      summary: Health check
+      description: Returns service status. No authentication required.
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, service]
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  service:
+                    type: string
+                    example: spectre-posting
+
+  /posts/dry-run:
+    post:
+      tags: [posts]
+      summary: Generate only (dry-run)
+      description: Generate post text without persisting or publishing. No post_id returned.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostRequest'
+      responses:
+        '200':
+          description: Generated post text
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /posts:
+    post:
+      tags: [posts]
+      summary: Create and publish post
+      description: Generate post text and persist it. Returns post_id and status.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostRequest'
+      responses:
+        '201':
+          description: Post created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /posts/{id}:
+    get:
+      tags: [posts]
+      summary: Get post status
+      description: Retrieve a post by ID (status, text, created_at).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Post ID (e.g. post_abc123)
+      responses:
+        '200':
+          description: Post found
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, status, post_text, created_at]
+                properties:
+                  id:
+                    type: string
+                    example: post_abc123
+                  status:
+                    type: string
+                    enum: [draft, published, failed]
+                  post_text:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+        '404':
+          description: Post not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Key
+      description: API key as Bearer token
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key in header
+
+  schemas:
+    PostRequest:
+      type: object
+      required: [topic]
+      properties:
+        topic:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Subject of the post
+        tickers:
+          type: array
+          items:
+            type: string
+            maxLength: 20
+          description: Token tickers (e.g. BTC, ETH)
+        constraints:
+          type: object
+          properties:
+            tone:
+              type: string
+              enum: [pro, hedge-fund, neutral]
+            non_ai_sounding:
+              type: boolean
+            no_overpromises:
+              type: boolean
+        format:
+          type: string
+          enum: [twitter, telegram, headline]
+          default: twitter
+        sources:
+          type: array
+          items:
+            type: string
+            format: uri
+        disclaimers:
+          type: string
+          maxLength: 200
+
+    PostResponse:
+      type: object
+      required: [success, post_text, metadata, timestamp]
+      properties:
+        success:
+          type: boolean
+        post_text:
+          type: string
+        metadata:
+          type: object
+          properties:
+            topic:
+              type: string
+            tickers:
+              type: array
+              items:
+                type: string
+            format:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+        post_id:
+          type: string
+          nullable: true
+          description: Set when published; null for dry-run
+        timestamp:
+          type: string
+          format: date-time
+        error:
+          type: string
+          description: Present when success is false
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Invalid or missing API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimited:
+      description: Too many requests
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

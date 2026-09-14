@@ -1,0 +1,220 @@
+/* MobileTokenPeek — long-press preview card (prefix mpk-). */
+
+.mpk-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.mpk-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  animation: mpkFade 180ms ease both;
+  /* iOS only dispatches click on "clickable" elements - without this the
+     tap-outside-to-close backdrop is dead on real devices. */
+  cursor: pointer;
+}
+.mpk-root.is-closing .mpk-backdrop { animation: mpkFade 180ms ease reverse both; }
+@keyframes mpkFade { from { opacity: 0; } to { opacity: 1; } }
+
+.mpk-card {
+  position: relative;
+  margin: 0 10px calc(14px + env(safe-area-inset-bottom));
+  padding: 8px 16px 14px;
+  border-radius: 18px;
+  background: rgba(17, 17, 19, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: mpkRise 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.mpk-root.is-closing .mpk-card { animation: mpkDrop 180ms ease both; }
+@keyframes mpkRise {
+  from { transform: translateY(48px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes mpkDrop {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(48px); opacity: 0; }
+}
+
+.mpk-grabber {
+  width: 36px;
+  height: 4px;
+  margin: 0 auto 12px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* head */
+.mpk-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.mpk-logo img,
+.mpk-logo-fallback {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.05);
+}
+.mpk-logo-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(245, 245, 247, 0.7);
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.mpk-id {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.mpk-sym {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #f5f5f7;
+}
+.mpk-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mpk-net {
+  font-style: normal;
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.mpk-pricewrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.mpk-price {
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 18px;
+  font-weight: 700;
+  color: #f5f5f7;
+}
+.mpk-pricewrap b {
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* sparkline */
+.mpk-spark {
+  display: block;
+  width: 100%;
+  height: 56px;
+  margin: 12px 0 4px;
+}
+
+/* stat grid */
+.mpk-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+.mpk-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 8px 7px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.mpk-cell span {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  color: rgba(245, 245, 247, 0.35);
+}
+.mpk-cell b {
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  font-weight: 600;
+  color: #f5f5f7;
+  white-space: nowrap;
+}
+
+/* actions */
+.mpk-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.mpk-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 120ms ease, background 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.mpk-btn:active { transform: scale(0.97); }
+.mpk-btn--watch {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.85);
+}
+.mpk-btn--watch.is-on { color: #f5f5f7; background: rgba(255, 255, 255, 0.1); }
+.mpk-btn--open {
+  background: #f5f5f7;
+  border: none;
+  color: #09090b;
+}
+
+/* ================= day mode ================= */
+body.theme-light .mpk-backdrop { background: rgba(15, 23, 42, 0.3); }
+body.theme-light .mpk-card {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.18);
+}
+body.theme-light .mpk-grabber { background: rgba(15, 23, 42, 0.15); }
+body.theme-light .mpk-sym,
+body.theme-light .mpk-price,
+body.theme-light .mpk-cell b { color: #0f172a; }
+body.theme-light .mpk-name { color: rgba(15, 23, 42, 0.5); }
+body.theme-light .mpk-cell {
+  background: rgba(15, 23, 42, 0.035);
+  border-color: rgba(15, 23, 42, 0.05);
+}
+body.theme-light .mpk-cell span { color: rgba(15, 23, 42, 0.4); }
+body.theme-light .mpk-btn--watch {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.1);
+  color: rgba(15, 23, 42, 0.8);
+}
+body.theme-light .mpk-btn--watch.is-on { color: #0f172a; background: rgba(15, 23, 42, 0.1); }
+body.theme-light .mpk-btn--open { background: #0f172a; color: #ffffff; }

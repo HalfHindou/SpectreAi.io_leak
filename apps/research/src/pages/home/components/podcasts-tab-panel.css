@@ -1,0 +1,279 @@
+/**
+ * Command Center → Podcasts. Prefix `ccp-`.
+ * Day mode arrives as `.app.app-day-mode` (this renders inside the app tree).
+ */
+
+.ccp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-height: 0;
+  /* The Command Center body is a fixed-height scroll pane, so the panel has to
+     be slot-height-driven or it leaves dead space under a 420px list. */
+  height: 100%;
+  /* Queried below: this panel also renders in a narrow mobile slot, so the
+     column count must follow the PANE, not the viewport. */
+  container-type: inline-size;
+}
+
+.ccp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.ccp-views { display: flex; gap: 4px; }
+
+.ccp-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-default);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.ccp-view:hover { color: var(--text-secondary); }
+
+.ccp-view.is-active {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--border-accent);
+}
+
+.ccp-view-count {
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 0.625rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ccp-all {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.ccp-all:hover { color: var(--text-primary); }
+
+.ccp-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-content: start;
+  gap: 2px 10px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  /* No backdrop-filter here — this scrolls. */
+}
+
+/* Two columns once the pane can hold two full titles. Podcast titles are long
+   ("TIP840: CATL: Powering EVs, Power Grids, and AI w/ …"), so the threshold is
+   set by the title, not by the artwork. */
+@container (min-width: 820px) {
+  .ccp-list { grid-template-columns: 1fr 1fr; }
+}
+
+.ccp-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: 9px 10px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.ccp-row:hover { background: rgba(255, 255, 255, 0.04); }
+.ccp-row.is-active { background: rgba(255, 255, 255, 0.07); }
+
+.ccp-art {
+  position: relative;
+  flex-shrink: 0;
+  width: 54px;
+  height: 54px;
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  background: var(--bg-elevated);
+}
+
+.ccp-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.ccp-ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+}
+
+.ccp-art-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f5f5f7;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.ccp-row:hover .ccp-art-play,
+.ccp-row.is-active .ccp-art-play { opacity: 1; }
+
+@media (hover: none) {
+  .ccp-art-play { opacity: 1; background: rgba(0, 0, 0, 0.35); }
+}
+
+.ccp-art-prog {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.ccp-art-prog > span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  background: #f5f5f7;
+}
+
+.ccp-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+
+.ccp-show {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ccp-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ccp-meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.ccp-dur {
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.ccp-cc {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-tertiary);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.ccp-left {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.ccp-empty {
+  margin: 0;
+  padding: var(--sp-6) var(--sp-3);
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--text-tertiary);
+}
+
+.ccp-skel {
+  height: 72px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ── Day mode ── */
+
+.app.app-day-mode .ccp-view {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.1);
+  color: #64748b;
+}
+
+.app.app-day-mode .ccp-view.is-active {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.1);
+  border-color: rgba(15, 23, 42, 0.16);
+}
+
+.app.app-day-mode .ccp-view-count { background: rgba(15, 23, 42, 0.12); color: #475569; }
+.app.app-day-mode .ccp-all { color: #64748b; }
+.app.app-day-mode .ccp-all:hover { color: #0f172a; }
+.app.app-day-mode .ccp-row:hover { background: rgba(15, 23, 42, 0.04); }
+.app.app-day-mode .ccp-row.is-active { background: rgba(15, 23, 42, 0.07); }
+.app.app-day-mode .ccp-title { color: #0f172a; }
+/* #94a3b8 (--text-muted in day mode) is 2.56:1 on white — meaningful text
+   steps up to #64748b. */
+.app.app-day-mode .ccp-show,
+.app.app-day-mode .ccp-meta,
+.app.app-day-mode .ccp-left,
+.app.app-day-mode .ccp-cc,
+.app.app-day-mode .ccp-empty { color: #64748b; }
+.app.app-day-mode .ccp-cc { background: rgba(15, 23, 42, 0.06); }
+.app.app-day-mode .ccp-dur { background: rgba(15, 23, 42, 0.07); color: #334155; }
+.app.app-day-mode .ccp-skel { background: rgba(15, 23, 42, 0.05); }
+.app.app-day-mode .ccp-art-prog > span { background: #ffffff; }
+
+@media (max-width: 768px) {
+  .ccp-art { width: 46px; height: 46px; }
+}

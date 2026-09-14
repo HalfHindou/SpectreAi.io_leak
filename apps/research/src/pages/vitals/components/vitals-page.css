@@ -1,0 +1,1644 @@
+/* VITALS — platform fundamentals.
+ *
+ * Prefix: vt-. Dark is the base; every rule that sets a colour has an
+ * .app.app-day-mode counterpart in vitals-page.day-mode.css.
+ *
+ * SURFACE. Every plane is the app's .glass-card, taken off /fear-greed
+ * (.fg-metric-card) the way /why, /alt-rotation, /etfs and /wallets took it:
+ * the `135deg rgba(255,255,255,0.04) -> 0.016` gradient, the 0.04 hairline, the
+ * 16px radius, `blur(24px) saturate(1.8)`, --shadow-lg. The page used to paint
+ * its own material — a 180deg 0.072 pane, a 0.10 edge, an 18/22px radius and a
+ * hand-rolled four-part shadow with a 0.15 inner rim-light — so a Vitals card
+ * sat visibly brighter and rounder than the card next to it on any other page.
+ *
+ * CONTRAST FLOOR. --text-secondary/-muted (0.6 / 0.35) read as grey-on-black at
+ * the 10-11px labels this page is full of, so the ramp floors at 0.46. Numbers
+ * are never dimmer than --vt-t2.
+ *
+ * COLOUR. Chrome is warm-white. Hue is market semantics (--vt-bull/--vt-bear),
+ * a caveat (--vt-gold) or a chart series, never a surface, a focus ring, a
+ * progress fill or a "live" dot. The page shipped with a #4ade80 accent, a
+ * green->blue bar gradient and a green/cyan/violet ambient wash; none of those
+ * meant anything.
+ */
+
+.vt-page {
+  /* market semantics — the design-system pair, so "up" on Vitals is the same
+     green as "up" everywhere else in the app. Day mode swaps the channel in one
+     rule (vitals-page.day-mode.css). */
+  --vt-bull: #34D399;
+  --vt-bear: #F87171;
+  --vt-gold: #F59E0B;
+
+  /* text ramp — the floor is 0.46, not 0.35 */
+  --vt-t1: #f5f5f7;
+  --vt-t2: rgba(245, 245, 247, 0.78);
+  --vt-t3: rgba(245, 245, 247, 0.62);
+  --vt-t4: rgba(245, 245, 247, 0.46);
+
+  /* the app's .glass-card, taken off /fear-greed (.fg-metric-card) */
+  --vt-pane: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.016) 100%);
+  --vt-pane-lit: linear-gradient(135deg, rgba(255, 255, 255, 0.075) 0%, rgba(255, 255, 255, 0.028) 100%);
+  --vt-pane-soft: var(--vt-pane);
+  --vt-edge: rgba(255, 255, 255, 0.06);
+  --vt-edge-soft: rgba(255, 255, 255, 0.04);
+  --vt-glass: blur(24px) saturate(1.8);
+  --vt-radius: 16px;
+  --vt-lift: var(--shadow-lg);
+  --vt-lift-sm: var(--shadow-md);
+
+  position: relative;
+  max-width: 1560px;
+  margin: 0 auto;
+  padding: var(--sp-6) var(--sp-6) var(--sp-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  color: var(--vt-t1);
+}
+
+/* Ambient light. Structural, not decoration: it gives the glass something to
+   refract so the planes read as surfaces instead of flat rectangles. Warm white,
+   not the green/cyan/violet wash this page shipped with — a page-wide hue tints
+   every card on it, which is exactly what a design system exists to stop. */
+.vt-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(58% 42% at 18% 0%, rgba(255, 255, 255, 0.035), transparent 62%),
+    radial-gradient(48% 38% at 88% 6%, rgba(255, 255, 255, 0.022), transparent 60%);
+}
+
+/* ---------- glass primitive ---------- */
+
+/* The card. --shadow-lg already carries the `inset 0 1px 0 rgba(255,255,255,
+   0.04)` specular top-light, which is the whole of the app's glass edge — the
+   radial sheens and the 1px rim gradient this page drew on top of it were an
+   extra material nothing else in the app has. */
+.vt-glass,
+.vt-section {
+  position: relative;
+  background: var(--vt-pane);
+  border: 1px solid var(--vt-edge);
+  border-radius: var(--vt-radius);
+  box-shadow: var(--vt-lift);
+}
+
+.vt-section { padding: var(--sp-6); }
+
+/* ---------- type ---------- */
+
+.vt-eyebrow {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--vt-t4);
+  margin-bottom: var(--sp-2);
+}
+
+.vt-page h1 {
+  font-family: var(--font-display);
+  /* The masthead used to open on a 50px display line over a three-line
+     paragraph — ~200px of page before the first number. The voice survives at
+     38px; the height does not come back. */
+  font-size: clamp(28px, 2.9vw, 38px);
+  font-weight: 700;
+  letter-spacing: -0.032em;
+  line-height: 1.04;
+  margin: 0;
+  color: var(--vt-t1);
+}
+
+.vt-page h2 {
+  font-family: var(--font-display);
+  /* A section title is a label for the card under it, not a second masthead —
+     at 24px it read at nearly the weight of the page's own h1. */
+  font-size: clamp(18px, 1.5vw, 21px);
+  font-weight: 640;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--vt-t1);
+}
+
+.vt-page h3 {
+  font-size: 15px;
+  font-weight: 640;
+  margin: 0;
+  letter-spacing: -0.012em;
+  color: var(--vt-t1);
+}
+
+.vt-section__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-6);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-5);
+}
+
+.vt-section__sub,
+.vt-tide__sub {
+  margin: var(--sp-2) 0 0;
+  max-width: 66ch;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--vt-t3);
+}
+
+.vt-note { margin: var(--sp-3) 0 0; font-size: 12.5px; line-height: 1.55; color: var(--vt-t3); }
+.vt-note--dim { color: var(--vt-t4); }
+.vt-note--filter { margin: 0; display: flex; align-items: center; gap: var(--sp-2); }
+.vt-empty { margin: var(--sp-6) 0; text-align: center; font-size: 13px; color: var(--vt-t3); }
+/* Inside a chart's canvas box the message has to sit where the chart would be,
+   not push the card taller. */
+.vt-chart__canvas > .vt-empty {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  padding: 0 var(--sp-5);
+}
+
+.vt-tone--up { color: var(--vt-bull); }
+.vt-tone--down { color: var(--vt-bear); }
+.vt-tone--flat { color: var(--vt-t4); }
+
+/* ---------- controls ---------- */
+
+.vt-pill {
+  appearance: none;
+  border: 1px solid var(--vt-edge-soft);
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--vt-t2);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-weight: 570;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, transform 160ms ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+}
+
+.vt-pill:hover { background: rgba(255, 255, 255, 0.1); color: var(--vt-t1); transform: translateY(-1px); }
+.vt-pill.is-active {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.86));
+  color: #0b0b0e;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+.vt-pill--sm { padding: 5px 11px; font-size: 11.5px; min-height: 30px; }
+
+.vt-linkbtn {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--vt-t2);
+  font-size: 12.5px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.vt-linkbtn:hover { color: var(--vt-t1); }
+
+/* segmented control — the tab pattern that replaces the endless scroll */
+.vt-seg {
+  display: inline-flex;
+  gap: 3px;
+  padding: 4px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid var(--vt-edge-soft);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  overflow-x: auto;
+  scrollbar-width: none;
+  max-width: 100%;
+}
+.vt-seg::-webkit-scrollbar { display: none; }
+
+.vt-seg__btn {
+  appearance: none;
+  border: none;
+  background: none;
+  color: var(--vt-t3);
+  font-size: 13px;
+  font-weight: 580;
+  padding: 8px 15px;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px; /* app-wide touch floor */
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.vt-seg__btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.07); color: var(--vt-t1); }
+.vt-seg__btn.is-active {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.09));
+  color: var(--vt-t1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 2px 8px rgba(0, 0, 0, 0.32);
+}
+.vt-seg__btn:disabled { opacity: 0.35; cursor: not-allowed; }
+/* A first-hand marker, not a market signal — warm white, and no glow. */
+.vt-seg__dot { width: 5px; height: 5px; border-radius: 50%; background: var(--vt-t1); }
+
+.vt-tabs { display: flex; gap: var(--sp-1); flex-wrap: wrap; }
+.vt-tab {
+  appearance: none;
+  border: none;
+  background: none;
+  color: var(--vt-t3);
+  font-size: 13px;
+  font-weight: 570;
+  padding: 8px 13px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 34px;
+  transition: background 150ms, color 150ms;
+}
+.vt-tab:hover:not(:disabled) { background: rgba(255, 255, 255, 0.07); color: var(--vt-t1); }
+.vt-tab.is-active {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
+  color: var(--vt-t1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+.vt-tab:disabled { opacity: 0.35; cursor: not-allowed; }
+.vt-tab__dot { width: 5px; height: 5px; border-radius: 50%; background: var(--vt-t1); }
+.vt-tabs--sm .vt-tab { font-size: 12px; padding: 6px 10px; min-height: 32px; }
+
+/* ---------- chips ---------- */
+
+.vt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  vertical-align: middle;
+  border: 1px solid transparent;
+}
+
+/* Provenance is a RANK, not a hue: own data is the strongest thing we can say
+   about a figure, so it takes the solid warm-white chip and everything else
+   steps down to a ghost. It used to be green, which put it in the same channel
+   as "price up" two columns away. A caveat is the one badge that keeps a
+   colour, and it is the design system's amber. */
+.vt-chip--own { background: var(--vt-t1); color: #0b0b0e; border-color: transparent; }
+.vt-chip--shadow { background: rgba(255, 255, 255, 0.06); color: var(--vt-t3); border-color: var(--vt-edge); }
+.vt-chip--warn,
+.vt-chip--scope { background: rgba(245, 158, 11, 0.14); color: var(--vt-gold); border-color: rgba(245, 158, 11, 0.28); }
+
+.vt-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.vt-dot--up { background: var(--vt-bull); }
+.vt-dot--down { background: var(--vt-bear); }
+/* These two name the segments of the first-hand traders bar, so they have to be
+   the same two steps the bar is painted with — a white legend dot beside a
+   magenta bar is a legend for a different chart. */
+.vt-dot--new { background: #F472B6; }
+.vt-dot--ret { background: #DB2777; }
+
+.vt-av {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09);
+}
+.vt-av--fallback { display: grid; place-items: center; font-size: 12px; font-weight: 750; color: #0b0b0e; }
+.vt-av--lg { width: 56px; height: 56px; border-radius: 15px; font-size: 24px; }
+
+/* ---------- masthead ---------- */
+
+.vt-masthead {
+  /* Grid, not flex: on flex with align-items:flex-end the search box hung off
+     the BOTTOM of a three-line lead, level with nothing. Anchored to the top of
+     the same row it reads as page chrome. */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--sp-4) var(--sp-8);
+  padding-bottom: var(--sp-5);
+  /* the page header ends here — without the rule the tab strip floated in the
+     copy above it */
+  border-bottom: 1px solid var(--vt-edge-soft);
+}
+.vt-masthead__lead { max-width: 62ch; }
+.vt-masthead__lead p { margin: var(--sp-2) 0 0; font-size: 14px; line-height: 1.6; color: var(--vt-t2); }
+
+/* ---------- scope banner ---------- */
+
+.vt-firstband {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-6);
+  flex-wrap: wrap;
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--vt-edge);
+  border-radius: var(--vt-radius);
+  /* the lit variant of the same card, so "this is our own data" reads as
+     emphasis on one material rather than a second material */
+  background: var(--vt-pane-lit);
+  box-shadow: var(--vt-lift-sm);
+}
+.vt-firstband__tag { display: flex; align-items: center; gap: var(--sp-3); font-size: 13px; color: var(--vt-t2); flex-wrap: wrap; }
+.vt-firstband__stats { display: flex; gap: var(--sp-8); margin: 0; flex-wrap: wrap; }
+.vt-firstband__stats div { display: flex; flex-direction: column; gap: 2px; }
+.vt-firstband__stats dt { font-size: 11px; color: var(--vt-t4); letter-spacing: 0.05em; }
+.vt-firstband__stats dd { margin: 0; font-family: var(--font-mono); font-size: 18px; font-weight: 680; font-variant-numeric: tabular-nums; color: var(--vt-t1); }
+
+/* a coverage caveat is part of the number, not a footnote */
+/* A caveat has to be READ, which is not the same as being the loudest plane on
+   the screen: full-bleed amber across 1560px out-shouted the numbers it was
+   qualifying. The amber moves to a 3px rule on the leading edge — the chip
+   inside still carries the colour, so the signal is intact at a tenth of the
+   area. */
+.vt-scopewarn {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: 0 12px 12px 0;
+  border: 1px solid var(--vt-edge);
+  border-left: 3px solid var(--vt-gold);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--vt-t2);
+}
+
+/* ---------- the tide (hero scene) ---------- */
+
+/* Four stacked bands — header / chart / numbers / legend. Nothing floats on the
+   canvas any more: the stat rail used to be absolutely positioned over the
+   bottom of the chart and landed straight on the date axis, and the copy sat
+   under a black scrim that swallowed the top quarter of the data. */
+
+.vt-tide {
+  position: relative;
+  border-radius: var(--vt-radius);
+  border: 1px solid var(--vt-edge);
+  box-shadow: var(--vt-lift);
+  overflow: hidden;
+  background: var(--vt-pane);
+}
+
+.vt-tide__head {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+  padding: var(--sp-6) var(--sp-6) var(--sp-5);
+}
+.vt-tide__headtext { max-width: 62ch; }
+.vt-tide__head h2 { margin: 6px 0 0; }
+/* Mode first, then range: "how is this drawn" is a bigger decision than "how
+   far back", and on a narrow header the range pills are the half that wraps. */
+.vt-tide__tools { display: flex; align-items: center; gap: var(--sp-3); flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; }
+.vt-tide__ranges { display: flex; gap: var(--sp-2); flex: 0 0 auto; }
+
+.vt-tide__scene {
+  position: relative;
+  height: clamp(300px, 40vh, 430px);
+  /* the chart runs edge to edge; only the bands above and below are inset */
+  border-top: 1px solid var(--vt-edge-soft);
+  border-bottom: 1px solid var(--vt-edge-soft);
+}
+.vt-tide__canvas { position: absolute; inset: 0; z-index: 1; }
+.vt-tide__canvas canvas { display: block; width: 100%; height: 100%; }
+
+/* A wash behind the data instead of a scrim on top of it. Neutral: the bands
+   themselves carry the only colour this scene is allowed. */
+.vt-tide__glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 18% 100%, rgba(255, 255, 255, 0.05), transparent 64%);
+}
+
+.vt-tide__hud {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--vt-edge-soft);
+}
+.vt-tide__hud > .vt-stat {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.032), rgba(255, 255, 255, 0));
+  padding: var(--sp-4) var(--sp-5);
+}
+
+.vt-stat { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.vt-stat__label {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--vt-t4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vt-stat__value {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: clamp(19px, 1.7vw, 26px);
+  font-weight: 700;
+  letter-spacing: -0.028em;
+  font-variant-numeric: tabular-nums;
+  color: var(--vt-t1);
+}
+
+.vt-tide__skeleton {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.02) 25%, rgba(255, 255, 255, 0.06) 50%, rgba(255, 255, 255, 0.02) 75%);
+  background-size: 200% 100%;
+  animation: vtShimmer 1.6s ease-in-out infinite;
+}
+.vt-tide__empty { position: absolute; inset: 0; display: grid; place-items: center; }
+
+@keyframes vtShimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* Follows the crosshair (vt-tide.jsx sets `left`); the corner position below is
+   the fallback for narrow canvases, where there is no room to flip sides. The
+   width is FIXED because the flip maths in onMove has to know it — a measured
+   width would land a frame late and the panel would jump. */
+.vt-tide__readout {
+  position: absolute;
+  top: var(--sp-4);
+  right: var(--sp-4);
+  z-index: 3;
+  width: 236px;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: 14px;
+  background: rgba(12, 12, 14, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  pointer-events: none;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+.vt-tide__readout-date { font-size: 11px; color: var(--vt-t3); }
+.vt-tide__readout-total { display: block; font-family: var(--font-mono); font-size: 19px; font-weight: 700; margin-bottom: var(--sp-2); font-variant-numeric: tabular-nums; color: var(--vt-t1); }
+.vt-tide__readout ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.vt-tide__readout li { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--vt-t2); }
+/* The floor band is a near-black bronze — as an 8px swatch on a near-black
+   panel it was invisible, so every swatch carries a hairline. */
+.vt-tide__readout li i { width: 8px; height: 8px; border-radius: 3px; flex: 0 0 auto; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22); }
+.vt-tide__readout li.is-rest { color: var(--vt-t4); }
+.vt-tide__readout li.is-rest i { background: transparent; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14); }
+.vt-tide__readout li.is-rest .vt-tide__readout-val { color: var(--vt-t3); }
+.vt-tide__readout-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vt-tide__readout-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--vt-t1); }
+
+.vt-tide__legend { display: flex; flex-wrap: wrap; gap: var(--sp-2); list-style: none; margin: 0; padding: var(--sp-4) var(--sp-5); border-top: 1px solid var(--vt-edge-soft); }
+
+.vt-legend-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--vt-edge-soft);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--vt-t2);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 11.5px;
+  font-weight: 540;
+  cursor: pointer;
+  min-height: 30px;
+  transition: background 140ms, opacity 140ms;
+}
+.vt-legend-btn i { width: 8px; height: 8px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22); }
+.vt-legend-btn.is-muted { opacity: 0.38; }
+.vt-legend-btn:hover { background: rgba(255, 255, 255, 0.1); color: var(--vt-t1); }
+
+/* ---------- column headers ----------
+ *
+ * A board that prints "$478m" beside "$478m rev" is unreadable without the
+ * paragraph above it, and the paragraph is not on screen once you have scrolled
+ * two rows. The header carries the SAME grid as the rows under it, so every
+ * label sits exactly over its column, and it sticks while a long board scrolls.
+ */
+
+.vt-thead {
+  display: grid;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 9px var(--sp-3);
+  margin-top: var(--sp-4);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--vt-t4);
+  border-bottom: 1px solid var(--vt-edge);
+  /* Sticks to the top of the app's scroll container (the same anchor .vt-rail
+     already uses), so the labels survive a 50-row board. The fill is opaque:
+     a translucent header would show the rows travelling underneath it. */
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: rgba(13, 13, 16, 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.vt-thead + .vt-rows { margin-top: 0; }
+
+/* the ladder header takes the stacked row's two-line grid so "chg" lands over
+   the change and not over the ranked figure a line above it */
+.vt-thead--stacked {
+  grid-template-columns: 32px 28px minmax(140px, 300px) minmax(90px, 1fr) 190px;
+  grid-template-areas:
+    "rank avatar name bar   value"
+    "rank avatar meta spark stats";
+  row-gap: 1px;
+}
+.vt-thead--stacked .vt-thead__rank { grid-area: rank; text-align: right; }
+.vt-thead--stacked .vt-thead__name { grid-area: name; }
+.vt-thead--stacked .vt-thead__meta { grid-area: meta; }
+.vt-thead--stacked .vt-thead__bar { grid-area: bar; }
+.vt-thead--stacked .vt-thead__spark { grid-area: spark; text-align: left; }
+.vt-thead--stacked .vt-thead__value { grid-area: value; text-align: right; }
+.vt-thead--stacked .vt-thead__stats {
+  grid-area: stats;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+}
+.vt-thead__delta { min-width: 62px; text-align: right; }
+.vt-thead__sub { min-width: 108px; text-align: right; }
+
+.vt-thead--compact { grid-template-columns: 32px minmax(0, 1fr) 116px 76px 108px; }
+.vt-thead--compact > :nth-child(n + 3) { text-align: right; }
+.vt-thead--cats { grid-template-columns: 168px minmax(120px, 440px) minmax(0, 1fr) 104px 76px 68px; }
+.vt-thead--cats > :nth-child(n + 4) { text-align: right; }
+
+/* ---------- rows ---------- */
+
+.vt-rows { list-style: none; margin: var(--sp-4) 0 0; padding: 0; display: flex; flex-direction: column; }
+.vt-row { border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+.vt-row:last-child { border-bottom: none; }
+
+.vt-row__link {
+  display: grid;
+  grid-template-columns: 32px 28px minmax(0, 1fr) 76px 116px 76px 108px;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 11px var(--sp-3);
+  text-decoration: none;
+  color: inherit;
+  border-radius: 12px;
+  transition: background 140ms, transform 140ms, box-shadow 140ms;
+  min-height: 48px;
+}
+.vt-row__link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+.vt-row.is-self .vt-row__link { background: rgba(255, 255, 255, 0.085); }
+
+.vt-row__rank { font-family: var(--font-mono); font-size: 12.5px; color: var(--vt-t4); font-variant-numeric: tabular-nums; text-align: right; }
+.vt-row__id { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.vt-row__name { display: flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 600; letter-spacing: -0.012em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--vt-t1); }
+.vt-row__meta { font-size: 11.5px; color: var(--vt-t4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vt-row__spark { display: block; width: 100%; min-width: 0; height: 30px; line-height: 0; }
+/* the "no history" rule: a hairline where the trend would be, so an absent
+   series reads as absent instead of as a chart that failed to paint */
+.vt-row__spark-none {
+  display: block;
+  width: 100%;
+  height: 1px;
+  margin-top: 14px;
+  background: repeating-linear-gradient(90deg, var(--vt-edge) 0 4px, transparent 4px 9px);
+}
+.vt-spark__svg { display: block; }
+.vt-row__value, .vt-row__delta, .vt-row__sub { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+.vt-row__value { font-size: 15px; font-weight: 660; color: var(--vt-t1); }
+/* .vt-tone--down is declared earlier in the file at the same specificity, so
+   without this the ranked figure kept the neutral ink. */
+.vt-row__value.vt-tone--down { color: var(--vt-bear); }
+.vt-row__delta { font-size: 12.5px; font-weight: 560; }
+.vt-row__sub { font-size: 12px; color: var(--vt-t3); }
+
+.vt-rows--compact .vt-row__link { grid-template-columns: 32px minmax(0, 1fr) 116px 76px 108px; }
+
+/* THE STACKED LADDER ROW — two lines instead of one very wide one.
+   The single-line grid put the identity column on 1fr, so on a 1900px page a
+   platform's name sat ~1000px away from its own number and the row read as
+   mostly empty (founder: "organize columns in two rows too much empty space").
+   Rank and logo span both lines; the ranked figure sits beside the name it
+   belongs to; the supporting detail (sector, sparkline, change, secondary fact)
+   sits underneath. Nothing is dropped and the eye travels half as far. */
+.vt-rows--stacked .vt-row__link {
+  /* The name column is CAPPED, and the slack it gives up is SPENT rather than
+     left blank. Capping it alone was only half the fix: the freed width went to
+     an empty 1fr column with the ranked figure pinned to its far edge, so a
+     1900px row still put "Tether" and "$479m" ~700px apart with nothing in
+     between (founder: "sad design and lots of empty space").
+     That column is now the magnitude bar on line one and the 30-day trend on
+     line two — the two things a ranked row cannot say in words. */
+  grid-template-columns: 32px 28px minmax(140px, 300px) minmax(90px, 1fr) 190px;
+  grid-template-areas:
+    "rank avatar name bar   value"
+    "rank avatar meta spark stats";
+  column-gap: var(--sp-3);
+  row-gap: 2px;
+  align-items: center;
+  padding-top: var(--sp-3);
+  padding-bottom: var(--sp-3);
+}
+.vt-rows--stacked .vt-row__rank { grid-area: rank; align-self: center; }
+/* The avatar element is .vt-av (see Avatar in vt-ladder.jsx). The old selector
+   named .vt-row__avatar/.vt-row__logo, which exist nowhere in the DOM — so the
+   logo had NO grid area and was auto-placed into an implicit column. It only
+   looked right on desktop by luck. */
+.vt-rows--stacked .vt-av { grid-area: avatar; align-self: center; }
+.vt-rows--stacked .vt-row__name { grid-area: name; align-self: end; }
+.vt-rows--stacked .vt-row__value { grid-area: value; align-self: end; text-align: right; }
+.vt-rows--stacked .vt-row__meta { grid-area: meta; align-self: start; }
+.vt-rows--stacked .vt-row__stats {
+  grid-area: stats;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+}
+/* THE MAGNITUDE BAR — share of the board leader, on the name's own line so the
+   eye reads platform → size → figure in one sweep.
+   One hue for every row on purpose: this encodes HOW MUCH, which is a magnitude
+   job, and a leaderboard that gave each bar its own colour would be spending the
+   identity channel to re-say what the bar length already says. */
+.vt-rows--stacked .vt-row__bar {
+  grid-area: bar;
+  align-self: end;
+  position: relative;
+  height: 6px;
+  margin-bottom: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.055);
+  overflow: hidden;
+}
+.vt-rows--stacked .vt-row__bar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(8, 145, 178, 0.5), #0ea5c4);
+  transition: width 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* A negative ranked figure — trader PnL is the board where it happens — is a
+   loss, and a loss does not wear the neutral magnitude colour. */
+.vt-rows--stacked .vt-row__bar.is-down i {
+  background: linear-gradient(90deg, rgba(248, 113, 113, 0.45), var(--vt-bear));
+}
+
+/* The trend takes the bar's column, so the two marks share one left edge and
+   one width. Uncapped on purpose now: a floating 320px line had to be capped
+   because it was drifting in open space, but a line that sits directly under the
+   bar it belongs to is measured by it. */
+.vt-rows--stacked .vt-row__spark { grid-area: spark; align-self: start; width: 100%; min-width: 0; max-width: none; height: 28px; margin: 0; }
+/* the secondary fact is context, not a headline - it must not out-weigh the
+   ranked figure directly above it */
+.vt-rows--stacked .vt-row__sub { min-width: 108px; text-align: right; white-space: nowrap; }
+.vt-rows--stacked .vt-row__delta { min-width: 62px; text-align: right; }
+
+/* Below ~1100px the bar has fewer pixels than the rounding on its own ends, and
+   the row is better off giving that width to the name. */
+@media (max-width: 1100px) {
+  .vt-rows--stacked .vt-row__link,
+  .vt-thead--stacked {
+    grid-template-columns: 32px 28px minmax(140px, 1fr) 0 128px;
+  }
+  .vt-rows--stacked .vt-row__bar,
+  .vt-thead--stacked .vt-thead__bar { display: none; }
+  /* The column stays — the trend line still lives in it, and it is the only
+     thing keeping the sector text and the numbers from ending up at opposite
+     ends of an empty row again. */
+}
+
+@media (max-width: 640px) {
+  /* The sparkline is the first thing to go when width is scarce - the change
+     and the ranked figure both survive. The class is .vt-row__spark; the old
+     rule said .vt-spark, matched nothing, and the trend line stayed on screen
+     lying across the sector text underneath it. */
+  .vt-rows--stacked .vt-row__stats .vt-row__spark { display: none; }
+  .vt-rows--stacked .vt-row__link { column-gap: var(--sp-2); }
+}
+.vt-row--skeleton { height: 48px; border-radius: 12px; background: rgba(255, 255, 255, 0.035); margin-bottom: 4px; }
+.vt-rows--skeleton { animation: vtShimmer 1.6s ease-in-out infinite; background-size: 200% 100%; }
+
+/* ---------- categories ---------- */
+
+.vt-cats__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.vt-cat {
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: none;
+  color: inherit;
+  display: grid;
+  /* The track used to be the 1fr, so on a 1560px page the bar ran to x=1240 and
+     its own value sat past it — a bar chart you had to read across the room.
+     The bar is capped and the numbers follow it; the trailing 1fr is dead space
+     that keeps the row (and therefore the hover fill) full width. */
+  grid-template-columns: 168px minmax(120px, 440px) minmax(0, 1fr) 104px 76px 68px;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 10px var(--sp-3);
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  min-height: 42px;
+  transition: background 140ms;
+}
+.vt-cat:hover { background: rgba(255, 255, 255, 0.06); }
+.vt-cat.is-active { background: rgba(255, 255, 255, 0.1); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12); }
+.vt-cat__name { font-size: 13.5px; font-weight: 580; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--vt-t1); }
+.vt-cat__track { height: 8px; border-radius: 5px; background: rgba(255, 255, 255, 0.08); overflow: hidden; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4); }
+/* A magnitude bar is not a market signal — it takes the warm-white ramp, not
+   a green-to-blue gradient with a glow under it. */
+.vt-cat__fill {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+  background: linear-gradient(90deg, rgba(245, 245, 247, 0.85), rgba(245, 245, 247, 0.42));
+  /* the same specular top-light every other surface on the page carries, so the
+     bar reads as a solid and not as a flat grey block */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.vt-cat__value, .vt-cat__delta, .vt-cat__count { font-family: var(--font-mono); font-size: 12.5px; font-variant-numeric: tabular-nums; text-align: right; color: var(--vt-t1); }
+/* the platform count is a column of the table, not a footnote — at --vt-t4 it
+   was the dimmest thing on the page and read as disabled */
+.vt-cat__count { color: var(--vt-t3); font-size: 11.5px; }
+
+/* ---------- hud second facts ---------- */
+
+/* One exact line under each headline figure. It is a third child of the flex
+   column .vt-stat already is, so nothing about the tile's layout changes. */
+.vt-stat__note {
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--vt-t3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- momentum strip ---------- */
+
+/* Its own grid: the cohort's five tracks have nowhere to put a pace column.
+   Same shape as everything else here — identity left, slack, figures right. */
+.vt-thead--movers,
+.vt-rows--movers .vt-row__link {
+  grid-template-columns: 32px minmax(140px, 300px) minmax(0, 1fr) 96px 76px 158px 104px;
+}
+.vt-thead--movers > :nth-child(n + 4) { text-align: right; }
+/* the sub column carries a LEVEL here, under a header that says so — not the
+   free-form second fact the ladder puts in that slot */
+.vt-movers .vt-row__sub { min-width: 0; text-align: right; color: var(--vt-t2); }
+
+/* THE PACE GLYPH.
+   A direction, not a measurement: the two percentages are printed beside it.
+   Every row draws on ONE scale computed across the block (vt-movers.jsx), so
+   the rows are comparable to each other and not only to themselves. */
+.vt-mv__pace { display: flex; align-items: center; justify-content: flex-end; gap: var(--sp-2); min-width: 0; }
+.vt-mv__glyph { flex: 0 0 auto; overflow: visible; }
+.vt-mv__zero { stroke: rgba(255, 255, 255, 0.2); stroke-width: 1; }
+/* Where it has been, and where it is now. The link carries the verdict's
+   colour so the direction reads before the word does. */
+.vt-mv__from { fill: none; stroke: var(--vt-t4); stroke-width: 1.4; }
+.vt-mv__to { fill: var(--vt-t2); }
+.vt-mv__link { stroke: var(--vt-t4); stroke-width: 1.4; }
+.vt-mv__word {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--vt-t4);
+  white-space: nowrap;
+}
+.vt-mv__pace.is-faster .vt-mv__link,
+.vt-mv__pace.is-faster .vt-mv__to { stroke: var(--vt-bull); fill: var(--vt-bull); }
+.vt-mv__pace.is-faster .vt-mv__word { color: var(--vt-bull); }
+.vt-mv__pace.is-falling .vt-mv__link,
+.vt-mv__pace.is-falling .vt-mv__to { stroke: var(--vt-bear); fill: var(--vt-bear); }
+.vt-mv__pace.is-falling .vt-mv__word { color: var(--vt-bear); }
+/* slower keeps the neutral ramp: still growing, just not as fast — that is not
+   a market signal and must not borrow the bear channel */
+
+/* ---------- the tape (coins) ---------- */
+
+.vt-coins__tag { display: flex; gap: var(--sp-2); align-items: center; flex-wrap: wrap; }
+
+/* THE CONCENTRATION STRIP.
+   An ORDERED RAMP, not a colour per coin — same rule the tide's bands follow.
+   The strip is one quantity cut into slices, so a hue per ticker would be eight
+   unrelated colours competing to say what the widths already say. */
+.vt-coins__strip {
+  display: flex;
+  width: 100%;
+  height: 30px;
+  border-radius: 9px;
+  overflow: hidden;
+  margin-bottom: var(--sp-4);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+.vt-coins__seg {
+  position: relative;
+  min-width: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(245, 245, 247, var(--seg-a, 0.5));
+  /* the hairline is what separates two adjacent steps of the same ramp */
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+.vt-coins__seg:last-child { box-shadow: none; }
+.vt-coins__seg.is-rest { background: rgba(255, 255, 255, 0.07); }
+.vt-coins__seglabel {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  /* the segment is warm white, so its own label has to be the page's ground */
+  color: #0b0b0e;
+  white-space: nowrap;
+}
+.vt-coins__seg.is-rest .vt-coins__seglabel { color: var(--vt-t3); }
+
+/* BREADTH AS A STRIP. One mark per app we read, filled for the ones that traded
+   the coin — "25 of 28" was a number you had to divide in your head. */
+.vt-coin__dots { flex: 0 0 auto; }
+.vt-coin__dots .is-on { fill: var(--vt-t2); }
+.vt-coin__dots .is-off { fill: rgba(255, 255, 255, 0.12); }
+.vt-coin__appsn { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 11.5px; color: var(--vt-t3); min-width: 18px; text-align: right; }
+
+/* Same shape as the sector list: a capped bar with its numbers alongside, and a
+   trailing 1fr of dead space that keeps the row full width. A bar allowed to
+   run the full 1560px puts its own value a screen away from its start. */
+.vt-thead--coins,
+.vt-coin {
+  display: grid;
+  grid-template-columns: 92px minmax(120px, 420px) minmax(0, 1fr) 104px 68px 196px;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.vt-thead--coins > :nth-child(n + 4) { text-align: right; }
+
+/* Occupies the slack track. Grid auto-places in DOM order, so without a
+   placeholder here every figure would slide one column left. */
+.vt-gap { display: block; min-width: 0; }
+
+.vt-coins__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.vt-coin { padding: 10px var(--sp-3); border-radius: 12px; min-height: 40px; }
+/* A ticker is an identifier, not prose - it gets the numeric face so BTC and
+   $39.0m sit on the same rail. */
+.vt-coin__name {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 640;
+  letter-spacing: -0.01em;
+  color: var(--vt-t1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vt-coin__track { height: 8px; border-radius: 5px; background: rgba(255, 255, 255, 0.08); overflow: hidden; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4); }
+.vt-coin__fill {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+  background: linear-gradient(90deg, rgba(245, 245, 247, 0.85), rgba(245, 245, 247, 0.42));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.vt-coin__val, .vt-coin__share, .vt-coin__apps {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--vt-t1);
+}
+/* Share and breadth are context for the volume beside them, one step down so
+   the eye reads the bar and the dollars first. */
+.vt-coin__share { color: var(--vt-t2); }
+.vt-coin__apps { display: flex; align-items: center; justify-content: flex-end; gap: 7px; color: var(--vt-t3); font-size: 11.5px; }
+
+/* ---------- the floor ---------- */
+
+.vt-floor__legend { display: flex; gap: var(--sp-4); align-items: center; font-size: 11.5px; color: var(--vt-t3); flex-wrap: wrap; }
+.vt-floor__legend span { display: inline-flex; align-items: center; gap: 5px; }
+.vt-floor__legend-note { color: var(--vt-t4); }
+.vt-floor__plot { position: relative; width: 100%; }
+.vt-floor__plot svg { width: 100%; height: auto; display: block; overflow: visible; }
+.vt-floor__grid { stroke: rgba(255, 255, 255, 0.07); stroke-width: 1; }
+.vt-floor__axis { fill: rgba(245, 245, 247, 0.6); font-size: 11px; }
+.vt-floor__axis-title { fill: rgba(245, 245, 247, 0.46); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; }
+.vt-floor__label { fill: rgba(245, 245, 247, 0.78); font-size: 11px; font-weight: 560; pointer-events: none; }
+/* the logo IS the identifier inside a bubble; the monogram is the honest
+   fallback when we hold no logo for a first-hand-only platform */
+.vt-floor__logo { pointer-events: none; opacity: 0.95; }
+.vt-floor__mono { fill: rgba(245, 245, 247, 0.92); font-size: 11px; font-weight: 700; pointer-events: none; }
+.vt-floor__node { cursor: pointer; outline: none; }
+.vt-floor__bubble { stroke-width: 1.75; transition: fill-opacity 140ms; }
+.vt-floor__bubble--up { fill: rgba(52, 211, 153, 0.2); stroke: var(--vt-bull); }
+.vt-floor__bubble--down { fill: rgba(248, 113, 113, 0.18); stroke: var(--vt-bear); }
+.vt-floor__node.is-on .vt-floor__bubble { fill-opacity: 0.55; }
+.vt-floor__node:focus-visible .vt-floor__bubble { stroke: #fff; stroke-width: 2.5; }
+
+/* Corner-parked is only the FALLBACK now (a plot too narrow to flip). On a
+   desktop vt-floor.jsx writes left/top-or-bottom inline so the card opens beside
+   the bubble you are pointing at.
+   WIDTH IS FIXED and must stay in step with CARD_W in vt-floor.jsx — the flip
+   maths runs on the same frame as the hover, so a measured width would land late
+   and the card would jump.
+   POINTER-EVENTS OFF: parked in the corner it never touched a bubble; sitting
+   beside one it would swallow the hover of everything underneath it. */
+.vt-floor__card {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 240px;
+  pointer-events: none;
+  padding: var(--sp-4);
+  border-radius: 14px;
+  background: rgba(12, 12, 14, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+.vt-floor__card strong { font-size: 15px; display: block; margin-bottom: var(--sp-2); color: var(--vt-t1); }
+.vt-floor__card dl { margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.vt-floor__card dl > div { display: flex; justify-content: space-between; gap: var(--sp-4); font-size: 12px; }
+.vt-floor__card dt { color: var(--vt-t3); }
+.vt-floor__card dd { margin: 0; font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--vt-t1); }
+.vt-floor__open { display: inline-block; margin-top: var(--sp-3); font-size: 11.5px; color: var(--vt-t3); }
+
+/* ---------- search ---------- */
+
+.vt-search { position: relative; min-width: min(340px, 100%); }
+/* The field carried --vt-edge (0.06) and no glyph, so on a dark page it read as
+   floating placeholder text rather than as an input. The border steps up to
+   0.14 and a magnifier marks the affordance; the icon is a background-image so
+   the control stays one element. background-COLOR, never the shorthand — day
+   mode repaints the fill and would drop the glyph with it. */
+.vt-search__input {
+  width: 100%;
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background-color: rgba(255, 255, 255, 0.06);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23f5f5f7' stroke-opacity='0.5' stroke-width='1.6' stroke-linecap='round'%3E%3Ccircle cx='7' cy='7' r='4.6'/%3E%3Cpath d='M10.4 10.4 14 14'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 16px center;
+  background-size: 15px 15px;
+  color: var(--vt-t1);
+  border-radius: 999px;
+  padding: 12px 18px 12px 41px;
+  font-size: 13.5px;
+  font-family: inherit;
+  min-height: 44px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
+}
+.vt-search__input::placeholder { color: var(--vt-t4); }
+.vt-search__input:focus {
+  outline: none;
+  border-color: rgba(245, 245, 247, 0.32);
+  background-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(245, 245, 247, 0.08);
+}
+
+.vt-search__results {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  border-radius: 16px;
+  background: rgba(12, 12, 14, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+  max-height: 400px;
+  overflow-y: auto;
+}
+.vt-search__row {
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: none;
+  color: inherit;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 10px 12px;
+  border-radius: 11px;
+  cursor: pointer;
+  text-align: left;
+  min-height: 42px;
+}
+.vt-search__row.is-cursor { background: rgba(255, 255, 255, 0.1); }
+.vt-search__name { font-size: 13.5px; font-weight: 580; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--vt-t1); }
+.vt-search__meta { font-size: 11px; color: var(--vt-t4); }
+.vt-search__val { font-family: var(--font-mono); font-size: 12px; color: var(--vt-t2); font-variant-numeric: tabular-nums; }
+
+/* ---------- provenance ---------- */
+
+.vt-prov__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--sp-4); }
+.vt-prov__item { display: flex; flex-direction: column; padding: var(--sp-5); border-radius: 14px; border: 1px solid var(--vt-edge-soft); background: rgba(255, 255, 255, 0.035); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+.vt-prov__item--first_hand { border-color: var(--vt-edge); background: var(--vt-pane-lit); }
+/* the lane chip is a header for the card, so it gets a rule under it rather
+   than sitting loose above the title */
+.vt-prov__item > .vt-chip { align-self: flex-start; margin-bottom: var(--sp-3); }
+.vt-prov__item strong { display: block; margin: 0 0 var(--sp-2); padding-top: var(--sp-3); border-top: 1px solid var(--vt-edge-soft); font-size: 14.5px; color: var(--vt-t1); }
+.vt-prov__item p { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--vt-t2); }
+
+/* ---------- detail ---------- */
+
+.vt-page--detail { gap: var(--sp-5); }
+.vt-crumb { display: flex; align-items: center; gap: var(--sp-2); font-size: 12.5px; color: var(--vt-t4); }
+.vt-crumb a { color: var(--vt-t2); text-decoration: none; }
+.vt-crumb a:hover { color: var(--vt-t1); }
+
+.vt-crumb__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 38px;
+  padding: 0 12px 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--vt-edge-soft);
+  background: var(--vt-pane-soft);
+  font-weight: 560;
+  transition: background 140ms, border-color 140ms;
+}
+.vt-crumb__back:hover { background: rgba(255, 255, 255, 0.08); border-color: var(--vt-edge); }
+.vt-crumb__here { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.vt-detail__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-6); flex-wrap: wrap; }
+.vt-detail__id { display: flex; gap: var(--sp-4); align-items: flex-start; }
+.vt-detail__meta { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin: var(--sp-2) 0 0; font-size: 13px; color: var(--vt-t2); }
+.vt-detail__tags { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: var(--sp-3) 0 0; }
+.vt-detail__links { display: flex; gap: var(--sp-2); align-items: center; flex-wrap: wrap; }
+.vt-detail__desc { margin: 0; max-width: 84ch; font-size: 14.5px; line-height: 1.62; color: var(--vt-t2); }
+.vt-detail__skeleton { height: 60vh; border-radius: var(--vt-radius); background: linear-gradient(90deg, rgba(255, 255, 255, 0.025) 25%, rgba(255, 255, 255, 0.06) 50%, rgba(255, 255, 255, 0.025) 75%); background-size: 200% 100%; animation: vtShimmer 1.6s ease-in-out infinite; }
+
+/* The separators used to be a 1px GAP over an --vt-edge-soft backdrop, so an
+   uneven last row (the tile list is filtered — a platform with no TVL ships no
+   TVL cell) left the backdrop showing as lighter holes at the end of the grid.
+   Same hairlines drawn as inset shadows on the tiles instead: the tail is
+   simply empty card, because there is nothing behind the tiles any more. */
+.vt-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 0;
+  margin: 0;
+  border: 1px solid var(--vt-edge);
+  border-radius: var(--vt-radius);
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(24, 24, 30, 0.96), rgba(16, 16, 21, 0.96));
+  box-shadow: var(--vt-lift-sm);
+}
+.vt-kpi, .vt-kpis > div {
+  padding: var(--sp-4) var(--sp-4) var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: linear-gradient(180deg, rgba(24, 24, 30, 0.96), rgba(16, 16, 21, 0.96));
+  box-shadow: inset 1px 0 0 var(--vt-edge-soft), inset 0 1px 0 var(--vt-edge-soft);
+}
+.vt-kpis dt { font-size: 10.5px; color: var(--vt-t4); letter-spacing: 0.08em; text-transform: uppercase; }
+/* Eighteen tiles at one weight is a wall, not a summary. The four that open the
+   grid are the platform's economics; everything after them is support, and the
+   two sizes are what makes the first row scan as the answer. */
+.vt-kpis dd { margin: 0; font-family: var(--font-mono); font-size: 19px; font-weight: 700; letter-spacing: -0.026em; font-variant-numeric: tabular-nums; color: var(--vt-t1); }
+.vt-kpi--lead dd { font-size: 26px; letter-spacing: -0.03em; }
+.vt-kpis__note { font-size: 11px; color: var(--vt-t3); }
+.vt-kpis--users { grid-template-columns: repeat(auto-fit, minmax(152px, 1fr)); margin-bottom: var(--sp-5); }
+
+/* ---------- chart card ---------- */
+
+.vt-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: var(--sp-4); }
+.vt-grid--wide { grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); }
+
+.vt-chart {
+  position: relative;
+  background: var(--vt-pane);
+  border: 1px solid var(--vt-edge);
+  border-radius: var(--vt-radius);
+  padding: var(--sp-5);
+  box-shadow: var(--vt-lift-sm);
+}
+.vt-chart__title { display: flex; flex-direction: column; gap: 2px; }
+.vt-chart__title h3 { font-size: 15px; }
+.vt-chart__title span { font-size: 11.5px; color: var(--vt-t3); }
+.vt-chart__controls { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap; margin-bottom: var(--sp-4); }
+.vt-chart__ctl { display: flex; gap: var(--sp-2); align-items: center; flex-wrap: wrap; }
+.vt-chart__canvas { position: relative; height: clamp(240px, 30vh, 330px); }
+.vt-chart__canvas canvas { display: block; width: 100%; height: 100%; }
+/* Corner-parked is only the FALLBACK now. On a desktop the card writes `left`
+   inline so the panel opens beside the bar you are pointing at — parked, it sat
+   a card's width away from a bar on the left of a 90-day chart.
+   WIDTH IS FIXED and must stay in step with RO_W in vt-chart-card.jsx /
+   vt-stack-card.jsx: the flip runs on the same frame as the move, so a measured
+   width would land late and the panel would jump. */
+.vt-chart__readout {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
+  /* ONE LINE for a single-series card. Stacked as a date over a value it was a
+     two-storey box holding about sixty pixels of text, so most of it was empty
+     padding — a panel that big reads as a dialog, not as a label on a bar. */
+  width: 118px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: 6px 10px;
+  border-radius: 9px;
+  background: rgba(12, 12, 14, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+.vt-chart__readout span { font-size: 10.5px; color: var(--vt-t3); white-space: nowrap; }
+.vt-chart__readout strong { font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums; color: var(--vt-t1); white-space: nowrap; }
+
+/* The stacked card names its bands, so it is wider and reads left-to-right like
+   the tide's panel rather than as a right-aligned pair. */
+.vt-chart__readout--bands {
+  width: 224px;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 8px 12px;
+  border-radius: 11px;
+}
+.vt-chart__readout--bands strong { font-size: 16px; margin-bottom: 6px; }
+.vt-chart__readout--bands ul {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0 0;
+  border-top: 1px solid var(--vt-edge-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.vt-chart__readout--bands li { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--vt-t2); }
+/* the band swatches are near-black on a near-black panel at 8px, so each one
+   carries a hairline — same rule the tide's readout follows */
+.vt-chart__readout--bands li i { width: 8px; height: 8px; border-radius: 3px; flex: 0 0 auto; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22); }
+.vt-chart__readout--bands li.is-rest { color: var(--vt-t4); }
+.vt-chart__ro-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vt-chart__ro-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--vt-t1); }
+
+/* icon-style chart-type buttons */
+.vt-iconbtn {
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  border: 1px solid var(--vt-edge-soft);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--vt-t3);
+  cursor: pointer;
+  transition: background 140ms, color 140ms;
+}
+.vt-iconbtn:hover { background: rgba(255, 255, 255, 0.1); color: var(--vt-t1); }
+.vt-iconbtn.is-active { background: rgba(255, 255, 255, 0.16); color: var(--vt-t1); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18); }
+
+/* ---------- users panel ---------- */
+
+.vt-users__chart { margin-top: var(--sp-2); position: relative; }
+.vt-users__bars { display: flex; align-items: flex-end; gap: 3px; height: 180px; padding: 0; }
+.vt-users__bar {
+  flex: 1 1 0;
+  appearance: none;
+  border: none;
+  padding: 0;
+  background: none;
+  display: flex;
+  flex-direction: column-reverse;
+  border-radius: 4px 4px 0 0;
+  overflow: hidden;
+  cursor: pointer;
+  min-width: 4px;
+  transition: filter 140ms;
+}
+.vt-users__bar:hover, .vt-users__bar.is-on { filter: brightness(1.4); }
+.vt-users__seg { display: block; width: 100%; }
+/* NEW vs RETURNING traders is not two identities, it is one quantity split in
+   two — so it takes ONE hue in two steps rather than two colours, and the hue is
+   the one the page already uses for traders (METRIC_TONE.traders). Two shades of
+   white said "greyscale chart" and left the split doing the work alone.
+   Both steps clear their own surface in both themes (4.2:1 / 7.3:1 on black,
+   4.6:1 / 2.7:1 on paper), which is why there is no day-mode swap below. */
+.vt-users__seg--ret { background: linear-gradient(180deg, #DB2777, #B71F63); }
+.vt-users__seg--new { background: linear-gradient(180deg, #F472B6, #E85BA3); }
+.vt-users__axis { display: flex; justify-content: space-between; margin-top: 7px; font-size: 11px; color: var(--vt-t4); }
+.vt-users__readout {
+  position: absolute;
+  top: -6px;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: 13px;
+  background: rgba(12, 12, 14, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  font-size: 12px;
+  color: var(--vt-t2);
+  pointer-events: none;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+.vt-users__readout strong { font-size: 12.5px; color: var(--vt-t1); }
+.vt-users__legend { display: flex; gap: var(--sp-4); list-style: none; margin: var(--sp-3) 0 0; padding: 0; font-size: 11.5px; color: var(--vt-t3); }
+.vt-users__legend li { display: flex; align-items: center; gap: 6px; }
+.vt-users__coins { margin-top: var(--sp-5); }
+.vt-users__coins-label { font-size: 10.5px; color: var(--vt-t4); letter-spacing: 0.09em; text-transform: uppercase; }
+.vt-users__coins ul { list-style: none; margin: var(--sp-2) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.vt-users__coins li { display: flex; align-items: baseline; gap: 8px; padding: 6px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--vt-edge-soft); font-size: 12px; color: var(--vt-t1); }
+.vt-users__coins span { font-family: var(--font-mono); color: var(--vt-t3); font-variant-numeric: tabular-nums; }
+
+/* ---------- composition + methodology ---------- */
+
+.vt-kids__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--sp-3); }
+.vt-kids__list li { padding: var(--sp-4); border-radius: 14px; border: 1px solid var(--vt-edge-soft); background: rgba(255, 255, 255, 0.035); }
+.vt-kids__name { font-size: 13.5px; font-weight: 590; color: var(--vt-t1); }
+.vt-kids__val { float: right; font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums; color: var(--vt-t1); }
+.vt-kids__meth { margin: var(--sp-2) 0 0; font-size: 12px; line-height: 1.55; color: var(--vt-t3); clear: both; }
+
+.vt-meth__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--sp-4); }
+.vt-meth__card { padding: var(--sp-5); border-radius: 16px; border: 1px solid var(--vt-edge-soft); background: rgba(255, 255, 255, 0.035); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+.vt-meth__card p { margin: 0 0 var(--sp-2); font-size: 13px; line-height: 1.6; color: var(--vt-t2); }
+.vt-meth__fine { font-size: 12px !important; color: var(--vt-t3) !important; }
+.vt-meth__addr { display: flex; flex-direction: column; gap: 4px; }
+.vt-meth__addr code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; color: var(--vt-t3); word-break: break-all; background: rgba(255, 255, 255, 0.06); padding: 5px 8px; border-radius: 7px; }
+.vt-meth__defs { margin: 0 0 var(--sp-2); display: flex; flex-direction: column; gap: var(--sp-2); }
+.vt-meth__defs > div { display: flex; flex-direction: column; gap: 2px; }
+.vt-meth__defs dt { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--vt-t4); }
+.vt-meth__defs dd { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--vt-t2); }
+
+.vt-error { text-align: center; padding: var(--sp-10) var(--sp-4); display: flex; flex-direction: column; align-items: center; gap: var(--sp-4); }
+.vt-back { align-self: flex-start; }
+
+/* segmented control — small variant + count badge */
+.vt-seg--sm .vt-seg__btn { font-size: 11.5px; padding: 7px 11px; min-height: 34px; }
+@media (max-width: 768px) { .vt-seg--sm .vt-seg__btn { min-height: 38px; } }
+.vt-seg__count { font-family: var(--font-mono); font-size: 10.5px; color: var(--vt-t4); }
+.vt-chart__ranges { display: flex; gap: 4px; }
+.vt-chart__canvas { height: var(--vt-chart-h, clamp(240px, 30vh, 330px)); }
+
+/* stacked-breakdown legend */
+.vt-stack__legend { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); list-style: none; margin: var(--sp-4) 0 0; padding: 0; }
+.vt-stack__legend li { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--vt-t2); }
+.vt-stack__legend i { width: 9px; height: 9px; border-radius: 3px; flex: 0 0 auto; border: 1px solid var(--vt-edge); }
+.vt-stack__name { font-weight: 560; }
+.vt-stack__share { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--vt-t3); }
+/* the folded remainder — present, countable, and not competing with the bands
+   that actually carry the platform. Hover names its members. */
+.vt-stack__legend li.is-rest { color: var(--vt-t4); cursor: help; }
+.vt-stack__legend li.is-rest .vt-stack__name { font-weight: 500; }
+
+/* the Overview -> Boards hand-off */
+.vt-ladder__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-top: var(--sp-3);
+}
+.vt-ladder__foot .vt-note { margin: 0; }
+
+/* ---------- category rail ---------- */
+
+.vt-split { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: var(--sp-5); align-items: start; }
+.vt-split__main { min-width: 0; display: flex; flex-direction: column; gap: var(--sp-4); }
+
+.vt-rail {
+  position: sticky;
+  top: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-4);
+  border-radius: var(--vt-radius);
+  background: var(--vt-pane);
+  border: 1px solid var(--vt-edge);
+  box-shadow: var(--vt-lift-sm);
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.vt-rail__btn {
+  appearance: none;
+  border: none;
+  background: none;
+  color: var(--vt-t2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 550;
+  cursor: pointer;
+  text-align: left;
+  min-height: 38px;
+  transition: background 140ms, color 140ms;
+}
+.vt-rail__btn:hover { background: rgba(255, 255, 255, 0.07); color: var(--vt-t1); }
+.vt-rail__btn.is-active {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08));
+  color: var(--vt-t1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+.vt-rail__n { font-family: var(--font-mono); font-size: 11px; color: var(--vt-t4); font-variant-numeric: tabular-nums; }
+
+/* ---------- the frost ----------
+   One filter, the app's: blur(24px) saturate(1.8). The saturate is the part
+   that matters — it lifts the near-black page THROUGH the panel, and without it
+   the 0.04 gradient reads as flat grey.
+
+   On CARDS only. The filter is what costs; a per-control backdrop-filter (this
+   page had one on every pill, every segmented control and every legend button)
+   buys nothing over a near-opaque chip and multiplies the compositing work by
+   the number of controls on screen. The ladder rows scroll INSIDE the card, not
+   under it, so the card-level filter is safe here. */
+
+.vt-section,
+.vt-chart,
+.vt-rail,
+.vt-tide,
+.vt-kpis,
+.vt-firstband {
+  backdrop-filter: var(--vt-glass);
+  -webkit-backdrop-filter: var(--vt-glass);
+}
+
+/* The KPI strip painted an OPAQUE near-grey (rgba(30,30,38)) over the page,
+   which is the one thing the design system rules out for a surface: a flat grey
+   fill instead of a translucent lift on black. Same card as everything else,
+   with a hairline grid drawn by the 1px gap. */
+.vt-kpi, .vt-kpis > div { background: var(--vt-pane); }
+
+/* ==========================================================================
+   COMPARE — two to four platforms side by side
+   ========================================================================== */
+
+.vt-compare { display: flex; flex-direction: column; gap: var(--sp-5); }
+.vt-compare__head h2 { margin-top: 2px; }
+
+.vt-compare__picker {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+.vt-compare__picker .vt-search { flex: 1 1 280px; max-width: 420px; }
+.vt-compare__full { margin: 0; font-size: 12.5px; color: var(--vt-t4); }
+
+.vt-compare__chips { list-style: none; margin: 0; padding: 0; display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+
+/* The colour dot is the join between this chip, its line on the chart and its
+   column in the table — without it a four-way comparison is unreadable. */
+.vt-chipsel {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 8px 6px 10px;
+  border: 1px solid var(--vt-edge);
+  border-radius: 999px;
+  background: var(--vt-pane-soft);
+  font-size: 13px;
+  font-weight: 560;
+  min-height: 38px;
+}
+.vt-chipsel > i { width: 8px; height: 8px; border-radius: 50%; background: var(--chip-hue, var(--vt-t1)); flex: 0 0 auto; }
+.vt-chipsel img { width: 18px; height: 18px; border-radius: 5px; object-fit: cover; }
+.vt-chipsel a { color: var(--vt-t1); text-decoration: none; }
+.vt-chipsel a:hover { text-decoration: underline; }
+.vt-chipsel button {
+  border: 0; background: none; color: var(--vt-t4); cursor: pointer;
+  font-size: 16px; line-height: 1; padding: 4px 2px; min-width: 22px;
+}
+.vt-chipsel button:hover { color: var(--vt-t1); }
+
+/* ---------- the overlay chart ---------- */
+
+.vt-overlay__legend {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: flex;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  font-size: 12.5px;
+}
+.vt-overlay__legend li { display: inline-flex; align-items: center; gap: 6px; }
+.vt-overlay__legend i { width: 9px; height: 3px; border-radius: 2px; }
+.vt-overlay__name { color: var(--vt-t2); }
+.vt-overlay__val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--vt-t1); }
+.vt-overlay__date { margin-left: auto; color: var(--vt-t4); font-family: var(--font-mono); }
+
+/* THE FOLLOWING READOUT.
+   The crosshair used to be the whole hover: the numbers it pointed at printed
+   in the legend row under the card, so reading a point meant looking away from
+   it. Same recipe as the tide's panel — fixed width (vt-overlay-card.jsx does
+   the flip maths against READOUT_W, so a measured width would land a frame late
+   and the panel would jump), pointer-events off, opaque enough that the lines
+   do not read through it. */
+.vt-overlay__readout {
+  position: absolute;
+  top: 8px;
+  z-index: 3;
+  width: 200px;
+  padding: var(--sp-3) var(--sp-3) 10px;
+  border-radius: 12px;
+  background: rgba(12, 12, 14, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+.vt-overlay__readout-date { display: block; font-size: 11px; color: var(--vt-t3); margin-bottom: 6px; }
+.vt-overlay__readout ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.vt-overlay__readout li { display: flex; align-items: center; gap: 7px; font-size: 12px; }
+/* the legend's swatch is a 9x3 line stub — the panel repeats it exactly, so the
+   row and the line on the chart are recognisably the same series */
+.vt-overlay__readout li i { width: 9px; height: 3px; border-radius: 2px; flex: 0 0 auto; }
+.vt-overlay__readout-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--vt-t2); }
+.vt-overlay__readout-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--vt-t1); }
+
+/* ---------- the comparison table ---------- */
+
+.vt-cmp__scroll { overflow-x: auto; }
+.vt-cmp__table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+
+.vt-cmp__table thead th {
+  text-align: right;
+  padding: 0 var(--sp-3) var(--sp-3);
+  vertical-align: bottom;
+  font-weight: 640;
+  color: var(--vt-t1);
+  border-bottom: 1px solid var(--vt-edge);
+  white-space: nowrap;
+}
+.vt-cmp__table thead th:first-child { text-align: left; color: var(--vt-t4); font-weight: 600; }
+.vt-cmp__table thead th em { display: block; font-style: normal; font-size: 11px; font-weight: 500; color: var(--vt-t4); margin-top: 2px; }
+.vt-cmp__col { display: inline-flex; align-items: center; gap: 6px; justify-content: flex-end; }
+.vt-cmp__col i { width: 8px; height: 8px; border-radius: 50%; background: var(--chip-hue, var(--vt-t1)); }
+
+.vt-cmp__table tbody th {
+  text-align: left;
+  font-weight: 560;
+  color: var(--vt-t2);
+  padding: 10px var(--sp-3) 10px 0;
+  white-space: nowrap;
+}
+.vt-cmp__table tbody th em { display: block; font-style: normal; font-size: 11px; color: var(--vt-t4); margin-top: 1px; }
+.vt-cmp__table tbody tr + tr th,
+.vt-cmp__table tbody tr + tr td { border-top: 1px solid var(--vt-edge-soft); }
+
+.vt-cmp__table td {
+  text-align: right;
+  padding: 10px var(--sp-3);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--vt-t2);
+  white-space: nowrap;
+}
+/* Weight, not colour: a green cell on a fees row would read as "up" when it
+   actually means "highest of these three". */
+.vt-cmp__table td.is-best {
+  color: var(--vt-t1);
+  font-weight: 680;
+  background: rgba(255, 255, 255, 0.055);
+  border-radius: 8px;
+}
+.vt-cmp__na { color: var(--vt-t4); }
+.vt-cmp__key { margin: var(--sp-4) 0 0; font-size: 12px; line-height: 1.6; color: var(--vt-t4); max-width: 72ch; }
+
+/* ---------- the written read ---------- */
+
+.vt-read__head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); }
+.vt-read__head .vt-eyebrow { margin-bottom: 0; }
+.vt-read__verdict {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 999px; border: 1px solid currentColor;
+}
+.vt-read__headline { font-size: 18px !important; line-height: 1.35; margin: var(--sp-3) 0 0 !important; max-width: 60ch; }
+.vt-read__body { margin: var(--sp-3) 0 0; font-size: 14px; line-height: 1.65; color: var(--vt-t2); max-width: 72ch; }
+
+.vt-read__dims { list-style: none; margin: var(--sp-4) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.vt-read__dims li { display: flex; align-items: baseline; gap: var(--sp-3); flex-wrap: wrap; font-size: 13px; }
+.vt-read__dim { min-width: 120px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--vt-t4); }
+.vt-read__dims strong { color: var(--vt-t1); font-weight: 640; }
+.vt-read__why { color: var(--vt-t3); }
+
+.vt-read__cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--sp-5); margin-top: var(--sp-5); }
+.vt-read__label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--vt-t4); margin-bottom: var(--sp-2); }
+.vt-read__cols ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.vt-read__cols li { font-size: 13px; line-height: 1.5; color: var(--vt-t2); padding-left: 14px; position: relative; }
+.vt-read__cols li::before { content: '·'; position: absolute; left: 3px; color: var(--vt-t4); }
+.vt-read__foot { margin: var(--sp-5) 0 0; font-size: 11.5px; color: var(--vt-t4); }
+
+.vt-tone--warn { color: var(--vt-gold); }
+
+/* ---------- shared skeletons ---------- */
+
+.vt-skel {
+  border-radius: var(--vt-radius);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.025) 25%, rgba(255, 255, 255, 0.06) 50%, rgba(255, 255, 255, 0.025) 75%);
+  background-size: 200% 100%;
+  animation: vtShimmer 1.6s ease-in-out infinite;
+}
+.vt-skel--tall { height: 380px; }
+.vt-skel--read { height: 190px; }
+
+@media (max-width: 768px) {
+  .vt-compare__picker .vt-search { max-width: none; }
+  .vt-cmp__table { font-size: 12.5px; }
+  .vt-read__dim { min-width: 0; }
+}
+.vt-chipsel__fb {
+  width: 18px; height: 18px; border-radius: 5px;
+  display: grid; place-items: center;
+  font-size: 10px; font-weight: 800;
+  background: rgba(255, 255, 255, 0.14); color: var(--vt-t2);
+}
+.vt-chipsel__img { width: 18px; height: 18px; border-radius: 5px; object-fit: cover; flex: 0 0 auto; }
+
+/* ---------- third-party active addresses ---------- */
+
+.vt-tp { display: flex; flex-direction: column; gap: var(--sp-5); }
+.vt-tp .vt-section__head { margin-bottom: 0; }
+.vt-tp__figure { text-align: right; }
+.vt-tp__figure span {
+  display: block; font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+  font-size: clamp(26px, 3vw, 38px); font-weight: 700; letter-spacing: -0.03em; color: var(--vt-t1);
+}
+.vt-tp__figure em { font-style: normal; font-size: 11.5px; color: var(--vt-t4); }
+
+.vt-tp__chains { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.vt-tp__chains li { display: grid; grid-template-columns: 132px minmax(60px, 1fr) 72px; align-items: center; gap: var(--sp-3); }
+.vt-tp__chain { font-size: 13px; color: var(--vt-t2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vt-tp__bar { height: 6px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.vt-tp__bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, rgba(245, 245, 247, 0.8), rgba(245, 245, 247, 0.4)); }
+.vt-tp__val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 12.5px; text-align: right; color: var(--vt-t2); }
+
+.vt-tp__credit { margin: 0; font-size: 11.5px; color: var(--vt-t4); }
+.vt-tp__credit a { color: var(--vt-t3); }
+
+@media (max-width: 768px) {
+  .vt-tp__chains li { grid-template-columns: 92px minmax(40px, 1fr) 60px; }
+}

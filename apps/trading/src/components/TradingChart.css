@@ -1,0 +1,4935 @@
+/**
+ * TradingChart Styles - Clean Professional Design
+ */
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Phase G: instant-paint placeholder while the lazy TradingChart bundle
+   downloads. Sits inside the chart container; canvas fills the bento-
+   card area. Fade-in keyframe matches the chart's own mount transition
+   so the swap is invisible. */
+/* Neutral chunk-load shimmer - the TradingChart lazy chunk's Suspense
+   fallback (idle-prefetched, so this window is ~0 in practice). Replaced
+   the old line-curve ChartPlaceholderSparkline: candles pop in directly,
+   no intermediate line-chart effect (Gleb 2026-07-09). */
+.chart-chunk-shimmer {
+  width: 100%;
+  height: 380px;
+  min-height: 240px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--bg-surface, #0e0f12);
+}
+
+/* Bento surface treatment (v2 Observatory: translucent for gradient bleed).
+   The chart canvas inside is its own opaque element. Only the chart toolbar
+   strip + volume area benefit from the bleed, but that's enough to feel the
+   atmosphere extending through the chart card edges. */
+.trading-chart {
+  display: flex;
+  flex-direction: column;
+  /* Refined terminal: a flat lifted-charcoal panel defined by a single hairline
+     border - no floating shadow stack, no top sheen, no glass. The chart bg
+     (--ob-chart) matches so the candles bleed edge-to-edge inside the frame.
+     MUST stay the same token themeChartSurface() feeds the canvas, or a picked
+     background tone re-tones one and not the other and a seam appears. */
+  background: var(--ob-chart, #111113);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  position: relative;
+  flex-shrink: 0;
+  transition: height 0.4s ease-out;
+}
+
+/* Collapsed state when data tabs are expanded */
+.trading-chart.collapsed {
+  height: 200px;
+}
+
+/* Chart cursor - hidden for clean look */
+.trading-chart canvas {
+  cursor: none;
+}
+
+/* Flash effect when capturing screenshot */
+.trading-chart.capturing {
+  animation: captureFlash 0.3s ease-out;
+}
+
+@keyframes captureFlash {
+  0% {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 0 0 1px rgba(245, 245, 247, 0.15);
+  }
+  50% {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 0 0 1px rgba(245, 245, 247, 0.1), 0 0 16px rgba(245, 245, 247, 0.08);
+  }
+  100% {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+}
+
+/* Animated gradient border - removed for terminal aesthetic */
+
+/* Fullscreen Mode */
+.trading-chart.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99999;
+  background: var(--bg-base);
+  display: flex;
+  flex-direction: column;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Remove animated border in fullscreen */
+.trading-chart.fullscreen::before,
+.trading-chart.fullscreen:hover::before {
+  display: none !important;
+  opacity: 0 !important;
+  content: none !important;
+}
+
+/* Remove hover effects in fullscreen */
+.trading-chart.fullscreen:hover {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Fullscreen close button - top right */
+.fullscreen-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 100000;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fullscreen-close-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.9);
+}
+
+.fullscreen-close-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.trading-chart.fullscreen .chart-content-area {
+  flex: 1;
+  min-height: 0;
+  height: calc(100vh - 70px);
+}
+
+.trading-chart.fullscreen .chart-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  padding: 20px 40px 20px 40px;
+  width: 100%;
+  height: 100%;
+}
+
+.trading-chart.fullscreen .chart-canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.trading-chart.fullscreen .chart-controls {
+  background: rgba(9, 9, 11, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  flex-shrink: 0;
+  padding: 6px 20px;
+}
+
+/* Hide axis drag handles in fullscreen mode */
+.trading-chart.fullscreen .axis-drag-handle {
+  display: none;
+}
+
+/* Chart Controls - Inline Terminal Bar with auto-fade */
+.chart-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--sp-2);
+  padding: 7px 12px;
+  /* Near-black control strip - only a hairline separates it from the chart. */
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: visible !important;
+  z-index: 1000;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  /* Geist - the token page's display/body font (design-tokens.css --font-body), so the
+     chart toolbar reads as part of the HUD instead of generic Apple system sans. */
+  font-family: var(--font-body);
+  /* Make the toolbar its own size-query container. The chart column is narrow
+     when both side panels are open even on a wide viewport, so viewport media
+     queries miss the overlap - container queries below react to the toolbar's
+     OWN width instead. inline-size only (no block containment) so the bar still
+     grows with its content height. */
+  container-type: inline-size;
+  container-name: chartbar;
+}
+
+/* Show controls on hover or when dropdown is open */
+.chart-controls:hover,
+.trading-chart:hover .chart-controls,
+.chart-controls.controls-active {
+  opacity: 1;
+}
+
+/* Light mode: remove neon/glow, use ink-stroke glass */
+body.theme-light .trading-chart::before,
+body.theme-light .trading-chart:hover::before {
+  display: none;
+}
+
+body.theme-light .trading-chart.capturing {
+  animation: captureFlashLight 0.3s ease-out;
+}
+
+@keyframes captureFlashLight {
+  0% { box-shadow: var(--shadow-panel), 0 0 0 2px rgba(17, 17, 19, 0.18); }
+  50% { box-shadow: var(--shadow-panel), 0 0 0 2px rgba(17, 17, 19, 0.12); }
+  100% { box-shadow: var(--shadow-panel); }
+}
+
+body.theme-light .chart-controls {
+  background: transparent;
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .trading-chart {
+  background: rgba(0, 0, 0, 0.015);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.02);
+}
+
+body.theme-light .type-btn {
+  color: rgba(15, 23, 42, 0.62);
+}
+
+body.theme-light .type-btn:hover {
+  color: rgba(15, 23, 42, 0.7);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .type-btn.active {
+  color: rgba(15, 23, 42, 0.9);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .tf-btn {
+  color: rgba(15, 23, 42, 0.62);
+}
+
+body.theme-light .tf-btn:hover {
+  color: rgba(15, 23, 42, 0.6);
+}
+
+body.theme-light .tf-btn.active {
+  color: rgba(15, 23, 42, 0.9);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .tool-btn {
+  color: rgba(15, 23, 42, 0.6);
+}
+
+body.theme-light .tool-btn:hover {
+  color: rgba(15, 23, 42, 0.6);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .tool-btn.active {
+  color: rgba(15, 23, 42, 0.9);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .price-mcap-toggle .toggle-btn {
+  color: rgba(15, 23, 42, 0.62);
+}
+
+body.theme-light .price-mcap-toggle .toggle-btn.active {
+  color: rgba(15, 23, 42, 0.9);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Hover brightened to warm-white text (invisible on white) - keep it dark. */
+body.theme-light .price-mcap-toggle .toggle-btn:hover {
+  color: rgba(15, 23, 42, 0.9);
+}
+
+body.theme-light .price-mcap-toggle::before,
+body.theme-light .timeframes::before,
+body.theme-light .chart-tools::before {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+body.theme-light .zoom-indicator {
+  color: rgba(15, 23, 42, 0.35);
+}
+
+body.theme-light .zoom-indicator:hover {
+  color: rgba(15, 23, 42, 0.7);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* Word-trigger buttons (Types / Tools / More / TF overflow). Their inactive
+   colour is set later (~:5000) to a white-based grey that reads invisible on a
+   light toolbar - flip to the same slate ramp as the type/tf buttons above. */
+body.theme-light .chart-controls .tf-dropdown-trigger,
+body.theme-light .chart-controls .tf-more-trigger,
+body.theme-light .chart-controls .chart-more-trigger {
+  color: rgba(15, 23, 42, 0.4);
+}
+
+body.theme-light .chart-controls .tf-dropdown-trigger:hover,
+body.theme-light .chart-controls .tf-more-trigger:hover,
+body.theme-light .chart-controls .chart-more-trigger:hover {
+  color: rgba(15, 23, 42, 0.85);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .tf-dropdown-menu,
+body.theme-light .tf-dropdown-menu.tf-dropdown-fixed {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+body.theme-light .tf-dropdown-item {
+  color: rgba(15, 23, 42, 0.5);
+}
+
+body.theme-light .tf-dropdown-item:hover {
+  color: rgba(15, 23, 42, 0.9);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .tf-dropdown-item.active {
+  color: #0f172a;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .trading-chart.fullscreen .chart-controls {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+}
+
+.chart-controls-left {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: 1;
+  min-width: 0;
+  overflow: visible;
+}
+
+.chart-controls-right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-shrink: 0;
+  margin-left: auto;
+  position: relative;
+  overflow: visible !important;
+  z-index: 100;
+}
+
+/* Chart Type Buttons - Ghost Terminal Style */
+.chart-types {
+  display: flex;
+  gap: 1px;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.type-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  border-radius: var(--r-sm);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  transition: all 0.06s var(--ease-out);
+  position: relative;
+}
+
+.type-btn:hover {
+  color: rgba(245, 245, 247, 0.7);
+  background: var(--glass-fill-hover);
+}
+
+.type-btn.active {
+  color: rgba(245, 245, 247, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Locked (Coming Soon) chart-type + tool buttons. Dim, not-allowed,
+   with a small corner lock glyph. Click surfaces a Coming Soon toast. */
+.type-btn.is-locked,
+.tool-btn.is-locked {
+  cursor: not-allowed;
+  color: rgba(245, 245, 247, 0.28);
+}
+.type-btn.is-locked:hover,
+.tool-btn.is-locked:hover {
+  color: rgba(245, 245, 247, 0.4);
+  background: rgba(255, 255, 255, 0.02);
+}
+.type-lock {
+  margin-left: 1px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+.tool-btn.is-locked {
+  position: relative;
+}
+.tool-lock {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.type-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.type-icon.x-icon {
+  width: auto;
+  height: auto;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.type-label {
+  letter-spacing: 0.01em;
+}
+
+/* TradingView Button */
+.type-btn.tradingview-btn {
+  padding: 5px 8px;
+}
+
+.type-btn.tradingview-btn.active {
+  color: rgba(245, 245, 247, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* TradingView Lightweight Charts Container */
+.tradingview-container {
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 100 !important;
+  border-radius: 12px;
+  overflow: hidden !important;
+  background: var(--ob-chart, #111113) !important;
+  pointer-events: auto !important;
+  min-width: 400px !important;
+  min-height: 300px !important;
+}
+
+@media (max-width: 768px) {
+  .tradingview-container {
+    min-width: 0 !important;
+  }
+}
+
+/* Ensure Lightweight Charts canvas is visible */
+.tradingview-container canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.tradingview-container.lightweight-charts {
+  /* Lightweight Charts specific styling */
+}
+
+/* Override Lightweight Charts default styles */
+.tradingview-container canvas {
+  border-radius: 12px;
+}
+
+/* Lightweight Charts tooltip styling */
+.tradingview-container .tv-lightweight-charts {
+  font-family: var(--font-body) !important;
+}
+
+/* Price scale styling */
+.tradingview-container .price-axis {
+  background: var(--ob-chart, #111113);
+}
+
+/* Time scale styling */
+.tradingview-container .time-axis {
+  background: var(--ob-chart, #111113);
+}
+
+/* Day mode — the container/axis backdrops are hardcoded obsidian above, so in
+   light theme they punched a black rectangle through the white page before the
+   TV iframe painted (and around its edges). */
+body.theme-light .tradingview-container,
+body.theme-light .tradingview-container .price-axis,
+body.theme-light .tradingview-container .time-axis {
+  background: #ffffff !important;
+}
+
+/* Price / MCap - compact text switch with a "/" divider (one is always active) */
+.price-mcap-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-left: 6px;
+}
+
+/* Separator before the Price/MCap group */
+.price-mcap-toggle::before {
+  content: '';
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  margin-right: 7px;
+}
+
+.price-mcap-toggle .toggle-btn {
+  padding: 4px 6px;
+  background: transparent;
+  border: none;
+  border-radius: var(--r-xs);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.4);
+  cursor: pointer;
+  transition: all 0.06s var(--ease-out);
+}
+
+.price-mcap-toggle .toggle-btn:hover {
+  color: rgba(245, 245, 247, 0.85);
+}
+
+.price-mcap-toggle .toggle-btn.active {
+  color: #fff;
+  font-weight: 600;
+  background: transparent;
+}
+
+/* The "/" between Price and MCap - reads as a switch, not two pills */
+.pm-sep {
+  color: rgba(245, 245, 247, 0.26);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1;
+  padding: 0;
+  margin: 0 1px 0 -2px;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Timeframe Selector - Ghost */
+.timeframes {
+  display: flex;
+  gap: 1px;
+  flex-shrink: 0;
+  align-items: center;
+  position: relative;
+  overflow: visible !important;
+  z-index: 100;
+  margin-left: 4px;
+}
+
+/* Separator before timeframes */
+.timeframes::before {
+  content: '';
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  margin-right: 4px;
+}
+
+/* More dropdown container */
+.tf-more-dropdown {
+  position: relative;
+  overflow: visible !important;
+  z-index: 100;
+}
+
+.tf-more-trigger {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tf-more-trigger .tf-chevron {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.2s ease;
+}
+
+.tf-more-trigger .tf-chevron.open {
+  transform: rotate(180deg);
+}
+
+.tf-more-dropdown .tf-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  left: auto;
+  min-width: 60px;
+  background: rgba(12, 12, 15, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 3px;
+  z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  animation: dropdownFadeIn 0.15s ease-out;
+}
+
+/* Fixed position dropdown to escape overflow:hidden containers */
+.tf-dropdown-menu.tf-dropdown-fixed {
+  position: fixed !important;
+  top: auto;
+  left: auto;
+  z-index: 99999 !important;
+  min-width: 60px;
+  background: rgba(12, 12, 15, 0.95) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 8px;
+  padding: 3px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  animation: dropdownFadeIn 0.15s ease-out;
+}
+
+.timeframes-mobile {
+  position: relative;
+}
+
+/* Timeframe Dropdown Trigger */
+.tf-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tf-dropdown-trigger:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.tf-dropdown-trigger svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+}
+
+.tf-dropdown-trigger svg.open {
+  transform: rotate(180deg);
+}
+
+/* Timeframe Dropdown Menu */
+.tf-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 80px;
+  background: rgba(18, 18, 22, 1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 4px;
+  z-index: 100;
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  animation: dropdownFadeIn 0.15s ease-out;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tf-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: var(--r-xs);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.65);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.06s var(--ease-out);
+}
+
+.tf-dropdown-item:hover {
+  background: var(--glass-fill-hover);
+  color: rgba(245, 245, 247, 0.95);
+}
+
+.tf-dropdown-item.active {
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tf-btn {
+  padding: 6px 11px;
+  min-width: 34px;
+  text-align: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--r-sm);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.48);
+  cursor: pointer;
+  transition: all 0.06s var(--ease-out);
+  position: relative;
+}
+
+.tf-btn:hover {
+  color: rgba(245, 245, 247, 0.78);
+  background: var(--glass-fill-hover);
+}
+
+.tf-btn.active {
+  color: #f5f5f7;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tf-btn.active::after {
+  display: none;
+}
+
+/* Tools - Ghost Icon Buttons */
+.chart-tools {
+  display: flex;
+  gap: 1px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: visible !important;
+  z-index: 100;
+  margin-left: 4px;
+}
+
+/* Separator before tools */
+.chart-tools::before {
+  content: '';
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  margin-right: 4px;
+  align-self: center;
+}
+
+.tool-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--r-sm);
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  transition: all 0.06s var(--ease-out);
+  position: relative;
+  overflow: visible !important;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.tool-btn:hover {
+  color: rgba(245, 245, 247, 0.7);
+  background: var(--glass-fill-hover);
+}
+
+.tool-btn:active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tool-btn.active {
+  color: rgba(245, 245, 247, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ATH button */
+/* ATH + VWAP are standard 32px tool buttons with the uniform 14px lucide icon now -
+   the old bespoke widths + squished svg dims are gone (.tool-btn svg sizes them). */
+
+/* VWAP button */
+
+.tool-btn.vwap-btn.active svg text {
+  fill: rgba(255, 208, 80, 0.85);
+}
+
+.tool-btn.vwap-btn.active svg line {
+  stroke: rgba(255, 208, 80, 0.85);
+}
+
+.tool-btn svg {
+  width: 14px;
+  height: 14px;
+  transition: color 0.2s ease;
+}
+
+/* Custom Tooltips for Tool Buttons - DISABLED (now using JavaScript tooltips) */
+.tool-btn[data-tooltip] {
+  position: relative;
+  z-index: 100;
+  isolation: isolate;
+}
+
+/* Hide CSS tooltips - we're using JavaScript tooltips now */
+.tool-btn[data-tooltip]::after {
+  display: none !important;
+}
+
+.tool-btn[data-tooltip]::before {
+  display: none !important;
+}
+
+/* Special styling for ATH button tooltip */
+.tool-btn.ath-btn[data-tooltip]::after {
+  background: rgba(18, 18, 22, 1);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.tool-btn.ath-btn[data-tooltip]::before {
+  border-top-color: rgba(18, 18, 22, 1);
+}
+
+/* Special styling for heatmap button tooltip */
+.tool-btn.heatmap-btn[data-tooltip]::after {
+  background: rgba(18, 18, 22, 1);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.tool-btn.heatmap-btn[data-tooltip]::before {
+  border-top-color: rgba(18, 18, 22, 1);
+}
+
+/* Zoom indicator tooltips - DISABLED (now using JavaScript tooltips) */
+.zoom-indicator[data-tooltip] {
+  position: relative;
+}
+
+/* Hide CSS tooltips - we're using JavaScript tooltips now */
+.zoom-indicator[data-tooltip]::after {
+  display: none !important;
+}
+
+.zoom-indicator[data-tooltip]::before {
+  display: none !important;
+}
+
+/* Fixed Position Button Tooltip */
+.button-tooltip-fixed {
+  position: fixed !important;
+  padding: 5px 10px;
+  background: rgba(12, 12, 15, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 6px;
+  color: rgba(245, 245, 247, 0.8) !important;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 99999 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: tooltipFadeIn 0.15s ease-out;
+  transform: translate(-50%, calc(-100% - 10px));
+  will-change: transform, opacity;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.button-tooltip-fixed::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(18, 18, 22, 1);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-100% - 10px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, calc(-100% - 12px));
+  }
+}
+
+/* Zoom indicators */
+.zoom-indicators {
+  display: flex;
+  gap: 4px;
+  margin-left: 4px;
+}
+
+.zoom-indicator {
+  padding: 3px 6px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.zoom-indicator:hover {
+  color: rgba(245, 245, 247, 0.7);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* OHLCV Data Legend - Bloomberg-style persistent overlay */
+.ohlcv-legend {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: rgba(9, 9, 11, 0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.60);
+  pointer-events: none;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.ohlcv-legend--active {
+  opacity: 1;
+}
+
+.ohlcv-legend-symbol {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: rgba(245, 245, 247, 0.7);
+  letter-spacing: -0.01em;
+}
+
+.ohlcv-legend-tf {
+  color: rgba(245, 245, 247, 0.55);
+  font-size: 0.8125rem;
+  letter-spacing: 0.03em;
+}
+
+.ohlcv-legend-label {
+  color: rgba(245, 245, 247, 0.55);
+  font-size: 0.8125rem;
+  margin-left: 2px;
+}
+
+.ohlcv-legend-value {
+  color: rgba(245, 245, 247, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+.ohlcv-legend-value.bull {
+  color: var(--bull, #10B981);
+}
+
+.ohlcv-legend-value.bear {
+  color: var(--bear, #EF4444);
+}
+
+.ohlcv-legend-change {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 2px;
+}
+
+.ohlcv-legend-change.bull {
+  color: var(--bull, #10B981);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.ohlcv-legend-change.bear {
+  color: var(--bear, #EF4444);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.ohlcv-legend-hint {
+  color: rgba(245, 245, 247, 0.50);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-style: italic;
+}
+
+/* Light mode OHLCV legend */
+body.theme-light .ohlcv-legend {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+body.theme-light .ohlcv-legend-symbol {
+  color: rgba(15, 23, 42, 0.7);
+}
+
+body.theme-light .ohlcv-legend-value {
+  color: rgba(15, 23, 42, 0.6);
+}
+
+body.theme-light .ohlcv-legend-label,
+body.theme-light .ohlcv-legend-tf {
+  color: rgba(15, 23, 42, 0.25);
+}
+
+/* Chart Content Area - height controlled by inline style + resize handle */
+.chart-content-area {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Chart Body - TradingView-like interactions */
+.chart-body {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none; /* Prevent touch scrolling */
+  cursor: crosshair;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.chart-body:active {
+  cursor: grabbing;
+}
+
+.chart-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none; /* Let parent handle events */
+}
+
+/* Volume Tooltip - Terminal Style */
+.volume-tooltip {
+  position: absolute;
+  pointer-events: none;
+  z-index: 100;
+  background: rgba(12, 12, 15, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 12px 16px;
+  min-width: 140px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: tooltipFadeIn 0.15s ease-out;
+  overflow: hidden;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -100%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -100%) translateY(0);
+  }
+}
+
+.tooltip-date {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.7);
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.tooltip-content {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.tooltip-accent {
+  width: 2px;
+  background: rgba(245, 245, 247, 0.15);
+  border-radius: 1px;
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+.tooltip-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tooltip-label {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.tooltip-value {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.9);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Chart Overlay Elements */
+.chart-overlay {
+  position: absolute;
+  top: var(--sp-4);
+  left: var(--sp-4);
+  right: var(--sp-4);
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.chart-legend {
+  display: flex;
+  gap: var(--sp-4);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 4px 8px;
+  background: rgba(9, 9, 11, 0.5);
+  backdrop-filter: blur(6px);
+  border-radius: 4px;
+  border: none;
+}
+
+.legend-color {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.legend-color.bull {
+  background: var(--bull);
+}
+
+.legend-color.bear {
+  background: var(--bear);
+}
+
+.legend-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* Price Scale Styling */
+.price-scale {
+  position: absolute;
+  right: var(--sp-3);
+  top: var(--sp-4);
+  bottom: var(--sp-4);
+  width: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.price-tick {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-align: right;
+  padding-right: var(--sp-2);
+}
+
+/* Current Price Indicator */
+.current-price-indicator {
+  position: absolute;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.price-line {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--bull) 20%, var(--bull) 100%);
+  position: absolute;
+  left: 0;
+}
+
+.price-badge {
+  padding: 3px 8px;
+  background: var(--bull);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #000;
+}
+
+/* Volume Bars */
+.volume-section {
+  height: 60px;
+  padding: 0 var(--sp-4);
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .type-label {
+    display: none;
+  }
+
+  .type-btn {
+    padding: 5px 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  .chart-controls {
+    padding: 4px 8px;
+  }
+
+  .type-btn {
+    padding: 4px 6px;
+  }
+
+  .tool-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .tool-btn svg {
+    width: 13px;
+    height: 13px;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────────────
+   Toolbar progressive collapse (container-query driven).
+
+   Overlap reported on medium screens / both side-panels open: the toolbar
+   column is narrow while the viewport stays wide, so @media never triggers.
+   We react to `.chart-controls`' OWN inline-size and shed the lowest-value
+   items first. Breakpoints are measured: with everything shown the toolbar
+   needs ~1035px before the left/right groups collide; each removal below buys
+   back the room for the next. Order of disappearance as the bar narrows:
+
+     1050px → Candles/Line/Holders text labels (icons stay)
+      980px → the locked "Coming Soon" type placeholders (Candles/Line/Holders)
+      890px → the locked tools cluster (heatmap/ATH/VWAP/indicators/draw/FS)
+              and the zoom/T:% readout
+      600px → tighten gaps + smaller buttons
+
+   Each tier fires ~40px before its group would actually collide, so the
+   transition is always a clean hide, never a momentary overlap.
+
+   Always kept (functional): TradingView toggle, Price/MCap, the 5 primary
+   timeframes and the existing "More" timeframe dropdown that already absorbs
+   12H/1D/1W overflow.
+   ─────────────────────────────────────────────────────────────────────── */
+@container chartbar (max-width: 1050px) {
+  .chart-controls .type-label { display: none; }
+  .chart-controls .type-btn { padding: 5px 8px; }
+}
+
+@container chartbar (max-width: 980px) {
+  /* Fold the placeholder chart types (Candles/Line/Holders) into the "Types"
+     menu. The TradingView button (only working type) + Price/MCap stay inline. */
+  .chart-controls .chart-types .type-btn.is-locked { display: none; }
+  .chart-controls .chart-types-more { display: flex; }
+}
+
+@container chartbar (max-width: 890px) {
+  /* Fold the locked tool placeholders into the "Tools" menu; drop the transient
+     zoom/T:% readout (a status badge, not a control). */
+  .chart-controls .chart-tools { display: none; }
+  .chart-controls .chart-tools-more { display: flex; }
+  .chart-controls .zoom-indicators { display: none; }
+}
+
+@container chartbar (max-width: 600px) {
+  .chart-controls { padding: 4px 8px; }
+  .chart-controls .type-btn { padding: 4px 6px; }
+  .chart-controls .tf-btn { padding: 4px 7px; }
+}
+
+/* Overflow dropdown triggers - hidden until their container breakpoint reveals
+   them (above). Both reuse the .tf-more-trigger / .tf-dropdown-menu look. */
+.chart-types-more,
+.chart-tools-more {
+  display: none;
+  position: relative;
+  align-items: center;
+  flex-shrink: 0;
+  overflow: visible !important;
+  z-index: 100;
+}
+
+.chart-more-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 130px;
+  background: rgba(12, 12, 15, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 3px;
+  z-index: 99999;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  animation: dropdownFadeIn 0.15s ease-out;
+}
+
+/* Tools menu hangs off the right edge so it never spills past the chart. */
+.tf-dropdown-menu--right.chart-more-menu {
+  left: auto;
+  right: 0;
+}
+
+.chart-more-menu .tf-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Leading icon + label cluster (lock stays pinned right via space-between). */
+.chart-more-menu .chart-more-item-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-more-menu .chart-more-item-label svg {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.chart-more-menu .tf-dropdown-item.is-locked {
+  opacity: 0.55;
+}
+
+.chart-more-menu .tf-dropdown-item.is-locked svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+body.theme-light .chart-more-menu {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* =========================
+   X CHART OVERLAY STYLES
+   ========================= */
+
+.x-chart-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.x-mention-avatar {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+}
+
+.x-mention-avatar::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.6), rgba(34, 197, 94, 0.2));
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.x-mention-avatar.bullish::before {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.8), rgba(34, 197, 94, 0.3));
+}
+
+.x-mention-avatar.announcement::before {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08));
+}
+
+.x-mention-avatar.neutral::before {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.2));
+}
+
+.x-mention-avatar:hover::before,
+.x-mention-avatar.hovered::before {
+  opacity: 1;
+}
+
+.x-mention-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.x-mention-avatar.bullish img {
+  border-color: #22c55e;
+}
+
+.x-mention-avatar.announcement img {
+  border-color: rgba(245, 245, 247, 0.65);
+}
+
+.x-mention-avatar:hover img,
+.x-mention-avatar.hovered img {
+  transform: scale(1.15);
+  border-width: 3px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.x-mention-avatar:hover,
+.x-mention-avatar.hovered {
+  z-index: 100;
+}
+
+/* Mention Tooltip */
+.mention-tooltip {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-3);
+  min-width: 220px;
+  max-width: 280px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+  animation: mentionFadeIn 0.2s ease;
+  z-index: 1000;
+}
+
+@keyframes mentionFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.mention-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 12px;
+  height: 12px;
+  background: rgba(0, 0, 0, 0.95);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mention-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--sp-2);
+}
+
+.mention-user {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mention-likes {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.mention-content {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* X Chart mode indicator */
+.x-chart-mode-indicator {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.6);
+  z-index: 10;
+}
+
+.x-chart-mode-indicator svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* =========================
+   X BUBBLES VISUALIZATION
+   ========================= */
+
+.x-bubbles-container {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #0a0a0f 0%, #0d0d18 50%, #08080d 100%);
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+}
+
+/* Deep space nebula background */
+.x-bubbles-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    /* Central nebula glow */
+    radial-gradient(ellipse 70% 60% at 50% 50%, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
+    /* Corner accents */
+    radial-gradient(ellipse 80% 60% at 5% 95%, rgba(255, 255, 255, 0.06) 0%, transparent 35%),
+    radial-gradient(ellipse 70% 70% at 95% 5%, rgba(99, 102, 241, 0.22) 0%, transparent 35%),
+    radial-gradient(ellipse 50% 50% at 85% 85%, rgba(236, 72, 153, 0.12) 0%, transparent 35%),
+    radial-gradient(ellipse 60% 60% at 15% 15%, rgba(6, 182, 212, 0.1) 0%, transparent 35%);
+  animation: auroraShift 30s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Animated mesh overlay with grid effect */
+.x-bubbles-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    /* Subtle grid lines */
+    linear-gradient(90deg, rgba(255, 255, 255, 0.01) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.01) 1px, transparent 1px),
+    /* Flowing light beams */
+    linear-gradient(125deg, transparent 40%, rgba(255, 255, 255, 0.02) 50%, transparent 60%),
+    linear-gradient(225deg, transparent 40%, rgba(99, 102, 241, 0.03) 50%, transparent 60%);
+  background-size: 60px 60px, 60px 60px, 100% 100%, 100% 100%;
+  animation: meshMove 40s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Energy particles floating */
+.energy-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.energy-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.08) 50%, transparent 70%);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1), 0 0 20px rgba(255, 255, 255, 0.08);
+  animation: floatParticle 20s linear infinite;
+}
+
+.energy-particle:nth-child(1) { left: 10%; animation-delay: 0s; animation-duration: 25s; }
+.energy-particle:nth-child(2) { left: 20%; animation-delay: -5s; animation-duration: 22s; }
+.energy-particle:nth-child(3) { left: 35%; animation-delay: -10s; animation-duration: 28s; }
+.energy-particle:nth-child(4) { left: 50%; animation-delay: -3s; animation-duration: 20s; }
+.energy-particle:nth-child(5) { left: 65%; animation-delay: -8s; animation-duration: 24s; }
+.energy-particle:nth-child(6) { left: 80%; animation-delay: -12s; animation-duration: 26s; }
+.energy-particle:nth-child(7) { left: 90%; animation-delay: -2s; animation-duration: 23s; }
+
+@keyframes floatParticle {
+  0% {
+    transform: translateY(100vh) scale(0.5);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-20vh) scale(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes auroraShift {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(15deg);
+  }
+}
+
+@keyframes meshMove {
+  0% {
+    background-position: 0% 0%, 100% 100%;
+  }
+  100% {
+    background-position: 100% 100%, 0% 0%;
+  }
+}
+
+/* Glowing stars layer */
+.stars-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  animation: gentleGlow 20s ease-in-out infinite;
+}
+
+.star-1 {
+  width: 2px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
+  animation-duration: 25s;
+}
+
+.star-2 {
+  width: 3px;
+  height: 3px;
+  background: rgba(99, 102, 241, 0.6);
+  box-shadow: 0 0 5px rgba(99, 102, 241, 0.5);
+  animation-duration: 30s;
+}
+
+.star-3 {
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.1);
+  animation-duration: 22s;
+}
+
+@keyframes gentleGlow {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Fullscreen mode for X Bubbles */
+.x-bubbles-container.fullscreen-bubbles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 99999;
+  border-radius: 0;
+  background: #0a0a0c;
+}
+
+/* Hide other page elements when X Bubbles is in fullscreen */
+.x-bubbles-container.fullscreen-bubbles ~ *,
+body:has(.fullscreen-bubbles) .panel-right,
+body:has(.fullscreen-bubbles) .data-tabs,
+body:has(.fullscreen-bubbles) .ai-assistant,
+body:has(.fullscreen-bubbles) .ai-fab {
+  display: none !important;
+}
+
+/* Zoomable content area */
+.bubbles-zoom-area {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+  z-index: 5;
+  /* Smooth transform - no transition during panning for immediate response */
+  transition: transform 0.1s ease-out;
+}
+
+/* Disable transition during active panning for smoother feel */
+.x-bubbles-container.panning .bubbles-zoom-area {
+  transition: none;
+}
+
+/* Ambient floating bubbles - Enhanced */
+.ambient-bubbles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  transition: filter 0.5s ease;
+  z-index: 1;
+}
+
+.ambient-bubbles.is-dragging {
+  filter: blur(3px);
+  opacity: 0.6;
+}
+
+.ambient-bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, 
+    rgba(255, 255, 255, 0.06), 
+    rgba(255, 255, 255, 0.04) 40%,
+    rgba(255, 255, 255, 0.01) 70%,
+    transparent);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 
+    0 0 30px rgba(255, 255, 255, 0.04),
+    inset 0 0 20px rgba(255, 255, 255, 0.02);
+  opacity: 0.6;
+  transition: all 0.8s ease;
+  animation: floatBubble 8s ease-in-out infinite;
+}
+
+/* Staggered slow floating animations */
+/* Staggered bubble animations with subtle glow */
+.ambient-bubble.ab-1 { 
+  animation: floatSlow1 18s ease-in-out infinite, subtleGlow 8s ease-in-out infinite; 
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025) 50%, transparent);
+}
+.ambient-bubble.ab-2 { 
+  animation: floatSlow2 22s ease-in-out infinite, subtleGlow 10s ease-in-out infinite; 
+  animation-delay: -5s, -2s; 
+  background: radial-gradient(circle at 40% 40%, rgba(6, 182, 212, 0.12), rgba(99, 102, 241, 0.05) 50%, transparent);
+}
+.ambient-bubble.ab-3 { 
+  animation: floatSlow3 20s ease-in-out infinite, subtleGlow 9s ease-in-out infinite; 
+  animation-delay: -8s, -3s; 
+  background: radial-gradient(circle at 25% 35%, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.025) 50%, transparent);
+}
+.ambient-bubble.ab-4 { 
+  animation: floatSlow1 25s ease-in-out infinite, subtleGlow 7s ease-in-out infinite; 
+  animation-delay: -12s, -4s; 
+}
+.ambient-bubble.ab-5 { 
+  animation: floatSlow2 16s ease-in-out infinite, subtleGlow 11s ease-in-out infinite; 
+  animation-delay: -3s, -1s; 
+  background: radial-gradient(circle at 35% 25%, rgba(59, 130, 246, 0.12), rgba(99, 102, 241, 0.05) 50%, transparent);
+}
+.ambient-bubble.ab-6 { 
+  animation: floatSlow3 21s ease-in-out infinite, subtleGlow 6s ease-in-out infinite; 
+  animation-delay: -6s, -2s; 
+}
+.ambient-bubble.ab-7 { 
+  animation: floatSlow1 24s ease-in-out infinite, subtleGlow 8s ease-in-out infinite; 
+  animation-delay: -10s, -3s; 
+  background: radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02) 50%, transparent);
+}
+.ambient-bubble.ab-8 { 
+  animation: floatSlow2 19s ease-in-out infinite, subtleGlow 9s ease-in-out infinite; 
+  animation-delay: -4s, -1s; 
+}
+
+@keyframes subtleGlow {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.02);
+    opacity: 0.4;
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.04);
+    opacity: 0.6;
+  }
+}
+
+@keyframes floatSlow1 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+  25% { transform: translate(15px, -20px) scale(1.05); opacity: 0.6; }
+  50% { transform: translate(-8px, -30px) scale(1.03); opacity: 0.55; }
+  75% { transform: translate(12px, -10px) scale(1.04); opacity: 0.45; }
+}
+
+@keyframes floatSlow2 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.4; }
+  33% { transform: translate(-15px, 12px) scale(1.04); opacity: 0.55; }
+  66% { transform: translate(10px, -18px) scale(0.98); opacity: 0.45; }
+}
+
+@keyframes floatSlow3 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.45; }
+  20% { transform: translate(10px, 15px) scale(1.03); opacity: 0.5; }
+  40% { transform: translate(-15px, 8px) scale(1.05); opacity: 0.4; }
+  60% { transform: translate(8px, -20px) scale(0.97); opacity: 0.55; }
+  80% { transform: translate(-10px, -10px) scale(1.02); opacity: 0.35; }
+}
+
+/* Drag trail/ripple effect */
+.drag-trail-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.drag-ripple {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.drag-ripple.ripple-1 {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.06) 0%, transparent 70%);
+  animation: rippleExpand 1.5s ease-out infinite;
+}
+
+.drag-ripple.ripple-2 {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.04) 0%, transparent 70%);
+  animation: rippleExpand 1.5s ease-out infinite;
+  animation-delay: 0.4s;
+}
+
+.drag-ripple.ripple-3 {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.04) 0%, transparent 70%);
+  animation: rippleExpand 1.5s ease-out infinite;
+  animation-delay: 0.8s;
+}
+
+@keyframes rippleExpand {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
+}
+
+/* 2D Mode - hide ripples */
+.x-bubbles-container.mode-2d .drag-trail-container {
+  display: none;
+}
+
+/* Connection lines SVG */
+.bubble-connections {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  transition: filter 0.3s ease;
+}
+
+/* Connection group styling */
+.connection-group {
+  transition: opacity 0.3s ease;
+}
+
+/* Glow behind connection lines */
+.connection-glow {
+  opacity: 0.4;
+  filter: blur(2px);
+  animation: glowPulse 4s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+.x-bubbles-container:has(.kol-bubble.dragging) .bubble-connections {
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.12));
+}
+
+.connection-line {
+  animation: dashFlow 4s linear infinite;
+  transition: stroke-width 0.3s ease, opacity 0.3s ease;
+}
+
+.x-bubbles-container:has(.kol-bubble.dragging) .connection-line {
+  stroke-width: 0.6;
+  animation: dashFlowFast 1.5s linear infinite;
+}
+
+/* Animated particle on connection */
+.connection-particle {
+  opacity: 0.8;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.2));
+}
+
+.x-bubbles-container:has(.kol-bubble.dragging) .connection-particle {
+  opacity: 1;
+  filter: drop-shadow(0 0 5px rgba(245, 245, 247, 0.5));
+}
+
+@keyframes dashFlow {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -4.6; }
+}
+
+@keyframes dashFlowFast {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -9.2; }
+}
+
+/* Center bubble styling is now handled by .kol-bubble.center */
+
+/* KOL Bubbles */
+.kol-bubble {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  z-index: 5;
+  /* Ensure hit area for dragging - all children are position:absolute so parent would otherwise be 0x0 */
+  min-width: 120px;
+  min-height: 120px;
+  animation: bubbleAppear 0.6s ease forwards;
+  opacity: 0;
+  transition: left 0.05s ease-out, top 0.05s ease-out;
+}
+
+.kol-bubble:active {
+  cursor: grabbing;
+}
+
+@keyframes bubbleAppear {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Bubble sizes */
+.kol-bubble.small .kol-bubble-ring { width: 50px; height: 50px; }
+.kol-bubble.small .kol-bubble-inner { width: 40px; height: 40px; }
+.kol-bubble.small .kol-bubble-glow { width: 60px; height: 60px; }
+.kol-bubble.medium .kol-bubble-ring { width: 65px; height: 65px; }
+.kol-bubble.medium .kol-bubble-inner { width: 52px; height: 52px; }
+.kol-bubble.medium .kol-bubble-glow { width: 80px; height: 80px; }
+.kol-bubble.large .kol-bubble-ring { width: 80px; height: 80px; }
+.kol-bubble.large .kol-bubble-inner { width: 65px; height: 65px; }
+.kol-bubble.large .kol-bubble-glow { width: 100px; height: 100px; }
+.kol-bubble.xlarge .kol-bubble-ring { width: 95px; height: 95px; }
+.kol-bubble.xlarge .kol-bubble-inner { width: 78px; height: 78px; }
+.kol-bubble.xlarge .kol-bubble-glow { width: 120px; height: 120px; }
+
+/* Center bubble (Spectre AI) */
+.kol-bubble.center .kol-bubble-ring { 
+  width: 100px; 
+  height: 100px; 
+  border-width: 3px; 
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 0 25px rgba(255, 255, 255, 0.08),
+    inset 0 0 20px rgba(255, 255, 255, 0.06);
+}
+.kol-bubble.center .kol-bubble-inner { width: 82px; height: 82px; }
+.kol-bubble.center .kol-bubble-glow { 
+  width: 140px; 
+  height: 140px;
+  opacity: 0.7;
+  animation: centerBubbleGlow 4s ease-in-out infinite;
+}
+
+@keyframes centerBubbleGlow {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+  50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.8; }
+}
+
+.kol-bubble.center .kol-bubble-title { 
+  font-size: 0.9375rem; 
+  font-weight: 700;
+}
+
+/* Center bubble dragging - special effect */
+.kol-bubble.center.dragging .kol-bubble-ring {
+  border-color: rgba(245, 245, 247, 0.65);
+  box-shadow: 
+    0 0 40px rgba(255, 255, 255, 0.15),
+    0 0 80px rgba(255, 255, 255, 0.08),
+    inset 0 0 30px rgba(255, 255, 255, 0.08);
+}
+
+.kol-bubble.center.dragging .kol-bubble-glow {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 70%);
+}
+
+/* Bubble glow effect */
+.kol-bubble-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.kol-bubble:hover .kol-bubble-glow,
+.kol-bubble.selected .kol-bubble-glow,
+.kol-bubble.center .kol-bubble-glow {
+  opacity: 1;
+  animation: bubbleGlow 3s ease-in-out infinite;
+}
+
+@keyframes bubbleGlow {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+  50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.8; }
+}
+
+/* Bubble title above */
+.kol-bubble-title {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
+  z-index: 5;
+}
+
+.kol-bubble:hover .kol-bubble-title {
+  color: white;
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateX(-50%) translateY(-3px);
+}
+
+.kol-bubble.center .kol-bubble-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Dragging state */
+.kol-bubble.dragging {
+  transition: none !important;
+  z-index: 100 !important;
+  filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.08));
+}
+
+.kol-bubble.dragging .kol-bubble-ring {
+  border-color: rgba(245, 245, 247, 0.65);
+  box-shadow: 
+    0 0 20px rgba(255, 255, 255, 0.1),
+    0 0 40px rgba(255, 255, 255, 0.06),
+    inset 0 0 10px rgba(255, 255, 255, 0.06);
+  animation: dragPulse 0.8s ease-in-out infinite;
+}
+
+@keyframes dragPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.03); }
+}
+
+.kol-bubble.dragging .kol-bubble-glow {
+  opacity: 0.8;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.06) 40%, transparent 70%);
+  animation: dragGlow 1s ease-in-out infinite;
+}
+
+.kol-bubble.dragging .kol-bubble-inner {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes dragGlow {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+  50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+}
+
+.kol-bubble.dragging .kol-bubble-title {
+  background: rgba(236, 72, 153, 0.7);
+  transform: translateX(-50%) translateY(-5px) scale(1.1);
+}
+
+/* Following state - connected bubbles being pulled */
+.kol-bubble.following {
+  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.06));
+}
+
+.kol-bubble.following .kol-bubble-ring {
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 0 15px rgba(255, 255, 255, 0.08),
+    inset 0 0 8px rgba(255, 255, 255, 0.04);
+}
+
+.kol-bubble.following .kol-bubble-glow {
+  opacity: 0.5;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.06) 0%, transparent 70%);
+}
+
+.kol-bubble.following .kol-bubble-inner {
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+.kol-bubble.following .kol-bubble-title {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* In motion state - bubbles moving from physics */
+.kol-bubble.in-motion .kol-bubble-ring {
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.06);
+}
+
+.kol-bubble.in-motion .kol-bubble-glow {
+  opacity: 0.4;
+}
+
+.kol-bubble-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 0 15px rgba(255, 255, 255, 0.08),
+    inset 0 0 10px rgba(255, 255, 255, 0.04);
+}
+
+.kol-bubble:hover .kol-bubble-ring,
+.kol-bubble.selected .kol-bubble-ring {
+  border-color: #EC4899;
+  box-shadow: 
+    0 0 25px rgba(236, 72, 153, 0.5),
+    inset 0 0 15px rgba(236, 72, 153, 0.2);
+}
+
+.kol-bubble-inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.kol-bubble:hover .kol-bubble-inner {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.kol-bubble-inner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* KOL Bubble Tooltip */
+.kol-bubble-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 15px;
+  background: rgba(20, 20, 30, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-3);
+  min-width: 200px;
+  z-index: 100;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+  animation: tooltipFade 0.2s ease;
+}
+
+@keyframes tooltipFade {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.tooltip-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.tooltip-close:hover {
+  color: var(--text-primary);
+}
+
+.tooltip-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+
+.tooltip-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.08);
+}
+
+.tooltip-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.tooltip-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tooltip-followers {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.tooltip-socials {
+  display: flex;
+  gap: var(--sp-1);
+  padding-top: var(--sp-2);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.social-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.social-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.social-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Bubbles Controls - Top */
+.bubbles-controls-top {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  gap: var(--sp-2);
+  z-index: 20;
+}
+
+.bubble-control-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-full);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.bubble-control-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.bubble-control-btn svg {
+  width: 12px;
+  height: 12px;
+  opacity: 0.7;
+}
+
+.bubble-control-btn.legend {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(236, 72, 153, 0.2));
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.bubble-control-btn.focus {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.bubble-control-btn.active {
+  background: rgba(0, 0, 0, 0.9);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.bubble-control-btn svg.rotated {
+  transform: rotate(180deg);
+}
+
+/* Filter Dropdown Container */
+.bubble-filter-dropdown {
+  position: relative;
+}
+
+/* Filter Dropdown Menu */
+.filter-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: rgba(15, 15, 20, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  min-width: 240px;
+  padding: 8px 0;
+  z-index: 100;
+  animation: dropdownFadeIn 0.2s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Legend Menu */
+.legend-menu {
+  padding: 12px;
+  min-width: 280px;
+}
+
+.filter-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+  border-radius: var(--radius-md);
+  transition: background 0.15s ease;
+}
+
+.filter-legend-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Toggle Switch */
+.toggle-switch-label {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.toggle-switch-label input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  transition: all 0.25s ease;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  transition: all 0.25s ease;
+}
+
+.toggle-switch-label input:checked + .toggle-slider {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.toggle-switch-label input:checked + .toggle-slider::before {
+  transform: translateX(16px);
+  background: rgba(245, 245, 247, 0.5);
+}
+
+/* Legend Color Dot */
+.legend-color {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.legend-label {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.legend-label strong {
+  color: white;
+  margin-right: 4px;
+}
+
+/* Time Menu */
+.time-menu {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.filter-time-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-time-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.filter-time-item.active {
+  color: rgba(245, 245, 247, 0.65);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.filter-time-item .check-mark {
+  color: rgba(245, 245, 247, 0.65);
+  font-weight: 600;
+}
+
+/* Followers Menu */
+.followers-menu {
+  padding: 16px;
+  min-width: 260px;
+}
+
+.filter-followers-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 14px;
+}
+
+.filter-followers-inputs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.follower-input-group {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+}
+
+.follower-input-group .input-icon {
+  font-size: 0.8125rem;
+  opacity: 0.6;
+}
+
+.follower-input-group input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  font-size: 0.875rem;
+  width: 100%;
+}
+
+.follower-input-group input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.filter-apply-btn {
+  width: 100%;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-apply-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Category Colors on Bubble Borders */
+.kol-bubble[data-category="main"] .kol-bubble-ring {
+  border-color: #22c55e !important;
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.4), inset 0 0 10px rgba(34, 197, 94, 0.1) !important;
+}
+
+.kol-bubble[data-category="project"] .kol-bubble-ring {
+  border-color: #ec4899 !important;
+  box-shadow: 0 0 20px rgba(236, 72, 153, 0.4), inset 0 0 10px rgba(236, 72, 153, 0.1) !important;
+}
+
+.kol-bubble[data-category="top5"] .kol-bubble-ring {
+  border-color: #eab308 !important;
+  box-shadow: 0 0 20px rgba(234, 179, 8, 0.4), inset 0 0 10px rgba(234, 179, 8, 0.1) !important;
+}
+
+.kol-bubble[data-category="kol100k"] .kol-bubble-ring {
+  border-color: #f97316 !important;
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.4), inset 0 0 10px rgba(249, 115, 22, 0.1) !important;
+}
+
+.kol-bubble[data-category="kolUnder100k"] .kol-bubble-ring {
+  border-color: rgba(245, 245, 247, 0.65) !important;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.08), inset 0 0 10px rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Category hover effects */
+.kol-bubble[data-category="main"]:hover .kol-bubble-ring {
+  box-shadow: 0 0 30px rgba(34, 197, 94, 0.5), 0 0 60px rgba(34, 197, 94, 0.2), inset 0 0 15px rgba(34, 197, 94, 0.15) !important;
+}
+
+.kol-bubble[data-category="project"]:hover .kol-bubble-ring {
+  box-shadow: 0 0 30px rgba(236, 72, 153, 0.5), 0 0 60px rgba(236, 72, 153, 0.2), inset 0 0 15px rgba(236, 72, 153, 0.15) !important;
+}
+
+.kol-bubble[data-category="top5"]:hover .kol-bubble-ring {
+  box-shadow: 0 0 30px rgba(234, 179, 8, 0.5), 0 0 60px rgba(234, 179, 8, 0.2), inset 0 0 15px rgba(234, 179, 8, 0.15) !important;
+}
+
+.kol-bubble[data-category="kol100k"]:hover .kol-bubble-ring {
+  box-shadow: 0 0 30px rgba(249, 115, 22, 0.5), 0 0 60px rgba(249, 115, 22, 0.2), inset 0 0 15px rgba(249, 115, 22, 0.15) !important;
+}
+
+.kol-bubble[data-category="kolUnder100k"]:hover .kol-bubble-ring {
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.1), 0 0 60px rgba(255, 255, 255, 0.06), inset 0 0 15px rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Light theme for dropdowns */
+.x-bubbles-container.light-theme .filter-dropdown-menu {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.x-bubbles-container.light-theme .toggle-slider {
+  background: rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+.x-bubbles-container.light-theme .toggle-slider::before {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.x-bubbles-container.light-theme .legend-label {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.x-bubbles-container.light-theme .legend-label strong {
+  color: #1a1a2e;
+}
+
+.x-bubbles-container.light-theme .filter-time-item {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.x-bubbles-container.light-theme .filter-time-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #1a1a2e;
+}
+
+.x-bubbles-container.light-theme .filter-followers-title {
+  color: #1a1a2e;
+}
+
+.x-bubbles-container.light-theme .follower-input-group {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.x-bubbles-container.light-theme .follower-input-group input {
+  color: #1a1a2e;
+}
+
+.x-bubbles-container.light-theme .follower-input-group input::placeholder {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+/* Top Right Controls Container */
+.bubbles-controls-top-right {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Close fullscreen button */
+.close-fullscreen-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-full);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.close-fullscreen-btn:hover {
+  background: rgba(239, 68, 68, 0.8);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: white;
+}
+
+.close-fullscreen-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.x-bubbles-container.light-theme .close-fullscreen-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #64748b;
+}
+
+.x-bubbles-container.light-theme .close-fullscreen-btn:hover {
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+}
+
+/* View Mode Toggle (2D/3D) */
+.view-mode-toggle {
+  display: flex;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: var(--radius-full);
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+}
+
+.view-mode-btn {
+  padding: 5px 14px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
+}
+
+.view-mode-btn:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.view-mode-btn.active {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.2) 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.08);
+}
+
+.x-bubbles-container.light-theme .view-mode-toggle {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.x-bubbles-container.light-theme .view-mode-btn {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.x-bubbles-container.light-theme .view-mode-btn:hover {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.x-bubbles-container.light-theme .view-mode-btn.active {
+  background: linear-gradient(135deg, rgba(245, 245, 247, 0.6) 0%, rgba(245, 245, 247, 0.3) 100%);
+  color: white;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: var(--radius-full);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.theme-toggle span {
+  transition: color 0.3s ease, opacity 0.3s ease;
+  opacity: 0.5;
+}
+
+.theme-toggle span.active {
+  color: white;
+  opacity: 1;
+}
+
+.toggle-switch {
+  width: 44px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.toggle-dot {
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, rgba(245, 245, 247, 0.5), rgba(245, 245, 247, 0.4));
+  border-radius: 50%;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.08);
+}
+
+.toggle-switch.light-mode .toggle-dot {
+  transform: translateX(20px);
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}
+
+/* Light theme for X Bubbles */
+.x-bubbles-container.light-theme {
+  background: #f8fafc;
+}
+
+.x-bubbles-container.light-theme::before {
+  background: 
+    radial-gradient(ellipse 80% 60% at 20% 80%, rgba(255, 255, 255, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 80% at 80% 20%, rgba(255, 255, 255, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 50% at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 60%);
+}
+
+.x-bubbles-container.light-theme::after {
+  background: 
+    linear-gradient(125deg, transparent 40%, rgba(255, 255, 255, 0.015) 50%, transparent 60%),
+    linear-gradient(225deg, transparent 40%, rgba(99, 102, 241, 0.03) 50%, transparent 60%);
+}
+
+.x-bubbles-container.light-theme .ambient-bubble {
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02) 50%, transparent);
+  border-color: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.03);
+}
+
+.x-bubbles-container.light-theme .star {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.x-bubbles-container.light-theme .star-1 {
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.1), 0 0 8px rgba(255, 255, 255, 0.08);
+}
+
+.x-bubbles-container.light-theme .star-2 {
+  box-shadow: 0 0 6px rgba(99, 102, 241, 0.5), 0 0 12px rgba(99, 102, 241, 0.3);
+}
+
+.x-bubbles-container.light-theme .star-3 {
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.1), 0 0 16px rgba(255, 255, 255, 0.06);
+}
+
+.x-bubbles-container.light-theme .kol-bubble-title {
+  background: rgba(255, 255, 255, 0.9);
+  color: #1e293b;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.x-bubbles-container.light-theme .kol-bubble-ring {
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.06);
+}
+
+.x-bubbles-container.light-theme .kol-bubble-inner {
+  background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.x-bubbles-container.light-theme .kol-bubble-tooltip {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.x-bubbles-container.light-theme .tooltip-name {
+  color: #1e293b;
+}
+
+.x-bubbles-container.light-theme .tooltip-followers {
+  color: #64748b;
+}
+
+.x-bubbles-container.light-theme .tooltip-close {
+  color: #64748b;
+}
+
+.x-bubbles-container.light-theme .social-btn {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #475569;
+}
+
+.x-bubbles-container.light-theme .bubble-control-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #1e293b;
+}
+
+.x-bubbles-container.light-theme .bubbles-branding {
+  color: #64748b;
+}
+
+.x-bubbles-container.light-theme .zoom-btn,
+.x-bubbles-container.light-theme .fit-btn,
+.x-bubbles-container.light-theme .fullscreen-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #1e293b;
+}
+
+.x-bubbles-container.light-theme .zoom-level {
+  color: #64748b;
+}
+
+.x-bubbles-container.light-theme .connection-line {
+  stroke: url(#connectionGradientLight);
+}
+
+.x-bubbles-container.light-theme .connection-glow {
+  opacity: 0.2;
+}
+
+.x-bubbles-container.light-theme .connection-particle {
+  fill: rgba(245, 245, 247, 0.5);
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.12));
+}
+
+.x-bubbles-container.light-theme .energy-particle {
+  background: radial-gradient(circle, rgba(245, 245, 247, 0.6) 0%, rgba(255, 255, 255, 0.08) 50%, transparent 70%);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.12), 0 0 16px rgba(99, 102, 241, 0.3);
+}
+
+.x-bubbles-container.light-theme .theme-toggle {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.x-bubbles-container.light-theme .theme-toggle span {
+  color: #64748b;
+}
+
+.x-bubbles-container.light-theme .theme-toggle span.active {
+  color: #1e293b;
+}
+
+/* Bubbles Controls - Bottom */
+.bubbles-controls-bottom {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 20;
+}
+
+.bubbles-branding {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.bubbles-branding strong {
+  color: var(--accent);
+}
+
+.bubbles-branding .divider {
+  opacity: 0.3;
+}
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.zoom-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.zoom-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.zoom-level {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  min-width: 45px;
+  text-align: center;
+  font-family: var(--font-mono);
+}
+
+.fit-btn, .fullscreen-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.2s ease;
+}
+
+.fit-btn:hover, .fullscreen-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+.fullscreen-btn.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.fit-btn svg, .fullscreen-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Hide chart body when bubbles are active */
+.chart-body.hidden {
+  display: none !important;
+}
+
+/* Responsive adjustments for bubbles */
+@media (max-width: 900px) {
+  .bubbles-controls-top {
+    flex-wrap: wrap;
+    gap: var(--sp-1);
+  }
+
+  .bubble-control-btn {
+    padding: 6px 10px;
+    font-size: 0.8125rem;
+  }
+
+  .bubbles-controls-top-right {
+    top: auto;
+    bottom: 50px;
+    right: 12px;
+  }
+
+  .zoom-controls {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .kol-bubble.xlarge .kol-bubble-ring { width: 70px; height: 70px; }
+  .kol-bubble.xlarge .kol-bubble-inner { width: 56px; height: 56px; }
+  .kol-bubble.large .kol-bubble-ring { width: 60px; height: 60px; }
+  .kol-bubble.large .kol-bubble-inner { width: 48px; height: 48px; }
+
+  .center-bubble-ring { width: 80px; height: 80px; }
+  .center-bubble-inner { width: 64px; height: 64px; }
+  .center-bubble-label { margin-top: 48px; }
+}
+
+@media (max-width: 600px) {
+  .x-bubbles-container {
+    /* Fills parent chart-content-area */
+  }
+
+  .bubbles-branding {
+    display: none;
+  }
+
+  .bubble-control-btn span {
+    display: none;
+  }
+}
+
+/* =========================
+   CHART RESIZE HANDLE
+   ========================= */
+.chart-resize-handle {
+  width: 100%;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ns-resize;
+  background: transparent;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 10;
+}
+
+.chart-resize-handle:hover,
+.chart-resize-handle.active {
+  background: transparent;
+}
+
+.resize-handle-bar {
+  width: 48px;
+  height: 3px;
+  background: rgba(245, 245, 247, 0.08);
+  border-radius: 2px;
+  transition: all 0.25s ease;
+}
+
+.chart-resize-handle:hover .resize-handle-bar {
+  background: rgba(245, 245, 247, 0.2);
+  width: 64px;
+}
+
+.chart-resize-handle.active .resize-handle-bar {
+  background: rgba(245, 245, 247, 0.35);
+  width: 80px;
+}
+
+.chart-resize-handle.active {
+  background: transparent;
+}
+
+/* Prevent text selection while resizing */
+body:has(.chart-resize-handle.active) {
+  user-select: none;
+  cursor: ns-resize !important;
+}
+
+/* ==================== CROSSHAIR STYLES ==================== */
+
+.crosshair-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.crosshair-line {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.crosshair-vertical {
+  width: 1px;
+  top: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.crosshair-horizontal {
+  height: 1px;
+  left: 12px;
+  right: 0;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.crosshair-label {
+  position: absolute;
+  font-family: "SF Pro Text", -apple-system, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.crosshair-price {
+  right: 6px;
+  transform: translateY(-50%);
+  background: rgba(20, 16, 35, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.95);
+  padding: 5px 10px;
+  border-radius: 4px;
+  border-left: 2px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+.crosshair-time {
+  bottom: -30px;
+  transform: translateX(-50%);
+  background: rgba(20, 20, 28, 0.95);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* OHLCV Data Display - TradingView style */
+.crosshair-ohlcv {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 12px;
+  background: rgba(15, 15, 20, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  z-index: 100;
+}
+
+.ohlcv-label {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 400;
+  margin-right: -2px;
+}
+
+.ohlcv-value {
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.ohlcv-value.bullish {
+  color: #22c55e;
+}
+
+.ohlcv-value.bearish {
+  color: #ef4444;
+}
+
+.ohlcv-value.volume {
+  color: rgba(245, 245, 247, 0.8);
+}
+
+/* ==================== AXIS DRAG HANDLES ==================== */
+
+.axis-drag-handle {
+  position: absolute;
+  z-index: 80;
+  transition: background 0.15s ease;
+  /* Mobile: a finger drag on the axis zooms the scale instead of scrolling
+     the page. Scoped to the handle only so page scroll works everywhere else. */
+  touch-action: none;
+}
+
+/* Price axis (right side) - drag up/down to zoom price scale */
+.price-axis-handle {
+  top: 20px;
+  right: 0;
+  width: 65px;
+  height: calc(100% - 100px);
+  cursor: ns-resize;
+  background: transparent;
+}
+
+.price-axis-handle:hover,
+.price-axis-handle.active {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+/* Time axis (bottom) - drag left/right to zoom time scale - only on time labels, not volume */
+.time-axis-handle {
+  bottom: 0;
+  left: 15px;
+  right: 65px;
+  height: 25px;
+  cursor: ew-resize;
+  background: transparent;
+}
+
+.time-axis-handle:hover,
+.time-axis-handle.active {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+/* Prevent text selection while dragging */
+body:has(.axis-drag-handle.active) {
+  user-select: none;
+}
+
+body:has(.price-axis-handle.active) {
+  cursor: ns-resize !important;
+}
+
+body:has(.time-axis-handle.active) {
+  cursor: ew-resize !important;
+}
+
+body:has(.time-axis-handle.active) {
+  cursor: ns-resize !important;
+}
+
+/* =========================
+   2D MODE - Gradient Mesh
+   ========================= */
+.x-bubbles-container.mode-2d {
+  background: #08090c;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.x-bubbles-container.mode-2d.panning {
+  cursor: grabbing;
+}
+
+.x-bubbles-container.mode-2d:not(.panning):hover {
+  cursor: grab;
+}
+
+.x-bubbles-container.mode-2d::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    /* Animated gradient blobs */
+    radial-gradient(ellipse 50% 40% at 15% 25%, rgba(236, 72, 153, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 50% at 85% 20%, rgba(59, 130, 246, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 75% 75%, rgba(16, 185, 129, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 55% at 20% 80%, rgba(245, 158, 11, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 35% at 50% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
+  animation: gradient-shift-2d 20s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes gradient-shift-2d {
+  0%, 100% { 
+    transform: scale(1) translate(0, 0);
+    filter: hue-rotate(0deg);
+  }
+  25% { 
+    transform: scale(1.1) translate(2%, -2%);
+    filter: hue-rotate(15deg);
+  }
+  50% { 
+    transform: scale(1.05) translate(-1%, 2%);
+    filter: hue-rotate(-10deg);
+  }
+  75% { 
+    transform: scale(1.15) translate(-2%, -1%);
+    filter: hue-rotate(10deg);
+  }
+}
+
+.x-bubbles-container.mode-2d::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    /* Noise texture overlay */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 2D - Hide energy particles */
+.x-bubbles-container.mode-2d .energy-particles {
+  display: none;
+}
+
+/* 2D - Subtle ambient shapes */
+.x-bubbles-container.mode-2d .ambient-bubbles {
+  opacity: 0.25;
+}
+
+.x-bubbles-container.mode-2d .ambient-bubble {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
+  border: none;
+  box-shadow: none;
+  animation: drift-2d 30s ease-in-out infinite;
+}
+
+.x-bubbles-container.mode-2d .ambient-bubble.ab-1 { animation-delay: 0s; animation-duration: 25s; }
+.x-bubbles-container.mode-2d .ambient-bubble.ab-2 { animation-delay: -5s; animation-duration: 30s; }
+.x-bubbles-container.mode-2d .ambient-bubble.ab-3 { animation-delay: -10s; animation-duration: 35s; }
+.x-bubbles-container.mode-2d .ambient-bubble.ab-4 { animation-delay: -15s; animation-duration: 28s; }
+.x-bubbles-container.mode-2d .ambient-bubble.ab-5 { animation-delay: -8s; animation-duration: 32s; }
+.x-bubbles-container.mode-2d .ambient-bubble.ab-6 { animation-delay: -12s; animation-duration: 27s; }
+
+@keyframes drift-2d {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(10px, -15px) scale(1.05); }
+  50% { transform: translate(-5px, 10px) scale(0.95); }
+  75% { transform: translate(8px, 5px) scale(1.02); }
+}
+
+/* 2D - Simple clean connections */
+.x-bubbles-container.mode-2d .connection-glow {
+  display: none;
+}
+
+.x-bubbles-container.mode-2d .connection-particle {
+  display: none;
+}
+
+.x-bubbles-container.mode-2d .connection-line {
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 1;
+  stroke-dasharray: none;
+  animation: none;
+  filter: none;
+}
+
+/* 2D - Clean modern bubbles */
+.x-bubbles-container.mode-2d .kol-bubble-glow {
+  display: none;
+}
+
+.x-bubbles-container.mode-2d .kol-bubble-ring {
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.x-bubbles-container.mode-2d .kol-bubble-inner {
+  background: rgba(20, 20, 30, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.x-bubbles-container.mode-2d .kol-bubble-title {
+  background: rgba(255, 255, 255, 0.95);
+  color: #0a0a0f;
+  font-weight: 600;
+  text-shadow: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.x-bubbles-container.mode-2d .kol-bubble:hover .kol-bubble-ring {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transform: translate(-50%, -50%) scale(1.03);
+}
+
+.x-bubbles-container.mode-2d .kol-bubble.dragging {
+  filter: none;
+}
+
+.x-bubbles-container.mode-2d .kol-bubble.dragging .kol-bubble-ring {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 0 40px rgba(255, 255, 255, 0.15),
+    0 15px 50px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  animation: none;
+}
+
+.x-bubbles-container.mode-2d .kol-bubble.following {
+  filter: none;
+}
+
+.x-bubbles-container.mode-2d .kol-bubble.following .kol-bubble-ring {
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  animation: none;
+}
+
+.x-bubbles-container.mode-2d .kol-bubble.center .kol-bubble-ring {
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* 2D - Hide drag trail */
+.x-bubbles-container.mode-2d .drag-trail-container {
+  display: none;
+}
+
+/* 2D Light Theme */
+.x-bubbles-container.mode-2d.light-theme {
+  background: #f8f9fc;
+}
+
+.x-bubbles-container.mode-2d.light-theme::before {
+  background: 
+    radial-gradient(ellipse 50% 40% at 15% 25%, rgba(236, 72, 153, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 50% at 85% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 75% 75%, rgba(16, 185, 129, 0.1) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 55% at 20% 80%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 35% at 50% 50%, rgba(255, 255, 255, 0.025) 0%, transparent 50%);
+}
+
+.x-bubbles-container.mode-2d.light-theme::after {
+  opacity: 0.015;
+}
+
+.x-bubbles-container.mode-2d.light-theme .ambient-bubble {
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.02) 0%, transparent 70%);
+}
+
+.x-bubbles-container.mode-2d.light-theme .kol-bubble-ring {
+  border-color: rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.x-bubbles-container.mode-2d.light-theme .kol-bubble-inner {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.x-bubbles-container.mode-2d.light-theme .kol-bubble-title {
+  background: #1a1a2e;
+  color: white;
+  text-shadow: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border: none;
+}
+
+.x-bubbles-container.mode-2d.light-theme .kol-bubble:hover .kol-bubble-ring {
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transform: translate(-50%, -50%) scale(1.03);
+}
+
+.x-bubbles-container.mode-2d.light-theme .connection-line {
+  stroke: rgba(0, 0, 0, 0.08);
+}
+
+/* =========================
+   3D MODE - Enhanced Effects
+   ========================= */
+.x-bubbles-container.mode-3d .kol-bubble {
+  transform-style: preserve-3d;
+  perspective: 800px;
+}
+
+/* 3D Sphere Ring - the outer shell */
+.x-bubbles-container.mode-3d .kol-bubble-ring {
+  background: 
+    /* Top highlight - light source from top-left */
+    radial-gradient(ellipse 60% 40% at 30% 20%, rgba(255, 255, 255, 0.25) 0%, transparent 50%),
+    /* Secondary highlight */
+    radial-gradient(ellipse 40% 30% at 70% 80%, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
+    /* Main sphere gradient - creates depth */
+    radial-gradient(circle at 35% 35%, 
+      rgba(255, 255, 255, 0.08) 0%, 
+      rgba(99, 102, 241, 0.3) 30%,
+      rgba(59, 130, 246, 0.2) 60%,
+      rgba(30, 30, 60, 0.6) 100%
+    );
+  box-shadow: 
+    /* Outer glow */
+    0 0 20px rgba(255, 255, 255, 0.08),
+    /* 3D drop shadow */
+    0 8px 25px -5px rgba(0, 0, 0, 0.5),
+    0 15px 40px -10px rgba(0, 0, 0, 0.3),
+    /* Inner shadow for depth */
+    inset 0 -8px 20px rgba(0, 0, 0, 0.4),
+    inset 0 8px 15px rgba(255, 255, 255, 0.1),
+    /* Rim light */
+    inset 0 0 2px rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Glass highlight overlay for 3D effect */
+.x-bubbles-container.mode-3d .kol-bubble-ring::before {
+  content: '';
+  position: absolute;
+  top: 8%;
+  left: 15%;
+  width: 35%;
+  height: 25%;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 100%
+  );
+  border-radius: 50%;
+  filter: blur(1px);
+  pointer-events: none;
+}
+
+/* Bottom reflection */
+.x-bubbles-container.mode-3d .kol-bubble-ring::after {
+  content: '';
+  position: absolute;
+  bottom: 5%;
+  right: 20%;
+  width: 20%;
+  height: 12%;
+  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+/* 3D Inner sphere (avatar container) */
+.x-bubbles-container.mode-3d .kol-bubble-inner {
+  background: 
+    /* Top light reflection */
+    radial-gradient(ellipse 70% 50% at 30% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+    /* Base gradient */
+    radial-gradient(circle at 40% 40%, #2a2a4a 0%, #1a1a2e 50%, #0f0f1a 100%);
+  box-shadow: 
+    /* Recessed shadow */
+    inset 0 4px 15px rgba(0, 0, 0, 0.5),
+    inset 0 -4px 10px rgba(255, 255, 255, 0.04),
+    /* Subtle border glow */
+    0 0 3px rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Avatar image with sphere mapping effect */
+.x-bubbles-container.mode-3d .kol-bubble-inner img {
+  filter: contrast(1.05) saturate(1.1);
+  mask-image: radial-gradient(circle, white 60%, rgba(255,255,255,0.8) 80%, rgba(255,255,255,0.5) 100%);
+  -webkit-mask-image: radial-gradient(circle, white 60%, rgba(255,255,255,0.8) 80%, rgba(255,255,255,0.5) 100%);
+}
+
+/* 3D Glow effect - ambient sphere light */
+.x-bubbles-container.mode-3d .kol-bubble-glow {
+  background: 
+    radial-gradient(circle, 
+      rgba(255, 255, 255, 0.08) 0%, 
+      rgba(255, 255, 255, 0.06) 30%,
+      rgba(255, 255, 255, 0.04) 50%,
+      transparent 70%
+    );
+  filter: blur(8px);
+}
+
+/* Shadow on "ground" */
+.x-bubbles-container.mode-3d .kol-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -15%;
+  left: 50%;
+  transform: translateX(-50%) rotateX(90deg);
+  width: 70%;
+  height: 20px;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.4) 0%, transparent 70%);
+  filter: blur(5px);
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* 3D Hover - lift and tilt */
+.x-bubbles-container.mode-3d .kol-bubble:hover {
+  transform: translateY(-4px) rotateX(-5deg) rotateY(5deg);
+}
+
+.x-bubbles-container.mode-3d .kol-bubble:hover .kol-bubble-ring {
+  box-shadow: 
+    0 0 30px rgba(255, 255, 255, 0.1),
+    0 12px 35px -5px rgba(0, 0, 0, 0.6),
+    0 20px 50px -10px rgba(0, 0, 0, 0.4),
+    inset 0 -8px 20px rgba(0, 0, 0, 0.4),
+    inset 0 8px 15px rgba(255, 255, 255, 0.15);
+}
+
+.x-bubbles-container.mode-3d .kol-bubble:hover::after {
+  opacity: 0.8;
+  width: 80%;
+}
+
+/* 3D Dragging - pop forward */
+.x-bubbles-container.mode-3d .kol-bubble.dragging {
+  transform: scale(1.1) translateZ(30px);
+}
+
+.x-bubbles-container.mode-3d .kol-bubble.dragging .kol-bubble-ring {
+  box-shadow: 
+    0 0 40px rgba(255, 255, 255, 0.12),
+    0 15px 45px -5px rgba(0, 0, 0, 0.7),
+    0 25px 60px -10px rgba(0, 0, 0, 0.5),
+    inset 0 -10px 25px rgba(0, 0, 0, 0.5),
+    inset 0 10px 20px rgba(255, 255, 255, 0.2);
+}
+
+.x-bubbles-container.mode-3d .kol-bubble.dragging::after {
+  opacity: 0.9;
+  width: 90%;
+  filter: blur(8px);
+}
+
+/* Center bubble - larger, more prominent */
+.x-bubbles-container.mode-3d .kol-bubble.center .kol-bubble-ring {
+  background: 
+    radial-gradient(ellipse 60% 40% at 30% 20%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 30% at 70% 80%, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
+    radial-gradient(circle at 35% 35%, 
+      rgba(255, 255, 255, 0.1) 0%, 
+      rgba(255, 255, 255, 0.08) 30%,
+      rgba(99, 102, 241, 0.3) 60%,
+      rgba(40, 30, 80, 0.7) 100%
+    );
+  box-shadow: 
+    0 0 40px rgba(255, 255, 255, 0.12),
+    0 10px 35px -5px rgba(0, 0, 0, 0.6),
+    0 20px 50px -10px rgba(0, 0, 0, 0.4),
+    inset 0 -10px 25px rgba(0, 0, 0, 0.5),
+    inset 0 10px 20px rgba(255, 255, 255, 0.15),
+    inset 0 0 3px rgba(255, 255, 255, 0.4);
+}
+
+/* Following bubbles - subtle pulse effect */
+.x-bubbles-container.mode-3d .kol-bubble.following .kol-bubble-ring {
+  animation: sphere3DPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes sphere3DPulse {
+  0%, 100% { 
+    box-shadow: 
+      0 0 25px rgba(255, 255, 255, 0.1),
+      0 8px 25px -5px rgba(0, 0, 0, 0.5),
+      0 15px 40px -10px rgba(0, 0, 0, 0.3),
+      inset 0 -8px 20px rgba(0, 0, 0, 0.4),
+      inset 0 8px 15px rgba(255, 255, 255, 0.1);
+  }
+  50% { 
+    box-shadow: 
+      0 0 35px rgba(255, 255, 255, 0.15),
+      0 10px 30px -5px rgba(0, 0, 0, 0.6),
+      0 18px 45px -10px rgba(0, 0, 0, 0.35),
+      inset 0 -8px 20px rgba(0, 0, 0, 0.4),
+      inset 0 8px 15px rgba(255, 255, 255, 0.15);
+  }
+}
+
+/* 3D connections have depth */
+.x-bubbles-container.mode-3d .bubble-connections {
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.3));
+}
+
+/* 3D Light theme adjustments */
+.x-bubbles-container.mode-3d.light-theme .kol-bubble-ring {
+  background: 
+    radial-gradient(ellipse 60% 40% at 30% 20%, rgba(255, 255, 255, 0.5) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 30% at 70% 80%, rgba(255, 255, 255, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 35% 35%, 
+      rgba(255, 255, 255, 0.9) 0%, 
+      rgba(240, 240, 255, 0.8) 30%,
+      rgba(220, 220, 240, 0.7) 60%,
+      rgba(180, 180, 210, 0.6) 100%
+    );
+  box-shadow: 
+    0 0 15px rgba(255, 255, 255, 0.08),
+    0 8px 25px -5px rgba(0, 0, 0, 0.2),
+    0 15px 40px -10px rgba(0, 0, 0, 0.15),
+    inset 0 -8px 20px rgba(0, 0, 0, 0.1),
+    inset 0 8px 15px rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.x-bubbles-container.mode-3d.light-theme .kol-bubble-inner {
+  background: 
+    radial-gradient(ellipse 70% 50% at 30% 20%, rgba(255, 255, 255, 0.8) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, #ffffff 0%, #f8f8ff 50%, #f0f0f8 100%);
+  box-shadow: 
+    inset 0 4px 15px rgba(0, 0, 0, 0.1),
+    inset 0 -4px 10px rgba(255, 255, 255, 0.02),
+    0 0 3px rgba(255, 255, 255, 0.06);
+}
+
+.x-bubbles-container.mode-3d.light-theme .kol-bubble::after {
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.15) 0%, transparent 70%);
+}
+
+/* 3D Title - floating above sphere */
+.x-bubbles-container.mode-3d .kol-bubble-title {
+  background: 
+    linear-gradient(135deg, rgba(20, 20, 40, 0.9) 0%, rgba(30, 30, 60, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.4),
+    0 8px 25px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateX(-50%) translateZ(20px);
+  backdrop-filter: blur(8px);
+}
+
+.x-bubbles-container.mode-3d .kol-bubble:hover .kol-bubble-title {
+  background: 
+    linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.15) 100%);
+  box-shadow: 
+    0 6px 20px rgba(255, 255, 255, 0.08),
+    0 10px 30px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateX(-50%) translateY(-5px) translateZ(30px);
+}
+
+.x-bubbles-container.mode-3d .kol-bubble.dragging .kol-bubble-title {
+  background: 
+    linear-gradient(135deg, rgba(245, 245, 247, 0.3) 0%, rgba(236, 72, 153, 0.8) 100%);
+  box-shadow: 
+    0 8px 25px rgba(255, 255, 255, 0.1),
+    0 12px 35px rgba(0, 0, 0, 0.4);
+  transform: translateX(-50%) translateY(-8px) translateZ(40px) scale(1.1);
+}
+
+.x-bubbles-container.mode-3d.light-theme .kol-bubble-title {
+  background: 
+    linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 248, 255, 0.9) 100%);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #1e293b;
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.15),
+    0 8px 25px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* =========================
+   3D Scene & Navigation
+   ========================= */
+.scene-3d {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.05s linear;
+  z-index: 5;
+}
+
+.x-bubbles-container.mode-3d {
+  background: radial-gradient(ellipse at center, #0a0a1a 0%, #050510 50%, #000005 100%);
+  cursor: crosshair;
+}
+
+.x-bubbles-container.mode-3d .scene-3d {
+  /* 3D transform is applied via inline style */
+}
+
+.x-bubbles-container.navigating {
+  cursor: move;
+}
+
+/* =========================
+   Space Environment - Smooth Floating Particles
+   ========================= */
+.space-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.space-particle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.4;
+}
+
+.space-particle.sp-1 {
+  width: 60px;
+  height: 60px;
+  background: radial-gradient(circle at 30% 30%, 
+    rgba(255, 255, 255, 0.08) 0%, 
+    rgba(255, 255, 255, 0.04) 40%,
+    transparent 70%);
+  animation: floatParticle1 35s ease-in-out infinite;
+}
+
+.space-particle.sp-2 {
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(circle at 30% 30%, 
+    rgba(99, 102, 241, 0.25) 0%, 
+    rgba(99, 102, 241, 0.08) 40%,
+    transparent 70%);
+  animation: floatParticle2 45s ease-in-out infinite;
+}
+
+.space-particle.sp-3 {
+  width: 50px;
+  height: 50px;
+  background: radial-gradient(circle at 30% 30%, 
+    rgba(255, 255, 255, 0.06) 0%, 
+    rgba(255, 255, 255, 0.03) 40%,
+    transparent 70%);
+  animation: floatParticle3 40s ease-in-out infinite;
+}
+
+.space-particle.sp-4 {
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle at 30% 30%, 
+    rgba(6, 182, 212, 0.2) 0%, 
+    rgba(6, 182, 212, 0.05) 40%,
+    transparent 70%);
+  animation: floatParticle4 50s ease-in-out infinite;
+}
+
+@keyframes floatParticle1 {
+  0%, 100% { 
+    transform: translate(0, 0) scale(1); 
+    opacity: 0.3;
+  }
+  25% { 
+    transform: translate(30px, -50px) scale(1.1); 
+    opacity: 0.5;
+  }
+  50% { 
+    transform: translate(-20px, -80px) scale(0.9); 
+    opacity: 0.4;
+  }
+  75% { 
+    transform: translate(40px, -30px) scale(1.05); 
+    opacity: 0.35;
+  }
+}
+
+@keyframes floatParticle2 {
+  0%, 100% { 
+    transform: translate(0, 0) scale(1); 
+    opacity: 0.25;
+  }
+  33% { 
+    transform: translate(-40px, 60px) scale(1.15); 
+    opacity: 0.4;
+  }
+  66% { 
+    transform: translate(50px, 30px) scale(0.95); 
+    opacity: 0.3;
+  }
+}
+
+@keyframes floatParticle3 {
+  0%, 100% { 
+    transform: translate(0, 0) scale(1); 
+    opacity: 0.35;
+  }
+  50% { 
+    transform: translate(60px, -40px) scale(1.2); 
+    opacity: 0.5;
+  }
+}
+
+@keyframes floatParticle4 {
+  0%, 100% { 
+    transform: translate(0, 0) scale(1); 
+    opacity: 0.2;
+  }
+  25% { 
+    transform: translate(-30px, 40px) scale(1.1); 
+    opacity: 0.3;
+  }
+  50% { 
+    transform: translate(20px, 70px) scale(0.9); 
+    opacity: 0.25;
+  }
+  75% { 
+    transform: translate(-50px, 20px) scale(1.05); 
+    opacity: 0.35;
+  }
+}
+
+/* Subtle Stars */
+.space-stars-subtle {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.subtle-star {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  opacity: 0.3;
+  animation: subtleTwinkle 15s ease-in-out infinite;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+}
+
+@keyframes subtleTwinkle {
+  0%, 100% { 
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.5;
+    transform: scale(1.1);
+  }
+}
+
+/* =========================
+   Warp Speed Effect
+   ========================= */
+.warp-effect {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.warp-line {
+  position: absolute;
+  width: 1px;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.12), transparent);
+  transform-origin: center center;
+  animation: warpStretch 0.8s linear infinite;
+  border-radius: 2px;
+  filter: blur(0.5px);
+}
+
+@keyframes warpStretch {
+  0% {
+    transform: translateY(-100%) scaleY(0.3);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.8;
+  }
+  70% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(100vh) scaleY(2);
+    opacity: 0;
+  }
+}
+
+/* =========================
+   Flight HUD
+   ========================= */
+.flight-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* Crosshair */
+.hud-crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.crosshair-ring {
+  width: 60px;
+  height: 60px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 
+    0 0 15px rgba(255, 255, 255, 0.2),
+    inset 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+.crosshair-dot {
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 
+    0 0 12px rgba(255, 255, 255, 0.6),
+    0 0 25px rgba(255, 255, 255, 0.3);
+}
+
+.crosshair-line {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.crosshair-h {
+  width: 20px;
+  height: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.crosshair-h:first-of-type { left: -40px; }
+.crosshair-line.crosshair-h { left: -40px; }
+.crosshair-line.crosshair-h::after {
+  content: '';
+  position: absolute;
+  right: -80px;
+  width: 20px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.crosshair-v {
+  width: 2px;
+  height: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.crosshair-v:first-of-type { top: -40px; }
+.crosshair-line.crosshair-v { top: -40px; }
+.crosshair-line.crosshair-v::after {
+  content: '';
+  position: absolute;
+  bottom: -80px;
+  width: 2px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Speed Indicator - Bottom Center */
+.hud-speed-bottom {
+  position: absolute;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.speed-display {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(4px);
+}
+
+.speed-display .speed-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.speed-display.warp .speed-value {
+  color: rgba(245, 245, 247, 0.65);
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+.speed-display .speed-unit {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.warp-badge {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.65);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  animation: warpBlink 0.5s ease-in-out infinite;
+}
+
+@keyframes warpBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Position Indicator */
+.hud-position {
+  position: absolute;
+  right: 80px;
+  top: 20px;
+}
+
+.pos-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.12);
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+
+.pos-coords {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.8125rem;
+  font-family: var(--font-mono);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.pos-coords span {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 3px;
+  border-left: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Compass */
+.hud-compass {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.compass-ring {
+  width: 80px;
+  height: 80px;
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  position: relative;
+  transition: transform 0.1s ease-out;
+}
+
+.compass-ring span {
+  position: absolute;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.compass-n { top: 5px; left: 50%; transform: translateX(-50%); color: rgba(245, 245, 247, 0.65) !important; }
+.compass-e { right: 5px; top: 50%; transform: translateY(-50%); }
+.compass-s { bottom: 5px; left: 50%; transform: translateX(-50%); }
+.compass-w { left: 5px; top: 50%; transform: translateY(-50%); }
+
+/* Planet markers on depth bar */
+.depth-planet-marker {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Planet close effect - glow when passing by */
+.kol-bubble.planet-close .kol-bubble-ring {
+  box-shadow: 
+    0 0 60px rgba(255, 255, 255, 0.2),
+    0 0 100px rgba(255, 255, 255, 0.08),
+    0 0 150px rgba(99, 102, 241, 0.2);
+}
+
+.kol-bubble.planet-close .kol-bubble-title {
+  font-size: 1rem !important;
+  padding: 8px 16px !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.12);
+}
+
+/* Space nebula background enhancement for 3D */
+.x-bubbles-container.mode-3d::before {
+  background: 
+    /* Central bright area */
+    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
+    /* Nebula clouds */
+    radial-gradient(ellipse 80% 60% at 20% 80%, rgba(99, 102, 241, 0.2) 0%, transparent 40%),
+    radial-gradient(ellipse 60% 80% at 80% 20%, rgba(255, 255, 255, 0.04) 0%, transparent 40%),
+    radial-gradient(ellipse 70% 50% at 10% 30%, rgba(236, 72, 153, 0.1) 0%, transparent 40%),
+    radial-gradient(ellipse 50% 70% at 90% 70%, rgba(6, 182, 212, 0.08) 0%, transparent 40%);
+  animation: nebulaShift 60s ease-in-out infinite alternate;
+}
+
+@keyframes nebulaShift {
+  0% {
+    filter: hue-rotate(0deg) brightness(1);
+    transform: scale(1);
+  }
+  50% {
+    filter: hue-rotate(15deg) brightness(1.05);
+    transform: scale(1.02);
+  }
+  100% {
+    filter: hue-rotate(-8deg) brightness(0.98);
+    transform: scale(1);
+  }
+}
+
+/* Ambient bubbles in 3D space mode - slow floating effect */
+.x-bubbles-container.mode-3d .ambient-bubbles {
+  opacity: 0.4;
+}
+
+.x-bubbles-container.mode-3d .ambient-bubble {
+  animation-duration: 40s !important;
+}
+
+/* Hide connection lines in deep 3D flight - focus on planets */
+.x-bubbles-container.mode-3d .bubble-connections {
+  opacity: 0.3;
+}
+
+/* Edge vignette for space immersion */
+.x-bubbles-container.mode-3d::after {
+  background: 
+    radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.6) 100%);
+  animation: none;
+}
+
+/* 3D mode shows energy particles with slow animation */
+.x-bubbles-container.mode-3d .energy-particles {
+  display: block;
+  opacity: 0.6;
+}
+
+.x-bubbles-container.mode-3d .energy-particle {
+  animation-duration: 40s !important;
+}
+
+/* 3D Navigation Help Panel - Collapsible */
+.nav-help-3d {
+  position: absolute;
+  left: 12px;
+  bottom: 60px;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  padding: 12px 16px;
+  z-index: 30;
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.7);
+  min-width: 160px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease;
+}
+
+.nav-help-3d.collapsed {
+  min-width: auto;
+  padding: 8px 12px;
+}
+
+.nav-help-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nav-help-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.nav-collapse-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--accent-light);
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.nav-collapse-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent);
+}
+
+.nav-help-content {
+  margin-top: 10px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.nav-help-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.nav-help-item kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  font-size: 0.8125rem;
+  font-family: var(--font-mono);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  color: var(--accent-light);
+}
+
+.nav-help-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 10px 0;
+}
+
+.nav-reset-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: white;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.12) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-reset-btn:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.2) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.08);
+}
+
+/* Depth Indicator */
+.depth-indicator {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 30;
+}
+
+.depth-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.depth-bar {
+  width: 6px;
+  height: 150px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+
+.depth-bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, 
+    rgba(255, 255, 255, 0.08) 0%, 
+    rgba(99, 102, 241, 0.2) 50%, 
+    rgba(6, 182, 212, 0.3) 100%
+  );
+}
+
+.depth-marker {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 14px;
+  background: linear-gradient(135deg, rgba(245, 245, 247, 0.5) 0%, rgba(245, 245, 247, 0.5) 100%);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.12), 0 0 20px rgba(255, 255, 255, 0.08);
+  transition: bottom 0.15s ease-out;
+}
+
+.depth-value {
+  font-size: 0.8125rem;
+  font-family: var(--font-mono);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Light theme adjustments for 3D UI */
+.x-bubbles-container.light-theme .nav-help-3d {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(255, 255, 255, 0.06);
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.x-bubbles-container.light-theme .nav-help-item {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.x-bubbles-container.light-theme .nav-help-item kbd {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.60);
+}
+
+.x-bubbles-container.light-theme .depth-bar {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.x-bubbles-container.light-theme .depth-label,
+.x-bubbles-container.light-theme .depth-value {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+/* Hide 3D elements in 2D mode */
+.x-bubbles-container.mode-2d .nav-help-3d,
+.x-bubbles-container.mode-2d .depth-indicator {
+  display: none;
+}
+
+/* Loading more history - Left edge glow effect */
+.loading-edge-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 120px;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.06) 30%,
+    rgba(255, 255, 255, 0.02) 60%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 50;
+  animation: pulseGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.6;
+    width: 100px;
+  }
+  50% {
+    opacity: 1;
+    width: 140px;
+  }
+}
+
+/* Loading more history indicator */
+.loading-more-indicator {
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  background: linear-gradient(135deg, rgba(15, 15, 20, 0.95) 0%, rgba(25, 25, 35, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: 12px 18px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 
+    0 0 30px rgba(255, 255, 255, 0.08),
+    0 4px 20px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  z-index: 100;
+  animation: slideInLeft 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  backdrop-filter: blur(10px);
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-30px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0) scale(1);
+  }
+}
+
+.loading-more-indicator .loading-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.06) 100%);
+  border-radius: 8px;
+  animation: iconSpin 2s linear infinite;
+}
+
+.loading-more-indicator .loading-icon svg {
+  width: 18px;
+  height: 18px;
+  color: rgba(245, 245, 247, 0.6);
+}
+
+@keyframes iconSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-more-indicator .loading-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.loading-more-indicator .loading-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  letter-spacing: 0.02em;
+}
+
+.loading-more-indicator .loading-dots {
+  font-size: 0.8125rem;
+  color: rgba(245, 245, 247, 0.6);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  display: flex;
+  gap: 2px;
+}
+
+.loading-more-indicator .loading-dots span {
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+
+.loading-more-indicator .loading-dots span:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.loading-more-indicator .loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-more-indicator .loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dotPulse {
+  0%, 60%, 100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+
+/* Chart skeleton shimmer loader */
+.chart-skeleton {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+.chart-skeleton-controls {
+  display: flex;
+  gap: 8px;
+}
+.chart-skeleton-pill {
+  height: 28px;
+  width: 60px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+.chart-skeleton-area {
+  flex: 1;
+  border-radius: 8px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+  animation-delay: 100ms;
+}
+
+/* TradingView chart shimmer overlay - shown until onChartReady */
+/* Spectre brand watermark - centered behind chart data, very subtle (research parity).
+   A decorative skin swaps the image via --skin-watermark (lib/decorSkins.js);
+   the var is cleared when no skin / in day mode, so the logo is the fallback. */
+.chart-watermark {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: var(--skin-watermark, url('/logo-dark-mode.png'));
+  background-repeat: no-repeat;
+  background-position: center 50%;
+  background-size: 19% auto;
+  opacity: 0.045;
+  z-index: 1;
+  transition: opacity 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* Skin watermarks are line-art, thinner than the logo - slightly higher presence */
+.app[class*="skin-"] .chart-watermark {
+  opacity: 0.07;
+  background-size: 24% auto;
+}
+body.theme-light .chart-watermark {
+  background-image: url('/logo-day-mode.png');
+  opacity: 0.05;
+}
+@media (max-width: 768px) {
+  .chart-watermark { background-size: 42% auto; opacity: 0.04; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chart-watermark { transition: none; }
+}
+
+/* === Chart toolbar typography: Geist, matching the token-page HUD === */
+/* The toolbar wears Geist (--font-body) - the same font as the bento cards, dossier,
+   and headers - instead of the old generic Apple system stack. The numeric timeframe
+   pills + zoom readout switch to Geist Mono below (tabular figures, like the page's
+   .stat-value prices). Word triggers (More / Types / Tools) stay Geist sans. */
+.chart-controls .tf-btn,
+.chart-controls .type-btn,
+.chart-controls .type-label,
+.chart-controls .toggle-btn,
+.chart-controls .price-mcap-toggle .toggle-btn,
+.chart-controls .tf-dropdown-trigger,
+.chart-controls .tf-more-trigger,
+.chart-controls .chart-more-trigger,
+.tf-dropdown-menu,
+.tf-dropdown-item,
+.chart-more-menu,
+.chart-more-item-label {
+  font-family: var(--font-body) !important;
+  letter-spacing: 0;
+}
+
+/* === Refined terminal toolbar: dim inactive -> white active + inset press === */
+/* Inactive labels recede to a quiet grey; the selected control reads as pure white
+   in a recessed/pressed well (see the active block below). Hover is a soft lift. */
+.chart-controls .tf-btn:not(.is-locked),
+.chart-controls .type-btn:not(.is-locked),
+.chart-controls .tf-dropdown-trigger,
+.chart-controls .chart-more-trigger {
+  color: rgba(245, 245, 247, 0.42);
+}
+.chart-controls .tf-btn:not(.is-locked):hover,
+.chart-controls .type-btn:not(.is-locked):hover,
+.chart-controls .tf-dropdown-trigger:hover,
+.chart-controls .chart-more-trigger:hover {
+  color: rgba(245, 245, 247, 0.72);
+}
+/* White mode: the inactive-toolbar rule above (specificity .chart-controls
+   .tf-btn:not(.is-locked) = 0,3,0) OUT-SPECIFIED the earlier body.theme-light
+   .tf-btn (0,2,1), so the buttons stayed warm-white on white. Match its
+   structure at higher specificity to flip them to readable dark slate. */
+body.theme-light .chart-controls .tf-btn:not(.is-locked),
+body.theme-light .chart-controls .type-btn:not(.is-locked),
+body.theme-light .chart-controls .tf-dropdown-trigger,
+body.theme-light .chart-controls .chart-more-trigger {
+  color: rgba(15, 23, 42, 0.62);
+}
+body.theme-light .chart-controls .tf-btn:not(.is-locked):hover,
+body.theme-light .chart-controls .type-btn:not(.is-locked):hover,
+body.theme-light .chart-controls .tf-dropdown-trigger:hover,
+body.theme-light .chart-controls .chart-more-trigger:hover {
+  color: rgba(15, 23, 42, 0.85);
+}
+/* Numeric readouts (timeframe pills + zoom T:/P:) use Geist SANS (--font-num-chip)
+   with tabular figures + slashed-zero OFF - NO crossing-zero font on the chart
+   section. Pills carry no zeros, but the zoom readout (T:1500%) + overflow dropdown
+   (30m) do, so every digit stays a plain round zero. Geist Mono's slashed zero is
+   the reason the design system keeps --font-num-chip on Geist sans for numbers. */
+.chart-controls .tf-btn:not(.tf-more-trigger),
+.chart-controls .zoom-indicator {
+  font-family: var(--font-num-chip) !important;
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+}
+
+/* Active = pure WHITE, always one neutral colour (never the token accent). */
+.chart-controls .tf-btn.active,
+.chart-controls .type-btn.active,
+.chart-controls .price-mcap-toggle .toggle-btn.active {
+  color: #ffffff;
+}
+.chart-controls .type-btn.active .type-icon { opacity: 1; }
+
+/* Active = INSET / pressed-key (chosen 2026-06-25, replacing the translucent
+   white glow-fill that read as "AI slop"). The selected control sits RECESSED in
+   the toolbar: a darker well (translucent black so it adapts to the chart behind
+   the transparent bar) + a top inner shadow for depth + a 1px bottom "lip"
+   highlight, with white text. No glow-fill, no ring. border-radius inherits from
+   the button so there is zero layout shift. Day-mode counterpart below. */
+body:not(.theme-light) .chart-controls .tf-btn.active,
+body:not(.theme-light) .chart-controls .type-btn.active,
+body:not(.theme-light) .chart-controls .type-btn.tradingview-btn.active,
+body:not(.theme-light) .chart-controls .price-mcap-toggle .toggle-btn.active {
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.7), inset 0 -1px 0 0 rgba(255, 255, 255, 0.07);
+}
+
+/* Day-mode pressed = a faint ink well + soft top shadow + white bottom lip.
+   Overrides the light-fill rules near :260 via higher specificity. */
+body.theme-light .chart-controls .tf-btn.active,
+body.theme-light .chart-controls .type-btn.active,
+body.theme-light .chart-controls .type-btn.tradingview-btn.active,
+body.theme-light .chart-controls .price-mcap-toggle .toggle-btn.active {
+  background: rgba(15, 23, 42, 0.07);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.16), inset 0 -1px 0 0 rgba(255, 255, 255, 0.65);
+}
+
+/* Fast-terminal declutter (2026-07-10): the locked Coming-Soon tool
+   placeholders (heatmap / ATH / VWAP / indicators / fullscreen) fold into
+   the Tools overflow menu at EVERY width - a row of dead lock-badged
+   buttons read as heavy desktop software, not a terminal. Functional
+   controls stay inline: chart style, the drawing-rail toggle (TV mode),
+   Fit. Layout-only change - no colors/sizes touched, works in both themes. */
+.chart-controls .chart-tools .tool-btn.is-locked { display: none; }
+.chart-controls .chart-tools-more { display: flex; }

@@ -1,0 +1,115 @@
+.page-layout {
+  /* Must match .header height (74px in components/header.css). Was 46px which
+     left the top ~28px of page content (e.g. the welcome-page trending ticker)
+     hidden behind the fixed header. */
+  --page-layout-header: 50px;
+  --page-layout-padding-x: 24px;
+  --page-layout-padding-y: 24px;
+  --page-layout-padding-bottom: 0px;
+  --page-layout-sidebar-width: 220px;
+  --page-layout-sidebar-collapsed: 64px;
+
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  width: 100%;
+  margin-left: 0;
+  padding: calc(var(--page-layout-header) + var(--page-layout-padding-y)) 0 var(--page-layout-padding-bottom);
+  transition: margin-left 0.25s ease, width 0.25s ease;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  /* 🪤 BOTH LINES BELOW ARE LOAD-BEARING - do not "clean up" the transform.
+     It is an identity transform, so it looks like a dead GPU hint, and it has a
+     real cost: it makes this element the containing block for every
+     `position: fixed` descendant on the page. Measured on /watchlists, an
+     `inset: 0` modal scrim rendered at x=220 (missing the nav sidebar), the
+     modal sat 110px right of centre, and scrolling dragged the "fixed" overlay
+     off-screen with the content.
+     It was removed on 2026-08-27 for exactly that reason and PUT BACK the same
+     day: without the compositing layer it forces, Safari stops repainting the
+     region under the fixed header on Traders Corner - page content and header
+     chrome paint interleaved, reported twice by the founder. Chrome is fine
+     either way; WebKit is not, and we cannot drive Safari from here to iterate.
+     THE FIX FOR A TRAPPED OVERLAY IS NOT TO TOUCH THIS LINE. Render the overlay
+     through `@/components/app-portal`, which moves it to <body> - out of this
+     containing block AND out of `.app-main-content`'s stacking context - while
+     keeping the `.app…` theme classes that scope every day-mode rule. The
+     mobile block below drops the transform because at =<768px there is no
+     sidebar offset to trap anything into. */
+  will-change: scroll-position;
+  transform: translateZ(0);
+}
+
+.page-layout__content {
+  flex: 1;
+  min-height: min-content;
+}
+
+.page-layout__content > * {
+  min-height: 0 !important;
+}
+
+.app.nav-sidebar-open .page-layout:not(.page-layout--no-sidebar) {
+  margin-left: var(--page-layout-sidebar-width);
+  width: calc(100% - var(--page-layout-sidebar-width));
+}
+
+.app.nav-sidebar-open.nav-sidebar-collapsed .page-layout:not(.page-layout--no-sidebar) {
+  margin-left: var(--page-layout-sidebar-collapsed);
+  width: calc(100% - var(--page-layout-sidebar-collapsed));
+}
+
+.page-layout--no-sidebar {
+  margin-left: 0 !important;
+  width: 100% !important;
+}
+
+.page-layout--centered .page-layout__inner {
+  width: 100%;
+  max-width: var(--page-layout-max-width, 960px);
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8, 32px);
+}
+
+@media (max-width: 768px) {
+  .page-layout {
+    margin-left: 0 !important;
+    width: 100% !important;
+    /* Both axes must be visible — if only one is visible and the other isn't,
+       CSS spec auto-converts visible→auto, creating a scroll trap.
+       Also kill overscroll-behavior so touch events propagate to app-main-content. */
+    overflow: visible !important;
+    overscroll-behavior: auto !important;
+    /* Remove transform/will-change so position:fixed modals inside pages
+       are positioned relative to the viewport, not this element */
+    transform: none !important;
+    will-change: auto !important;
+    min-height: auto;
+    height: auto;
+    padding-top: 0 !important;
+    padding-bottom: 0;
+  }
+
+  .page-layout__content {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  /* Safety-net: give all pages a default top padding to clear
+     the fixed mobile header. Pages with their own !important
+     padding-top in mobile-2026.css will override this. */
+  .page-layout__content > *:first-child {
+    padding-top: calc(52px + env(safe-area-inset-top, 0px));
+  }
+
+  .page-layout--centered .page-layout__inner {
+    max-width: 100%;
+  }
+}

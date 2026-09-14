@@ -1,0 +1,371 @@
+/* ═══════════════════════════════════════════════════════
+   X BUBBLES × COSMOS — page-specific chrome on top of the
+   shared cosmos.css HUD. Warm-white, no purple.
+   ═══════════════════════════════════════════════════════ */
+
+/* the cosmos-root is absolute-inset — give it a full-viewport host inside
+   the xi page (which owns position context + header offset) */
+.xb-cosmos-host {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* The xi page spans the FULL viewport beneath the fixed app header (74px)
+   and the navigation sidebar — cosmos.css's 14px HUD corners would tuck the
+   controls under both. Clear the chrome the same way .xi-filter does. */
+.xb-cosmos .cosmos-hud-tl {
+  top: calc(74px + 14px);
+  left: calc(var(--sidebar-nav-width, 220px) + 14px);
+}
+.xb-cosmos .cosmos-hud-tr { top: calc(74px + 14px); }
+.xb-cosmos .cosmos-hud-bl { left: calc(var(--sidebar-nav-width, 220px) + 14px); }
+.app.nav-sidebar-collapsed .xb-cosmos .cosmos-hud-tl,
+.app.nav-sidebar-collapsed .xb-cosmos .cosmos-hud-bl {
+  left: calc(64px + 14px);
+}
+@media (max-width: 720px) {
+  .xb-cosmos .cosmos-hud-tl { top: calc(60px + 10px); left: 10px; }
+  .xb-cosmos .cosmos-hud-tr { top: calc(60px + 10px); }
+  .xb-cosmos .cosmos-hud-bl { left: 10px; }
+}
+
+/* status line under the control cluster */
+.xb-status {
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: rgba(245, 245, 247, 0.45);
+  padding: 2px 4px;
+  user-select: none;
+}
+.cosmos-day .xb-status { color: rgba(15, 23, 42, 0.5); }
+
+/* "+N more" bump — turns the density cap into a visible control */
+.xb-status-more {
+  margin-left: 6px;
+  padding: 1px 7px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: rgba(245, 245, 247, 0.75);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+.xb-status-more:hover { background: rgba(255, 255, 255, 0.12); color: rgba(245, 245, 247, 0.95); }
+.cosmos-day .xb-status-more {
+  color: rgba(15, 23, 42, 0.65);
+  background: rgba(15, 23, 42, 0.06);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+.cosmos-day .xb-status-more:hover { background: rgba(15, 23, 42, 0.12); color: rgba(15, 23, 42, 0.9); }
+
+/* KOL tier chip inside the hover card */
+.xb-tier-tag {
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 245, 247, 0.14);
+  color: rgba(245, 245, 247, 0.75);
+  white-space: nowrap;
+}
+.cosmos-day .xb-tier-tag {
+  border-color: rgba(15, 23, 42, 0.18);
+  color: rgba(15, 23, 42, 0.6);
+}
+
+/* ── embedded mode (x-dash Constellation tab): the host panel owns the
+   chrome, so the HUD returns to plain 14px corners ── */
+.xb-cosmos--embedded .cosmos-hud-tl { top: 14px; left: 14px; }
+.xb-cosmos--embedded .cosmos-hud-tr { top: 14px; }
+.xb-cosmos--embedded .cosmos-hud-bl { left: 14px; }
+@media (max-width: 720px) {
+  .xb-cosmos--embedded .cosmos-hud-tl { top: 10px; left: 10px; }
+  .xb-cosmos--embedded .cosmos-hud-tr { top: 10px; }
+  .xb-cosmos--embedded .cosmos-hud-bl { left: 10px; }
+}
+
+/* ── live signal chips (breakout radar → the universe) ── */
+.xb-signal-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.xb-signal-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  appearance: none;
+  cursor: pointer;
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  color: #fbbf24;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.xb-signal-chip:hover {
+  transform: translateY(-1px);
+  background: rgba(251, 191, 36, 0.14);
+}
+.xb-signal-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fbbf24;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.8);
+  animation: xbSignalPulse 1.6s ease-in-out infinite;
+}
+@keyframes xbSignalPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .xb-signal-dot { animation: none; }
+}
+.cosmos-day .xb-signal-chip {
+  background: rgba(180, 120, 10, 0.08);
+  border-color: rgba(160, 105, 10, 0.35);
+  color: #92600a;
+}
+
+/* hunter detectors carry their own hues: contagion = rotation cyan,
+   distribution = exit red (breakout keeps the amber default) */
+.xb-signal-chip--contagion {
+  background: rgba(34, 211, 238, 0.07);
+  border-color: rgba(34, 211, 238, 0.28);
+  color: #67e8f9;
+}
+.xb-signal-chip--contagion .xb-signal-dot {
+  background: #22d3ee;
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.8);
+}
+.xb-signal-chip--contagion:hover { background: rgba(34, 211, 238, 0.13); }
+.xb-signal-chip--distribution {
+  background: rgba(248, 113, 113, 0.07);
+  border-color: rgba(248, 113, 113, 0.3);
+  color: #fca5a5;
+}
+.xb-signal-chip--distribution .xb-signal-dot {
+  background: #f87171;
+  box-shadow: 0 0 8px rgba(248, 113, 113, 0.8);
+}
+.xb-signal-chip--distribution:hover { background: rgba(248, 113, 113, 0.13); }
+.cosmos-day .xb-signal-chip--contagion {
+  background: rgba(8, 145, 178, 0.07);
+  border-color: rgba(8, 145, 178, 0.35);
+  color: #0e7490;
+}
+.cosmos-day .xb-signal-chip--distribution {
+  background: rgba(220, 38, 38, 0.06);
+  border-color: rgba(220, 38, 38, 0.3);
+  color: #b91c1c;
+}
+/* off-universe signal: info only, nothing to fly to */
+.xb-signal-chip--far {
+  cursor: default;
+  opacity: 0.82;
+}
+.xb-signal-chip--far:hover { transform: none; }
+
+/* receipt line inside hover cards — graded Proof-ledger data */
+.xb-receipt {
+  color: #facc15;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.cosmos-day .xb-receipt { color: #92600a; }
+
+/* ── landing doorway into the universe (below the search bar) ── */
+.xb-landing-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: 16px auto 4px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: rgba(245, 245, 247, 0.88);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, background 0.25s ease;
+}
+.xb-landing-cta:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.07);
+}
+.xb-landing-cta svg { opacity: 0.75; }
+.xb-landing-cta__sub {
+  color: rgba(245, 245, 247, 0.38);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+.app.app-day-mode .xb-landing-cta {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: rgba(15, 23, 42, 0.85);
+}
+.app.app-day-mode .xb-landing-cta:hover {
+  border-color: rgba(15, 23, 42, 0.22);
+  background: rgba(15, 23, 42, 0.07);
+}
+.app.app-day-mode .xb-landing-cta__sub { color: rgba(15, 23, 42, 0.45); }
+
+/* ── engine switch (Cosmos ↔ Legacy) — page-level, top-center command chrome.
+   Was a whisper pill at bottom-center, buried under the graph ("near
+   invisible"). Now it sits in the command band under the header where
+   nothing else lives in either engine, with real glass + an active glow. ── */
+.xb-engine-switch {
+  position: absolute;
+  top: calc(74px + 60px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 7;
+  display: flex;
+  gap: 3px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(9, 9, 11, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.xb-engine-switch button {
+  appearance: none;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.55);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  padding: 8px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+.xb-engine-switch button::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.45;
+}
+.xb-engine-switch button:hover { color: rgba(245, 245, 247, 0.9); }
+.xb-engine-switch button.is-on {
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 18px rgba(255, 255, 255, 0.07);
+}
+.xb-engine-switch button.is-on::before {
+  opacity: 1;
+  box-shadow: 0 0 8px rgba(245, 245, 247, 0.8);
+}
+.app.app-day-mode .xb-engine-switch {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.app.app-day-mode .xb-engine-switch button { color: rgba(15, 23, 42, 0.55); }
+.app.app-day-mode .xb-engine-switch button:hover { color: rgba(15, 23, 42, 0.9); }
+.app.app-day-mode .xb-engine-switch button.is-on {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.09);
+  box-shadow: none;
+}
+
+@media (max-width: 720px) {
+  /* thumb-reach on a phone, floated above the bottom nav */
+  .xb-engine-switch {
+    top: auto;
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  }
+  .xb-status { display: none; }
+}
+
+/* ── legacy layout switcher (Web · Hierarchy · Grid) — sits just under the
+   Cosmos/Legacy engine switch in the command band. Shares the engine-switch
+   glass pill treatment so the two read as one control stack. ── */
+.xb-layout-switch {
+  position: absolute;
+  top: calc(74px + 60px + 46px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 7;
+  display: flex;
+  gap: 3px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(9, 9, 11, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.40),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+.xb-layout-switch button {
+  appearance: none;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.5);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 6px 15px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, transform 0.2s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.xb-layout-switch button:hover {
+  color: rgba(245, 245, 247, 0.9);
+  transform: translateY(-1px);
+}
+.xb-layout-switch button.is-on {
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.11);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 0 16px rgba(255, 255, 255, 0.06);
+}
+.app.app-day-mode .xb-layout-switch {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(15, 23, 42, 0.10);
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.app.app-day-mode .xb-layout-switch button { color: rgba(15, 23, 42, 0.55); }
+.app.app-day-mode .xb-layout-switch button:hover { color: rgba(15, 23, 42, 0.9); }
+.app.app-day-mode .xb-layout-switch button.is-on {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.08);
+  box-shadow: none;
+}
+
+@media (max-width: 720px) {
+  /* stack above the engine switch, both floated over the bottom nav */
+  .xb-layout-switch {
+    top: auto;
+    bottom: calc(84px + 46px + env(safe-area-inset-bottom, 0px));
+  }
+}

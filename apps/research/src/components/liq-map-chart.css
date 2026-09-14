@@ -1,0 +1,77 @@
+/* LiqMapChart — price-axis liquidation map. Dark-first; day mode at the end. */
+.lmc { position: relative; width: 100%; display: flex; flex-direction: column; gap: 8px; }
+
+.lmc-legend {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px;
+  padding: 0 2px;
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.01em;
+  color: rgba(245, 245, 247, 0.68);
+}
+.lmc-lg { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.lmc-actions { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+.lmc-lg i { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+.lmc-lg--long i { background: #ef5350; }
+.lmc-lg--short i { background: #26a69a; }
+
+.lmc-plot {
+  position: relative; width: 100%; height: var(--lmc-h, 380px);
+  /* pan-y hands the horizontal drag to useTouchScrub (the crosshair) and keeps
+     the vertical one with the browser, so the page still scrolls over the plot. */
+  touch-action: pan-y;
+  border-radius: 12px; overflow: hidden;
+  background: #0a0b0f; border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.lmc-plot canvas { display: block; width: 100%; height: 100%; }
+
+.lmc-state {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: 12.5px; color: rgba(245, 245, 247, 0.4);
+}
+
+.lmc-tip {
+  position: absolute; top: 12px; pointer-events: none;
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 8px 10px; border-radius: 9px; min-width: 132px;
+  background: rgba(12, 14, 20, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5);
+  font-variant-numeric: tabular-nums; z-index: 3;
+}
+.lmc-tip b { font-size: 12.5px; font-weight: 700; color: #f5f5f7; }
+.lmc-tip span { font-size: 11px; font-weight: 700; }
+.lmc-tip em {
+  display: flex; align-items: center; gap: 5px;
+  font-style: normal; font-size: 10.5px; color: rgba(245, 245, 247, 0.55);
+}
+.lmc-tip em i { width: 7px; height: 7px; border-radius: 2px; flex: none; }
+.lmc-tip .up, .lmc-foot .up { color: #26a69a; }
+.lmc-tip .dn, .lmc-foot .dn { color: #ef5350; }
+
+.lmc-foot {
+  display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+  padding: 0 2px; font-size: 11px; color: rgba(245, 245, 247, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+.lmc-foot b { font-weight: 700; margin-left: 4px; }
+.lmc-note { margin-left: auto; font-size: 10px; color: rgba(245, 245, 247, 0.42); }
+
+/* day mode — app hosts that do NOT thread dayMode (welcome, Command Center)
+   keep the dark plot as a media object; the canvas ink stays light there. */
+.app.app-day-mode .lmc-legend { color: #64748b; }
+.app.app-day-mode .lmc-plot { background: #0b0d13; border-color: rgba(15, 23, 42, 0.08); }
+.app.app-day-mode .lmc-foot { color: #64748b; }
+.app.app-day-mode .lmc-note { color: #94a3b8; }
+
+/* lmc--day mirrors the `dark` prop — set exactly when the canvas draws with
+   DARK ink (day-mode Traders Corner, LITE paper), so the plot must go light or
+   the axes are invisible. Placed after the .app.app-day-mode block on purpose:
+   equal specificity, later wins when both apply. */
+.lmc.lmc--day .lmc-legend { color: #64748b; }
+.lmc.lmc--day .lmc-plot { background: #f7f8fb; border-color: rgba(15, 23, 42, 0.1); }
+.lmc.lmc--day .lmc-foot { color: #64748b; }
+.lmc.lmc--day .lmc-note { color: #94a3b8; }
+
+@media (max-width: 720px) {
+  .lmc-legend { font-size: 9.5px; gap: 4px 10px; }
+  .lmc-note { display: none; }
+}

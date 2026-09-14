@@ -1,0 +1,522 @@
+/* VITALS — narrow viewports.
+ *
+ * The leaderboard rows are the hard part: six columns do not fit 390px, so the
+ * value and delta move under the name rather than shrinking to unreadable. No
+ * interaction here is hover-only — the tide's readout is optional detail, and
+ * every bubble on the floor is focusable and tappable.
+ */
+
+@media (max-width: 1024px) {
+  .vt-row__link { grid-template-columns: 26px 24px minmax(0, 1fr) 96px 62px; }
+  .vt-row__sub { display: none; }
+  .vt-rows--compact .vt-row__link { grid-template-columns: 26px minmax(0, 1fr) 96px 62px; }
+  .vt-cat { grid-template-columns: 118px minmax(60px, 1fr) 80px 56px; }
+  .vt-cat__count { display: none; }
+  /* Breadth is the first column to go: the volume and the share are what the
+     bar is about, and "17 of 28" needs a whole column to say a small thing. */
+  .vt-coin,
+  .vt-thead--coins { grid-template-columns: 72px minmax(60px, 1fr) 92px 60px; }
+  .vt-coin__apps,
+  .vt-thead--coins > :nth-child(6) { display: none; }
+  /* 28 marks at 6px is 168px — wider than the bar it would sit beside. The
+     strip above survives; it is the one that carries the concentration. */
+  .vt-coins__strip { height: 24px; }
+  /* No slack to hand out at this width — the bar's own 1fr already takes it,
+     and a spare track would eat a column the figures need. */
+  .vt-gap { display: none; }
+
+  /* COLUMN HEADERS follow their rows exactly or they label the wrong column.
+     Each of these mirrors the grid two rules above it, and the labels for the
+     figures that were just dropped go with them. */
+  .vt-thead--compact { grid-template-columns: 26px minmax(0, 1fr) 96px 62px; }
+  /* The pace glyph is the first thing to go: it is a comparison between two
+     figures that are still printed, and 78px of drawing does not fit beside
+     them at this width. */
+  .vt-thead--movers,
+  .vt-rows--movers .vt-row__link { grid-template-columns: 26px minmax(0, 1fr) 88px 66px 92px; }
+  .vt-mv__pace,
+  .vt-thead--movers > :nth-child(6) { display: none; }
+  /* The generic `.vt-row__sub { display: none }` above is (0,1,0) and reaches
+     this row too. Here the sub column is the 30-day fee LEVEL under a header
+     that names it, not the ladder's free-form second fact — it earns its
+     track, so it is put back. */
+  .vt-rows--movers .vt-row__sub { display: block; }
+  .vt-thead--cats { grid-template-columns: 118px minmax(60px, 1fr) 80px 56px; }
+  .vt-thead__sub,
+  .vt-thead__cat-count { display: none; }
+}
+
+@media (max-width: 768px) {
+  .vt-page {
+    padding: var(--sp-4) var(--sp-3) var(--sp-12);
+    gap: var(--sp-6);
+  }
+
+  .vt-section,
+  .vt-chart { padding: var(--sp-4); border-radius: var(--radius-md); }
+  /* THE TIDE is four full-bleed bands that carry their own padding — padding on
+     the card itself would inset the chart and orphan the band rules. */
+  .vt-tide { border-radius: var(--radius-md); }
+
+  /* The masthead is a GRID (two columns on a desktop), so `flex-direction`
+     here was inert — the column stack has to come from the template. */
+  .vt-masthead { grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: var(--sp-4); }
+  .vt-search { min-width: 0; width: 100%; }
+
+  /* 🪤 THE MAGNIFIER RAN UNDER THE PLACEHOLDER.
+     The field reserves its left inset with padding-left: 41px and paints the
+     glyph as a background-image at x=16. On a phone a global comfort rule -
+     `input[type="text"]:not(…):not(…):not(…) { padding: 12px 14px }`, roughly
+     (0,4,1) - overwrites that padding wholesale, so the text started at 14px
+     and ran straight across the icon.
+     Padding is that rule's to own; the indent is not. text-indent is untouched
+     by it, wins at one class, and on a single-line input moves exactly what
+     needs moving - placeholder, value and caret. 14 + 27 lands the text at the
+     same 41px the desktop reserves. No !important, no specificity war with a
+     global that is right about everything except this one control. */
+  .vt-search__input { text-indent: 27px; }
+
+  .vt-tide__head { flex-direction: column; gap: var(--sp-4); }
+  .vt-stat__value { font-size: 18px; }
+  /* Size the SCENE, not the canvas. The canvas is absolutely positioned with
+     inset:0, so a height here wins over `bottom` and grew the chart past the
+     scene — straight over the stat rail below it. */
+  .vt-tide__scene { height: 260px; }
+
+  /* THE TIDE'S PANEL IS BACK, TRIMMED.
+     It was hidden because at six bands plus a total it covers a third of a
+     phone — true, and the file already carried a full-width-strip layout for
+     exactly this case, dead under that `display: none`. With a finger able to
+     scrub (below), hiding it means the page's hero chart cannot be read at all
+     on a phone. So: the strip lives, at the top of the scene where the stack
+     rarely reaches, and it names the three biggest bands. Past three it is a
+     list you scroll with your eyes while your finger is busy. */
+  .vt-tide__readout li:nth-child(n + 4) { display: none; }
+  .vt-tide__readout { padding: var(--sp-2) var(--sp-3); }
+  .vt-tide__readout-total { font-size: 16px; margin-bottom: 4px; }
+  .vt-tide__readout li { font-size: 11px; }
+
+  /* §F/§K THE CHART IS SCRUBBABLE WITH A FINGER.
+     None of these charts had a single touch handler, so on a phone no value on
+     any of them could be read at all. The handlers are in the components; this
+     is the half that decides the axis. pan-y hands the vertical drag to the
+     page and keeps the horizontal one for the scrub — the document's own rule,
+     because preventDefault on a React touch listener is a passive-listener
+     violation and would take the page scroll with it. */
+  .vt-chart__canvas,
+  .vt-tide__scene { touch-action: pan-y; }
+
+  /* On a phone the header stacks, and a right-aligned control cluster ends up
+     hanging in the middle of the card. The tools become a full-width toolbar:
+     mode across the top, range under it, both reading from the left edge the
+     copy above them already uses. */
+  .vt-tide__tools { width: 100%; justify-content: flex-start; gap: var(--sp-2); }
+  .vt-tide__tools .vt-seg { flex: 1 1 100%; }
+  .vt-tide__tools .vt-seg__btn { flex: 1 1 0; }
+
+  .vt-firstband { flex-direction: column; align-items: flex-start; gap: var(--sp-3); }
+  .vt-firstband__stats { gap: var(--sp-5); }
+  .vt-firstband__stats dd { font-size: 15px; }
+
+  /* THE LADDER ROW ON A PHONE.
+     Every selector here carries the .vt-rows--stacked prefix. Without it these
+     rules were (0,1,0) against the desktop stacked grid's (0,2,0) and LOST, so
+     a phone rendered the four-column desktop row: the logo was auto-placed into
+     an implicit column below the row, the value column collapsed to 0px and the
+     trend line lay across the sector text. The area names must also match the
+     grid actually in force — 'av' did not exist in it, which is what threw the
+     logo out of the row in the first place. */
+  .vt-rows--stacked .vt-row__link,
+  .vt-row__link {
+    grid-template-columns: 22px 26px minmax(0, 1fr) auto;
+    grid-template-areas:
+      'rank avatar name value'
+      'rank avatar meta stats';
+    column-gap: var(--sp-2);
+    row-gap: 1px;
+    padding: 9px 4px;
+    align-items: center;
+  }
+
+  .vt-rows--stacked .vt-row__rank,
+  .vt-row__rank { grid-area: rank; }
+  .vt-rows--stacked .vt-av,
+  .vt-row__link > .vt-av { grid-area: avatar; align-self: center; }
+  .vt-rows--stacked .vt-row__name,
+  .vt-row__name { grid-area: name; align-self: end; }
+  .vt-rows--stacked .vt-row__meta,
+  .vt-row__meta { grid-area: meta; align-self: start; }
+  .vt-rows--stacked .vt-row__value,
+  .vt-row__value { grid-area: value; align-self: end; font-size: 14px; text-align: right; }
+  .vt-rows--stacked .vt-row__id,
+  .vt-row__id { grid-area: name; }
+
+  /* The delta is the one supporting fact worth its width on a phone; the trend
+     line and the secondary figure are not. */
+  .vt-rows--stacked .vt-row__stats {
+    grid-area: stats;
+    justify-content: flex-end;
+    gap: var(--sp-2);
+    align-self: start;
+  }
+  /* The phone grid has no `bar` area, and a child holding grid-area: bar in a
+     template that does not declare it gets auto-placed — a stray 6px sliver in
+     an implicit column, which is exactly how the logo escaped this row before. */
+  .vt-rows--stacked .vt-row__bar,
+  .vt-row__bar { display: none; }
+  .vt-rows--stacked .vt-row__spark,
+  .vt-row__spark { display: none; }
+  .vt-rows--stacked .vt-row__sub,
+  .vt-row__sub { display: none; }
+  .vt-rows--stacked .vt-row__delta,
+  .vt-row__delta { display: block; min-width: 0; font-size: 12px; }
+
+  /* 🪤 The rules above re-grid the UNPREFIXED `.vt-row__link` with
+     grid-template-AREAS and then hand `grid-area` to .vt-row__id / __name /
+     __meta / __value. Any new row variant that overrides only the COLUMNS
+     inherits those areas: the identity cell went to the third of four tracks
+     and the change, which has no area at all, auto-placed on top of the name.
+     Clearing the template and returning the children to auto puts them back in
+     DOM order — rank, identity, growth, week — which is what the four tracks
+     are for. */
+  .vt-thead--movers,
+  .vt-rows--movers .vt-row__link {
+    grid-template-columns: 22px minmax(0, 1fr) 76px 60px;
+    grid-template-areas: none;
+  }
+  .vt-rows--movers .vt-row__rank,
+  .vt-rows--movers .vt-row__id,
+  .vt-rows--movers .vt-row__value,
+  .vt-rows--movers .vt-row__delta { grid-area: auto; align-self: center; }
+  /* 🪤 The same generic rule also carries `align-self: end` on .vt-row__name,
+     written for the stacked row where the name IS a grid child. In these
+     variants the name lives inside .vt-row__id, which is a flex COLUMN — and
+     there align-self runs along the cross axis, so it pushed every platform
+     name to the right-hand edge of its own cell. Handing it back to the
+     parent's align-items puts the text where a name belongs. */
+  .vt-rows--movers .vt-row__name,
+  .vt-rows--compact .vt-row__name { align-self: auto; }
+  .vt-rows--movers .vt-row__sub { display: none; }
+  .vt-thead--movers > :nth-child(7) { display: none; }
+
+  /* The phone row is a different grid with different areas, and the two
+     columns a header would be most useful for (trend, secondary figure) are
+     dropped above. A header here could only mislabel what is left. */
+  .vt-thead { display: none; }
+
+  /* THE TIDE.
+     Desktop stacks header / chart / stat rail / legend in normal flow, so the
+     phone only has to tighten the padding and drop the rail to two columns. */
+  .vt-tide__head { padding: var(--sp-4) var(--sp-4) var(--sp-3); }
+  .vt-tide__head h2 { font-size: 21px; }
+  .vt-tide .vt-tide__ranges { flex-wrap: wrap; }
+  .vt-tide__hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vt-tide__hud > .vt-stat { padding: var(--sp-3) var(--sp-4); }
+  .vt-tide__legend { padding: var(--sp-4); }
+
+  /* Same trap as the momentum row above, and this one predates it: the areas
+     declared here are 'rank id value', but the generic rules hand .vt-row__id
+     the area "name" — which does not exist in this template — and give the
+     change no area at all, so both auto-placed into implicit columns. Measured
+     at 390px the name sat at x=345 in a 39px box while the change took 198px on
+     the left. Clear the template, let the four visible children fall into the
+     four tracks in DOM order. */
+  .vt-rows--compact .vt-row__link {
+    grid-template-columns: 24px minmax(0, 1fr) 76px 60px;
+    grid-template-areas: none;
+  }
+  .vt-rows--compact .vt-row__rank,
+  .vt-rows--compact .vt-row__id,
+  .vt-rows--compact .vt-row__value,
+  .vt-rows--compact .vt-row__delta { grid-area: auto; align-self: center; }
+
+  .vt-cat { grid-template-columns: 96px minmax(40px, 1fr) 72px 50px; gap: var(--sp-2); }
+  .vt-cat__name { font-size: 12.5px; }
+  .vt-coin { grid-template-columns: 60px minmax(40px, 1fr) 84px 52px; gap: var(--sp-2); }
+  .vt-coin__name { font-size: 12px; }
+  /* The tile is already three lines on a phone; a fourth turns the stat rail
+     into a wall of small type. The figures survive, the gloss does not. */
+  .vt-stat__note { display: none; }
+
+  .vt-floor__card {
+    position: static;
+    margin-top: var(--sp-3);
+    width: 100%;
+  }
+
+  .vt-floor__label { display: none; }
+
+  .vt-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vt-kpis dd { font-size: 17px; }
+  .vt-kpis--users { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .vt-detail__head { flex-direction: column; align-items: stretch; }
+  .vt-detail__links { width: 100%; }
+  .vt-av--lg { width: 44px; height: 44px; border-radius: 11px; font-size: 18px; }
+
+  .vt-chart__controls { flex-direction: column; align-items: stretch; gap: var(--sp-3); }
+  .vt-chart__canvas { height: 220px; }
+
+  .vt-users__bars { height: 130px; gap: 2px; }
+  .vt-users__readout { position: static; margin-top: var(--sp-3); }
+
+  .vt-tabs { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; padding-bottom: 2px; }
+  .vt-tabs::-webkit-scrollbar { display: none; }
+  .vt-tab { white-space: nowrap; }
+}
+
+@media (max-width: 430px) {
+  .vt-firstband__stats { gap: var(--sp-4); }
+  .vt-stat { min-width: 0; }
+  .vt-page h1 { font-size: 27px; }
+}
+
+/* An inline text link is still a tap target on a phone. The app-wide 38px
+   touch-min rule does not reach it (it sits inside a paragraph), so it gets its
+   own floor here rather than relying on a rule that never matched. */
+@media (max-width: 768px) {
+  .vt-linkbtn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+  }
+}
+
+@media (max-width: 1024px) {
+  /* The rail becomes a horizontal chip strip — a sticky 232px column on a
+     tablet costs more than it navigates. */
+  .vt-split { grid-template-columns: minmax(0, 1fr); }
+  .vt-rail {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+    max-height: none;
+    padding: var(--sp-3);
+    gap: var(--sp-2);
+  }
+  .vt-rail .vt-eyebrow { display: none; }
+  .vt-rail__btn { width: auto; white-space: nowrap; }
+}
+
+@media (max-width: 768px) {
+  /* The chart grid's 420px minimum is wider than a phone, so a card overflowed
+     the viewport. One column below the breakpoint. */
+  .vt-grid,
+  .vt-grid--wide { grid-template-columns: minmax(0, 1fr); }
+  .vt-chart { padding: var(--sp-4); }
+  .vt-chart__controls { flex-direction: column; align-items: stretch; gap: var(--sp-3); }
+  .vt-chart__ctl { gap: var(--sp-2); }
+  .vt-chart__canvas { height: 210px; }
+  .vt-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vt-kpis dd { font-size: 17px; }
+  .vt-tide__scene { height: 240px; }
+  /* No room to flip sides on a phone: the panel is a full-width strip at the
+     top of the scene, which needs the fixed desktop width undone. */
+  .vt-tide__readout { top: var(--sp-3); right: var(--sp-3); left: var(--sp-3); width: auto; }
+  .vt-stack__legend { gap: var(--sp-2); }
+
+  /* The hand-off to the full board: the note and the control sit side by side
+     on a desktop row and would squeeze each other on a phone. */
+  .vt-ladder__foot { flex-direction: column; align-items: stretch; gap: var(--sp-3); }
+  .vt-ladder__foot .vt-pill { justify-content: center; width: 100%; }
+}
+
+/* The back control stays reachable while you read down a long platform page —
+   on a phone the alternative is scrolling back past every chart to leave. */
+@media (max-width: 768px) {
+  .vt-page--detail .vt-crumb {
+    position: sticky;
+    /* Under the FIXED mobile header, not under the viewport top — at top:0 the
+       back control parked itself behind the header and measured 16px above it. */
+    top: calc(var(--m-header-h, 52px) + env(safe-area-inset-top, 0px));
+    z-index: 5;
+    margin: calc(var(--sp-4) * -1) calc(var(--sp-3) * -1) 0;
+    padding: var(--sp-2) var(--sp-3);
+    background: rgba(9, 9, 11, 0.82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--vt-edge-soft);
+  }
+  .vt-crumb__sep { display: none; }
+  .vt-crumb__here { font-size: 12.5px; color: var(--vt-t3); }
+}
+
+/* Four stat columns do not fit 560px — "KEPT BY PROTOCOLS" ran off the card.
+   Two columns, and the labels get to stay whole. (These rules used to target
+   .vt-tide__stats, a class the markup does not carry, so none of them applied.) */
+@media (max-width: 560px) {
+  .vt-tide__hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vt-tide__hud .vt-stat { min-width: 0; }
+  .vt-tide__hud .vt-stat__label { white-space: normal; overflow: visible; }
+}
+
+/* The masthead ran 184px on a phone — an eyebrow, a display heading, a
+   three-line paragraph and a search field, all before a single number. The
+   heading and the search earn their place; the explanatory paragraph is
+   desktop-only copy, and the eyebrow repeats the heading. */
+@media (max-width: 768px) {
+  .vt-masthead { gap: var(--sp-3); }
+  .vt-masthead .vt-eyebrow { display: none; }
+  .vt-page h1 { font-size: 25px; letter-spacing: -0.03em; }
+  .vt-masthead__lead p { display: none; }
+  .vt-page { padding-top: var(--sp-3); }
+}
+
+/* ---------------------------------------------------------------------------
+ * CONFORMANCE PASS — .claude/rules/mobile-design-system.md
+ *
+ * The blocks above are per-component fixes written as the page was built. This
+ * one holds the app-wide mobile contract, measured against the document at
+ * 425px rather than assumed.
+ * ------------------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .vt-page {
+    /* §H BLUR BUDGET. The page declares one filter token and every card reads
+       it, so the whole surface moves with a single line. It was
+       `blur(24px) saturate(1.8)` — the desktop material — which the document
+       calls out twice by name: over 20px kills the frame rate on mid-range
+       Android, and this page paints six full-width cards of it. */
+    --vt-glass: var(--m-blur, blur(8px)) saturate(1.4);
+
+    /* §L2 surfaces. Content floats on the void here; the pane keeps a gradient
+       so a card still reads as a plane, but at the document's tint rather than
+       the desktop's. */
+    --vt-pane: linear-gradient(135deg, rgba(255, 255, 255, 0.028) 0%, rgba(255, 255, 255, 0.012) 100%);
+
+    /* §B spacing tokens, and §M's clearance rule. The page reserved 48px at the
+       bottom against a 76px bottom nav, so the last band of every tab sat
+       underneath it — measured: the stat rail was cut in half by the nav. */
+    padding-left: var(--m-content-pad, 8px);
+    padding-right: var(--m-content-pad, 8px);
+    padding-bottom: calc(var(--m-bottom-nav-h, 76px) + env(safe-area-inset-bottom, 0px) + var(--m-lg, 16px));
+    gap: var(--m-lg, 16px);
+  }
+
+  /* §B radius. These were taking the desktop --radius-md; the mobile system has
+     its own token and it is what every other page on the phone uses. */
+  .vt-section,
+  .vt-chart,
+  .vt-tide,
+  .vt-rail,
+  .vt-kpis { border-radius: var(--m-card-radius-lg, 14px); }
+
+  /* §H again, for the three panels that survive on a phone and carry their own
+     filter rather than the card token. The rest of the floating panels are
+     already display:none above. */
+  .vt-search__results,
+  .vt-floor__card,
+  .vt-users__readout {
+    backdrop-filter: var(--m-blur-heavy, blur(12px));
+    -webkit-backdrop-filter: var(--m-blur-heavy, blur(12px));
+  }
+
+  /* §F3 TOUCH TARGETS — NOT SETTABLE FROM THIS PAGE, and the rule that tried
+     was deleted rather than left dead.
+     The document asks for 44px. The app ships a global `--touch-min: 38px`
+     applied by app-store-ready.css to `button:not(…):not(…):not(…)` and four
+     more selectors of the same shape — specificity around (0,3,1), which no
+     single-class page rule can reach. A per-page 44px would have to be
+     `!important` against a global, which is the cross-file war the project
+     rules exist to prevent, and it would leave vitals the only page on the
+     phone at a different size.
+     Measured here: every control lands on exactly 38px, i.e. vitals already
+     matches what the app enforces. Moving to 44 is one line in the global
+     token and an app-wide decision. */
+
+  /* §K NO TEXT UNDER 11px. The page is full of 10-10.5px labels — legible on a
+     desktop at arm's length, not on a phone. The colour stays at this page's
+     own 0.46 contrast floor rather than the document's 0.35: the vitals
+     stylesheet records that --text-muted read as grey-on-black at exactly these
+     sizes, and a legibility floor outranks a style token. */
+  .vt-eyebrow,
+  .vt-stat__label,
+  .vt-kpis dt,
+  .vt-coins__seglabel,
+  .vt-mv__word,
+  .vt-chip,
+  .vt-floor__axis-title,
+  .vt-thead { font-size: 11px; }
+  .vt-eyebrow { letter-spacing: 0.15em; }
+}
+
+
+/* §A SMALL MOBILE — the document's second breakpoint, for iPhone SE and narrow
+ * Android. Measured at 315px (narrower than any phone, so this holds well
+ * inside the real 375 floor): the two BAR tables are the only rows on the page
+ * whose tracks are all fixed, and they were the only ones that broke —
+ * `.vt-cat` ran 36px past its card, `.vt-coin` 14px. Every other row on the
+ * surface has a 1fr and absorbed the loss.
+ *
+ * The bar is what goes. It is the nicest thing in those rows and the most
+ * expendable: the figure beside it says the same magnitude in dollars, and on
+ * the coins table the full-width concentration strip above still carries the
+ * shape. Dropping a 40px track and its gap buys 48px, which is more than either
+ * row was short — the name gets it, and a sector stops being cut mid-word.
+ */
+@media (max-width: 380px) {
+  .vt-cat__track,
+  .vt-coin__track { display: none; }
+
+  .vt-cat { grid-template-columns: minmax(0, 1fr) 72px 50px; }
+  .vt-coin,
+  .vt-thead--coins { grid-template-columns: minmax(0, 1fr) 84px 52px; }
+}
+
+
+/* ---------------------------------------------------------------------------
+ * §L4 TOGGLE PILLS — ghost capsules, glow on the active one.
+ *
+ * The desktop segmented control is a filled TRACK with a lighter button riding
+ * inside it. On a phone this page stacks three of those in a row under every
+ * chart title, and three filled tracks read as three more cards competing with
+ * the card they sit in. The document's mobile idiom is the opposite: inactive
+ * is text alone, active is a soft fill with a hairline and a quiet glow, and
+ * the group itself is nothing.
+ * ------------------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .vt-seg {
+    background: none;
+    border-color: transparent;
+    box-shadow: none;
+    padding: 0;
+    gap: var(--sp-1);
+  }
+
+  .vt-seg__btn {
+    color: rgba(245, 245, 247, 0.42);
+    border-radius: 999px;
+    padding: 0 13px;
+  }
+
+  .vt-seg__btn.is-active {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--vt-t1);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 12px rgba(245, 245, 247, 0.06), inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* The range pills are the same control in a different component. Inactive
+     drops its fill; ACTIVE drops the solid warm-white capsule — beside a row of
+     ghost segments that read as one idiom, a filled white pill reads as a
+     second, louder one for the same job. Same soft fill and glow as above. */
+  .vt-pill--sm:not(.is-active) {
+    background: none;
+    border-color: transparent;
+    color: rgba(245, 245, 247, 0.42);
+  }
+  .vt-pill--sm.is-active {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--vt-t1);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 12px rgba(245, 245, 247, 0.06), inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* 🪤 The chip's LINK, not the chip, was misaligned. The global mobile touch
+     rule gives every `a` a 38px min-height; the anchor is display:block, so its
+     text sat at the top of that box while the dot and the logo stayed centred
+     in the 52px chip. Making the anchor centre its own line leaves the global
+     height intact and puts the name back on the axis. */
+  .vt-chipsel a { display: inline-flex; align-items: center; }
+}

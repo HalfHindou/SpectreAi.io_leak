@@ -1,0 +1,121 @@
+/**
+ * skins.css — on-panel half of decorative skins.
+ *
+ * Generic consumption rules, written ONCE: lib/decorSkins.js writes the
+ * equipped skin's art as --skin-* data-URI vars on <html>, and App.jsx
+ * puts .skin-<id> on the .app root. Adding a new skin = registry entry
+ * + murals only; this file never grows per-skin.
+ *
+ * v7 model: each surface carries ONE full-bleed mural — a continuous
+ * engraving that wraps the panel like a CS:GO weapon finish (art is
+ * authored to bleed off the edges and stay sparse over data zones).
+ * The old scattered corner-icon slots are gone by design: small dotted
+ * icons read as cartoon stickers, not a skin.
+ *
+ * Every overlay: pointer-events none, absolutely positioned, hairline
+ * line-art at watermark opacity — content stays readable through it.
+ * Day mode hides everything (white line-art; engine clears vars too).
+ */
+
+/* Left column — full-height mural, anchored to the panel bottom.
+   Sits ABOVE the column's cards (z1) at watermark opacity, same trick
+   as the old ghost figures: card surfaces are opaque, so under them
+   the art would simply vanish. */
+.app[class*="skin-"] .panel-left::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--skin-left) center bottom / 100% auto no-repeat;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Right panel — composition flowing in from the top-right corner */
+.app[class*="skin-"] .panel-right::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--skin-right) right top / 100% auto no-repeat;
+  opacity: 0.13;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Token banner — wide strip flowing in from the right edge; the
+   left third stays clear for the name/price cluster (authored so). */
+.app[class*="skin-"] .token-banner {
+  position: relative;
+}
+
+.app[class*="skin-"] .token-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--skin-banner) right center / auto 100% no-repeat;
+  opacity: 0.17;
+  pointer-events: none;
+}
+
+/* DataTabs — panorama along the section's bottom edge */
+.app[class*="skin-"] .data-tabs {
+  position: relative;
+}
+
+.app[class*="skin-"] .data-tabs::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--skin-tabs) center bottom / 100% auto no-repeat;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+/* Empty states — the skin's mascot takes the stage */
+.app[class*="skin-"] .empty-watchlist,
+.app[class*="skin-"] .tweets-empty-state {
+  position: relative;
+}
+
+.app[class*="skin-"] .empty-watchlist::before,
+.app[class*="skin-"] .tweets-empty-state::before {
+  content: '';
+  display: block;
+  width: 110px;
+  height: 110px;
+  margin: 0 auto 10px;
+  background: var(--skin-mascot) center / contain no-repeat;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* The generic icon dims when the mascot is present */
+.app[class*="skin-"] .empty-watchlist > svg,
+.app[class*="skin-"] .empty-watchlist .icon-wrap,
+.app[class*="skin-"] .tweets-empty-state .empty-icon {
+  display: none;
+}
+
+/* Day mode: decor is dark-mode-only (engine clears the vars as well —
+   this is the belt-and-suspenders kill switch). Selectors MUST stay
+   skin-scoped: an unscoped .token-banner::before rule here would kill
+   TokenBanner.css's own day-mode gradient ::before. */
+body.theme-light .app[class*="skin-"] .panel-left::before,
+body.theme-light .app[class*="skin-"] .panel-right::before,
+body.theme-light .app[class*="skin-"] .token-banner::before,
+body.theme-light .app[class*="skin-"] .data-tabs::after,
+body.theme-light .app[class*="skin-"] .empty-watchlist::before,
+body.theme-light .app[class*="skin-"] .tweets-empty-state::before {
+  content: none;
+}
+
+/* Restore the stock empty-state icons in day mode (mascot pseudo is gone) */
+body.theme-light .app[class*="skin-"] .empty-watchlist > svg,
+body.theme-light .app[class*="skin-"] .empty-watchlist .icon-wrap,
+body.theme-light .app[class*="skin-"] .tweets-empty-state .empty-icon {
+  display: initial;
+}

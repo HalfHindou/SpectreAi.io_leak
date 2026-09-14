@@ -1,0 +1,109 @@
+/* MobileAgentSheet (mas-) - bottom sheet hosting the agent chat surface.
+   Mirrors MobileSwapSheet's scrim/sheet/grabber structure. */
+
+.mas-root {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.mas-backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  cursor: pointer;
+}
+
+.mas-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 92dvh;
+  background: rgba(12, 12, 14, 0.98);
+  border-radius: 18px 18px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.6);
+  transition: transform 160ms ease-out, height 200ms ease-out;
+  overflow: hidden;
+}
+
+/* Peek mode - the auto-opened brief shows as a half sheet, not a takeover
+   (review: a 92dvh modal per token visit is hostile). Chart stays visible;
+   the scrim lightens; tap the grabber or the expand pill for full height. */
+.mas-sheet--peek { height: 58dvh; }
+.mas-root--peek .mas-backdrop { background: rgba(0, 0, 0, 0.25); backdrop-filter: none; }
+
+.mas-expand {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(245, 245, 247, 0.6);
+  font-size: 10.5px;
+  font-weight: 550;
+  padding: 3px 9px;
+  cursor: pointer;
+}
+.mas-expand:active { color: #f5f5f7; }
+
+.mas-grabber-region { padding: 10px 0 4px; flex-shrink: 0; touch-action: none; }
+.mas-grabber {
+  width: 44px;
+  height: 4px;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: rgba(245, 245, 247, 0.2);
+}
+
+.mas-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 14px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+.mas-identity { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.mas-logo { width: 24px; height: 24px; object-fit: contain; }
+.mas-titles { display: flex; flex-direction: column; }
+.mas-title { font-size: 14px; font-weight: 600; color: #f5f5f7; }
+.mas-subtitle { font-size: 11px; color: rgba(245, 245, 247, 0.45); }
+.mas-actions { display: flex; align-items: center; gap: 6px; }
+
+.mas-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+/* AgentChatSurface fills the body (it brings its own list + composer). */
+.mas-body .sagent-surface { flex: 1; min-height: 0; }
+
+.mas-foot {
+  padding: 6px 14px calc(8px + env(safe-area-inset-bottom));
+  font-size: 10px;
+  color: rgba(245, 245, 247, 0.28);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Cards can use the full sheet width on phones. */
+.mas-body .sagent-card { max-width: 100%; }
+
+/* The desktop composer is 13px; on a phone anything under 16px makes iOS
+   Safari zoom the page the moment the field takes focus, and the sheet ends
+   up cropped. Bump it here only - the desktop panel keeps its 13px. */
+.mas-body .sagent-composer__input { font-size: 16px; }
+
+/* Day mode */
+body.theme-light .mas-sheet { background: rgba(255, 255, 255, 0.99); border-top-color: rgba(15, 23, 42, 0.1); }
+body.theme-light .mas-expand { color: #64748b; background: rgba(15, 23, 42, 0.04); border-color: rgba(15, 23, 42, 0.12); }
+body.theme-light .mas-expand:active { color: #0f172a; }
+body.theme-light .mas-grabber { background: rgba(15, 23, 42, 0.2); }
+body.theme-light .mas-header { border-bottom-color: rgba(15, 23, 42, 0.07); }
+body.theme-light .mas-title { color: #0f172a; }
+body.theme-light .mas-subtitle { color: #64748b; }
+body.theme-light .mas-foot { color: #94a3b8; }

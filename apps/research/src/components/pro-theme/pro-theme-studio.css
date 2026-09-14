@@ -1,0 +1,1628 @@
+/* PRO Theme Studio (localhost test)
+   1) .pts-*            the floating button + picker panel
+   2) .pro-theme-*      the fixed backdrop layer behind the app
+   3) .app.pro-glass    frosted-glass skin: translucent surface tokens + chrome
+   4) .app.pro-paper    light paper skin (rides .app-day-mode, adds pearl canvas)
+   NOTE: class names deliberately never contain the substring "glass-" -
+   app-store-ready.css glass-ifies any [class*="glass-"] element. */
+
+/* ---------- 1. entry points ---------- */
+/* The floating "Themes" fab lived here. It is GONE (founder 08-04: "move
+   themes") — a pill parked over the bottom-right of every page covered a Top
+   Coins row and clipped the watchlist Add tile, and a permanent overlay is the
+   wrong home for a control you touch once a week. The studio is now opened from
+   the header, Mission Control, the nav sidebar and the mobile header, all via
+   `lib/theme-studio.jsx`. The close button keeps its phone-sized tap target. */
+@media (max-width: 768px) {
+  /* 44px is the iOS minimum tap target; 30px is a miss-magnet on a phone. */
+  .pts-close { width: 44px; height: 44px; border-radius: 12px; }
+}
+
+/* The globe lives in theme-globe.css — shared with LITE. */
+
+/* ---------- 1b. panel ---------- */
+.pts-panel-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  /* One palette for the whole studio, re-pointed once for day mode below.
+     The panel renders OUTSIDE `.app` (AppShell mounts ProThemeStudio as a
+     sibling of the app tree), so `.app.app-day-mode .pts-…` can never match -
+     the panel carries its own `--day` class from the store instead. */
+  --pts-scrim: rgba(9, 9, 11, 0.55);
+  --pts-bg-top: rgba(16, 16, 20, 0.94);
+  --pts-bg-bot: rgba(9, 9, 11, 0.96);
+  --pts-line: var(--border-default, rgba(255, 255, 255, 0.04));
+  --pts-line-strong: var(--border-strong, rgba(255, 255, 255, 0.06));
+  --pts-tile: rgba(255, 255, 255, 0.025);
+  --pts-tile-hover: rgba(255, 255, 255, 0.05);
+  --pts-tile-on: rgba(245, 245, 247, 0.1);
+  --pts-tile-on-hover: rgba(245, 245, 247, 0.13);
+  --pts-ring-on: rgba(245, 245, 247, 0.3);
+  --pts-inset: rgba(255, 255, 255, 0.05);
+  --pts-fg: var(--text-primary, #f5f5f7);
+  --pts-fg-2: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  --pts-fg-3: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  --pts-fg-4: var(--text-muted, rgba(245, 245, 247, 0.35));
+  --pts-danger: #fca5a5;
+}
+
+/* Day mode. Mirrors `.settings-panel` day mode - the app's canonical panel. */
+.pts-panel-wrap--day {
+  --pts-scrim: rgba(15, 23, 42, 0.28);
+  --pts-bg-top: rgba(255, 255, 255, 0.97);
+  --pts-bg-bot: rgba(248, 250, 252, 0.98);
+  --pts-line: rgba(15, 23, 42, 0.08);
+  --pts-line-strong: rgba(15, 23, 42, 0.12);
+  --pts-tile: rgba(15, 23, 42, 0.03);
+  --pts-tile-hover: rgba(15, 23, 42, 0.06);
+  --pts-tile-on: rgba(15, 23, 42, 0.07);
+  --pts-tile-on-hover: rgba(15, 23, 42, 0.1);
+  --pts-ring-on: rgba(15, 23, 42, 0.35);
+  --pts-inset: rgba(255, 255, 255, 0.7);
+  --pts-fg: #0f172a;
+  --pts-fg-2: rgba(15, 23, 42, 0.65);
+  --pts-fg-3: rgba(15, 23, 42, 0.5);
+  --pts-fg-4: rgba(15, 23, 42, 0.38);
+  --pts-danger: #b91c1c;
+}
+
+.pts-panel-scrim { position: absolute; inset: 0; background: var(--pts-scrim); }
+.pts-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(420px, 92vw);
+  display: flex;
+  flex-direction: column;
+  /* Same glass as `.settings-panel`: near-opaque so a dense page underneath
+     never bleeds into the controls, warm-black rather than blue charcoal. */
+  background: linear-gradient(180deg, var(--pts-bg-top), var(--pts-bg-bot));
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-left: 1px solid var(--pts-line-strong);
+  box-shadow:
+    inset 1px 0 0 var(--pts-inset),
+    -4px 0 24px rgba(0, 0, 0, 0.12),
+    -24px 0 60px rgba(0, 0, 0, 0.5);
+  font-family: var(--font-body);
+  color: var(--pts-fg);
+  animation: ptsSlideIn var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+@keyframes ptsSlideIn { from { transform: translateX(28px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.pts-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  /* iOS home-screen PWA: the panel is position:absolute;top:0 inside a
+     fixed full-viewport wrap, so WITHOUT the inset the header renders UNDER
+     the status bar - the title collides with the clock and the close button
+     is physically unreachable (founder hit exactly this). max() so desktop,
+     where the inset is 0, keeps its original 18px. */
+  padding: max(18px, env(safe-area-inset-top, 0px)) 20px 14px;
+  border-bottom: 1px solid var(--pts-line);
+}
+.pts-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--pts-fg);
+}
+.pts-sub { margin-top: 4px; font-size: 0.75rem; color: var(--pts-fg-3); }
+.pts-close {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid var(--pts-line);
+  background: var(--pts-tile);
+  color: var(--pts-fg-3);
+  cursor: pointer;
+  transition: all var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.pts-close:hover {
+  color: var(--pts-fg);
+  background: var(--pts-tile-hover);
+  border-color: var(--pts-line-strong);
+}
+.pts-body { flex: 1; overflow-y: auto; padding: 16px 20px calc(28px + env(safe-area-inset-bottom, 0px)); }
+.pts-body::-webkit-scrollbar { width: 4px; }
+.pts-body::-webkit-scrollbar-thumb { background: var(--pts-fg-4); border-radius: 999px; }
+
+.pts-looks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px; }
+
+/* One tile, three uses: the Look cards, the Data-panel / Glass-depth cards and
+   the Soft-focus row all share this shape so the studio reads as one control
+   surface (the app's `.settings-option-btn`, sized up for a title + a line of
+   copy). Interactive ramp is the house one: muted -> lift on hover -> warm
+   white fill + ring when picked. */
+.pts-look,
+.pts-depth,
+.pts-toggle {
+  border-radius: var(--radius-md, 12px);
+  border: 1px solid var(--pts-line);
+  background: var(--pts-tile);
+  color: var(--pts-fg);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.pts-look:hover,
+.pts-depth:hover,
+.pts-toggle:hover {
+  background: var(--pts-tile-hover);
+  border-color: var(--pts-line-strong);
+  transform: translateY(-1px);
+}
+.pts-look--active,
+.pts-depth--active {
+  background: var(--pts-tile-on);
+  border-color: var(--pts-ring-on);
+  box-shadow: inset 0 1px 0 var(--pts-inset);
+}
+.pts-look--active:hover,
+.pts-depth--active:hover { background: var(--pts-tile-on-hover); }
+
+.pts-look { display: flex; flex-direction: column; gap: 4px; padding: 11px 11px 10px; }
+/* Paper's tile previews the look it sells - a lighter card in a dark column. */
+.pts-look--paper { background: linear-gradient(160deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05)); }
+.pts-panel-wrap--day .pts-look--paper { background: linear-gradient(160deg, rgba(255, 255, 255, 0.95), rgba(241, 245, 249, 0.9)); }
+.pts-look-name { font-size: 0.8125rem; font-weight: 600; }
+.pts-look-desc { font-size: 0.6875rem; line-height: 1.35; color: var(--pts-fg-3); }
+/* founder 08-05: "it didn't show whether it's glass or solid" - the picked card
+   has to be unmistakable at a glance, so the fill + ring carries a check too. */
+.pts-look--active .pts-look-name::after,
+.pts-depth--active .pts-depth-name::after {
+  content: '\2713';
+  margin-left: 6px;
+  font-weight: 700;
+  color: var(--pts-fg);
+}
+
+.pts-group { margin-bottom: 18px; }
+.pts-group-title {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pts-fg-3);
+  margin-bottom: 12px;
+}
+.pts-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.pts-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch; /* css-fill thumbs are empty spans - without stretch they collapse to 0 width */
+  gap: 5px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--pts-fg-3);
+}
+.pts-swatch-thumb {
+  display: block;
+  width: 100%;
+  height: 52px;
+  border-radius: var(--radius-md, 12px);
+  overflow: hidden;
+  border: 2px solid transparent;
+  outline: 1px solid var(--pts-line-strong);
+  transition: transform var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    outline-color var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.pts-swatch:hover .pts-swatch-thumb { transform: translateY(-1px); outline-color: var(--pts-ring-on); }
+.pts-swatch--active .pts-swatch-thumb { border-color: var(--pts-fg); outline-color: transparent; }
+.pts-swatch--active { color: var(--pts-fg); }
+.pts-swatch-thumb img, .pts-swatch-fill { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pts-swatch-fill { background-size: cover; }
+.pts-swatch-name {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+.pts-note { font-size: 0.75rem; line-height: 1.5; color: var(--pts-fg-3); }
+
+
+/* ---------- 2. backdrop layer ---------- */
+/* z-index -1, NOT 0: at 0 the fixed layer paints ABOVE any non-positioned
+   content, and the Coming-Soon gate pages render as plain static divs outside
+   .app-main-content — under a theme they were completely invisible behind the
+   wallpaper (found on /discover, 08-05). At -1 the backdrop sits above the
+   .app background (transparent under themes) and below ALL content, positioned
+   or not. */
+.pro-theme-backdrop { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+.pts-bgfill { position: absolute; inset: 0; background-size: cover; background-position: center; }
+.pts-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(5, 6, 10, 0.14) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(5, 6, 10, 0.56) 0%, rgba(5, 6, 10, 0.4) 34%, rgba(5, 6, 10, 0.66) 100%);
+}
+.pro-theme-backdrop--bright .pts-scrim {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0.12) 40%, rgba(255, 255, 255, 0.34) 100%);
+}
+
+/* ---------- 3. GLASS skin ---------- */
+/* Translucent surface tokens: every component built on the design-system vars
+   turns to frost over the backdrop automatically. */
+.app.pro-glass {
+  background: transparent !important;
+  /* Every design-system surface token is mixed from the same two inks as the
+     hand-written planes below, so ONE ink swap flips the whole app and the
+     Depth control can never drag a dark value back in on a bright backdrop. */
+  --bg-void: rgba(var(--pro-ink), var(--pro-a-void));
+  --bg-base: rgba(var(--pro-ink), var(--pro-a-base));
+  --bg-surface: rgba(var(--pro-ink), var(--pro-a-surface));
+  --bg-elevated: rgba(var(--pro-ink-lift), var(--pro-a-elev));
+  --bg-overlay: rgba(var(--pro-ink-lift), var(--pro-a-overlay)); /* overlays/menus stay near-opaque (legibility law) */
+  --bg-hover: rgba(var(--pro-edge), 0.06);
+  --glass-bg: rgba(var(--pro-ink), var(--pro-a-glass));
+  --glass-charcoal: rgba(var(--pro-ink), var(--pro-a-glass));
+  --glass-border: rgba(var(--pro-edge), calc(var(--pro-a-edge) + 0.01));
+  --glass-border-light: rgba(var(--pro-edge), calc(var(--pro-a-edge) + 0.04));
+  --border-subtle: rgba(var(--pro-edge), calc(var(--pro-a-edge) - 0.02));
+  --border-default: rgba(var(--pro-edge), var(--pro-a-edge));
+  --border-strong: rgba(var(--pro-edge), calc(var(--pro-a-edge) + 0.04));
+}
+
+/* ---------- 3a. THE INK ----------------------------------------------------
+   🪤 THE BUG THIS EXISTS TO KILL (founder, 08-03: "this looks terrible on the
+   panels… it didn't optimise for these bright versions"): every surface rule
+   below used to hardcode its own near-black rgba. `.pro-bright` remapped the
+   design-system TOKENS, so var-driven components turned white on a bright
+   backdrop — but the ~30 hardcoded planes in this file stayed BLACK. The
+   result on Frost/Pearl/Polar/any white swatch was dark slabs floating on a
+   white page, with the page's own day-mode text (dark) printed on them.
+   Measured before the fix: 4 dark slabs on home, 9 on traders-corner, 7 on
+   tokenized-assets, 3 on heatmaps, 2 on watchlists — all from this file.
+
+   FIX: no rule below names a colour. Every plane is `rgba(var(--pro-ink), a)`,
+   so one token flips the entire skin from smoke to frost, and any future
+   surface added here is bright-correct by construction.
+
+   Three density tiers, one hairline, one chip:
+     veil  - mood/hero bands, tab strips, command bars (the backdrop leads)
+     card  - content cards and panels
+     plane - dense data (tables, treemaps, sticky headers - data leads)
+   Each tier has a `2` variant = the bottom stop of its gradient. */
+.app.pro-glass {
+  --pro-ink: 11, 12, 16;       /* every plane is mixed from this */
+  --pro-ink-lift: 20, 21, 26;  /* menus/dropdowns sit one step off the page */
+  --pro-edge: 255, 255, 255;   /* hairlines + inner highlights */
+  --pro-a-edge: 0.08;
+  --pro-a-void: 0.34;
+  --pro-a-base: 0.3;
+  --pro-a-surface: 0.46;
+  --pro-a-elev: 0.56;
+  --pro-a-overlay: 0.9;
+  --pro-a-glass: 0.5;
+  --pro-a-veil: 0.52;
+  --pro-a-veil2: 0.58;
+  --pro-a-card: 0.64;
+  --pro-a-card2: 0.70;
+  --pro-a-plane: 0.72;
+  --pro-a-plane2: 0.78;
+  --pro-a-chip: 0.55;
+  --pro-a-chrome: 0.44;  /* header */
+  --pro-a-rail: 0.4;     /* sidebar */
+}
+html:has(.app.pro-glass) { background: #07080c !important; }
+html:has(.app.pro-glass) body { background: transparent !important; }
+
+.app.pro-glass .app-main-content,
+.app.pro-glass .page-layout,
+.app.pro-glass .page-shell,
+.app.pro-glass .main-content,
+/* `.rzm` is a PAGE CANVAS, same as `.welcome-page` — it was simply missed here,
+   so it kept `--bg-void` and painted a scrim over the whole Research Zone. That
+   is invisible while content fills it and obvious the moment it does not: a
+   pull-to-refresh opens a 90-150px hole at the top of the page and what filled
+   it was a flat empty slab of that scrim ("the box glass is there making it
+   look clunky"). Every rzm section carries its own plane below, so the canvas
+   has no material to lose. */
+.app.pro-glass .welcome-page,
+.app.pro-glass .rzm {
+  background: transparent !important;
+}
+.app.pro-glass .header {
+  background: rgba(var(--pro-ink), var(--pro-a-chrome)) !important;
+  backdrop-filter: blur(16px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(150%) !important;
+  border-bottom: 1px solid rgba(var(--pro-edge), calc(var(--pro-a-edge) - 0.01)) !important;
+}
+.app.pro-glass .navigation-sidebar {
+  background: rgba(var(--pro-ink), var(--pro-a-rail)) !important;
+  backdrop-filter: blur(16px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(150%) !important;
+  border-right: 1px solid rgba(var(--pro-edge), calc(var(--pro-a-edge) - 0.02)) !important;
+}
+/* the particle canvas just muddies a real backdrop */
+.app.pro-glass .particle-background,
+.app.pro-paper .particle-background { display: none; }
+
+/* BRIGHT backdrops do NOT use this skin at all.
+   AppShell gives them `pro-paper pro-bright` instead of `pro-glass`, because a
+   white wallpaper wants the light, day-mode-native Paper treatment - not the
+   dark-smoke machinery inverted surface by surface, which is what this file
+   used to attempt and what shipped as black slabs on a white page. So
+   everything below that says `.pro-glass` is the DARK look only; `.pro-bright`
+   now only ever appears next to `.pro-paper` (§4), which brings its own html
+   background with it. */
+
+/* ---------- 4. PAPER skin ---------- */
+/* AppShell forces .app-day-mode with pro-paper, so every component's existing
+   day-mode counterpart carries the content - paper adds the pearl canvas
+   behind and turns the chrome into airy translucent white. */
+.app.pro-paper,
+.app.pro-paper.app-day-mode {
+  background: transparent !important;
+  --bg-hover: rgba(15, 23, 42, 0.045);
+  /* same ink system as glass, so anything shared between the two looks
+     (data planes, mobile surfaces) has one source of truth */
+  --pro-ink: 255, 255, 255;
+  --pro-edge: 15, 23, 42;
+  --pro-a-edge: 0.08;
+  --pro-a-veil: 0.6;
+  --pro-a-veil2: 0.66;
+  --pro-a-card: 0.72;
+  --pro-a-card2: 0.78;
+  --pro-a-plane: 0.78;
+  --pro-a-plane2: 0.84;
+  --pro-a-chip: 0.64;
+}
+html:has(.app.pro-paper) { background: #f4f4f7 !important; }
+html:has(.app.pro-paper) body { background: transparent !important; }
+.app.pro-paper .app-main-content,
+.app.pro-paper .page-layout,
+.app.pro-paper .page-shell,
+.app.pro-paper .main-content,
+.app.pro-paper .welcome-page,
+.app.pro-paper .rzm {
+  background: transparent !important;
+}
+.app.pro-paper .header {
+  background: rgba(255, 255, 255, 0.62) !important;
+  backdrop-filter: blur(18px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(140%) !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.05) !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+.app.pro-paper .navigation-sidebar {
+  background: rgba(255, 255, 255, 0.55) !important;
+  backdrop-filter: blur(18px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(140%) !important;
+  border-right: 1px solid rgba(15, 23, 42, 0.05) !important;
+}
+
+/* ---------- 5. blending pass (founder review 07-30) ---------- */
+/* Landing: the hero stat band + the top-coins tab strip were near-opaque black
+   slabs (0.92-0.97 alpha gradients) - refrost them. (The top-coins TABLE plane
+   is not here: it is a dense data surface, so it lives in the data-plane block
+   at the end of this file and moves with the Data panels control.) */
+.app.pro-glass .welcome-horizontal-bar {
+  background: linear-gradient(180deg, rgba(var(--pro-ink), var(--pro-a-card)) 0%, rgba(var(--pro-ink), var(--pro-a-card2)) 100%) !important;
+}
+.app.pro-glass .welcome-topcoins-tabs {
+  background: rgba(var(--pro-ink), var(--pro-a-veil)) !important;
+}
+
+/* Charts: the canvas chart now paints a TRANSLUCENT bg under pro themes
+   (trading-chart.jsx palette) - turn its container's near-black glass
+   gradient into frost so the backdrop reads through behind the candles.
+   The TradingView iframe can't go transparent - frame it instead so the
+   dark plane reads as an intentional media card. */
+.app.pro-glass .trading-chart {
+  --chart-glass-bg: linear-gradient(168deg, rgba(var(--pro-ink), var(--pro-a-card)) 0%, rgba(var(--pro-ink), var(--pro-a-card2)) 100%);
+}
+.app.pro-glass .tradingview-advanced-container {
+  border-radius: 14px;
+  border: 1px solid rgba(var(--pro-edge), calc(var(--pro-a-edge) + 0.01));
+  /* !important: the component sets an INLINE background #111113 (TradingViewAdvanced.jsx:1366).
+     Ink-driven because the widget itself renders LIGHT under a bright/paper
+     theme (TradingViewAdvanced reads dayMode) - a black frame around a white
+     chart was the tell. */
+  background: rgba(var(--pro-ink), var(--pro-a-veil)) !important;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
+}
+
+/* Monarch: its panels are near-zero-alpha on the normally-black page, so
+   they vanished over a photo. Real frost for the three columns, the quick
+   cards and the composer. Dark frost in BOTH looks - monarch has no
+   day-mode parity, its white text must stay readable on paper too. */
+.app.pro-glass .monarch-page-sidebar,
+.app.pro-paper .monarch-page-sidebar,
+.app.pro-glass .monarch-page-panel,
+.app.pro-paper .monarch-page-panel {
+  background: rgba(11, 13, 17, 0.62);
+}
+.app.pro-glass .monarch-page-empty-grid > *,
+.app.pro-paper .monarch-page-empty-grid > * {
+  background: rgba(13, 15, 20, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+}
+.app.pro-glass .monarch-page-input-wrap,
+.app.pro-paper .monarch-page-input-wrap {
+  background: rgba(10, 12, 16, 0.78);
+  border-radius: 18px;
+}
+
+/* ---------- 6. per-page sweep (opaque-slab scan, 21 pages) ---------- */
+/* Pages that were already clean (var-driven frost): traders-corner, bubbles,
+   fear-greed, categories, watchlists, economic-calendar, private-markets,
+   predictions, zigchain, ai-charts, wallets, liquidation-heatmap.
+   Deliberately untouched: gm-dashboard (has its own cinematic scene system),
+   news .sn-hero__gradient (text-protection gradient ON an article image). */
+
+/* ventures: whole page paints opaque #09090b */
+.app.pro-glass .ventures-page { background: transparent !important; }
+
+/* strips / command bars */
+.app.pro-glass .heatmaps-hero,
+.app.pro-glass .sn-tabs,
+.app.pro-glass .xd-cmdbar,
+.app.pro-glass .ta-tab-bar {
+  background: rgba(var(--pro-ink), var(--pro-a-veil)) !important;
+}
+
+/* hero panels sharing the near-black chart-glass gradient */
+.app.pro-glass .st-hero,
+.app.pro-glass .roi-calculator-glass {
+  background: linear-gradient(180deg, rgba(var(--pro-ink), var(--pro-a-veil)) 0%, rgba(var(--pro-ink), var(--pro-a-veil2)) 100%) !important;
+}
+/* 🪤 …but the rule above is `background` + `!important` and NOTHING else, so it
+   only ever adds a FILL — radius, border and padding stay whatever the page
+   left them. On mobile the page says this wrapper is not a card at all:
+
+     .roi-calculator.roi-calculator-embedded .roi-calculator-glass {
+       background: transparent; border: none; border-radius: 0; box-shadow: none; }
+
+   `!important` beats that `background: transparent` while the `border-radius: 0`
+   survives — so the theme painted a plane with SQUARE corners and no inset, a
+   hard-edged slab chopped flat at both sides ("LOOK HOW UGLY BORDERS ARE CUT",
+   founder 08-06). Third instance of one pattern this week, after the /etfs hero
+   band (§13) and the RWA mobile card shell (above): a theme that adds a surface
+   must add the whole surface — fill AND shape AND inset — or it inherits a
+   layout that was written on the assumption no surface would be there.
+   Handing off to inner cards is not an option here the way it was for
+   `.mta-card-shell`: the ROI sections measure 0-0.03 alpha, i.e. invisible over
+   a photo. So the wrapper becomes the card, with the §19 material. */
+/* Tier note: the desktop rule above puts this on VEIL, but §3a reserves veil for
+   "mood/hero bands (the backdrop leads)" and CARD for "content cards and
+   panels". A calculator is inputs and figures — the data leads — and on a
+   backdrop whose lower half is sunlit grass a veil left "1000", "0.0155 BTC"
+   and "You add now" sitting on the photo. Card tier here. */
+@media (max-width: 768px) {
+  .app.pro-glass .roi-calculator-embedded .roi-calculator-glass,
+  .app.pro-paper .roi-calculator-embedded .roi-calculator-glass {
+    background: linear-gradient(
+      180deg,
+      rgba(var(--pro-ink), var(--pro-a-card)) 0%,
+      rgba(var(--pro-ink), var(--pro-a-card2)) 100%
+    ) !important;
+    border: 0.5px solid rgba(var(--pro-edge), 0.07) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(var(--pro-edge), 0.1),
+      0 1px 3px rgba(0, 0, 0, 0.16) !important;
+    border-radius: 16px !important;
+    padding: 4px 0 !important;
+    /* 🪤 NO `overflow: hidden` here. I added it with the radius to keep content
+       off the curve and it clipped the SEARCH RESULTS: the suggestions list is
+       `position: absolute; top: calc(100% + 4px)` on the input, so it hangs
+       BELOW this wrapper — which is only ~116px tall in the empty state.
+       Measured: dropdown 240px, 18px survived, and elementFromPoint on the
+       first result returned `.roi-calculator-page-content`, i.e. untappable.
+       The user could type and see nothing selectable ("I can't seem to search
+       anything", KP 08-07). Nothing here needs clipping — every child is
+       already inset by the padding above.
+       🪤 The automated check that "passed" this was a Playwright click, which
+       found the item in the DOM and landed inside that 18px sliver. An
+       actionability pass on a clipped element is NOT proof a human can use it:
+       hit-test the centre with elementFromPoint. */
+  }
+}
+
+/* RWA / tokenized-assets: every tab's card runs on --ta-glass-bg (plus one
+   hardcoded copy in overview.css) - swap the token, then catch both rule
+   families at higher specificity. */
+.app.pro-glass .tokenized-assets-page {
+  --ta-glass-bg: linear-gradient(180deg, rgba(var(--pro-ink), var(--pro-a-card)) 0%, rgba(var(--pro-ink), var(--pro-a-card2)) 100%);
+  --ta-glass-bg-quiet: linear-gradient(180deg, rgba(var(--pro-ink), var(--pro-a-veil)) 0%, rgba(var(--pro-ink), var(--pro-a-veil2)) 100%);
+}
+.app.pro-glass .rca, .app.pro-glass .rnf, .app.pro-glass .rgh,
+.app.pro-glass .rcd, .app.pro-glass .rti, .app.pro-glass .rfb,
+.app.pro-glass .rpc, .app.pro-glass .rbs, .app.pro-glass .rth,
+.app.pro-glass .rtw, .app.pro-glass .ramc, .app.pro-glass .rwa-cmd-screener,
+.app.pro-glass .rwa-ov2 .rgh, .app.pro-glass .rwa-ov2 .rcd,
+.app.pro-glass .rwa-ov2 .rti, .app.pro-glass .rwa-ov2 .rfb,
+.app.pro-glass .rwa-ov2 .rpc, .app.pro-glass .rwa-ov2 .rbs,
+.app.pro-glass .rwa-ov2 .rth, .app.pro-glass .rwa-ov2 .rtw,
+.app.pro-glass .rwa-ov2 .ramc, .app.pro-glass .rwa-ov2 .rwa-cmd-screener {
+  background: var(--ta-glass-bg, linear-gradient(180deg, rgba(var(--pro-ink), var(--pro-a-card)), rgba(var(--pro-ink), var(--pro-a-card2)))) !important;
+}
+/* 🪤 …but NOT inside the mobile card shell. `.mta-card-shell` IS the card on a
+   phone, so the mobile sheet deliberately strips the embedded desktop chrome
+   off these same classes ("Neutralize embedded desktop card chrome":
+   background/border/box-shadow none, `padding: 0 !important`). The rule above
+   is (0,3,0) and beats that (0,2,0), so the theme put a plane BACK onto an
+   element the layout had just stripped to zero padding — a hard-edged
+   full-bleed rectangle with its title sitting on the left edge and its right
+   side running off the viewport (founder screenshot, 08-06). Same defect as
+   the hero bands in §13: a plane painted onto something with no inset.
+   The shell already carries the theme's material, so the child stays bare. */
+.app.pro-glass .mta-card-shell .rca,
+.app.pro-glass .mta-card-shell .ramc,
+.app.pro-glass .mta-card-shell .rbc,
+.app.pro-glass .mta-card-shell .rtw,
+.app.pro-paper .mta-card-shell .rca,
+.app.pro-paper .mta-card-shell .ramc,
+.app.pro-paper .mta-card-shell .rbc,
+.app.pro-paper .mta-card-shell .rtw {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* translucent list cards (etf-flows rail + shared watchlist rows) */
+.app.pro-glass .watchlist-item {
+  background: linear-gradient(168deg, rgba(var(--pro-ink), var(--pro-a-veil2)) 0%, rgba(var(--pro-ink), var(--pro-a-card)) 100%) !important;
+  border-color: rgba(var(--pro-edge), var(--pro-a-edge));
+}
+
+/* sticky table header: stays MORE opaque on purpose (rows scroll under it),
+   but frosted instead of solid */
+.app.pro-glass .tdt-header {
+  background: rgba(var(--pro-ink), var(--pro-a-plane2)) !important;
+}
+
+/* ---------- 7. glass depth (Clear / Standard / Deep) ---------- */
+/* segmented control in the studio */
+/* Shape only - the tile's surface/hover/active ramp lives with `.pts-look`. */
+.pts-depths { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pts-depth { display: flex; flex-direction: column; gap: 2px; padding: 9px 10px; }
+.pts-depth-name { font-size: 0.75rem; font-weight: 600; }
+.pts-depth-desc { font-size: 0.6875rem; color: var(--pts-fg-3); }
+/* "Yours" is two tiles (Daily mix + Your photo), not three. */
+.pts-depths--pair { grid-template-columns: repeat(2, 1fr); }
+/* The photo tile is a <label> so a tap activates the input NATIVELY - iOS does
+   not open the picker for a programmatic click on a display:none input, which
+   is why upload was dead on a phone. The input therefore has to stay in the
+   render tree: hide it, never `display: none`. */
+.pts-photo { position: relative; }
+.pts-photo-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  /* Safari sizes a file input to its button; force it to fill the tile so the
+     whole tile is the tap target rather than a ~90px strip inside it. */
+  font-size: 0;
+}
+.pts-photo-error {
+  margin-top: 8px;
+  font-size: 0.6875rem;
+  line-height: 1.45;
+  color: var(--pts-danger);
+}
+
+/* Depth is now purely a set of ALPHAS - it never names a colour, so
+   Clear/Standard/Deep compose with a bright backdrop instead of dragging the
+   black planes back in (that fight was the second half of the bright bug). */
+
+/* CLEAR - thinner frost, lighter scrim, the backdrop leads */
+.app.pro-glass.pro-depth-clear {
+  --pro-a-void: 0.2;
+  --pro-a-base: 0.18;
+  --pro-a-surface: 0.3;
+  --pro-a-elev: 0.4;
+  --pro-a-overlay: 0.86;
+  --pro-a-glass: 0.34;
+  --pro-a-veil: 0.36;
+  --pro-a-veil2: 0.42;
+  --pro-a-card: 0.42;
+  --pro-a-card2: 0.48;
+  --pro-a-plane: 0.58;
+  --pro-a-plane2: 0.66;
+  --pro-a-chip: 0.4;
+  --pro-a-chrome: 0.3;
+  --pro-a-rail: 0.26;
+}
+.app.pro-glass.pro-depth-clear .pts-scrim {
+  background: linear-gradient(180deg, rgba(5, 6, 10, 0.4) 0%, rgba(5, 6, 10, 0.26) 34%, rgba(5, 6, 10, 0.5) 100%);
+}
+
+/* DEEP - heavier frost, darker scrim, data leads */
+.app.pro-glass.pro-depth-deep {
+  --pro-a-void: 0.55;
+  --pro-a-base: 0.5;
+  --pro-a-surface: 0.68;
+  --pro-a-elev: 0.76;
+  --pro-a-overlay: 0.94;
+  --pro-a-glass: 0.7;
+  --pro-a-veil: 0.64;
+  --pro-a-veil2: 0.7;
+  --pro-a-card: 0.74;
+  --pro-a-card2: 0.8;
+  --pro-a-plane: 0.8;
+  --pro-a-plane2: 0.86;
+  --pro-a-chip: 0.68;
+  --pro-a-chrome: 0.62;
+  --pro-a-rail: 0.58;
+}
+.app.pro-glass.pro-depth-deep .pts-scrim {
+  background: linear-gradient(180deg, rgba(5, 6, 10, 0.68) 0%, rgba(5, 6, 10, 0.54) 34%, rgba(5, 6, 10, 0.76) 100%);
+}
+
+/* ---------- 8. soft focus + toggle row + backdrop transitions ---------- */
+/* keep-last preload means a swap is instant; the filter still eases nicely */
+.pts-bgfill { transition: filter 0.35s ease, transform 0.35s ease; }
+.app.pro-focus .pts-bgfill {
+  filter: blur(16px) saturate(1.08) brightness(0.82);
+  transform: scale(1.05); /* hide the blur's soft edge */
+}
+.app.pro-focus.pro-paper .pts-bgfill,
+.app.pro-focus .pro-theme-backdrop--bright .pts-bgfill {
+  filter: blur(14px) brightness(1.02);
+}
+
+/* Surface/hover ramp shared with `.pts-look`; this adds the row layout + the
+   switch, which copies `.settings-toggle-switch` (40x22, mint when on). */
+.pts-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 12px;
+  margin-bottom: 18px;
+}
+.pts-toggle-name { display: block; font-size: 0.8125rem; font-weight: 600; }
+.pts-toggle-desc { display: block; font-size: 0.6875rem; color: var(--pts-fg-3); margin-top: 2px; }
+.pts-toggle-knob {
+  flex: 0 0 auto;
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: var(--radius-full, 9999px);
+  border: 1px solid var(--pts-line);
+  background: var(--pts-tile-hover);
+  transition: all var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.pts-toggle-knob::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--pts-fg-3);
+  transition: all var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.pts-toggle--on .pts-toggle-knob {
+  background: var(--bull-muted, rgba(16, 185, 129, 0.18));
+  border-color: rgba(16, 185, 129, 0.45);
+}
+.pts-toggle--on .pts-toggle-knob::after {
+  transform: translateX(18px);
+  background: var(--bull, #10B981);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.35);
+}
+
+/* ---------- 9. full-app audit, batch 1 (surgical) ---------- */
+/* alt-rotation: opaque #0b0d13 chart wrapper (canvas draws lines only) */
+.app.pro-glass .ar-chart-wrap {
+  background: rgba(var(--pro-ink), var(--pro-a-veil2)) !important;
+}
+/* x-intelligence right rail: 0.78 -> ease into the frost language */
+.app.pro-glass .xb-rp { background: rgba(var(--pro-ink), var(--pro-a-card)) !important; }
+
+/* ---------- 10. full-app audit, batch 2 (surgical) ---------- */
+/* liquidation MAP plot: frost + frame (the canvas may still paint its own
+   plane - then this reads as an intentional media card, like TVA) */
+.app.pro-glass .lmc-plot {
+  background: rgba(var(--pro-ink), var(--pro-a-veil2)) !important;
+  border-radius: 14px;
+  border: 1px solid rgba(var(--pro-edge), var(--pro-a-edge));
+}
+/* x-dash Cosmos tab (.xdu-host) deliberately untouched - it IS a full-bleed
+   three.js space scene, same category as gm-dashboard. */
+
+/* Light looks (paper AND bright glass): canvas-painted chart planes draw their
+   own pixels, so they keep whatever the canvas paints - they just get the
+   media-card frame so they read as intentional on a light canvas instead of
+   as a slab someone forgot to style. */
+.app.pro-paper .ar-chart-wrap,
+.app.pro-paper .liqp-hm-header,
+.app.pro-paper .liqp-real-heatmap-canvas-wrap,
+.app.pro-paper .lmc-plot,
+.app.pro-paper .tradingview-advanced-container {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16);
+}
+
+/* ---------- 11. traders-corner (inverse problem: near-zero-alpha panels) ---------- */
+/* The page is built flat on the black void (white 0.03-0.05 gradients), so
+   over a photo everything floated. Real frost for its three surface classes. */
+.app.pro-glass .tc-card,
+.app.pro-glass .tc-hero-card {
+  background: linear-gradient(160deg, rgba(var(--pro-ink), var(--pro-a-card)) 0%, rgba(var(--pro-ink), var(--pro-a-card2)) 100%) !important;
+  border-color: rgba(var(--pro-edge), calc(var(--pro-a-edge) + 0.01)) !important;
+}
+.app.pro-glass .tc-data-strip {
+  background: rgba(var(--pro-ink), var(--pro-a-card)) !important;
+  border-color: rgba(var(--pro-edge), var(--pro-a-edge)) !important;
+}
+
+/* ---------- 12. ghost-panel pass (inverse scan, 32 pages) ---------- */
+/* Card-like containers that floated with near-zero alpha over the photo.
+   Two strengths: data frost for dense panels, soft frost for editorial/hero
+   bands. Skipped on purpose: wrappers whose CHILDREN carry the background
+   categories + RWA wrappers, media-center rails) and heroes with their own
+   text-protection scrims.
+   ⚠️ CORRECTED 2026-08-02: heatmap/treemap grids and the x-dash treemap were
+   ALSO skipped here on the theory that their children carry the background.
+   They do not - the tiles are TINTED WASHES (green/red by change), so the
+   photo reads straight through the data. Founder screenshots confirmed it.
+   They are now handled by the data-plane block at the end of this file. */
+.app.pro-glass .tc-ai-intel,
+.app.pro-glass .st-analysis__card,
+.app.pro-glass .pm-arb__rail,
+.app.pro-glass .zsi,
+.app.pro-glass .wlp-card,
+.app.pro-glass .wlp-table,
+.app.pro-glass .liqp-ai-section,
+.app.pro-glass .signal-card,
+.app.pro-glass .sn-widget {
+  background: rgba(var(--pro-ink), var(--pro-a-card)) !important;
+  border-color: rgba(var(--pro-edge), var(--pro-a-edge));
+}
+.app.pro-glass .rz-lite-hero,
+.app.pro-glass .fg-hero,
+.app.pro-glass .sn-card,
+.app.pro-glass .sn-feat,
+.app.pro-glass .landing-hero,
+.app.pro-glass .sector-compare-root {
+  background: rgba(var(--pro-ink), var(--pro-a-veil)) !important;
+}
+/* Categories was skipped above on the theory its children carry the background.
+   They do not — .cat-mc / .cat-widget / .cat-trending-card are 0.008-0.028
+   alpha whites, i.e. invisible over a photo (founder screenshot, 08-04). Card
+   tier so the Data-panels control reaches them. */
+.app.pro-glass .cat-mc,
+.app.pro-glass .cat-widget,
+.app.pro-glass .cat-trending-card,
+.app.pro-glass .cat-ai-read {
+  background: linear-gradient(160deg, rgba(var(--pro-ink), var(--pro-a-card)) 0%, rgba(var(--pro-ink), var(--pro-a-card2)) 100%) !important;
+  border-color: rgba(var(--pro-edge), calc(var(--pro-a-edge) + 0.01)) !important;
+}
+
+/* ---------- 13. HERO BANDS (page + section headers) ---------- */
+/* RWA page root paints opaque dark on the mobile layout. BOTH skins: the
+   mobile rule is `background: #09090b` on `.mta-page`, so a Paper/bright
+   theme got a black page under white chrome. */
+.app.pro-glass .tokenized-assets-page,
+.app.pro-paper .tokenized-assets-page { background: transparent !important; }
+
+/* 🪤 This block was three lines of flat fill, and it carried THREE faults that
+   all showed up on one screenshot (founder, 08-06: "many headers are screwed,
+   look at etf flows"):
+
+   1. NO INSET. It painted a veil + a radius onto elements whose own padding is
+      0, so `.etfp-hero` rendered "ETF Flows" ON the slab's top-left corner and
+      the description ran into the right curve. Exactly the heatmaps banner bug
+      (e312c34f7): a plane is not a card until something holds content off its
+      edge. Every band below now states the inset it needs itself, because the
+      page CANNOT carry it — unthemed there is no band, and pre-padding the
+      header would push its title out of line with the cards underneath.
+   2. MOBILE RULES ON A DESKTOP SCREEN. The block was headed "mobile audit
+      (390px)" but was never wrapped in the media query that heading implies,
+      so `.etfp-hero` — a DESKTOP page header — wore a band only ever measured
+      at 390px. It is the one class here that renders at both widths, so it is
+      the one that needs a width-aware inset.
+   3. GLASS ONLY. Switching to Paper (or any bright backdrop, which runs the
+      Paper skin) made the band vanish outright, so one header was three
+      different objects depending on skin and width — the founder's "themes
+      must match in mobi and desktop".
+
+   One band now: the veil tier (a hero lets the backdrop lead, §3a), the lit
+   material from §19 (a FLAT fill is what read as "curved gray black boxes with
+   no style or polish"), a real inset, and both skins so the object survives a
+   theme switch. Ink-driven throughout, so it is bright-correct by construction. */
+.app.pro-glass .etfp-hero,
+.app.pro-paper .etfp-hero,
+.app.pro-glass .roi-calculator-page-header-inner,
+.app.pro-paper .roi-calculator-page-header-inner,
+.app.pro-glass .mint-hero-body,
+.app.pro-paper .mint-hero-body,
+.app.pro-glass .mhm-hero,
+.app.pro-paper .mhm-hero,
+.app.pro-glass .mfg-section,
+.app.pro-paper .mfg-section {
+  background: linear-gradient(
+    180deg,
+    rgba(var(--pro-ink), max(0, calc(var(--pro-a-veil) - 0.05))) 0%,
+    rgba(var(--pro-ink), var(--pro-a-veil2)) 100%
+  ) !important;
+  border: 0.5px solid rgba(var(--pro-edge), 0.07);
+  box-shadow:
+    inset 0 1px 0 rgba(var(--pro-edge), 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.16);
+  border-radius: 16px;
+}
+
+/* Per-band insets. Only the axes each element is genuinely missing — the tuned
+   values their own pages already carry must survive (`.mhm-hero` got its
+   `8px 12px 10px` in e312c34f7 and is left alone entirely). */
+.app.pro-glass .etfp-hero,
+.app.pro-paper .etfp-hero {
+  padding: 18px 22px 20px;
+}
+/* ROI's title block had NO band at all, so "ROI to ATH" and a full-measure
+   subtitle sat naked on the wallpaper 24px off the screen edge — the founder's
+   "words are close to borders, this isn't styled well" (08-07), and the reason
+   /etfs and /roi-calculator looked like different products. The band goes on
+   the INNER box, not `.roi-calculator-page-header`: the outer one carries the
+   fixed-header reserve (`--m-header-h + 12px`), and painting that would render
+   64px of empty plane above the text. `max-width` on the subtitle keeps the
+   measure readable instead of running the full width of the phone. */
+.app.pro-glass .roi-calculator-page-header-inner,
+.app.pro-paper .roi-calculator-page-header-inner {
+  padding: 16px 20px 18px;
+}
+.app.pro-glass .roi-calculator-page-subtitle,
+.app.pro-paper .roi-calculator-page-subtitle {
+  max-width: 42ch;
+}
+/* text block: page gives it `12px 0 0`, so it is flush left, right and bottom */
+.app.pro-glass .mint-hero-body,
+.app.pro-paper .mint-hero-body {
+  padding: 12px 14px 14px;
+}
+/* page gives it `0 16px`, so only the vertical is missing */
+.app.pro-glass .mfg-section,
+.app.pro-paper .mfg-section {
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+@media (max-width: 768px) {
+  /* `.etfp` drops to a 14px page gutter here, so the desktop inset would eat
+     most of the column */
+  .app.pro-glass .etfp-hero,
+  .app.pro-paper .etfp-hero {
+    padding: 13px 15px 14px;
+  }
+}
+
+/* ---------- 14. readability pass (founder: "values more visible, readability is key") ---------- */
+/* Principle: the backdrop may be dramatic BEHIND the data, never through it.
+   Three defenses under glass: a data-plane floor on tables/strips, luminous
+   value colors + text shadows, and real frost on filter pills. */
+
+/* 1. luminous market colors over photos (dark glass only - bright/paper
+   backdrops keep the standard tones for contrast) */
+.app.pro-glass:not(.pro-bright) {
+  --bull: #34D399;
+  --bear: #F87171;
+  /* secondary text lifted - 0.6/0.5/0.35 alphas sink into a photo */
+  --text-secondary: rgba(245, 245, 247, 0.74);
+  --text-tertiary: rgba(245, 245, 247, 0.64);
+  --text-muted: rgba(245, 245, 247, 0.48);
+}
+.app.pro-glass:not(.pro-bright) .change-cell.bear { color: #F87171; }
+.app.pro-glass:not(.pro-bright) .change-cell.bull,
+.app.pro-glass:not(.pro-bright) .change-cell.positive { color: #34D399; }
+
+/* 2. text shadow on dense data surfaces - lets values sit ON the photo
+   where row planes are thin */
+/* NOTE: this was a CONTAINER-level text-shadow - it cascaded to 655 text
+   nodes on home and repainted on every inner-scroll frame of the 50-row
+   table. The plane floor below carries the contrast instead; only the
+   genuinely floating labels (section 15) keep a shadow. */
+.app.pro-glass:not(.pro-bright) .welcome-horizontal-bar {
+  text-shadow: 0 1px 2px rgba(4, 6, 10, 0.5);
+}
+
+/* 3. data-plane floor: the top-coins table + its strips read denser than
+   mood surfaces (overrides the softer values from the blending pass) */
+.app.pro-glass .token-list-wrap {
+  background: linear-gradient(180deg, rgba(var(--pro-ink), var(--pro-a-plane)) 0%, rgba(var(--pro-ink), var(--pro-a-plane2)) 100%) !important;
+}
+
+/* 4. filter pills + section tabs: real chips instead of 0.35-alpha ghosts */
+.app.pro-glass .welcome-category-tab {
+  background: rgba(var(--pro-ink), var(--pro-a-chip));
+  border: 1px solid rgba(var(--pro-edge), var(--pro-a-edge));
+}
+/* Text tints are for the DARK look only: under a bright backdrop the app is in
+   day mode, so the page's own dark type is correct and a warm-white override
+   would print white on white. */
+.app.pro-glass:not(.pro-bright) .welcome-category-tab { color: rgba(245, 245, 247, 0.68); }
+.app.pro-glass:not(.pro-bright) .welcome-topcoins-header-tab { color: rgba(245, 245, 247, 0.62); }
+
+/* ---------- 15. floating-text pass (app-wide contrast audit) ---------- */
+/* Pill/tab controls that rendered as ghosts over the photo -> real chips */
+.app.pro-glass .tc-exb,
+.app.pro-glass .wl-toggle-btn,
+.app.pro-glass .pm-tab,
+.app.pro-glass .bubbles-pill,
+.app.pro-glass .cs-pill__name,
+.app.pro-glass .wlp-readbadge {
+  background: rgba(var(--pro-ink), var(--pro-a-chip));
+  border: 1px solid rgba(var(--pro-edge), var(--pro-a-edge));
+}
+/* Small data labels/values with no plane behind them -> text shadow.
+   .mono and .caption are the app-wide numeric/label utility classes. */
+.app.pro-glass:not(.pro-bright) .mono,
+.app.pro-glass:not(.pro-bright) .caption,
+.app.pro-glass:not(.pro-bright) .rz-tw__handle,
+.app.pro-glass:not(.pro-bright) .rz-tw__name,
+.app.pro-glass:not(.pro-bright) .rz-tw-ctrl,
+.app.pro-glass:not(.pro-bright) .tc-rekt-amt,
+.app.pro-glass:not(.pro-bright) .tc-rekt-tf,
+.app.pro-glass:not(.pro-bright) .tc-rekt-total,
+.app.pro-glass:not(.pro-bright) .wl-mc-num,
+.app.pro-glass:not(.pro-bright) .wl-mc-mover-badge,
+.app.pro-glass:not(.pro-bright) .token-name,
+.app.pro-glass:not(.pro-bright) .treemap-cell-name,
+.app.pro-glass:not(.pro-bright) .vpf-news-src,
+.app.pro-glass:not(.pro-bright) .pm-masthead__oi-label,
+.app.pro-glass:not(.pro-bright) .wlp-alpha-sym,
+.app.pro-glass:not(.pro-bright) .wlp-stat-value,
+.app.pro-glass:not(.pro-bright) .wlp-stat-sub,
+.app.pro-glass:not(.pro-bright) .wlp-stat-label,
+.app.pro-glass:not(.pro-bright) .liqp-metric-label,
+.app.pro-glass:not(.pro-bright) .liqp-metric-value,
+.app.pro-glass:not(.pro-bright) .liqp-metric-sublabel,
+.app.pro-glass:not(.pro-bright) .liqp-token-name,
+.app.pro-glass:not(.pro-bright) .liqp-ls-label,
+.app.pro-glass:not(.pro-bright) .cat-mc-num,
+.app.pro-glass:not(.pro-bright) .bubbles-pill-label,
+.app.pro-glass:not(.pro-bright) .liqp-hm-magnet-price,
+.app.pro-glass:not(.pro-bright) .liqp-hm-magnet-usd,
+.app.pro-glass:not(.pro-bright) .liqp-hm-magnet-dist {
+  text-shadow: 0 1px 2px rgba(4, 6, 10, 0.6);
+}
+
+/* ---------- 16. scroll-perf pass (founder: scroll lag + half-painted rows) ---------- */
+/* ROOT CAUSE: per-panel backdrop-filter re-filters the photo behind EVERY
+   frosted surface on every scroll frame. Glass had 2.6 MP of filtered area on
+   home (2.2x baseline) and 2.5 MP on traders-corner (15x baseline) - on a
+   retina window that is ~4x again in device pixels, which is the lag AND the
+   torn/half-painted rows (partial repaint of a large filtered region).
+   FIX: translucent fills carry the frost; blur only survives on small chrome
+   (header, sidebar, studio panel/fab). Plus: cap the app's own big blurs while
+   a photo backdrop is up. */
+.app.pro-glass .welcome-market-ai-widget { backdrop-filter: blur(12px) saturate(140%) !important; -webkit-backdrop-filter: blur(12px) saturate(140%) !important; }
+/* Safari: backdrop-filter's blur region paints SQUARE, ignoring the panel's
+   border-radius — the frost pokes past every rounded corner as a square
+   overlay (founder screenshot 2026-08-03; reproduced in WebKit, absent in
+   Chromium). No clip (clip-path/mask/isolate) contains it, so Safari trades
+   the blur for a deeper smoked fill — same read, clean curves. */
+@supports (-webkit-hyphens: none) {
+  .app.pro-glass .welcome-watchlist-widget {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .app.pro-glass:not(.pro-bright) .welcome-market-ai-widget {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background:
+      linear-gradient(180deg,
+        rgba(255, 255, 255, 0.05) 0%,
+        rgba(255, 255, 255, 0.012) 10%,
+        rgba(255, 255, 255, 0) 28%),
+      linear-gradient(180deg,
+        rgba(21, 21, 27, 0.78) 0%,
+        rgba(11, 11, 15, 0.86) 46%,
+        rgba(6, 6, 9, 0.92) 100%) !important;
+  }
+}
+.app.pro-glass .welcome-watchlist-widget { backdrop-filter: blur(10px) saturate(130%) !important; -webkit-backdrop-filter: blur(10px) saturate(130%) !important; }
+.app.pro-glass .welcome-topcoins-tabs { backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; }
+.app.pro-glass .filter-options { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+.app.pro-glass .token-ticker { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+/* the scrolling data plane must never be a filtered region */
+.app.pro-glass .token-list-wrap,
+.app.pro-glass .tc-card,
+.app.pro-glass .tc-hero-card,
+.app.pro-glass .tc-data-strip {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* The .tdt clipped-row override lived here. Obsolete: the table no longer
+   has an inner scroll region at all (welcome-page.css) - keeping a
+   max-height here would REINTRODUCE the nested scroller under the themes. */
+
+
+
+/* ---------- 18. DATA PLANES (founder: "a bit too transparent") ------------
+   The rule from the readability pass: the backdrop is dramatic BEHIND data,
+   never THROUGH it. Tinted-wash surfaces (heatmap tiles, treemap cells, table
+   rows) cannot carry their own opacity without destroying the colour coding,
+   so the PLANE UNDERNEATH them is what gets shaded. Tiles then composite over
+   a dark surface instead of a city skyline, and stay exactly as colourful.
+
+   User-controllable via Themes -> Data panels (proDataPlane store key):
+     clear = the old see-through look, backdrop fully visible
+     glass = default, readable but the scene still breathes through
+     solid = data first, backdrop only around the panels
+   Painted with ONE token so every surface below moves together. */
+/* One definition for both looks - the ink token already knows whether this
+   theme is smoke or frost. The Data-panels control moves the plane ALPHAS,
+   which is also why it now works on a bright backdrop. */
+.app.pro-glass,
+.app.pro-paper { --pro-plane: rgba(var(--pro-ink), var(--pro-a-plane)); }
+
+/* The control must MATCH THE OPTION on every page (founder, 08-04: "glass or
+   solid must match the options"). Moving only --pro-a-plane left any page whose
+   cards are built on --bg-surface / --bg-elevated / the card+veil tiers
+   structurally unable to honour "Solid" (Categories was the tell: near-invisible
+   stat cards with Solid selected). So the control now moves EVERY panel tier
+   together — plane, card, veil, chip, and the design-token surfaces. The page
+   canvas (void/base) and the chrome (header/rail) deliberately stay put: solid
+   means "data first, backdrop around the panels", not "hide the wallpaper". */
+.app.pro-glass.pro-plane-clear {
+  --pro-a-plane: 0.28; --pro-a-plane2: 0.36;
+  --pro-a-card: 0.4; --pro-a-card2: 0.46;
+  --pro-a-veil: 0.34; --pro-a-veil2: 0.4;
+  --pro-a-surface: 0.3; --pro-a-elev: 0.4;
+  --pro-a-chip: 0.36; --pro-a-glass: 0.32;
+}
+.app.pro-glass.pro-plane-solid {
+  --pro-a-plane: 0.93; --pro-a-plane2: 0.96;
+  --pro-a-card: 0.88; --pro-a-card2: 0.92;
+  --pro-a-veil: 0.8; --pro-a-veil2: 0.86;
+  --pro-a-surface: 0.85; --pro-a-elev: 0.9;
+  --pro-a-chip: 0.82; --pro-a-glass: 0.85;
+}
+
+.app.pro-paper.pro-plane-clear {
+  --pro-a-plane: 0.42; --pro-a-plane2: 0.5;
+  --pro-a-card: 0.5; --pro-a-card2: 0.56;
+  --pro-a-veil: 0.4; --pro-a-veil2: 0.46;
+  --pro-a-chip: 0.45;
+}
+.app.pro-paper.pro-plane-solid {
+  --pro-a-plane: 0.96; --pro-a-plane2: 0.98;
+  --pro-a-card: 0.92; --pro-a-card2: 0.95;
+  --pro-a-veil: 0.86; --pro-a-veil2: 0.9;
+  --pro-a-chip: 0.85;
+}
+
+.app.pro-glass .heatmaps-grid-container,
+.app.pro-glass .treemap-container,
+.app.pro-glass .xd-treemap,
+.app.pro-glass .xd-table-wrap,
+.app.pro-glass .xd-table-scroll,
+.app.pro-paper .heatmaps-grid-container,
+.app.pro-paper .treemap-container,
+.app.pro-paper .xd-treemap,
+.app.pro-paper .xd-table-wrap,
+.app.pro-paper .xd-table-scroll {
+  background: var(--pro-plane) !important;
+}
+
+/* The top-coins plane rides the same two alphas, so the Data-panels control and
+   the Depth control both reach it with no per-surface rule of their own. */
+
+
+/* ---------- 19. MOBILE SURFACES (founder: "hard reading, feels random") ---
+   🪤 THE MISS behind every mobile round so far: the phone tree is a DIFFERENT
+   COMPONENT SET with its own namespace - rzm-* (research zone), mws / mct /
+   wsec / mobile-quick-stats (welcome) - and not one of those classes appeared
+   anywhere in this file. Every pass up to here styled desktop classes, so on a
+   phone the only things that looked "themed" were components that hardcode
+   their own dark background. Hence: some panels black, some invisible,
+   "a bit random". Measured at 390px over Dusk Lake: 18 content surfaces per
+   screen at effective alpha 0.00.
+
+   Rules for this block:
+   - frost the OUTER section only. rzm-metrics CONTAINS rzm-metrics-grid and
+     rzm-stats-list; mct contains mct-content(-inner). Painting both stacks two
+     planes and reads muddy.
+   - page canvas stays transparent (app-main-content / page-layout /
+     welcome-page) - that is where the backdrop is supposed to show.
+   - drive it from --pro-plane so the Themes -> Data panels control moves the
+     phone too, instead of inventing a second opacity system. */
+@media (max-width: 768px) {
+  .app.pro-glass .rzm-tab-panel,
+  .app.pro-glass .discovery-section,
+  .app.pro-glass .mg,
+  .app.pro-glass .mwc-weather,
+  .app.pro-glass .mwc-datetime,
+  .app.pro-glass .rzm-hero,
+  .app.pro-glass .rzm-identity,
+  .app.pro-glass .rzm-metrics,
+  .app.pro-glass .rzm-perf-table,
+  .app.pro-glass .rzm-links-row,
+  .app.pro-glass .rzm-converter,
+  .app.pro-glass .rzm-proj-stage-grid,
+  .app.pro-glass .mobile-quick-stats,
+  .app.pro-glass .mws,
+  .app.pro-glass .mct,
+  .app.pro-glass .wsec,
+  .app.pro-glass .mcat-stat-card,
+  .app.pro-glass .mcat-trending-card,
+  .app.pro-glass .mcat-movers-card,
+  .app.pro-glass .mcat-ai-card,
+  /* RWA: the mobile sheet's own two compartments. Both already carry their
+     padding and radius, both are ~0.015-0.02 alpha white — i.e. invisible over
+     a photo — and neither was ever in this list, which is why §6's exclusion
+     above has something to hand the job TO. */
+  .app.pro-glass .mta-card-shell,
+  .app.pro-glass .mta-kpi,
+  .app.pro-paper .rzm-tab-panel,
+  .app.pro-paper .discovery-section,
+  .app.pro-paper .mg,
+  .app.pro-paper .mwc-weather,
+  .app.pro-paper .mwc-datetime,
+  .app.pro-paper .rzm-hero,
+  .app.pro-paper .rzm-identity,
+  .app.pro-paper .rzm-metrics,
+  .app.pro-paper .rzm-perf-table,
+  .app.pro-paper .rzm-links-row,
+  .app.pro-paper .rzm-converter,
+  .app.pro-paper .rzm-proj-stage-grid,
+  .app.pro-paper .mobile-quick-stats,
+  .app.pro-paper .mws,
+  .app.pro-paper .mct,
+  .app.pro-paper .wsec,
+  .app.pro-paper .mcat-stat-card,
+  .app.pro-paper .mcat-trending-card,
+  .app.pro-paper .mcat-movers-card,
+  .app.pro-paper .mcat-ai-card,
+  .app.pro-paper .mta-card-shell,
+  .app.pro-paper .mta-kpi {
+    /* MATERIAL, not a fill. A single flat `rgba(ink, a)` at a 16px radius is
+       exactly what the founder saw: "curved gray black boxes with no style or
+       polish". Real glass is lit — it is denser at the bottom than the top, it
+       has a bright edge where the light catches it, and it sits on the surface
+       behind it rather than being painted onto it.
+
+       Three cheap things do all of that, and NONE of them composites: a
+       gradient across the same alpha the Data-panels control drives, a 1px
+       inner highlight along the top edge, and a hairline that is a shade
+       brighter than the fill. Deliberately still NO per-panel backdrop-filter —
+       that was measured at 2.61 MP of blurred area on this page and is the
+       documented jank engine (pro-themes T4). The frost stays on small chrome;
+       the panels get light instead. */
+    background: linear-gradient(
+      180deg,
+      rgba(var(--pro-ink), max(0, calc(var(--pro-a-plane) - 0.07))) 0%,
+      rgba(var(--pro-ink), calc(var(--pro-a-plane) + 0.03)) 100%
+    ) !important;
+    border: 0.5px solid rgba(var(--pro-edge), 0.07);
+    box-shadow:
+      inset 0 1px 0 rgba(var(--pro-edge), 0.1),
+      0 1px 3px rgba(0, 0, 0, 0.16);
+    border-radius: 16px;
+  }
+
+  /* THE CHART — full-bleed square plane reads as a slab over a wallpaper
+     (founder 08-05: "spectre charts no curves"). Inset + rounded like every
+     other compartment; the chart engines re-measure on resize so the 16px of
+     width is safe. */
+  .app.pro-glass .rzm-chart-section,
+  .app.pro-paper .rzm-chart-section {
+    padding: 0 8px;
+  }
+  .app.pro-glass .rzm-chart-wrap,
+  .app.pro-paper .rzm-chart-wrap {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 0.5px solid rgba(var(--pro-edge), 0.07);
+    box-shadow: inset 0 1px 0 rgba(var(--pro-edge), 0.06);
+  }
+
+  /* CATEGORY DETAIL token list — fully transparent even under Solid
+     (founder 08-05: "Bitcoin and Ethereum not in a solid format even though
+     the theme I chose is solid"). Plane-driven so the Data-panels control
+     moves it. */
+  .app.pro-glass .mcat-token-list,
+  .app.pro-paper .mcat-token-list {
+    background: linear-gradient(
+      180deg,
+      rgba(var(--pro-ink), max(0, calc(var(--pro-a-plane) - 0.07))) 0%,
+      rgba(var(--pro-ink), calc(var(--pro-a-plane) + 0.03)) 100%
+    ) !important;
+    border: 0.5px solid rgba(var(--pro-edge), 0.07);
+    border-radius: 16px;
+    /* the page pays its own 16px gutter now (--mcat-gut); rows are
+       padding: 12px 0, so the compartment supplies the inner column inset */
+    margin: 0;
+    padding: 0 12px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(var(--pro-edge), 0.08);
+  }
+  /* the row hairline belongs to the compartment, not the photo */
+  .app.pro-glass .mcat-token-row,
+  .app.pro-paper .mcat-token-row,
+  .app.pro-glass .mcat-cat-row,
+  .app.pro-paper .mcat-cat-row {
+    border-bottom-color: rgba(var(--pro-edge), 0.06);
+  }
+
+  /* HEATMAPS (founder 08-05: "banner is weird… other things not visible…
+     edges look odd"). One material family for the whole page: stats and
+     movers take the card tier, pills and search become real chips, and the
+     map container clips its tiles to a rounded compartment. */
+  .app.pro-glass .mhm-stat,
+  .app.pro-glass .mhm-movers,
+  .app.pro-glass .mhm-pagination,
+  .app.pro-paper .mhm-stat,
+  .app.pro-paper .mhm-movers,
+  .app.pro-paper .mhm-pagination {
+    background: rgba(var(--pro-ink), var(--pro-a-card)) !important;
+    border: 0.5px solid rgba(var(--pro-edge), 0.07) !important;
+    border-radius: 12px;
+  }
+  .app.pro-glass .mhm-movers,
+  .app.pro-paper .mhm-movers { padding: 10px 12px; }
+  /* the sentiment badge is the fifth card in the same scroller — same
+     material as its .mhm-stat siblings (army finding, 08-05) */
+  .app.pro-glass .mhm-stat-badge,
+  .app.pro-paper .mhm-stat-badge {
+    background: rgba(var(--pro-ink), var(--pro-a-card)) !important;
+    border: 0.5px solid rgba(var(--pro-edge), 0.07) !important;
+    border-radius: 12px;
+  }
+  .app.pro-glass .mhm-pill,
+  .app.pro-paper .mhm-pill {
+    background: rgba(var(--pro-ink), var(--pro-a-chip)) !important;
+    border: 0.5px solid rgba(var(--pro-edge), 0.08) !important;
+  }
+  .app.pro-glass .mhm-search,
+  .app.pro-paper .mhm-search {
+    background: rgba(var(--pro-ink), var(--pro-a-veil)) !important;
+    border: 0.5px solid rgba(var(--pro-edge), 0.07) !important;
+  }
+  .app.pro-glass .heatmaps-grid-container,
+  .app.pro-paper .heatmaps-grid-container {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 0.5px solid rgba(var(--pro-edge), 0.07);
+  }
+
+  /* ECONOMIC CALENDAR — the month grid and the Market Outlook card (thesis +
+     Next Key Events) floated raw on the wallpaper. */
+  .app.pro-glass .mec-content .month-view,
+  .app.pro-glass .mec-content .mo-card,
+  .app.pro-paper .mec-content .month-view,
+  .app.pro-paper .mec-content .mo-card {
+    background: rgba(var(--pro-ink), var(--pro-a-card)) !important;
+    border-radius: 16px;
+    border: 0.5px solid rgba(var(--pro-edge), 0.07);
+  }
+
+  /* NEWS category strip — same sticky-black-band class as the RZ tab bar. */
+  .app.pro-glass .sn-tabs,
+  .app.pro-paper .sn-tabs {
+    background: rgba(var(--pro-ink), 0.86) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+    backdrop-filter: blur(20px) saturate(160%) !important;
+    border-radius: 14px;
+    border: 0.5px solid rgba(var(--pro-edge), 0.07);
+    box-shadow: inset 0 1px 0 rgba(var(--pro-edge), 0.09);
+    border-bottom-color: rgba(var(--pro-edge), 0.07) !important;
+  }
+
+  /* WATCHLISTS. `.wlm-header` is a sticky rgba(9,9,11,0.94) band — a hard
+     black slab over a wallpaper (founder sweep 08-04). Same treatment as the
+     top bar: dense ink frost instead of paint. The swipeable rows NEED an
+     opaque fill (the action rails hide behind them), so they take near-solid
+     ink rather than the translucent void token the plain app uses. */
+  .app.pro-glass .wlm-header,
+  .app.pro-paper .wlm-header {
+    background: rgba(var(--pro-ink), 0.82) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+    backdrop-filter: blur(20px) saturate(160%) !important;
+    border-bottom-color: rgba(var(--pro-edge), 0.07) !important;
+  }
+  .app.pro-glass .wlm-token-list .swipeable-row-content,
+  .app.pro-paper .wlm-token-list .swipeable-row-content {
+    background: rgba(var(--pro-ink), 0.97) !important;
+  }
+  /* the row block reads as a compartment, not a full-bleed slab */
+  .app.pro-glass .wlm-token-list,
+  .app.pro-paper .wlm-token-list {
+    margin: 0 8px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 0.5px solid rgba(var(--pro-edge), 0.07);
+    box-shadow: inset 0 1px 0 rgba(var(--pro-edge), 0.08);
+  }
+  /* the band between the header and the rows (stats strip, tabs, filters,
+     search) floated raw on the wallpaper — "watchlists is weird in a box
+     unstyled" (founder 08-05). One quiet veil so the page reads composed. */
+  .app.pro-glass .wlm-statstrip,
+  .app.pro-glass .wlm-tabs-strip,
+  .app.pro-glass .wlm-search-container,
+  .app.pro-paper .wlm-statstrip,
+  .app.pro-paper .wlm-tabs-strip,
+  .app.pro-paper .wlm-search-container {
+    background: rgba(var(--pro-ink), var(--pro-a-veil)) !important;
+  }
+  /* `.wlm-actions` was in that list and should not have been: the others are
+     full-width BANDS, it is a two-icon cluster at the end of the filter row —
+     so the veil painted a small dark rectangle next to the All/Major/On-Chain
+     pills and nowhere else ("next to major onchain the box is odd", founder
+     08-17). The buttons carry their own glass chip instead, matching the pills
+     they sit beside (watchlists-page.mobile.css). */
+
+  /* THE RESEARCH-ZONE TAB BAR. `.rzm-tabs-sticky` is `rgba(9,9,11,0.95)` with
+     `border-radius: 0` — measured 08-04 — so under a wallpaper it is a hard
+     black rectangle with square corners cutting across the page, in every
+     Research Zone screenshot the founder sent ("weird black boxes no rounding
+     edges in some areas"). It is a sticky bar, so it does need to stay legible
+     over whatever scrolls beneath it; it does not need to be opaque to do that.
+     Same frost and the same gleam as the two screen-edge bars, plus the radius
+     every other compartment already has. */
+  .app.pro-glass .rzm-tabs-sticky,
+  .app.pro-paper .rzm-tabs-sticky {
+    background: rgba(var(--pro-ink), 0.86) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+    backdrop-filter: blur(20px) saturate(160%) !important;
+    border-radius: 14px;
+    border: 0.5px solid rgba(var(--pro-edge), 0.07);
+    box-shadow: inset 0 1px 0 rgba(var(--pro-edge), 0.09);
+    border-bottom-color: rgba(var(--pro-edge), 0.07) !important;
+  }
+
+  /* THE TOP BAR. `.mobile-header` is `background: #09090b` with no blur and no
+     border — a flat opaque slab dropped on the wallpaper, which is the whole of
+     "the top bar seperations feel a bit ugly" and "dry sad gray". The opacity is
+     deliberate in the plain dark app (a translucent header let scrolled content
+     ghost through it — the documented "cut top" artifact), so this is scoped to
+     the PRO skins, where the wallpaper behind everything IS the design.
+     0.82 ink + a 22px blur is dense enough that body text underneath does not
+     read through, and the bottom edge gets the same two-layer gleam as the
+     bottom bar so the two ends of the screen match. */
+  /* 🪤 BOTH, on purpose. `.mobile-header` is the painter once mounted, but it
+     measures 0px tall mid-hydration, so a probe can catch either one as "the
+     bar" depending on timing — I chased that for a round. Whichever is
+     transparent contributes nothing, so listing both is correct rather than
+     merely defensive. */
+  .app.pro-glass .mobile-header,
+  .app.pro-paper .mobile-header,
+  .app.pro-glass .mobile-header-inner,
+  .app.pro-paper .mobile-header-inner {
+    background: rgba(var(--pro-ink), 0.82) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(160%) !important;
+    backdrop-filter: blur(22px) saturate(160%) !important;
+    /* 🪤 NO `position: relative` here. `.mobile-header` is `position: fixed`
+       (mobile-header.css) and this selector is (0,3,0) against its (0,1,0), so
+       adding `relative` took the header OUT of the fixed layer and back into
+       flow — while `.app-main-content` still padded the full header height to
+       clear it. Every page got that padding TWICE: the founder's "massive empty
+       gap on the top everywhere landing page research zone". It was only ever
+       here to anchor the ::after gleam, and `fixed` is already a positioned
+       ancestor, so the pseudo never needed it. */
+  }
+  .app.pro-glass .mobile-header::after,
+  .app.pro-paper .mobile-header::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(var(--pro-edge), 0.1) 12%,
+      rgba(var(--pro-edge), 0.3) 50%,
+      rgba(var(--pro-edge), 0.1) 88%,
+      transparent 100%
+    );
+    pointer-events: none;
+  }
+
+  /* 🪤 `.rzm-identity` and `.rzm-hero` are SIBLINGS that both take the plane, and
+     they touch — measured 08-04: identity y=52 h=60, hero y=112 h=129, zero gap.
+     Two 16px-radius cards butted together read as one card with a fault line
+     through it (founder: "btc header and price below, 2 blocks seems not
+     seperated or weird design"). They are one thing — who the token is and what
+     it costs — so they get one compartment: the seam's corners are squared and
+     only the outer edges keep the radius. */
+  .app.pro-glass .rzm-identity,
+  .app.pro-paper .rzm-identity {
+    border-radius: 16px 16px 0 0;
+    padding-bottom: 10px;
+  }
+  .app.pro-glass .rzm-hero,
+  .app.pro-paper .rzm-hero {
+    border-radius: 0 0 16px 16px;
+    padding-top: 2px;
+  }
+
+  /* The nested children must NOT paint a second plane on top of the parent. */
+  .app.pro-glass .rzm-section,
+  .app.pro-glass .mtl,
+  .app.pro-glass .mtl-list,
+  .app.pro-glass .mds-content,
+  .app.pro-glass .welcome-discovery-block,
+  .app.pro-glass .rzm-metrics-grid,
+  .app.pro-glass .rzm-stats-list,
+  .app.pro-glass .mct-content,
+  .app.pro-glass .mct-content-inner,
+  .app.pro-glass .wsec-collapse,
+  .app.pro-glass .wsec-collapse-inner,
+  .app.pro-glass .mws-scroll,
+  .app.pro-paper .rzm-section,
+  .app.pro-paper .mtl,
+  .app.pro-paper .mtl-list,
+  .app.pro-paper .mds-content,
+  .app.pro-paper .welcome-discovery-block,
+  .app.pro-paper .rzm-metrics-grid,
+  .app.pro-paper .rzm-stats-list,
+  .app.pro-paper .mct-content,
+  .app.pro-paper .mct-content-inner,
+  .app.pro-paper .wsec-collapse,
+  .app.pro-paper .wsec-collapse-inner,
+  .app.pro-paper .mws-scroll {
+    background: transparent !important;
+  }
+}
+
+
+/* ---------- 20. BRIGHT-BACKDROP READABILITY -------------------------------
+   Founder on Watchlists over a mountain/sky photo: "the top part is a bit too
+   hard to read".
+
+   🪤 ROOT CAUSE, and it is bigger than this page: `isBrightBg()` only knows
+   about GRADIENTS and SOLIDS (the g-* / s-* id lists). NOT ONE of the ~46
+   photo scenes can ever return true, so a bright sky photo keeps the DARK
+   treatment - pale text on a pale image. `pro-bright` never fires for photos
+   at all. Properly fixing that means measuring the image's real luminance
+   once on load rather than maintaining a hand-written id list (a photo is
+   also rarely uniformly bright), so it is deliberately NOT guessed at here.
+
+   The durable fix either way is the plane: give the header bands the same
+   treatment as every other data surface and they stay readable no matter how
+   bright the backdrop is. Same --pro-plane token, so the Data panels control
+   governs these too. */
+.app.pro-glass .wl-header,
+.app.pro-glass .wl-metrics,
+.app.pro-paper .wl-header,
+.app.pro-paper .wl-metrics {
+  background: var(--pro-plane) !important;
+  border-radius: 14px;
+  padding: 10px 14px;
+}
+
+/* ── Research Zone header stack under a theme ──
+   `.rz-lite-hero` ships `border-radius: 0` on purpose: on the stock app it is a
+   flush full-bleed band painted the same black as the page, so it has no edge
+   to round. A theme turns it into a translucent SLAB floating over a photo —
+   and a slab with square corners on a wallpaper reads as a crop, not a card
+   (founder, 08-03: "the main banner needs a slight curve to look clean").
+   The chart toolbar directly beneath it has the same problem, so the two are
+   rounded as ONE stack: hero closes the top, toolbar closes the bottom. That
+   keeps them flush against each other instead of becoming two separate bands
+   with a pinch between them. */
+/* The watchlist's inner scroller is a 12px-radius inset slab — tight enough
+   to read SQUARE next to the theme's 16-24px card corners on a wallpaper
+   (founder, 08-03: "by watchlist i noticed square… round it"). */
+.app.pro-glass .welcome-watchlist-widget .watchlist-items,
+.app.pro-paper .welcome-watchlist-widget .watchlist-items {
+  border-radius: 16px;
+}
+
+/* Correction (founder, 08-03 screenshot): the hero and the chart toolbar are
+   NOT flush — the Candles/Line switcher row sits between them on transparent
+   background, so the "one stack" premise left the hero's square bottom hanging
+   exposed over the wallpaper. Each band is its own card: full radius on both. */
+.app.pro-glass .rz-lite-hero,
+.app.pro-paper .rz-lite-hero {
+  border-radius: 16px !important;
+  overflow: hidden;
+}
+/* !important because trading-chart.css owns this element and the skin has to
+   win or the toolbar stays square on the wallpaper. */
+.app.pro-glass .chart-controls,
+.app.pro-paper .chart-controls {
+  border-radius: 16px 16px 0 0 !important;
+  border-bottom: none !important; /* flush with the chart canvas below */
+}
+
+/* ── The token's market-cap rank on a themed hero ──
+   `.rz-lite-hero-rank` ("#1") is a 10px chip filled with 15% of the token
+   colour — enough to read as a badge on the stock hero, which is SOLID black
+   behind it. A theme turns that hero into a translucent slab, so the wallpaper
+   reads straight THROUGH a 15% fill and a two-character chip tucked into the
+   logo's corner ghosts out against whatever pixel happens to sit under it
+   (founder, 08-05: "we lost token position number… in mobile i see it not in
+   desktop" — the mobile face prints "· Rank #1" in the identity line and a "#1"
+   on the Market Cap card, so the two surfaces disagreed).
+   Give the chip its own opaque plane, mixed from the same ink every other
+   themed surface uses, and a hair more size so it survives a busy wallpaper.
+   Colour is left alone — `--text-primary` already flips per skin.
+   🪤 The `.research-zone-lite` step is load-bearing: research-zone-lite.css
+   already ships `body.theme-light .research-zone-lite .rz-lite-hero-rank`
+   (three classes), and the Paper skin turns day mode ON — so a plain
+   `.app.pro-paper .rz-lite-hero-rank` LOSES the cascade and the chip keeps its
+   6%-alpha fill. Match the depth. */
+.app.pro-glass .research-zone-lite .rz-lite-hero-rank,
+.app.pro-paper .research-zone-lite .rz-lite-hero-rank {
+  background: rgba(var(--pro-ink), 0.92);
+  border-color: rgba(var(--token-rgb), 0.55);
+  font-size: 11px;
+  padding: 2px 7px;
+  letter-spacing: 0.01em;
+}
+.app.pro-glass .research-zone-lite .rz-lite-hero-rank {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+.app.pro-paper .research-zone-lite .rz-lite-hero-rank {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.14);
+}
+
+/* ---------- scrollbar tint (whole-app; mirrors LITE's Themes row) ---------- */
+.pts-sbtints { display: flex; flex-wrap: wrap; gap: 8px; }
+.pts-sbtint {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px 6px 8px;
+  border-radius: var(--radius-full, 9999px);
+  border: 1px solid var(--pts-line);
+  background: var(--pts-tile);
+  color: var(--pts-fg-2);
+  font: inherit; font-size: 0.75rem; font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.pts-sbtint:hover { background: var(--pts-tile-hover); border-color: var(--pts-line-strong); color: var(--pts-fg); }
+.pts-sbtint--active {
+  background: var(--pts-tile-on);
+  border-color: var(--pts-ring-on);
+  color: var(--pts-fg);
+  box-shadow: inset 0 1px 0 var(--pts-inset);
+}
+.pts-sbtint-pill { display: block; width: 5px; height: 20px; border-radius: var(--radius-full, 9999px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16); }
+/* the ring is what gives the Warm-white swatch an edge - flip it to ink on a
+   light panel or that one pill disappears into the card. */
+.pts-panel-wrap--day .pts-sbtint-pill { box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.18); }
+/* The day-mode chips used to be written as `.app.app-day-mode .pts-sbtint`,
+   which could never match: the studio mounts OUTSIDE `.app`. They now ride the
+   panel's own `--day` palette like everything else in here. */
+
+/* Panel-only polish: keep wallpaper and application skin rules untouched. */
+.pts-panel-wrap {
+  --pts-fg: #f5f5f7; --pts-fg-2: #d5d9e1; --pts-fg-3: #b9bfcb; --pts-fg-4: #9da6b6;
+  --pts-line: rgba(255,255,255,.12); --pts-line-strong: rgba(255,255,255,.2);
+  --pts-bg-top: rgba(31,33,39,.96); --pts-bg-bot: rgba(14,16,21,.95);
+  --pts-tile: rgba(255,255,255,.045); --pts-tile-on: rgba(255,255,255,.13);
+}
+.pts-panel-wrap--day {
+  --pts-fg: #202b3d; --pts-fg-2: #435169; --pts-fg-3: #59687e; --pts-fg-4: #59687e;
+  --pts-line: rgba(68,86,112,.15); --pts-line-strong: rgba(68,86,112,.24);
+  --pts-bg-top: rgba(255,255,255,.96); --pts-bg-bot: rgba(239,243,249,.94);
+  --pts-tile: rgba(255,255,255,.45); --pts-tile-on: rgba(255,255,255,.94);
+}
+.pts-panel-wrap .pts-close { width: 44px; height: 44px; flex: none; border-radius: 12px; box-shadow: inset 0 1px 0 var(--pts-inset); }
+.pts-panel-wrap :is(.pts-look,.pts-depth,.pts-toggle) { box-shadow: inset 0 1px 0 var(--pts-inset); }
+.pts-panel-wrap :is(.pts-look-desc,.pts-swatch-name) { font-size: 12px; line-height: 1.45; }
+.pts-panel-wrap .pts-body { min-height: 0; overscroll-behavior: contain; }
+.pts-panel-wrap button:focus-visible { outline: 2px solid var(--pts-fg-3); outline-offset: 3px; }
+@media (max-width: 380px) {
+  .pts-panel-wrap .pts-looks { grid-template-columns: minmax(0,1fr); }
+  .pts-panel-wrap .pts-look { padding: 10px 12px; }
+  .pts-panel-wrap .pts-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pts-panel-wrap .pts-panel { animation: none; }
+  .pts-panel-wrap * { transition: none; }
+}

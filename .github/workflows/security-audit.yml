@@ -1,0 +1,147 @@
+name: Security Audit
+
+# Run on every PR to main, on direct pushes to main, and weekly.
+# Fails the workflow on CRITICAL CVEs only — high/moderate are reported
+# but don't block, matching the maintainer's accepted-risk policy in
+# package.json -> spectre-security-notes.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    # Mondays at 09:00 UTC — picks up newly-disclosed CVEs against pinned versions.
+    - cron: '0 9 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  npm-audit:
+    name: npm audit (critical blocks; high/moderate informational)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies (workspaces)
+        # npm install (not ci) so a stale lockfile — deps added without
+        # re-running install — doesn't break the audit. --package-lock-only
+        # keeps node_modules empty, which is all npm audit needs.
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: npm audit (informational — high + moderate)
+        # Always report, never fail. Surfaces high/moderate CVEs in the
+        # GitHub Actions UI without blocking merges. Aligns with the
+        # spectre-security-notes register in package.json.
+        continue-on-error: true
+        run: npm audit --audit-level=moderate
+
+      - name: npm audit (blocking — critical only)
+        run: npm audit --audit-level=critical
+
+      - name: npm audit — developer-control (outside workspaces)
+        if: hashFiles('developer-control/package.json') != ''
+        run: |
+          cd developer-control
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm audit --audit-level=critical
+
+      - name: npm audit — desktop (outside workspaces)
+        if: hashFiles('desktop/package.json') != ''
+        run: |
+          cd desktop
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm audit --audit-level=critical
+
+  secret-scan:
+    name: Secret pattern scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan staged diff for known credential patterns
+        run: |
+          # Pattern shards are assembled at runtime so the workflow file
+          # itself contains no full match. The diff also excludes .github/
+          # as a second safety net so workflow edits never self-trigger.
+          P1='sk-ant-api'; P2='03-'
+          P3='sk_live_[A-Za-z0-9]{20,}'
+          P4='gsk_[A-Za-z0-9]{20,}'
+          P5='tvly-(dev|live)-[A-Za-z0-9]{20,}'
+          P6='vercel_blob_rw_[A-Za-z0-9_]{20,}'
+          P7='AIzaSy[A-Za-z0-9_-]{20,}'
+          P8='spect_[a-f0-9]{40,}'
+          P9='ghp_[A-Za-z0-9]{36}'
+          P10='xprv[A-Za-z0-9]{50,}'
+          BAD_PATTERNS="${P1}${P2}|${P3}|${P4}|${P5}|${P6}|${P7}|${P8}|${P9}|${P10}"
+          BASE=$(git merge-base origin/main HEAD 2>/dev/null || echo HEAD~1)
+          if git diff "$BASE"..HEAD --no-color -- ':!.github/' 2>/dev/null | grep -E -n "$BAD_PATTERNS"; then
+            echo '::error::Credential-shaped string detected in diff. Rotate immediately and remove from history.'
+            exit 1
+          fi
+          echo 'No credential patterns detected in diff.'
+
+  agent-instruction-unicode-scan:
+    name: Hidden-Unicode scan on agent-instruction files
+    # Blocks merges that introduce invisible Unicode (prompt-injection)
+    # characters into files an AI agent will read: CLAUDE.md, AGENTS.md,
+    # .cursorrules family, the entire .claude/** tree, and any tree-wide .md.
+    # Catches the "invisible characters, your AI reads them, you don't"
+    # class — Unicode tag chars (U+E0000-E007F), bidi controls
+    # (U+202A-202E, U+2066-2069), zero-width (U+200B-200F), soft hyphen,
+    # in-body BOM.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for hidden Unicode in AI-readable files
+        run: |
+          python3 <<'PY'
+          import os, re, sys
+          # ASCII-only escape sequences — the workflow file MUST NOT contain
+          # the very characters it scans for. Covers:
+          #   U+200B-200F : zero-width space/NJ/J, LRM, RLM
+          #   U+202A-202E : bidi overrides (LRE/RLE/PDF/LRO/RLO)
+          #   U+2066-2069 : isolate bidi (LRI/RLI/FSI/PDI)
+          #   U+00AD      : soft hyphen
+          #   U+FEFF      : in-body BOM / ZWNBSP
+          #   U+E0000-E007F : Unicode tag chars (the canonical AI-prompt smuggle)
+          PAT = re.compile(
+              '[\u200B-\u200F\u202A-\u202E\u2066-\u2069\u00AD\uFEFF]'
+              '|[\U000E0000-\U000E007F]'
+          )
+          SKIP = {'node_modules','.git','dist','build','.next','.vercel','coverage','.cache','.turbo'}
+          AI_NAMES = {'CLAUDE.md','AGENTS.md','.cursorrules','.windsurfrules','.aiderules'}
+          hits = []
+          def scan(path):
+              try:
+                  with open(path,'r',encoding='utf-8',errors='replace') as f:
+                      for ln,line in enumerate(f,1):
+                          for m in PAT.finditer(line):
+                              s = m.group(0)
+                              cp = ord(s) if len(s)==1 else int.from_bytes(s.encode('utf-32-le')[:4],'little')
+                              hits.append((path, ln, hex(cp)))
+              except Exception:
+                  pass
+          for root, dirs, files in os.walk('.'):
+              dirs[:] = [d for d in dirs if d not in SKIP and not d.startswith('.git')]
+              for f in files:
+                  full = os.path.join(root, f)
+                  norm = full.replace('\\','/')
+                  if f in AI_NAMES or f.endswith(('.md','.mdx')) or '/.claude/' in norm:
+                      scan(full)
+          if hits:
+              print('::error::Invisible Unicode found in AI-readable files (hidden prompt-injection class).')
+              for h in hits[:50]:
+                  print(f'::error file={h[0]},line={h[1]}::Unicode {h[2]} is invisible to humans but tokenized by the model')
+              if len(hits) > 50:
+                  print(f'... and {len(hits)-50} more hits')
+              sys.exit(1)
+          print('OK: no invisible-Unicode markers in agent-instruction files.')
+          PY

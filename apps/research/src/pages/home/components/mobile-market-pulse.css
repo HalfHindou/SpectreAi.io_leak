@@ -1,0 +1,342 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   MobileMarketPulse — horizontal scrolling market strip for mobile
+   48px height, glass chips, scroll-snap, hidden scrollbar
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Container - cinematic glass bar ── */
+.mmp {
+  width: 100%;
+  height: var(--m-header-h);
+  display: flex;
+  align-items: center;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.01) 100%
+  );
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.04);
+  padding: 0 var(--m-content-pad);
+  box-sizing: border-box;
+  backdrop-filter: blur(12px) saturate(130%);
+  -webkit-backdrop-filter: blur(12px) saturate(130%);
+}
+
+/* ── Scroll strip ── */
+.mmp-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y; /* NOT pan-x alone: that permits ONLY horizontal
+     panning from a touch starting here, so a vertical drag on this strip scrolls
+     NOTHING. Measured 2026-08-04: a drag from the market-pulse ticker or the
+     Command Center tab row moved the page 0px — the founder's "i cant scroll at
+     times", since these full-bleed bands are exactly where a thumb lands. With
+     both axes allowed the browser still locks to one after the first movement, so
+     the strip keeps scrolling sideways. */
+
+  /* Hide scrollbar — all browsers */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mmp-strip::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Chip base - radial gradient glass pill ── */
+.mmp-chip {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 30px;
+  padding: 0 8px;
+  background:
+    radial-gradient(ellipse 120% 70% at 50% 0%, rgba(255, 255, 255, 0.07) 0%, transparent 58%),
+    rgba(255, 255, 255, 0.025);
+  border: 0.5px solid rgba(255, 255, 255, 0.07);
+  border-radius: 9999px;
+  white-space: nowrap;
+  cursor: default;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition:
+    border-color var(--duration-fast, 150ms) var(--ease-out, ease-out),
+    transform 0.35s var(--spring-snappy, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.mmp-chip--token {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* Reset button styles */
+  font: inherit;
+  color: inherit;
+  outline: none;
+}
+
+.mmp-chip--token:active {
+  transform: scale(0.955);
+}
+
+.mmp-chip--token:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Token logo ── */
+.mmp-chip-logo-img {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Letter fallback circle */
+.mmp-chip-logo {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--bg-void, #09090b);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+/* ── Symbol label ── */
+.mmp-chip-symbol {
+  font-size: var(--m-text-xs);
+  font-weight: 600;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  letter-spacing: 0.01em;
+}
+
+/* ── Price ── */
+.mmp-chip-price {
+  font-family: var(--font-mono, var(--font-mono));
+  font-size: var(--m-text-xs);
+  font-weight: 500;
+  color: var(--text-primary, #f5f5f7);
+  letter-spacing: -0.01em;
+}
+
+/* ── 24h change badge ── */
+.mmp-chip-change {
+  font-family: var(--font-mono, var(--font-mono));
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 9999px;
+  line-height: 1.3;
+}
+
+.mmp-chip-change.positive {
+  color: var(--bull, #10B981);
+  background: var(--bull-muted, rgba(16, 185, 129, 0.08));
+}
+
+.mmp-chip-change.negative {
+  color: var(--bear, #EF4444);
+  background: var(--bear-muted, rgba(239, 68, 68, 0.08));
+}
+
+/* ── Stat chips (Fear & Greed, Dominance, MCap) ── */
+.mmp-chip--stat {
+  gap: var(--m-xs);
+  padding: 0 var(--m-sm);
+}
+
+.mmp-chip-label {
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mmp-chip-stat-label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+}
+
+.mmp-chip-stat-value {
+  font-family: var(--font-mono, var(--font-mono));
+  font-size: var(--m-text-xs);
+  font-weight: 500;
+  color: var(--text-primary, #f5f5f7);
+}
+
+/* ── Fear & Greed value — colored by classification ── */
+.mmp-chip-fg-value {
+  font-family: var(--font-mono, var(--font-mono));
+  font-size: var(--m-text-sm);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mmp-chip-fg-value.extreme-fear {
+  color: var(--bear, #EF4444);
+}
+
+.mmp-chip-fg-value.fear {
+  color: var(--amber, #F59E0B);
+}
+
+.mmp-chip-fg-value.neutral {
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+}
+
+.mmp-chip-fg-value.greed {
+  color: var(--bull, #10B981);
+}
+
+.mmp-chip-fg-value.extreme-greed {
+  color: var(--bull-bright, #34D399);
+}
+
+/* ── Loading skeletons ── */
+.mmp-skeleton {
+  flex: 0 0 auto;
+  width: 80px;
+  height: 32px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Stagger skeleton delays using the global stagger classes */
+
+/* ── Responsive: narrow screens (320px) — 3 items visible ── */
+@media (max-width: 374px) {
+  .mmp {
+    padding: 0 var(--sp-1, 4px);
+  }
+
+  .mmp-strip {
+    gap: var(--m-xs);
+  }
+
+  .mmp-chip {
+    padding: 0 7px;
+    gap: 3px;
+  }
+
+  .mmp-chip-symbol {
+    font-size: 0.625rem;
+  }
+
+  .mmp-chip-price {
+    font-size: 0.625rem;
+  }
+}
+
+/* ── Wider phones (430px+) — more items visible without scroll ── */
+@media (min-width: 430px) {
+  .mmp-chip {
+    gap: 6px;
+    padding: 0 10px;
+  }
+}
+
+/* ── Hide on desktop — this is mobile-only ── */
+@media (min-width: 769px) {
+  .mmp {
+    display: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Day Mode
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.app.app-day-mode .mmp,
+.mmp.mmp--day {
+  background: rgba(0, 0, 0, 0.02);
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.app.app-day-mode .mmp-chip,
+.mmp.mmp--day .mmp-chip {
+  background: linear-gradient(168deg, #ffffff 0%, #f1f5f9 100%);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 0.5px 2px rgba(0, 0, 0, 0.05);
+}
+
+.app.app-day-mode .mmp-chip--token:hover,
+.mmp.mmp--day .mmp-chip--token:hover {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.app.app-day-mode .mmp-chip-symbol,
+.mmp.mmp--day .mmp-chip-symbol {
+  color: #475569;
+}
+
+.app.app-day-mode .mmp-chip-price,
+.mmp.mmp--day .mmp-chip-price {
+  color: #0f172a;
+}
+
+.app.app-day-mode .mmp-chip-stat-value,
+.mmp.mmp--day .mmp-chip-stat-value {
+  color: #0f172a;
+}
+
+.app.app-day-mode .mmp-chip-stat-label,
+.mmp.mmp--day .mmp-chip-stat-label {
+  color: #64748b;
+}
+
+.app.app-day-mode .mmp-chip-label,
+.mmp.mmp--day .mmp-chip-label {
+  color: #94a3b8;
+}
+
+.app.app-day-mode .mmp-chip-fg-value.neutral,
+.mmp.mmp--day .mmp-chip-fg-value.neutral {
+  color: #64748b;
+}
+
+.app.app-day-mode .mmp-chip-logo,
+.mmp.mmp--day .mmp-chip-logo {
+  color: #ffffff;
+}
+
+.app.app-day-mode .mmp-skeleton,
+.mmp.mmp--day .mmp-skeleton {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.06) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.app.app-day-mode .mmp-chip-change.positive {
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.app.app-day-mode .mmp-chip-change.negative {
+  background: rgba(239, 68, 68, 0.12);
+}

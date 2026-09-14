@@ -1,0 +1,556 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   MobileWatchlistStrip — horizontal scrolling watchlist for mobile
+   Section header + token card row + add card + empty state
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Container - with scroll scrim hints ── */
+.mws {
+  width: 100%;
+  padding: 0;
+  position: relative;
+}
+
+/* Gradient scrims hinting more content on right edge */
+.mws::after {
+  content: '';
+  position: absolute;
+  top: 30px;
+  right: 0;
+  bottom: 0;
+  width: 40px;
+  background: linear-gradient(to left, var(--bg-void, #09090b) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* ── Section header ── */
+.mws-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  margin-bottom: 6px;
+}
+
+.mws-header-label {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary, #f5f5f7);
+  letter-spacing: -0.01em;
+}
+
+.mws-header-action {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: var(--m-sm) var(--m-xs);
+  margin: calc(-1 * var(--m-sm)) calc(-1 * var(--m-xs));
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: var(--m-text-sm);
+  min-height: 44px;
+  font-weight: 500;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--duration-fast, 150ms) var(--ease-out, ease-out);
+}
+
+.mws-header-action:active {
+  color: var(--text-primary, #f5f5f7);
+}
+
+.mws-header-action svg {
+  opacity: 0.7;
+}
+
+/* ── Scroll strip ── */
+.mws-scroll {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  /* pan-x for horizontal strip scroll, pan-y so vertical gestures pass
+     through to the page scroller instead of being eaten here. */
+  touch-action: pan-x pan-y;
+  will-change: scroll-position;
+  padding: 12px 16px;
+  box-sizing: border-box;
+
+  /* Hide scrollbar — all browsers */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mws-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Token card - subtle volume ── */
+.mws-card {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 80px;
+  width: 88px;
+  min-height: 96px;
+  padding: 10px 8px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 0.5px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--m-card-radius-lg);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 0.5px 0 rgba(255, 255, 255, 0.05);
+
+  /* Reset button styles */
+  font: inherit;
+  color: inherit;
+  outline: none;
+  box-sizing: border-box;
+}
+
+/* Top-edge warm line on each card */
+.mws-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 245, 247, 0.1), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Branded card — token's native color ── */
+.mws-card--branded {
+  border-color: rgba(var(--mws-brand), 0.12);
+  background: rgba(var(--mws-brand), 0.04);
+}
+
+.mws-card--branded::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+}
+
+.mws-card--branded:hover {
+  border-color: rgba(var(--mws-brand), 0.2);
+}
+
+.mws-card:active {
+  opacity: 0.7;
+}
+
+.mws-card:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Token logo (44px) - floating with shadow ── */
+.mws-card-logo {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.mws-card-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.mws-card-logo-fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--bg-void, #09090b);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+/* ── Symbol text (13px — CMC-matched) ── */
+.mws-card-symbol {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #f5f5f7);
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+/* ── Price (13px — CMC-matched) ── */
+.mws-card-price {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 24h change badge (12px with arrow — CMC-matched) ── */
+.mws-card-change {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.mws-card-change.positive {
+  color: var(--bull, #10B981);
+}
+
+.mws-card-change.negative {
+  color: var(--bear, #EF4444);
+}
+
+/* ── "Add" card ── */
+.mws-add {
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  gap: var(--m-xs);
+}
+
+.mws-add:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.mws-add-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+}
+
+.mws-add-label {
+  font-size: var(--m-text-xs);
+  font-weight: 500;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+}
+
+/* ── Empty state ── */
+.mws-empty {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--m-xs);
+  width: 200px;
+  min-height: 96px;
+  padding: 10px var(--m-lg);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color var(--duration-fast, 150ms) var(--ease-out, ease-out);
+
+  /* Reset button styles */
+  font: inherit;
+  color: inherit;
+  outline: none;
+}
+
+.mws-empty:active {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.mws-empty-icon {
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+}
+
+.mws-empty-title {
+  font-size: var(--m-text-base);
+  font-weight: 500;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  line-height: 1.3;
+}
+
+.mws-empty-cta {
+  font-size: var(--m-text-sm);
+  font-weight: 500;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  text-decoration: underline;
+  text-decoration-color: rgba(245, 245, 247, 0.2);
+  text-underline-offset: 2px;
+}
+
+/* ── Loading skeletons ── */
+.mws-skeleton {
+  flex: 0 0 auto;
+  width: 88px;
+  height: 96px;
+  border-radius: 12px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Stagger delays use global .stagger-1 through .stagger-5 classes */
+
+/* ── Responsive: narrow screens (320px) ── */
+@media (max-width: 374px) {
+  .mws-scroll {
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .mws-header {
+    padding: 0 12px;
+  }
+
+  .mws-card {
+    width: 76px;
+    min-width: 70px;
+    padding: 8px 6px;
+    min-height: 88px;
+  }
+
+  .mws-card-logo {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+  }
+
+  .mws-card-logo-fallback {
+    font-size: 14px;
+  }
+
+  .mws-card-symbol {
+    font-size: 12px;
+  }
+
+  .mws-card-price {
+    font-size: 11px;
+  }
+
+  .mws-card-change {
+    font-size: 11px;
+  }
+
+  .mws-skeleton {
+    width: 76px;
+    height: 88px;
+  }
+}
+
+/* ── Hide on desktop — mobile-only component ── */
+@media (min-width: 769px) {
+  .mws {
+    display: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Day Mode
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.app.app-day-mode .mws-header-label,
+.mws.mws--day .mws-header-label {
+  color: #0f172a;
+}
+
+.app.app-day-mode .mws-header-action,
+.mws.mws--day .mws-header-action {
+  color: #64748b;
+}
+
+.app.app-day-mode .mws-header-action:active,
+.mws.mws--day .mws-header-action:active {
+  color: #0f172a;
+}
+
+.app.app-day-mode .mws-card,
+.mws.mws--day .mws-card {
+  background: linear-gradient(168deg, #ffffff 0%, #f8fafc 40%, #f1f5f9 100%);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.app.app-day-mode .mws-card:hover,
+.mws.mws--day .mws-card:hover {
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.app.app-day-mode .mws-card--branded,
+.mws.mws--day .mws-card--branded {
+  background:
+    linear-gradient(168deg, rgba(var(--mws-brand), 0.10) 0%, rgba(var(--mws-brand), 0.04) 100%),
+    #ffffff;
+  border-color: rgba(var(--mws-brand), 0.25);
+  box-shadow: 0 2px 8px rgba(var(--mws-brand), 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.app.app-day-mode .mws-card--branded::before,
+.mws.mws--day .mws-card--branded::before {
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.25), transparent);
+}
+
+.app.app-day-mode .mws-card--branded:hover,
+.mws.mws--day .mws-card--branded:hover {
+  border-color: rgba(var(--mws-brand), 0.25);
+}
+
+.app.app-day-mode .mws::after,
+.mws.mws--day::after {
+  background: linear-gradient(to left, #f8f9fa 0%, transparent 100%);
+}
+
+.app.app-day-mode .mws-card-symbol,
+.mws.mws--day .mws-card-symbol {
+  color: #0f172a;
+}
+
+.app.app-day-mode .mws-card-price,
+.mws.mws--day .mws-card-price {
+  color: #475569;
+}
+
+.app.app-day-mode .mws-card-logo-fallback,
+.mws.mws--day .mws-card-logo-fallback {
+  color: #ffffff;
+}
+
+.app.app-day-mode .mws-add,
+.mws.mws--day .mws-add {
+  background: transparent;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.app.app-day-mode .mws-add:hover,
+.mws.mws--day .mws-add:hover {
+  border-color: rgba(0, 0, 0, 0.18);
+}
+
+.app.app-day-mode .mws-add-icon,
+.mws.mws--day .mws-add-icon {
+  color: #94a3b8;
+}
+
+.app.app-day-mode .mws-add-label,
+.mws.mws--day .mws-add-label {
+  color: #94a3b8;
+}
+
+.app.app-day-mode .mws-empty,
+.mws.mws--day .mws-empty {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.app.app-day-mode .mws-empty:active,
+.mws.mws--day .mws-empty:active {
+  border-color: rgba(0, 0, 0, 0.14);
+}
+
+.app.app-day-mode .mws-empty-icon,
+.mws.mws--day .mws-empty-icon {
+  color: #94a3b8;
+}
+
+.app.app-day-mode .mws-empty-title,
+.mws.mws--day .mws-empty-title {
+  color: #475569;
+}
+
+.app.app-day-mode .mws-empty-cta,
+.mws.mws--day .mws-empty-cta {
+  color: #64748b;
+  text-decoration-color: rgba(0, 0, 0, 0.15);
+}
+
+.app.app-day-mode .mws-skeleton,
+.mws.mws--day .mws-skeleton {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.06) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ── Added-to-watchlist confirmation toast ── */
+.mws-added-toast {
+  position: fixed;
+  bottom: calc(var(--m-bottom-nav-h, 76px) + env(safe-area-inset-bottom, 0px) + 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--bull, #10B981);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 9999px;
+  border: 0.5px solid rgba(16, 185, 129, 0.2);
+  z-index: 9999;
+  animation: mws-toast-in 250ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+@keyframes mws-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.app.app-day-mode .mws-added-toast,
+.mws.mws--day .mws-added-toast {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border-color: rgba(16, 185, 129, 0.15);
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .mws-card,
+  .mws-skeleton,
+  .mws-added-toast {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -1,0 +1,173 @@
+/* AgentPresentation - the voice stage (sapres-): scenes, beat label,
+   stat chips. No prose, ever. */
+
+.sapres {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: min(720px, 100%);
+}
+
+/* Post cards read best at reading-width even on a wide stage */
+.sapres__scene > .saxact__postcard {
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.sapres__stage {
+  position: relative;
+  width: 100%;
+}
+.sapres__scene {
+  width: 100%;
+  animation: sapres-scene-in 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* Outgoing layer: drifts up, blurs and fades while the new slide rises -
+   held mounted for 360ms by useOutgoing. */
+.sapres__scene--out {
+  position: absolute;
+  inset: 0 0 auto 0;
+  animation: sapres-scene-out 340ms cubic-bezier(0.4, 0, 0.6, 1) forwards;
+  pointer-events: none;
+  z-index: 1;
+}
+@keyframes sapres-scene-out {
+  from { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  to { opacity: 0; transform: translateY(-14px) scale(0.965); filter: blur(3px); }
+}
+
+/* Directional page-turn (chart <-> volume interlude) */
+.sapres__scene--out-left { animation-name: sapres-scene-out-left; }
+.sapres__scene--out-right { animation-name: sapres-scene-out-right; }
+.sapres__scene--in-right { animation-name: sapres-scene-in-right; }
+.sapres__scene--in-left { animation-name: sapres-scene-in-left; }
+@keyframes sapres-scene-out-left {
+  from { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
+  to { opacity: 0; transform: translateX(-34px) scale(0.97); filter: blur(3px); }
+}
+@keyframes sapres-scene-out-right {
+  from { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
+  to { opacity: 0; transform: translateX(34px) scale(0.97); filter: blur(3px); }
+}
+@keyframes sapres-scene-in-right {
+  from { opacity: 0; transform: translateX(38px) scale(0.985); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes sapres-scene-in-left {
+  from { opacity: 0; transform: translateX(-38px) scale(0.985); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* A featured post standing alone as a slide reads as a full card (its
+   in-thread styling is an inner card under the account rows). */
+.sapres__scene > .saxact__postcard {
+  margin-top: 0;
+  padding: 12px;
+  border-radius: 14px;
+  border-color: rgba(255, 255, 255, 0.07);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.012) 100%);
+}
+body.theme-light .sapres__scene > .saxact__postcard {
+  border-color: rgba(15, 23, 42, 0.1);
+  background: linear-gradient(165deg, rgba(15, 23, 42, 0.035) 0%, rgba(15, 23, 42, 0.008) 100%);
+}
+@keyframes sapres-scene-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Beat label - what just drew, the only text on stage. Ticker-morphs:
+   the old line slides up and out while the new one rises from below. */
+.sapres__beatwrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  min-height: 26px;
+  width: 100%;
+}
+.sapres__beat--out {
+  position: absolute;
+  animation: sapres-beat-out 260ms ease-in forwards;
+  pointer-events: none;
+}
+@keyframes sapres-beat-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-10px); }
+}
+.sapres__beat {
+  font-family: var(--font-num-chip, inherit);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  color: rgba(245, 245, 247, 0.85);
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.04);
+  animation: sapres-beat-in 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@keyframes sapres-beat-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Stat chips - the no-visual stage (extracted figures, voice-timed) */
+.sapres__stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.sapres__chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.015) 100%);
+  opacity: 0;
+  transform: translateY(8px) scale(0.94);
+  transition: opacity 380ms cubic-bezier(0.16, 1, 0.3, 1), transform 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sapres__chip.is-on { opacity: 1; transform: translateY(0) scale(1); }
+.sapres__chip-value {
+  font-family: var(--font-num-chip, inherit);
+  font-size: 17px;
+  font-weight: 650;
+  color: #f5f5f7;
+  letter-spacing: 0.01em;
+}
+.sapres__chip-label {
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: rgba(245, 245, 247, 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sapres__scene, .sapres__beat { animation: none; }
+  .sapres__scene--out, .sapres__beat--out { display: none; }
+  .sapres__chip { transition: none; opacity: 1; transform: none; }
+}
+
+/* Day mode (trading = body.theme-light) */
+body.theme-light .sapres__beat {
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.12);
+  background: rgba(15, 23, 42, 0.04);
+}
+body.theme-light .sapres__chip {
+  border-color: rgba(15, 23, 42, 0.1);
+  background: linear-gradient(160deg, rgba(15, 23, 42, 0.04) 0%, rgba(15, 23, 42, 0.012) 100%);
+}
+body.theme-light .sapres__chip-value { color: #0f172a; }
+body.theme-light .sapres__chip-label { color: #94a3b8; }

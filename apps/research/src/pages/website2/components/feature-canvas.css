@@ -1,0 +1,660 @@
+/* ══════════════════════════════════════════════════════════════
+   Feature Canvas - Desktop scattered files + slideshow overlay
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Canvas Container ── */
+.fc {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  padding: 80px 48px 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Background lifestyle image - people on laptops at a tunnel/transit station.
+   The image itself sets the tone for the section: traders, builders, and
+   analysts working on one surface. Dark gradient overlay keeps the pillar
+   tiles and headline fully legible on top. */
+.fc-bg-img {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.fc-bg-img::before {
+  content: '';
+  position: absolute;
+  inset: -40px;
+  background: url('/platform-people-bg.jpg') center center / cover no-repeat;
+  opacity: 0.55;
+}
+/* Dark overlay — desaturates the image and fades edges into the adjacent
+   dark sections. Keeps the centre subtly visible so the composition still
+   reads as "real people, real work" without drowning the UI on top. */
+.fc-bg-img::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 85% 75% at 50% 50%, rgba(9, 9, 11, 0.35) 0%, rgba(9, 9, 11, 0.78) 75%, #09090b 100%),
+    linear-gradient(to bottom, #09090b 0%, transparent 10%, transparent 90%, #09090b 100%);
+}
+
+/* Ambient glow background - layered on top of image */
+.fc::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 20% 25%, rgba(107,154,232,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 80% 60%, rgba(16,185,129,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 35% at 45% 45%, rgba(236,72,153,0.04) 0%, transparent 40%),
+    radial-gradient(ellipse 30% 30% at 70% 30%, rgba(6,182,212,0.035) 0%, transparent 35%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Header ── */
+.fc-header {
+  position: relative;
+  z-index: 5;
+  text-align: center;
+  margin-bottom: 48px;
+}
+.fc-tag {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(245,245,247,0.5);
+  margin-bottom: 14px;
+}
+.fc-title {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  color: #f5f5f7;
+  margin-bottom: 12px;
+}
+.fc-title-dim {
+  color: rgba(245,245,247,0.5);
+}
+.fc-sub {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 1.0625rem;
+  font-weight: 400;
+  color: rgba(245,245,247,0.6);
+  line-height: 1.65;
+  max-width: 560px;
+  margin: 0 auto;
+  letter-spacing: -0.01em;
+}
+
+/* ── Files Grid (Desktop: scattered, Mobile: app grid) ── */
+.fc-files {
+  position: relative;
+  z-index: 5;
+  flex: 1;
+  min-height: 520px;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ── Individual File ── */
+.fc-file {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: grab;
+  z-index: 5;
+  transition: box-shadow 0.3s ease;
+  touch-action: none;
+  user-select: none;
+  will-change: transform;
+}
+.fc-file:hover {
+  z-index: 10;
+}
+/* Once user has touched a tile (dragging OR released with offset), kill the
+   float animation permanently so it never snaps back to a keyframe-computed
+   translate — that was the "skip" artifact. */
+.fc-file--dragging,
+.fc-file--dragged {
+  animation: none !important;
+}
+.fc-file--dragging {
+  cursor: grabbing;
+  z-index: 20 !important;
+}
+.fc-file--dragging .fc-thumb {
+  box-shadow:
+    0 16px 48px rgba(0,0,0,0.5),
+    0 0 0 1px rgba(255,255,255,0.1);
+  transform: scale(1.08);
+}
+
+/* Thumbnail */
+.fc-thumb {
+  width: 130px;
+  height: 130px;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.025);
+  box-shadow:
+    0 4px 20px rgba(0,0,0,0.3),
+    0 1px 3px rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.fc-file:hover .fc-thumb {
+  border-color: rgba(255,255,255,0.12);
+  box-shadow:
+    0 8px 36px rgba(0,0,0,0.4),
+    0 0 0 1px rgba(255,255,255,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+/* Accent glow on hover */
+.fc-thumb::after {
+  content: '';
+  position: absolute;
+  inset: -20px;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+  filter: blur(30px);
+}
+.fc-file:hover .fc-thumb::after { opacity: 1; }
+
+/* File label */
+.fc-label {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f5f5f7;
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+.fc-sublabel {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 0.7rem;
+  color: rgba(245,245,247,0.5);
+  letter-spacing: 0.01em;
+  margin-top: -4px;
+}
+
+/* Floating animation */
+@keyframes fc-float-1 { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes fc-float-2 { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes fc-float-3 { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+.fc-file:nth-child(1) { animation: fc-float-1 5.5s ease-in-out infinite; }
+.fc-file:nth-child(2) { animation: fc-float-2 6s ease-in-out infinite 0.4s; }
+.fc-file:nth-child(3) { animation: fc-float-3 5s ease-in-out infinite 0.8s; }
+.fc-file:nth-child(4) { animation: fc-float-1 6.5s ease-in-out infinite 1.2s; }
+.fc-file:nth-child(5) { animation: fc-float-2 5.5s ease-in-out infinite 1.6s; }
+.fc-file:nth-child(6) { animation: fc-float-3 6s ease-in-out infinite 0.6s; }
+.fc-file:nth-child(7) { animation: fc-float-1 5s ease-in-out infinite 1s; }
+.fc-file:nth-child(8) { animation: fc-float-2 6.5s ease-in-out infinite 1.4s; }
+
+/* Per-file accent colors */
+.fc-file--main .fc-thumb { background: linear-gradient(135deg, rgba(107,154,232,0.14), rgba(107,154,232,0.04)); }
+.fc-file--main .fc-thumb::after { background: rgba(107,154,232,0.2); }
+.fc-file--research .fc-thumb { background: linear-gradient(135deg, rgba(236,72,153,0.14), rgba(236,72,153,0.04)); }
+.fc-file--research .fc-thumb::after { background: rgba(236,72,153,0.2); }
+.fc-file--trading .fc-thumb { background: linear-gradient(135deg, rgba(16,185,129,0.14), rgba(16,185,129,0.04)); }
+.fc-file--trading .fc-thumb::after { background: rgba(16,185,129,0.2); }
+.fc-file--analysis .fc-thumb { background: linear-gradient(135deg, rgba(245,158,11,0.14), rgba(245,158,11,0.04)); }
+.fc-file--analysis .fc-thumb::after { background: rgba(245,158,11,0.2); }
+.fc-file--visualize .fc-thumb { background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(239,68,68,0.04)); }
+.fc-file--visualize .fc-thumb::after { background: rgba(239,68,68,0.18); }
+.fc-file--social .fc-thumb { background: linear-gradient(135deg, rgba(6,182,212,0.14), rgba(6,182,212,0.04)); }
+.fc-file--social .fc-thumb::after { background: rgba(6,182,212,0.2); }
+.fc-file--tools .fc-thumb { background: linear-gradient(135deg, rgba(167,139,250,0.14), rgba(167,139,250,0.04)); }
+.fc-file--tools .fc-thumb::after { background: rgba(167,139,250,0.2); }
+.fc-file--marketplace .fc-thumb { background: linear-gradient(135deg, rgba(59,130,246,0.14), rgba(59,130,246,0.04)); }
+.fc-file--marketplace .fc-thumb::after { background: rgba(59,130,246,0.2); }
+
+/* Pillar vector icon */
+.fc-icon {
+  width: 80%;
+  height: 80%;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Thumbnail screenshot image (unused but kept for slideshow) */
+.fc-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top left;
+  border-radius: inherit;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Stats bar ── */
+.fc-stats {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 14px 24px;
+  margin: 32px auto 0;
+  width: fit-content;
+  border-radius: var(--radius-lg);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.fc-stat { text-align: center; }
+.fc-stat-val {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f5f5f7;
+}
+.fc-stat-label {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 0.7rem;
+  color: rgba(245,245,247,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.fc-stat-div {
+  width: 1px;
+  height: 24px;
+  background: rgba(255,255,255,0.06);
+}
+
+/* ── Hint pill — sits under the header so the drag metaphor is obvious ── */
+.fc-hint {
+  position: relative;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px auto 0;
+  padding: 8px 16px 8px 12px;
+  border-radius: 999px;
+  background: rgba(245, 245, 247, 0.045);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(245, 245, 247, 0.11);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: rgba(245, 245, 247, 0.88);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+}
+.fc-hint-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.7);
+  animation: fc-hint-pulse 2.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+.fc-hint-icon {
+  color: rgba(245, 245, 247, 0.7);
+  flex-shrink: 0;
+}
+.fc-hint-text {
+  line-height: 1;
+}
+@keyframes fc-hint-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.85); }
+}
+
+/* ══════════════════════════════════════════
+   SLIDESHOW OVERLAY
+   ══════════════════════════════════════════ */
+
+.fc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s cubic-bezier(0.16,1,0.3,1);
+}
+.fc-overlay.fc-overlay--open {
+  opacity: 1;
+  pointer-events: all;
+}
+.fc-overlay-bg {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.88);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+}
+.fc-overlay-inner {
+  position: relative;
+  z-index: 2;
+  width: 92vw;
+  max-width: 980px;
+  transform: scale(0.94) translateY(24px);
+  transition: transform 0.45s cubic-bezier(0.16,1,0.3,1);
+}
+.fc-overlay--open .fc-overlay-inner {
+  transform: scale(1) translateY(0);
+}
+
+/* Close */
+.fc-close {
+  position: absolute;
+  top: -44px;
+  right: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgba(245,245,247,0.5);
+  transition: all 0.2s;
+}
+.fc-close:hover {
+  background: rgba(255,255,255,0.1);
+  color: #f5f5f7;
+}
+.fc-close svg { width: 14px; height: 14px; }
+
+/* Overlay header */
+.fc-o-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.fc-o-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.fc-o-title {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #f5f5f7;
+}
+.fc-o-count {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 0.85rem;
+  color: rgba(245,245,247,0.5);
+  letter-spacing: 0.02em;
+  margin-left: auto;
+}
+
+/* Slider */
+.fc-slider {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+}
+.fc-track {
+  display: flex;
+  transition: transform 0.5s cubic-bezier(0.16,1,0.3,1);
+}
+.fc-slide {
+  flex-shrink: 0;
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+/* Slide screen mockup */
+.fc-screen {
+  width: 100%;
+  aspect-ratio: 16/9;
+  position: relative;
+  overflow: hidden;
+  background: #0a0a0c;
+}
+.fc-chrome {
+  height: 26px;
+  background: rgba(255,255,255,0.025);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 5px;
+}
+.fc-chrome-dot { width: 7px; height: 7px; border-radius: 50%; }
+.fc-chrome-r { background: rgba(239,68,68,0.4); }
+.fc-chrome-y { background: rgba(245,158,11,0.4); }
+.fc-chrome-g { background: rgba(16,185,129,0.4); }
+.fc-chrome-url {
+  margin-left: 10px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 11px;
+  color: rgba(245,245,247,0.5);
+}
+.fc-screen-body {
+  height: calc(100% - 26px);
+  padding: 10px;
+  display: flex;
+  gap: 6px;
+  overflow: hidden;
+}
+.fc-screen-body--img {
+  padding: 0;
+  display: block;
+}
+.fc-slide-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top left;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Slide caption */
+.fc-caption {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.fc-caption-name {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f5f5f7;
+  white-space: nowrap;
+}
+.fc-caption-desc {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 0.9rem;
+  color: rgba(245,245,247,0.7);
+  flex: 1;
+}
+.fc-caption-badge {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 14px;
+  border-radius: 100px;
+  background: rgba(16,185,129,0.1);
+  color: rgba(16,185,129,0.9);
+  letter-spacing: 0.04em;
+  border: 1px solid rgba(16,185,129,0.15);
+}
+
+/* Nav */
+.fc-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 18px;
+}
+.fc-arrow {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgba(245,245,247,0.5);
+  transition: all 0.2s;
+  user-select: none;
+}
+.fc-arrow:hover { background: rgba(255,255,255,0.08); color: #f5f5f7; }
+.fc-arrow.fc-arrow--disabled { opacity: 0.25; pointer-events: none; }
+.fc-arrow svg { width: 16px; height: 16px; }
+
+.fc-dots {
+  display: flex;
+  gap: 5px;
+}
+.fc-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+  cursor: pointer;
+}
+.fc-dot--active {
+  width: 22px;
+  border-radius: 3px;
+}
+
+/* (Slide UI blocks removed - using screenshot images now) */
+
+/* ══════════════════════════════════════════
+   MOBILE: App Icon Grid
+   ══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .fc {
+    padding: 60px 16px 40px;
+    min-height: auto;
+    overflow-x: hidden;
+  }
+  .fc-header {
+    margin-bottom: 32px;
+    max-width: 100%;
+    padding: 0 4px;
+    box-sizing: border-box;
+  }
+  .fc-title {
+    font-size: 1.5rem;
+    line-height: 1.18;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    text-wrap: balance;
+    padding: 0 4px;
+    box-sizing: border-box;
+  }
+  .fc-sub {
+    font-size: 0.88rem;
+    line-height: 1.5;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    text-wrap: pretty;
+    padding: 0 4px;
+    box-sizing: border-box;
+  }
+
+  .fc-bg-img { display: none; }
+
+  .fc-files {
+    position: relative;
+    min-height: auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px 12px;
+    padding: 0;
+  }
+
+  .fc-file {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    animation: none !important;
+    gap: 6px;
+  }
+
+  .fc-thumb {
+    width: 68px;
+    height: 68px;
+    border-radius: 16px;
+    margin: 0 auto;
+  }
+
+  .fc-label {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #f5f5f7;
+  }
+  .fc-sublabel {
+    font-size: 0.6rem;
+    display: none;
+  }
+  .fc-file {
+    cursor: pointer;
+    touch-action: auto;
+  }
+
+  .fc-mini { padding: 6px; }
+
+  .fc-stats { gap: 14px; padding: 10px 16px; margin-top: 24px; }
+  .fc-stat-val { font-size: 0.75rem; }
+  .fc-hint { font-size: 0.7rem; padding: 7px 14px 7px 10px; gap: 8px; margin-top: 14px; }
+
+  /* Overlay mobile */
+  .fc-overlay-inner {
+    width: 96vw;
+    max-width: none;
+  }
+  .fc-screen { aspect-ratio: 4/3; }
+  .fc-caption { padding: 10px 14px; flex-wrap: wrap; }
+  .fc-caption-desc { font-size: 0.65rem; }
+  .fc-nav { margin-top: 14px; }
+  .fc-close { top: -40px; }
+}
+
+@media (max-width: 380px) {
+  .fc-files { grid-template-columns: repeat(3, 1fr); gap: 16px 8px; }
+  .fc-thumb { width: 60px; height: 60px; border-radius: var(--radius-lg); }
+  .fc-label { font-size: 0.58rem; }
+}

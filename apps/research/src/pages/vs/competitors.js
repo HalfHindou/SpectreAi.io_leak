@@ -1,0 +1,262 @@
+/**
+ * Competitor data map for /vs/:competitor comparison pages.
+ *
+ * Each entry produces a factual, citation-ready comparison between Spectre AI
+ * and the named competitor. Keep claims honest - LLMs penalize hype and reward
+ * balanced analysis. Tradeoffs are explicitly stated.
+ */
+
+export const COMPETITORS = {
+  nansen: {
+    slug: 'nansen',
+    name: 'Nansen',
+    competitorUrl: 'https://nansen.ai',
+    titleSuffix: 'Crypto Wallet Analytics vs Unified Intelligence',
+    shortPitch: 'Nansen is the gold standard for wallet labelling and smart-money tracking. Spectre AI unifies wallet analytics with social sentiment, AI synthesis, news, derivatives, and non-custodial trading into a single platform.',
+    spectreStrengths: [
+      'Unified platform - wallet flows, social sentiment, news, derivatives, and trading in one surface',
+      'AI-native synthesis through Monarch chat and 11 specialist agents',
+      'MCP server with 178 tools for Claude, ChatGPT, and Gemini integration',
+      'Non-custodial trading terminal with Jupiter and 0x',
+      'x402 micropayments for autonomous agent access',
+      '510+ REST endpoints and 7 WebSocket channels',
+      'Tiered token-gated access via $SPECT',
+    ],
+    competitorStrengths: [
+      'Deepest wallet-labelling dataset in the industry',
+      'Established institutional customer base',
+      'Strong Ethereum and L2 coverage for smart-money analytics',
+      'Mature alerts and portfolio tooling for wallet-level workflows',
+    ],
+    comparisonTable: [
+      { capability: 'Wallet labelling', spectre: 'Whale monitoring (890+ wallets)', competitor: 'Industry-leading labelled wallet dataset' },
+      { capability: 'AI synthesis / chat', spectre: 'Monarch AI + 11 specialist agents', competitor: 'AI alerts (limited)' },
+      { capability: 'Social sentiment / X intelligence', spectre: '780+ KOLs, narrative rotation, influence graph', competitor: 'Not included' },
+      { capability: 'News aggregation', spectre: '500+ sources with AI classification', competitor: 'Not included' },
+      { capability: 'Derivatives / liquidation heatmap', spectre: 'Binance, OKX, Bybit, Deribit, Hyperliquid', competitor: 'Not included' },
+      { capability: 'Economic calendar', spectre: '657+ events, 9 sources, 4-tier impact', competitor: 'Not included' },
+      { capability: 'Non-custodial trading', spectre: 'Jupiter + 0x with Privy wallets', competitor: 'Not included' },
+      { capability: 'Public API', spectre: '510+ REST, 7 WebSocket, MCP, x402', competitor: 'REST API available' },
+      { capability: 'MCP server for AI agents', spectre: '178 tools at mcp.spectreai.io', competitor: 'Not available' },
+      { capability: 'Pricing model', spectre: 'Free tier + $SPECT tiers + x402 per-request', competitor: 'Subscription tiers' },
+    ],
+    whenToPick: {
+      competitor: 'You do pure wallet analytics work and need the deepest labelled-wallet dataset with mature portfolio tooling.',
+      spectre: 'You want wallet analytics alongside social sentiment, news, derivatives, AI synthesis, and trading in one surface, or you need to expose crypto data to an AI agent.',
+    },
+    verdict: 'Nansen is best-in-class for deep wallet-labelling workflows. Spectre AI is the better fit for analysts, traders, and AI agents who need multi-source intelligence synthesised into a single view - and for teams who want to replace five to seven separate tools with one.',
+  },
+
+  arkham: {
+    slug: 'arkham',
+    name: 'Arkham Intelligence',
+    competitorUrl: 'https://arkhamintelligence.com',
+    titleSuffix: 'On-Chain Entity Graph vs Unified Market Intelligence',
+    shortPitch: 'Arkham Intelligence de-anonymises on-chain activity through entity mapping. Spectre AI provides entity-aware market intelligence combined with social sentiment, AI analysis, derivatives data, and non-custodial trading.',
+    spectreStrengths: [
+      'Multi-source synthesis - on-chain plus social plus derivatives plus news',
+      'Monarch AI conversational analyst with live data integration',
+      'X/Twitter intelligence (780+ KOLs, narrative tracker, influence graph)',
+      'Liquidation heatmap across five exchanges',
+      '657+ economic calendar events with AI impact scoring',
+      'MCP server with 178 tools for LLM integration',
+      'Non-custodial trading with Jupiter and 0x',
+    ],
+    competitorStrengths: [
+      'Industry-leading entity / labelled-wallet graph',
+      'Arkham Exchange bounty platform for crowd-sourced labels',
+      'Strong EVM coverage with cross-chain entity tracking',
+      'Intel Exchange for real-time entity alerts',
+    ],
+    comparisonTable: [
+      { capability: 'Entity / wallet labelling', spectre: 'Whale tracking (890+ wallets)', competitor: 'Industry-leading entity graph' },
+      { capability: 'AI conversational analyst', spectre: 'Monarch AI with live data', competitor: 'Not included' },
+      { capability: 'Social sentiment', spectre: '780+ KOL scoring, X influence graph', competitor: 'Not included' },
+      { capability: 'News and narrative tracking', spectre: '500+ sources, 90+ narratives', competitor: 'Not included' },
+      { capability: 'Derivatives intelligence', spectre: 'Five exchanges, liquidation heatmap, funding', competitor: 'Not included' },
+      { capability: 'Economic calendar', spectre: '657+ events with impact scoring', competitor: 'Not included' },
+      { capability: 'Non-custodial trading', spectre: 'Jupiter + 0x via Privy', competitor: 'Not included' },
+      { capability: 'Public API', spectre: '510+ endpoints, MCP, x402', competitor: 'API available' },
+      { capability: 'MCP server for AI agents', spectre: '178 tools, Claude/ChatGPT native', competitor: 'Not available' },
+    ],
+    whenToPick: {
+      competitor: 'You are focused on on-chain investigations, entity de-anonymisation, or fund-tracing workflows that depend on the richest labelled-wallet graph.',
+      spectre: 'You need on-chain context alongside derivatives, social, news, and AI synthesis - or you are building an AI agent that needs crypto market data.',
+    },
+    verdict: 'Arkham is the stronger choice for pure entity and fund-tracing investigations. Spectre AI is the better fit when on-chain context needs to be combined with market, social, and derivatives intelligence - and when the output must feed an AI agent or conversational analyst.',
+  },
+
+  messari: {
+    slug: 'messari',
+    name: 'Messari',
+    competitorUrl: 'https://messari.io',
+    titleSuffix: 'Research and Data vs AI-Native Market Intelligence',
+    shortPitch: 'Messari is the established leader in crypto research, data, and governance tracking for institutions. Spectre AI delivers AI-synthesised intelligence, real-time social and derivatives data, and non-custodial trading in one surface at a fraction of the enterprise price.',
+    spectreStrengths: [
+      'AI-native synthesis via Monarch and 11 specialist agents',
+      'Real-time X/Twitter intelligence (780+ KOLs, narratives, influence graph)',
+      'Liquidation heatmap across five exchanges with cascade risk',
+      'Fear & Greed Index with multi-factor calculation',
+      '178 MCP tools so Claude and ChatGPT can query live data',
+      'x402 micropayments for pay-per-request API access',
+      'Non-custodial swap execution via Jupiter and 0x',
+      'Token-gated pricing via $SPECT (no enterprise quote required)',
+    ],
+    competitorStrengths: [
+      'Deep qualitative research reports and governance tracking',
+      'Established institutional client base',
+      'Curated token profiles with editorial layer',
+      'Crypto Compare Index and Messari Intel product lines',
+      'Mature disclosures database and regulatory tracking',
+    ],
+    comparisonTable: [
+      { capability: 'AI synthesis / chat', spectre: 'Monarch AI + 11 specialist agents', competitor: 'Research reports (human-authored)' },
+      { capability: 'Social sentiment intelligence', spectre: '780+ KOLs, narrative tracker, graph', competitor: 'Not included' },
+      { capability: 'Derivatives / liquidation heatmap', spectre: 'Five exchanges, cascade risk', competitor: 'Not included' },
+      { capability: 'Fear & Greed Index', spectre: 'Multi-factor, real-time', competitor: 'Not included' },
+      { capability: 'Non-custodial trading', spectre: 'Jupiter + 0x via Privy wallets', competitor: 'Not included' },
+      { capability: 'Economic calendar', spectre: '657+ events, 9 sources, 4-tier impact', competitor: 'Limited token-unlock calendar' },
+      { capability: 'Governance tracking', spectre: 'Roadmapped — Q3 2026', competitor: 'Industry-leading coverage' },
+      { capability: 'Research reports', spectre: 'AI-generated daily briefs', competitor: 'Deep human-authored reports' },
+      { capability: 'Public API', spectre: '510+ endpoints, WebSocket, MCP, x402', competitor: 'Messari API (enterprise)' },
+      { capability: 'MCP server for AI agents', spectre: '178 tools at mcp.spectreai.io', competitor: 'Not available' },
+      { capability: 'Pricing model', spectre: 'Free + $SPECT tiers + x402', competitor: 'Subscription + enterprise' },
+    ],
+    whenToPick: {
+      competitor: 'You need deep human-authored qualitative research, governance coverage, or institutional-grade compliance and disclosures tracking.',
+      spectre: 'You want real-time AI-synthesised intelligence across on-chain, social, derivatives, and news - with API and MCP access - without enterprise sales cycles.',
+    },
+    verdict: 'Messari is the gold standard for human-authored crypto research and institutional compliance workflows. Spectre AI is the better fit when the use case is real-time multi-source intelligence, AI agent integration, or self-serve product-led access.',
+  },
+
+  cryptoquant: {
+    slug: 'cryptoquant',
+    name: 'CryptoQuant',
+    competitorUrl: 'https://cryptoquant.com',
+    titleSuffix: 'On-Chain Indicators vs Unified Crypto Intelligence',
+    shortPitch: 'CryptoQuant focuses on on-chain indicators and exchange flows, especially for Bitcoin and Ethereum. Spectre AI offers a broader intelligence surface that includes on-chain data alongside social sentiment, derivatives, AI synthesis, and non-custodial trading.',
+    spectreStrengths: [
+      'Broader asset coverage (13,173 tokens vs BTC/ETH-focused)',
+      'AI conversational analyst (Monarch) with live data',
+      'X/Twitter intelligence and narrative tracking',
+      'News aggregation across 500+ sources',
+      'Non-custodial swap execution',
+      'MCP server with 178 tools for AI agents',
+      'x402 per-request API access for autonomous agents',
+      '$SPECT tiered access instead of per-seat subscriptions',
+    ],
+    competitorStrengths: [
+      'Industry-leading on-chain indicators for BTC and ETH',
+      'Exchange inflow and outflow data with hourly granularity',
+      'Realized price, MVRV, and other long-running metrics',
+      'Trusted by institutional traders for exchange flow alerts',
+      'Large library of custom indicators with historical depth',
+    ],
+    comparisonTable: [
+      { capability: 'On-chain indicators (BTC/ETH)', spectre: '20+ BTC metrics, 10+ ETH metrics', competitor: 'Industry-leading indicator library' },
+      { capability: 'Exchange flow tracking', spectre: 'Whale monitoring (890+ wallets)', competitor: 'Hourly inflow/outflow per exchange' },
+      { capability: 'Multi-asset coverage', spectre: '13,173 tokens, 150+ chains', competitor: 'BTC, ETH, top 20 focus' },
+      { capability: 'AI conversational analyst', spectre: 'Monarch AI with live data', competitor: 'Not included' },
+      { capability: 'Social sentiment', spectre: '780+ KOLs, narrative tracker', competitor: 'Not included' },
+      { capability: 'Derivatives / liquidation', spectre: 'Five-exchange heatmap', competitor: 'Derivatives indicators available' },
+      { capability: 'News aggregation', spectre: '500+ sources, AI classification', competitor: 'Not included' },
+      { capability: 'Non-custodial trading', spectre: 'Jupiter + 0x', competitor: 'Not included' },
+      { capability: 'MCP server for AI agents', spectre: '178 tools', competitor: 'Not available' },
+    ],
+    whenToPick: {
+      competitor: 'You are focused on Bitcoin and Ethereum on-chain analysis, exchange flows, or long-running indicators like realized price and MVRV.',
+      spectre: 'You need broad crypto intelligence across thousands of tokens, combining on-chain with social, derivatives, and AI synthesis.',
+    },
+    verdict: 'CryptoQuant is best-in-class for deep on-chain analysis of BTC and ETH, particularly for exchange flow and indicator-driven workflows. Spectre AI is the better fit for broader coverage, AI synthesis, and teams that need intelligence across chains and data categories in one surface.',
+  },
+
+  dextools: {
+    slug: 'dextools',
+    name: 'DEXTools',
+    competitorUrl: 'https://dextools.io',
+    titleSuffix: 'DEX Trading Dashboard vs AI Crypto Intelligence',
+    shortPitch: 'DEXTools is the go-to dashboard for DEX trading, pair screening, and memecoin hunting. Spectre AI unifies DEX-level trading data with on-chain analytics, AI synthesis, social intelligence, derivatives, and news in one platform.',
+    spectreStrengths: [
+      'AI Morning Brief, Monarch AI, and 11 specialist agents',
+      'Unified coverage beyond DEXs: CEX data, on-chain, social, news',
+      'Fear & Greed Index and economic calendar',
+      'Liquidation heatmap across five CEX derivatives venues',
+      'X/Twitter intelligence (780+ KOLs, narrative rotation)',
+      'Non-custodial swaps via Jupiter (Solana) and 0x (EVM)',
+      '510+ API endpoints plus MCP server and x402',
+      'News aggregation from 500+ sources with AI classification',
+    ],
+    competitorStrengths: [
+      'Fastest DEX pair discovery and screening',
+      'Deep liquidity, holder, and tax analysis per pair',
+      'Industry-standard tool for memecoin launches and sniping',
+      'Mature alerts for new pair creations and liquidity moves',
+      'Wide chain coverage across EVM DEXs',
+    ],
+    comparisonTable: [
+      { capability: 'DEX pair screening', spectre: 'Discover page with AI ranking', competitor: 'Industry-leading pair explorer' },
+      { capability: 'New pair / memecoin discovery', spectre: 'Discover + Bubbles visualisation', competitor: 'Best-in-class new pair feed' },
+      { capability: 'Holder distribution / contract analysis', spectre: 'On-chain metrics per token', competitor: 'Per-pair holder and tax analysis' },
+      { capability: 'CEX data integration', spectre: 'Binance, OKX, Bybit, Coinbase, Kraken', competitor: 'DEX-focused' },
+      { capability: 'AI synthesis / chat', spectre: 'Monarch AI + specialist agents', competitor: 'Not included' },
+      { capability: 'Social sentiment', spectre: '780+ KOLs, narratives, graph', competitor: 'Not included' },
+      { capability: 'Derivatives / liquidation heatmap', spectre: 'Five exchanges', competitor: 'Not included' },
+      { capability: 'News aggregation', spectre: '500+ sources, AI classified', competitor: 'Not included' },
+      { capability: 'Non-custodial trading', spectre: 'Jupiter + 0x via Privy', competitor: 'Via wallet-connect integrations' },
+      { capability: 'MCP server for AI agents', spectre: '178 tools', competitor: 'Not available' },
+    ],
+    whenToPick: {
+      competitor: 'You live in DEX pair screening - hunting new listings, analysing liquidity and holder distributions, and sniping memecoins on EVM DEXs.',
+      spectre: 'You want DEX-level data combined with CEX intelligence, derivatives, social sentiment, AI synthesis, and a non-custodial trading terminal.',
+    },
+    verdict: 'DEXTools is the sharpest tool for pure DEX pair discovery and memecoin workflows. Spectre AI is the better fit when DEX data needs to sit alongside CEX, on-chain, social, news, and AI synthesis in one intelligence layer.',
+  },
+
+  tradingview: {
+    slug: 'tradingview',
+    name: 'TradingView',
+    competitorUrl: 'https://tradingview.com',
+    titleSuffix: 'Charting Platform vs AI Crypto Intelligence',
+    shortPitch: 'TradingView is the industry standard for multi-asset charting and technical analysis. Spectre AI adds crypto-native intelligence: on-chain data, AI synthesis, social sentiment, derivatives heatmaps, and non-custodial trading, with TradingView charts embedded natively.',
+    spectreStrengths: [
+      'Crypto-native intelligence layer (on-chain, social, derivatives, news)',
+      'AI Morning Brief, Monarch AI, and 11 specialist agents',
+      'Fear & Greed Index aggregated from volatility, volume, social, dominance, on-chain',
+      'Liquidation heatmap across Binance, OKX, Bybit, Deribit, Hyperliquid',
+      'X/Twitter intelligence: 780+ KOLs, narrative tracker, influence graph',
+      '657+ economic calendar events with 4-tier impact scoring',
+      'Non-custodial swaps via Jupiter and 0x with Privy wallets',
+      '510+ REST endpoints and MCP server for AI agents',
+    ],
+    competitorStrengths: [
+      'Deepest charting and technical analysis toolkit in the industry',
+      'Multi-asset coverage (equities, forex, futures, crypto)',
+      'Massive community with published ideas, scripts, and indicators',
+      'Pine Script for custom studies and strategies',
+      'Cross-broker integration for non-custodial equity trading',
+    ],
+    comparisonTable: [
+      { capability: 'Charting and drawing tools', spectre: 'TradingView Lightweight Charts embedded', competitor: 'Industry-leading Advanced Charts' },
+      { capability: 'Pine Script / custom indicators', spectre: 'Not available', competitor: 'Full Pine Script support' },
+      { capability: 'Multi-asset coverage', spectre: 'Crypto-first (13,173 tokens)', competitor: 'Equities, forex, futures, crypto' },
+      { capability: 'On-chain analytics', spectre: '20+ BTC metrics, 10+ ETH metrics, whale tracking', competitor: 'Limited crypto on-chain data' },
+      { capability: 'AI market analysis', spectre: 'Morning Brief, Monarch AI, 11 agents', competitor: 'Not included' },
+      { capability: 'Social sentiment', spectre: 'X Intelligence, 780+ KOLs', competitor: 'Community ideas (peer-generated)' },
+      { capability: 'Liquidation heatmap', spectre: 'Five exchanges with cascade risk', competitor: 'Not included' },
+      { capability: 'Non-custodial crypto trading', spectre: 'Jupiter + 0x via Privy', competitor: 'Broker-integrated (not crypto DEXs)' },
+      { capability: 'MCP server for AI agents', spectre: '178 tools, Claude/ChatGPT native', competitor: 'Not available' },
+      { capability: 'Pricing model', spectre: 'Free tier + $SPECT tiers + x402', competitor: 'Subscription tiers' },
+    ],
+    whenToPick: {
+      competitor: 'You need the deepest charting and technical-analysis toolkit across multiple asset classes, or you rely on Pine Script for custom studies.',
+      spectre: 'You want crypto-native intelligence - on-chain, social, derivatives, AI synthesis - with TradingView-grade charts embedded, and you want to expose that data to AI agents via MCP.',
+    },
+    verdict: 'TradingView remains the benchmark for pure charting and multi-asset technical analysis. Spectre AI is purpose-built for crypto traders and analysts who need the intelligence layer on top: on-chain, social, derivatives, AI synthesis, and non-custodial execution in one surface.',
+  },
+}
+
+export function getCompetitor(slug) {
+  return COMPETITORS[slug?.toLowerCase?.()] || null
+}
+
+export const COMPETITOR_SLUGS = Object.keys(COMPETITORS)

@@ -1,0 +1,110 @@
+/* RWA Composability Web — force-directed network of tokenized-asset plumbing. */
+
+.rcw {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 18px;
+  background:
+    radial-gradient(120% 90% at 50% -10%, rgba(60, 80, 160, 0.1), transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.006)),
+    rgba(9, 9, 11, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.rcw-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.rcw-headline { display: flex; flex-direction: column; gap: 3px; }
+.rcw-title { font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-primary); }
+.rcw-sub { font-size: 12px; color: rgba(245, 245, 247, 0.45); }
+.rcw-legend { display: flex; gap: 12px; flex-wrap: wrap; }
+.rcw-leg { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(245, 245, 247, 0.55); }
+.rcw-leg-dot { width: 9px; height: 9px; border-radius: 50%; }
+
+.rcw-stage {
+  position: relative;
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  background: radial-gradient(60% 70% at 50% 45%, rgba(40, 52, 110, 0.14), transparent 72%), rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.rcw-hint { color: rgba(150, 175, 255, 0.7); font-style: italic; }
+
+.rcw-edges { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.rcw-flow { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.rcw-dot { filter: drop-shadow(0 0 3px currentColor); }
+.rcw-line { fill: none; stroke: rgba(150, 175, 255, 0.22); stroke-width: 1.2; transition: stroke 160ms ease; }
+.rcw-edge--active .rcw-line { stroke: rgba(170, 195, 255, 0.85); stroke-width: 2; }
+.rcw-edge--dim .rcw-line { stroke: rgba(150, 175, 255, 0.07); }
+.rcw-rel { fill: rgba(200, 215, 255, 0.95); font-size: 10px; font-weight: 600; text-anchor: middle; paint-order: stroke; stroke: rgba(0, 0, 0, 0.8); stroke-width: 3px; }
+
+.rcw-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  z-index: 2;
+  transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), opacity 160ms ease;
+}
+.rcw-node--active { z-index: 10; transform: translate(-50%, -50%) scale(1.18); }
+.rcw-node--dim { opacity: 0.28; }
+.rcw-orb { width: 100%; height: 100%; border-radius: 50%; }
+.rcw-node-label {
+  position: absolute;
+  top: calc(100% + 3px);
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.88);
+  white-space: nowrap;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 0 2px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+
+.rcw-node--focus .rcw-orb { box-shadow: 0 0 0 2px #fff, 0 0 0 4px currentColor, 0 0 20px rgba(255, 255, 255, 0.25) !important; }
+.rcw-node { cursor: pointer; }
+.rcw-stage--focused { cursor: pointer; }
+
+/* Focus readout panel */
+.rcw-readout {
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 248px; max-width: calc(100% - 24px);
+  z-index: 20;
+  padding: 12px 13px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(20, 22, 30, 0.96), rgba(12, 13, 18, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  animation: rcwReadoutIn 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes rcwReadoutIn { from { opacity: 0; transform: translateY(-6px) scale(0.97); } to { opacity: 1; transform: none; } }
+.rcw-readout-head { display: flex; align-items: center; gap: 8px; }
+.rcw-readout-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.rcw-readout-name { font-size: 0.92rem; font-weight: 700; color: var(--text-primary); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rcw-readout-close { background: none; border: none; color: rgba(245, 245, 247, 0.5); font-size: 1.1rem; line-height: 1; cursor: pointer; padding: 0 2px; }
+.rcw-readout-close:hover { color: var(--text-primary); }
+.rcw-readout-meta { font-size: 0.7rem; color: rgba(245, 245, 247, 0.5); margin: 3px 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+.rcw-readout-links { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.rcw-readout-link { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; font-size: 0.78rem; }
+.rcw-readout-rel { color: rgba(150, 175, 255, 0.85); font-size: 0.68rem; white-space: nowrap; }
+.rcw-readout-other { color: var(--text-secondary); font-weight: 600; flex: 1; min-width: 0; }
+.rcw-readout-stat { color: var(--bull-bright, #34d399); font-size: 0.72rem; }
+
+.app.app-day-mode .rcw-readout { background: #ffffff; border-color: rgba(0, 0, 0, 0.1); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12); }
+.app.app-day-mode .rcw-readout-name { color: #0f172a; }
+.app.app-day-mode .rcw-readout-other { color: #334155; }
+.app.app-day-mode .rcw-readout-rel { color: #4f6bd6; }
+
+.app.app-day-mode .rcw { background: #f8f9fa; border-color: rgba(0, 0, 0, 0.06); }
+.app.app-day-mode .rcw-title { color: #0f172a; }
+.app.app-day-mode .rcw-stage { background: #eef1f6; }
+.app.app-day-mode .rcw-node-label { color: #1e293b; text-shadow: none; }
+.app.app-day-mode .rcw-line { stroke: rgba(0, 0, 0, 0.18); }

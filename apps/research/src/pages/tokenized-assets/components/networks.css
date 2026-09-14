@@ -1,0 +1,318 @@
+/* ══════════════════════════════════════════════════════════════════
+   Networks tab — Chain Gravity centerpiece + asset-class legend.
+   Prefix: ta-net-
+   Consumes the page tokens (--ta-glass-*, --ta-cat-*, --ta-pad-*) —
+   never hardcodes glass/blur/shadow. Composes AROUND the shared
+   ChainOrbit creative (owned elsewhere) to kill its dead space:
+   the empty ring perimeter now carries a live "gravity rail" of the
+   orbiting chains, always populated (not hover-only).
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Centerpiece shell: orbit (left) + gravity rail (right) ──────────── */
+.ta-net-gravity {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: var(--sp-4);
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+}
+
+/* The orbit pane: let the shared .ta-creative breathe edge-to-edge and
+   stretch to the full height of the centerpiece. */
+.ta-net-gravity__orbit {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ta-net-gravity__orbit > .ta-creative {
+  flex: 1;
+  min-height: 360px;
+}
+
+/* ── Gravity rail: live leaderboard of the orbiting chains ──────────── */
+.ta-net-rail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--ta-pad-card);
+  background: var(--ta-glass-bg);
+  backdrop-filter: blur(var(--ta-glass-blur));
+  -webkit-backdrop-filter: blur(var(--ta-glass-blur));
+  border: 1px solid var(--ta-glass-border);
+  border-radius: var(--ta-glass-radius);
+  box-shadow: var(--ta-glass-shadow);
+  transition: border-color var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out),
+              transform var(--duration-base) var(--ease-out);
+}
+.ta-net-rail:hover {
+  border-color: var(--ta-glass-border-hover);
+  box-shadow: var(--ta-glass-shadow-hover);
+  transform: translateY(-1px);
+}
+
+.ta-net-rail__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.ta-net-rail__title {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+.ta-net-rail__sub {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+.ta-net-rail__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* One chain row: swatch · name · share-bar · share% · 7D delta */
+.ta-net-row {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: 7px var(--sp-2);
+  border: 1px solid transparent;
+  border-radius: var(--ta-glass-radius-sm);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out);
+}
+.ta-net-row:hover,
+.ta-net-row.is-active {
+  background: var(--ta-glass-bg-quiet);
+  border-color: var(--ta-glass-border);
+  transform: translateX(1px);
+}
+
+.ta-net-row__swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  background: currentColor;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+              0 0 8px -2px currentColor;
+}
+
+.ta-net-row__body {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.ta-net-row__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.ta-net-row__name {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ta-net-row__tvl {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Share micro-bar: a thin proportional track tinted with the chain color */
+.ta-net-row__track {
+  position: relative;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+.ta-net-row__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg,
+    color-mix(in srgb, currentColor 70%, transparent) 0%,
+    currentColor 100%);
+  transition: width var(--duration-slow) var(--ease-out);
+}
+
+.ta-net-row__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  white-space: nowrap;
+}
+.ta-net-row__share {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.ta-net-row__delta {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+.ta-net-row__delta.is-up { color: var(--bull-bright, #34D399); }
+.ta-net-row__delta.is-down { color: var(--bear-bright, #F87171); }
+
+/* Rail footer: aggregate readout fills the last sliver of dead space */
+.ta-net-rail__foot {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--ta-glass-border);
+}
+.ta-net-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ta-net-stat__label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.ta-net-stat__value {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Rail skeleton — shimmer rows matching the final shape */
+.ta-net-rail__skel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.ta-net-rail__skel-row {
+  height: 34px;
+  border-radius: var(--ta-glass-radius-sm);
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.07) 50%,
+    rgba(255, 255, 255, 0.04) 100%);
+  background-size: 200% 100%;
+  animation: ta-skel-slide 2s linear infinite;
+}
+
+/* ── Asset Class Mix — readable color legend (segments were tooltip-only) ── */
+.ta-net-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+  margin-top: var(--sp-2);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--ta-glass-border);
+}
+.ta-net-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ta-net-legend__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: currentColor;
+}
+.ta-net-legend__label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* ── Responsive: stack the centerpiece on tablet/mobile ──────────────── */
+@media (max-width: 1023px) {
+  .ta-net-gravity {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ta-net-gravity__orbit > .ta-creative { min-height: 300px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ta-net-rail__skel-row { animation: none; }
+  .ta-net-row__fill { transition: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Day mode
+   ══════════════════════════════════════════════════════════════════ */
+.app.app-day-mode .ta-net-rail {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+.app.app-day-mode .ta-net-rail:hover {
+  border-color: rgba(0, 0, 0, 0.10);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+.app.app-day-mode .ta-net-rail__title,
+.app.app-day-mode .ta-net-row__name,
+.app.app-day-mode .ta-net-row__share,
+.app.app-day-mode .ta-net-stat__value { color: #0F172A; }
+.app.app-day-mode .ta-net-rail__sub,
+.app.app-day-mode .ta-net-row__tvl,
+.app.app-day-mode .ta-net-stat__label,
+.app.app-day-mode .ta-net-legend__label { color: #475569; }
+.app.app-day-mode .ta-net-row__delta { color: rgba(0, 0, 0, 0.4); }
+.app.app-day-mode .ta-net-row:hover,
+.app.app-day-mode .ta-net-row.is-active {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.05);
+}
+.app.app-day-mode .ta-net-row__track { background: rgba(0, 0, 0, 0.06); }
+.app.app-day-mode .ta-net-rail__foot,
+.app.app-day-mode .ta-net-legend { border-top-color: rgba(0, 0, 0, 0.06); }
+.app.app-day-mode .ta-net-rail__skel-row {
+  background: linear-gradient(90deg,
+    rgba(0, 0, 0, 0.03) 0%,
+    rgba(0, 0, 0, 0.06) 50%,
+    rgba(0, 0, 0, 0.03) 100%);
+  background-size: 200% 100%;
+}

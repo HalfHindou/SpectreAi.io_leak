@@ -1,0 +1,594 @@
+/**
+ * PodcastsTab — prefix `mcp-`.
+ * Rendered inside the media-center page, so `.mc-page.day-mode` is the day-mode
+ * ancestor here (this is NOT a portal, unlike the player itself).
+ */
+
+.mcp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+}
+
+/* ═══════════════════════════════════════════
+   Featured episode
+   ═══════════════════════════════════════════ */
+
+.mcp-hero {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: var(--sp-6);
+  align-items: center;
+  padding: var(--sp-5);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.018) 100%);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-inner);
+}
+
+.mcp-hero-art {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: none;
+  padding: 0;
+  background: var(--bg-elevated);
+  cursor: pointer;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+}
+
+.mcp-hero-art img,
+.mcp-ep-art img,
+.mcp-show-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mcp-hero-play,
+.mcp-ep-play,
+.mcp-show-play {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.95);
+  color: #09090b;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  transition: transform var(--duration-fast) var(--ease-out),
+              opacity var(--duration-fast) var(--ease-out);
+}
+
+.mcp-hero-play {
+  right: 12px;
+  bottom: 12px;
+  width: 52px;
+  height: 52px;
+  padding-left: 3px;
+}
+
+.mcp-hero-art:hover .mcp-hero-play { transform: scale(1.06); }
+
+.mcp-hero-body { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
+
+.mcp-hero-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.mcp-hero-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.125rem, 1.8vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+
+.mcp-hero-show {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.mcp-hero-desc {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--text-tertiary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mcp-hero-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+
+.mcp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-default);
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+}
+
+.mcp-pill--cap { color: var(--text-secondary); }
+
+.mcp-hero-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-2); }
+
+.mcp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.94);
+  color: #09090b;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.mcp-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); }
+.mcp-btn:active { transform: translateY(0); }
+.mcp-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+
+.mcp-btn--ghost {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-default);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.mcp-btn--ghost:hover { color: var(--text-primary); border-color: var(--border-accent); }
+.mcp-btn--sm { height: 30px; padding: 0 var(--sp-3); font-size: 0.75rem; }
+
+/* ═══════════════════════════════════════════
+   Episode cards
+   ═══════════════════════════════════════════ */
+
+.mcp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--sp-4);
+}
+
+.mcp-ep {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  animation: mcp-in 0.4s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 24ms);
+}
+
+@keyframes mcp-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.mcp-ep--rail { width: 190px; flex-shrink: 0; }
+
+.mcp-ep-art {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  padding: 0;
+  background: var(--bg-elevated);
+  cursor: pointer;
+  transition: transform var(--duration-base) var(--ease-out),
+              border-color var(--duration-base) var(--ease-out);
+}
+
+.mcp-ep-art:hover { transform: translateY(-2px); border-color: var(--border-accent); }
+
+.mcp-ep-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 45%, rgba(0, 0, 0, 0.55) 100%);
+  opacity: 0;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.mcp-ep-play {
+  right: 10px;
+  bottom: 10px;
+  width: 36px;
+  height: 36px;
+  padding-left: 2px;
+  opacity: 0;
+}
+
+.mcp-ep-art:hover .mcp-ep-scrim,
+.mcp-ep-art:hover .mcp-ep-play,
+.mcp-ep.is-active .mcp-ep-play,
+.mcp-ep.is-active .mcp-ep-scrim { opacity: 1; }
+
+/* Resume marker — the same "you are N% in" the store persists */
+.mcp-ep-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.mcp-ep-progress > span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  background: var(--text-primary);
+}
+
+.mcp-ep-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+.mcp-ep-show {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mcp-ep-title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mcp-ep-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-size: 0.6875rem;
+  /* NOT --text-muted: at 0.35 alpha it measured 2.96:1 here, and the runtime
+     plus freshness are the two things a listener actually scans. */
+  color: var(--text-tertiary);
+}
+
+.mcp-dot { opacity: 0.6; }
+
+.mcp-cap-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-tertiary);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.mcp-ep-queue {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-default);
+  background: rgba(9, 9, 11, 0.7);
+  color: var(--text-secondary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out);
+}
+
+.mcp-ep:hover .mcp-ep-queue { opacity: 1; }
+.mcp-ep-queue:hover { color: var(--text-primary); }
+
+/* Touch has no hover — the queue button and play mark stay visible there. */
+@media (hover: none) {
+  .mcp-ep-queue,
+  .mcp-ep-play,
+  .mcp-ep-scrim { opacity: 1; }
+}
+
+/* ── Continue-listening rail ── */
+
+.mcp-cont { display: flex; flex-direction: column; gap: 4px; }
+
+.mcp-cont-left {
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+  padding-left: 2px;
+}
+
+.mcp-rail-track { align-items: flex-start; }
+
+/* ── Show tiles ── */
+
+.mcp-show {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 150px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.mcp-show-art {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  background: var(--bg-elevated);
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.mcp-show:hover .mcp-show-art { transform: translateY(-2px); }
+
+.mcp-show-play {
+  right: 8px;
+  bottom: 8px;
+  width: 30px;
+  height: 30px;
+  padding-left: 2px;
+  opacity: 0;
+}
+
+.mcp-show:hover .mcp-show-play { opacity: 1; }
+
+.mcp-show-name {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mcp-show-meta {
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mcp-ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+}
+
+/* ═══════════════════════════════════════════
+   Feed
+   ═══════════════════════════════════════════ */
+
+.mcp-feed { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+.mcp-feed-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.mcp-feed-title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.mcp-feed-count {
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.mcp-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  /* pan-x alone swallows vertical page scroll from a touch starting here */
+  touch-action: pan-x pan-y;
+  scrollbar-width: none;
+}
+
+.mcp-chips::-webkit-scrollbar { display: none; }
+
+.mcp-chip {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-default);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.mcp-chip:hover { color: var(--text-secondary); }
+.mcp-chip.is-active { color: var(--text-primary); background: rgba(255, 255, 255, 0.1); border-color: var(--border-accent); }
+
+.mcp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-10) var(--sp-4);
+  text-align: center;
+}
+
+.mcp-empty-title {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+}
+
+/* ── Skeletons ── */
+
+.mcp-hero--skel { grid-template-columns: 240px minmax(0, 1fr); }
+.mcp-skel { height: 14px; border-radius: 8px; background: rgba(255, 255, 255, 0.05); }
+.mcp-skel--art { width: 100%; aspect-ratio: 1; height: auto; border-radius: var(--radius-md); }
+.mcp-skel--card { aspect-ratio: 0.82; height: auto; border-radius: var(--radius-md); }
+.mcp-skel-lines { display: flex; flex-direction: column; gap: var(--sp-3); }
+
+/* ═══════════════════════════════════════════
+   Mobile
+   ═══════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .mcp { gap: var(--sp-6); }
+
+  .mcp-hero,
+  .mcp-hero--skel {
+    grid-template-columns: 108px minmax(0, 1fr);
+    gap: var(--sp-3);
+    padding: var(--sp-3);
+    align-items: flex-start;
+  }
+
+  .mcp-hero-play { width: 34px; height: 34px; right: 6px; bottom: 6px; }
+  .mcp-hero-title { font-size: 0.9375rem; }
+  .mcp-hero-desc { display: none; }
+  .mcp-hero-actions { width: 100%; }
+  .mcp-btn { height: 34px; flex: 1; justify-content: center; }
+
+  .mcp-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--sp-3); }
+  .mcp-ep--rail { width: 150px; }
+  .mcp-show { width: 120px; }
+  .mcp-feed-title { font-size: 1rem; }
+}
+
+/* ═══════════════════════════════════════════
+   Day mode
+   ═══════════════════════════════════════════ */
+
+.mc-page.day-mode .mcp-hero {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+.mc-page.day-mode .mcp-hero-title,
+.mc-page.day-mode .mcp-ep-title,
+.mc-page.day-mode .mcp-show-name,
+.mc-page.day-mode .mcp-feed-title { color: #0f172a; }
+
+.mc-page.day-mode .mcp-hero-show { color: #475569; }
+
+/* `--text-muted` is #94a3b8 in day mode — 2.56:1 on white. Anything carrying
+   meaning steps up to #64748b (4.76:1). */
+.mc-page.day-mode .mcp-hero-eyebrow,
+.mc-page.day-mode .mcp-chip { color: #64748b; }
+
+/* The episode count is a number people read — 3.96:1 on its plate. */
+.mc-page.day-mode .mcp-feed-count { color: #475569; }
+
+/* #64748b measured 4.27-4.37:1 against these translucent plates — one step
+   darker clears 4.5 and keeps the hierarchy under the #0f172a titles. */
+.mc-page.day-mode .mcp-hero-desc,
+.mc-page.day-mode .mcp-ep-show,
+.mc-page.day-mode .mcp-ep-meta,
+.mc-page.day-mode .mcp-show-meta,
+.mc-page.day-mode .mcp-cont-left,
+.mc-page.day-mode .mcp-pill { color: #475569; }
+
+.mc-page.day-mode .mcp-pill,
+.mc-page.day-mode .mcp-chip,
+.mc-page.day-mode .mcp-cap-badge,
+.mc-page.day-mode .mcp-feed-count {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+.mc-page.day-mode .mcp-chip.is-active {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.1);
+  border-color: rgba(15, 23, 42, 0.16);
+}
+
+.mc-page.day-mode .mcp-btn { background: #0f172a; color: #ffffff; }
+
+.mc-page.day-mode .mcp-btn--ghost {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.1);
+  color: #475569;
+}
+
+.mc-page.day-mode .mcp-btn--ghost:hover { color: #0f172a; }
+
+.mc-page.day-mode .mcp-ep-art,
+.mc-page.day-mode .mcp-show-art { border-color: rgba(15, 23, 42, 0.1); }
+
+.mc-page.day-mode .mcp-ep-queue {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #475569;
+}
+
+.mc-page.day-mode .mcp-ep-progress > span { background: #0f172a; }
+.mc-page.day-mode .mcp-empty-title { color: #475569; }
+.mc-page.day-mode .mcp-skel { background: rgba(15, 23, 42, 0.06); }
+.mc-page.day-mode .mcp-ph { color: #94a3b8; background: linear-gradient(135deg, rgba(15, 23, 42, 0.06), rgba(15, 23, 42, 0.02)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mcp-ep { animation: none; }
+}

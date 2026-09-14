@@ -1,0 +1,134 @@
+/* ============================================
+   MobileSideRail — edge-handle "Token quick actions".
+   Prefix: msr-
+
+   Flush to the left screen edge, rounded on the right
+   only (a handle built into the edge). Two stacked icon
+   tabs. Visible at rest as a glass popover; touch/drag
+   only brightens it. Portals to <body>; above the chart,
+   below sheets/drawer (z 2000).
+
+   Styled on the trading design tokens
+   (styles/design-tokens.css). Obsidian/glass tokens are
+   dark-only, so day mode (body.theme-light) carries
+   explicit light values.
+   ============================================ */
+
+.msr {
+  position: fixed;
+  left: 0;
+  z-index: 1500;
+  width: max-content;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  /* Rounded on the right only — the left edge is off-screen. */
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  overflow: hidden;               /* clip tabs to the rounded corner */
+  touch-action: none;             /* a vertical drag must not scroll the page */
+  user-select: none;
+  -webkit-user-select: none;
+
+  /* Visible glass popover at rest — same treatment as the research-side
+     social drawer handle (.tsoc-tab), mirrored for the left edge. */
+  background: linear-gradient(135deg, rgba(26, 26, 29, 0.92), rgba(17, 17, 19, 0.92));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: none;
+  box-shadow: 4px 0 18px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    background var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+/* Slow gleam invites the tap while the rail sits idle. */
+.msr::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 35%, rgba(255, 255, 255, 0.18) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: msrGleam 5.5s ease-in-out infinite;
+  pointer-events: none;
+}
+.msr--active::after,
+.msr--dragging::after { animation: none; opacity: 0; }
+@keyframes msrGleam {
+  0%, 60% { transform: translateX(-120%); }
+  80%, 100% { transform: translateX(120%); }
+}
+
+/* Touched: brighten the glass a step (mirrors .tsoc-tab--open). */
+.msr--active {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: linear-gradient(135deg, rgba(38, 38, 42, 0.95), rgba(24, 24, 27, 0.95));
+}
+/* Dragging: lift it off the surface. */
+.msr--dragging {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: linear-gradient(135deg, rgba(38, 38, 42, 0.95), rgba(24, 24, 27, 0.95));
+  box-shadow: 8px 0 28px rgba(0, 0, 0, 0.45);
+}
+
+/* Icon tabs — secondary at rest, primary on touch. */
+.msr-tab {
+  width: 24px;
+  height: 67px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: rgba(245, 245, 247, 0.6);
+  cursor: pointer;
+  transition: color 0.25s ease, background 0.25s ease;
+}
+.msr-tab:hover,
+.msr--active .msr-tab { color: #f5f5f7; }
+
+/* Vertical label — reads bottom-to-top like the research social handle. */
+.msr-tab-label {
+  font-family: var(--font-display, system-ui, sans-serif);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+/* Hairline divider between the two tabs. */
+.msr-tab + .msr-tab {
+  box-shadow: inset 0 1px 0 var(--glass-border);
+}
+.msr-tab:active { background: var(--glass-fill-hover); }
+
+/* ── Day mode (body.theme-light — obsidian/glass tokens are dark-only) ── */
+body.theme-light .msr {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    inset -1px 0 0 rgba(0, 0, 0, 0.04),
+    3px 0 16px rgba(0, 0, 0, 0.12);
+}
+body.theme-light .msr--active,
+body.theme-light .msr--dragging {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.14);
+}
+/* The white sweep is invisible on a light surface — darken it. */
+body.theme-light .msr::after {
+  background: linear-gradient(120deg, transparent 35%, rgba(0, 0, 0, 0.06) 50%, transparent 65%);
+}
+body.theme-light .msr-tab { color: #475569; }
+body.theme-light .msr-tab:hover,
+body.theme-light .msr--active .msr-tab { color: #0f172a; }
+body.theme-light .msr-tab + .msr-tab {
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.06);
+}
+body.theme-light .msr-tab:active { background: rgba(0, 0, 0, 0.05); }

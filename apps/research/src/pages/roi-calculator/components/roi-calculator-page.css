@@ -1,0 +1,266 @@
+/**
+ * ROI Calculator subpage – full-page layout
+ */
+.roi-calculator-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 20px 24px 48px;
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Desktop: widen into the two-column dashboard layout (see roi-calculator.css). */
+@media (min-width: 1025px) {
+  .roi-calculator-page {
+    max-width: 1240px;
+    padding: 24px 32px 64px;
+  }
+}
+
+.roi-calculator-page.day-mode {
+  --roi-page-text: rgba(0, 0, 0, 0.9);
+  --roi-page-text-muted: rgba(0, 0, 0, 0.55);
+  --roi-page-back: rgba(0, 0, 0, 0.5);
+}
+
+.roi-calculator-page-header {
+  margin-bottom: 28px;
+}
+
+.roi-calculator-page-header-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.roi-calculator-page-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  margin-bottom: 8px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  width: fit-content;
+}
+
+.roi-calculator-page.day-mode .roi-calculator-page-back {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.roi-calculator-page-back:hover {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.roi-calculator-page.day-mode .roi-calculator-page-back:hover {
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.roi-calculator-page-back svg {
+  width: 18px;
+  height: 18px;
+}
+
+.roi-calculator-page-title {
+  font-family: var(--font-glass, var(--font-display));
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.98);
+  margin: 0 0 4px;
+  letter-spacing: -0.02em;
+}
+
+.roi-calculator-page.day-mode .roi-calculator-page-title {
+  color: rgba(0, 0, 0, 0.9);
+}
+
+.roi-calculator-page-subtitle {
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 20px;
+  line-height: 1.4;
+}
+
+.roi-calculator-page.day-mode .roi-calculator-page-subtitle {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.roi-calculator-page-content {
+  flex: 1;
+  min-height: 0;
+}
+
+.roi-calculator-page-placeholder {
+  padding: 32px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+}
+
+.roi-calculator-page.day-mode .roi-calculator-page-placeholder {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.roi-calculator-page-placeholder-text {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.roi-calculator-page.day-mode .roi-calculator-page-placeholder-text {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+/* ============================================================
+   TABLET (769px - 1024px)
+   ============================================================ */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .roi-calculator-page {
+    max-width: 600px;
+    padding: 16px 20px 40px;
+  }
+
+  .roi-calculator-page-header {
+    margin-bottom: 20px;
+  }
+
+  .roi-calculator-page-title {
+    font-size: 1.5rem;
+  }
+
+  .roi-calculator-page-subtitle {
+    font-size: 0.875rem;
+    margin-bottom: 16px;
+  }
+
+  .roi-calculator-page-placeholder {
+    padding: 24px;
+    border-radius: 12px;
+  }
+}
+
+/* ============================================================
+   MOBILE (max-width: 768px)
+   ============================================================ */
+@media (max-width: 768px) {
+  .roi-calculator-page {
+    padding: 0 !important;
+    max-width: 100%;
+    /* ONE gutter for the whole page, so the header, the inputs and the
+       analysis column can never drift apart. 16px read as "the edges are too
+       close to the boxes and the text" (founder 08-12) — with the shell's own
+       8px that put a card 24px from the screen edge while its own inner
+       padding was 15px, so the outside of a card had barely more air than the
+       inside. 20px (28px total) restores the ratio without costing the 2-up
+       comparison grid a column. */
+    --roi-gutter: 20px;
+  }
+
+  /* 🪤 RESERVE THE FIXED HEADER. `.mobile-header` is `position: fixed`,
+     z-index 300, and spans the top 52px; `.app-main-content` pads only the
+     STATUS BAR, so every page pays the header's height itself. This one paid
+     12px, so its first child — the Back button — rendered at y=12-50, entirely
+     underneath the header: `elementFromPoint` at its centre returned
+     `.mobile-header-left`, i.e. invisible AND untappable. On an iOS
+     home-screen PWA there is no browser back and no swipe-back either, so the
+     page was a dead end (user report via KP, 08-06).
+     Measured against the pages that get this right: /etfs first text at 65,
+     /categories 80, /news 71, /fear-greed 103 — all clear of 52; ROI was 23.
+     Header height ONLY, no `env(safe-area-inset-top)`: `.app-main-content`
+     already pays that, and re-adding it here is the documented paid-twice
+     trap that left 150-216px of dead space on the bottom nav. */
+  .roi-calculator-page-header {
+    padding: calc(var(--m-header-h, 52px) + var(--m-md, 12px)) var(--roi-gutter, 20px) 0;
+    margin-bottom: var(--m-md, 12px);
+  }
+
+  .roi-calculator-page-header-inner {
+    gap: 4px;
+  }
+
+  .roi-calculator-page-back {
+    font-size: var(--m-text-base, 0.8125rem);
+    margin-bottom: 4px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .roi-calculator-page-back svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .roi-calculator-page-title {
+    font-size: var(--m-text-2xl, 1.375rem);
+    letter-spacing: -0.02em;
+  }
+
+  .roi-calculator-page-subtitle {
+    font-size: var(--m-text-base, 0.8125rem);
+    margin-bottom: var(--m-md, 12px);
+    line-height: 1.5;
+    color: rgba(245, 245, 247, 0.35);
+  }
+
+  .roi-calculator-page-content {
+    padding: 0 var(--roi-gutter, 20px) calc(var(--m-bottom-nav-h, 76px) + env(safe-area-inset-bottom, 0px) + 16px);
+  }
+
+  .roi-calculator-page-placeholder {
+    padding: var(--m-lg, 16px);
+    border-radius: var(--m-card-radius, 10px);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .roi-calculator-page-placeholder-text {
+    font-size: var(--m-text-base, 0.8125rem);
+  }
+
+  /* ── Day mode ── */
+  .app.app-day-mode .roi-calculator-page-subtitle,
+  .roi-calculator-page.day-mode .roi-calculator-page-subtitle {
+    color: rgba(0, 0, 0, 0.4);
+  }
+
+  .app.app-day-mode .roi-calculator-page-placeholder,
+  .roi-calculator-page.day-mode .roi-calculator-page-placeholder {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+
+  .app.app-day-mode .roi-calculator-page-back,
+  .roi-calculator-page.day-mode .roi-calculator-page-back {
+    color: rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* ============================================================
+   SMALL MOBILE (max-width: 380px)
+   ============================================================ */
+@media (max-width: 380px) {
+  /* iPhone SE and narrower: the comparison grid is already down to two 150px
+     columns, so hand the gutter back rather than squeeze the cards further. */
+  .roi-calculator-page {
+    --roi-gutter: 16px;
+  }
+
+  .roi-calculator-page-title {
+    font-size: 1.25rem;
+  }
+
+  .roi-calculator-page-subtitle {
+    font-size: var(--m-text-sm, 0.75rem);
+  }
+}

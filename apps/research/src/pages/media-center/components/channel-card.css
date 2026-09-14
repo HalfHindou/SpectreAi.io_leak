@@ -1,0 +1,372 @@
+/* ============================================================
+   Spectre Media — Show (channel) card  (mc-show-)
+   Premium show card: banner/brand header, prominent avatar,
+   name + 2-line desc + stat row + live pill + source badge.
+   Warm-white on black, glass, day-mode + mobile counterparts.
+   Renders inside .mc-grid-channels (minmax(200px,1fr)) — does
+   NOT redefine that grid.
+   ============================================================ */
+
+.mc-show-card {
+  --mc-cat: var(--cat, rgba(245, 245, 247, 0.4));
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-default);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  box-shadow: var(--shadow-inner), 0 4px 16px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--duration-base) var(--ease-out),
+              border-color var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out);
+  animation: mcShowIn 0.5s var(--ease-out) both;
+  animation-delay: calc(var(--mc-show-i, 0) * 0.04s);
+}
+
+@keyframes mcShowIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.mc-show-card--clickable { cursor: pointer; }
+
+.mc-show-card--clickable:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-accent);
+  box-shadow: var(--shadow-inner), var(--shadow-lg);
+}
+
+.mc-show-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Header strip ─────────────────────────────────── */
+
+.mc-show-header {
+  position: relative;
+  height: 56px;
+  flex: 0 0 auto;
+}
+
+.mc-show-banner {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* brand-gradient fallback, faintly tinted by category accent */
+.mc-show-banner--ph {
+  background:
+    radial-gradient(120% 140% at 18% -10%, color-mix(in srgb, var(--mc-cat) 30%, transparent) 0%, transparent 58%),
+    linear-gradient(135deg, #1b1b1f 0%, #0d0d10 100%);
+}
+
+.mc-show-header-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(5, 5, 7, 0.10) 0%, rgba(5, 5, 7, 0.30) 60%, rgba(5, 5, 7, 0.62) 100%);
+  pointer-events: none;
+}
+
+/* source badge — top-left */
+.mc-show-src {
+  position: absolute;
+  top: 9px;
+  left: 9px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  height: 19px;
+  padding: 0 7px;
+  border-radius: var(--radius-sm);
+  background: rgba(8, 8, 10, 0.66);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: #f5f5f7;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.mc-show-src--tw { color: #c9b8ff; }
+.mc-show-src--yt { color: #ffc4c4; }
+
+/* live pill — top-right */
+.mc-show-live {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 19px;
+  padding: 0 8px;
+  border-radius: var(--radius-full);
+  background: var(--bear);
+  color: #fff;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
+}
+.mc-show-live-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff;
+  animation: mcShowPulse 1.6s var(--ease-in-out) infinite;
+}
+@keyframes mcShowPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+/* avatar — straddles the header / body seam */
+.mc-show-avatar {
+  position: absolute;
+  left: 16px;
+  bottom: -28px;
+  z-index: 3;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elevated);
+  border: 3px solid var(--bg-base);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  transition: transform var(--duration-base) var(--ease-out);
+}
+.mc-show-card--clickable:hover .mc-show-avatar { transform: scale(1.04); }
+
+.mc-show-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mc-show-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--mc-cat) 26%, #1c1c20) 0%, #101013 100%);
+}
+
+/* ── Body ─────────────────────────────────────────── */
+
+.mc-show-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 8px;
+  padding: 38px 16px 14px;
+}
+
+.mc-show-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mc-show-desc {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.42;
+  color: var(--text-tertiary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* keep a stable 2-line height even when the channel has no description */
+.mc-show-desc--empty { min-height: calc(0.8125rem * 1.42 * 2); }
+
+/* ── Foot: stats + CTA ────────────────────────────── */
+
+.mc-show-foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.mc-show-stats {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  min-width: 0;
+}
+
+.mc-show-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.mc-show-stat-val {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.mc-show-stat-lbl {
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* View-channel affordance — chevron always; label reveals on hover */
+.mc-show-cta {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: var(--radius-full);
+  background: var(--glass-bg-light);
+  border: 1px solid var(--border-strong);
+  color: var(--text-tertiary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color var(--duration-base) var(--ease-out),
+              border-color var(--duration-base) var(--ease-out),
+              background var(--duration-base) var(--ease-out);
+}
+.mc-show-card--clickable:hover .mc-show-cta {
+  color: var(--text-primary);
+  border-color: var(--border-accent);
+  background: var(--bg-hover);
+}
+
+.mc-show-cta-text {
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  white-space: nowrap;
+  transition: max-width var(--duration-base) var(--ease-out),
+              opacity var(--duration-base) var(--ease-out);
+}
+.mc-show-card--clickable:hover .mc-show-cta-text {
+  max-width: 110px;
+  opacity: 1;
+}
+.mc-show-cta svg { display: block; transition: transform var(--duration-base) var(--ease-out); }
+.mc-show-card--clickable:hover .mc-show-cta svg { transform: translateX(1px); }
+
+/* ============================================================
+   Day mode
+   ============================================================ */
+
+.mc-page.day-mode .mc-show-card {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.07);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+.mc-page.day-mode .mc-show-card--clickable:hover {
+  border-color: rgba(0, 0, 0, 0.14);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07), 0 12px 32px rgba(0, 0, 0, 0.09);
+}
+
+.mc-page.day-mode .mc-show-banner--ph {
+  background:
+    radial-gradient(120% 140% at 18% -10%, color-mix(in srgb, var(--mc-cat) 26%, transparent) 0%, transparent 58%),
+    linear-gradient(135deg, #eef1f4 0%, #dfe4ea 100%);
+}
+.mc-page.day-mode .mc-show-header-scrim {
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgba(15, 23, 42, 0.04) 60%, rgba(15, 23, 42, 0.10) 100%);
+}
+
+.mc-page.day-mode .mc-show-src {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #0f172a;
+}
+.mc-page.day-mode .mc-show-src--tw { color: #6d4ec9; }
+.mc-page.day-mode .mc-show-src--yt { color: #c0392b; }
+
+.mc-page.day-mode .mc-show-avatar {
+  background: #eef1f4;
+  border-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+.mc-page.day-mode .mc-show-avatar-fallback {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--mc-cat) 24%, #eef1f4) 0%, #e2e7ec 100%);
+  color: #0f172a;
+}
+
+.mc-page.day-mode .mc-show-name { color: #0f172a; }
+.mc-page.day-mode .mc-show-desc { color: #64748b; }
+.mc-page.day-mode .mc-show-stat-val { color: #0f172a; }
+.mc-page.day-mode .mc-show-stat-lbl { color: #94a3b8; }
+
+.mc-page.day-mode .mc-show-cta {
+  background: #f1f3f5;
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #64748b;
+}
+.mc-page.day-mode .mc-show-card--clickable:hover .mc-show-cta {
+  color: #0f172a;
+  border-color: rgba(0, 0, 0, 0.18);
+  background: #f8fafc;
+}
+
+/* ============================================================
+   Responsive — keep premium feel in narrow grid cells
+   ============================================================ */
+
+@media (max-width: 640px) {
+  .mc-show-header { height: 50px; }
+  .mc-show-avatar {
+    width: 52px;
+    height: 52px;
+    bottom: -24px;
+    left: 14px;
+  }
+  .mc-show-body { padding: 32px 14px 13px; }
+  .mc-show-name { font-size: 0.875rem; }
+  .mc-show-desc { font-size: 0.75rem; -webkit-line-clamp: 2; }
+  .mc-show-stats { gap: 12px; }
+  /* CTA stays compact on touch — show only the chevron, no hover reveal */
+  .mc-show-cta-text { display: none; }
+  .mc-show-card--clickable:hover { transform: none; }
+}
+
+@media (hover: none) {
+  .mc-show-cta-text { display: none; }
+}

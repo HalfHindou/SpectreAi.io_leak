@@ -1,0 +1,66 @@
+/**
+ * SkinLayer — fixed ambient plane for the two large corner murals.
+ * Sits with AuroraField (z0), paints above the blooms via DOM order,
+ * below every content panel. Never intercepts input.
+ */
+
+.skin-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.skin-layer-piece {
+  position: absolute;
+  will-change: transform;
+}
+
+.skin-layer-piece svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Slow ambient drift — transform-only, GPU-cheap. Translation stays
+   small so the corner-anchored murals never detach from their edge. */
+.skin-drift-a { animation: skin-drift-a 52s var(--ease-soft, ease-in-out) infinite alternate; }
+.skin-drift-b { animation: skin-drift-b 58s var(--ease-soft, ease-in-out) infinite alternate; }
+.skin-drift-c { animation: skin-drift-c 44s var(--ease-soft, ease-in-out) infinite alternate; }
+
+@keyframes skin-drift-a {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(7px, -9px, 0); }
+}
+
+@keyframes skin-drift-b {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-8px, 7px, 0); }
+}
+
+@keyframes skin-drift-c {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-6px, 8px, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skin-layer-piece { animation: none !important; }
+}
+
+.app[data-reduced-motion="true"] .skin-layer-piece {
+  animation: none !important;
+}
+
+/* Phones: the stacked layout leaves no margins for the ambient plane —
+   skip the layer entirely (panels cover it; saves compositing too). */
+@media (max-width: 768px) {
+  .skin-layer {
+    display: none;
+  }
+}
+
+/* Day mode: white line-art on a light page is invisible-to-muddy — the
+   decor channel is dark-mode-only (engine clears the CSS vars too). */
+body.theme-light .skin-layer {
+  display: none;
+}

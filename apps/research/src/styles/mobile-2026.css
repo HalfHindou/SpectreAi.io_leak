@@ -1,0 +1,5813 @@
+/**
+ * Spectre AI – Mobile 2026 Edition
+ * Premium mobile-first optimizations for iPhone 15/16, modern Android
+ * Targets: 375px–430px primary, tablet 768px–1024px secondary
+ *
+ * Design philosophy:
+ * - Apple HIG + Material You merged aesthetic
+ * - Fluid typography with clamp()
+ * - Dynamic viewport units (dvh/svh)
+ * - Safe area awareness
+ * - Touch-first interactions (44px+ targets)
+ * - Performance: reduced blur, GPU compositing
+ * - Glassmorphic but lightweight on mobile
+ */
+
+/* ============================================================
+   CSS CUSTOM PROPERTIES – MOBILE TOKENS
+   ============================================================ */
+@media (max-width: 768px) {
+  :root {
+    /* Spacing scale – tighter on mobile */
+    --m-xs: 4px;
+    --m-sm: 8px;
+    --m-md: 12px;
+    --m-lg: 16px;
+    --m-xl: 20px;
+    --m-2xl: 28px;
+    --m-3xl: 36px;
+
+    /* Typography scale – fluid */
+    --m-text-xs: 0.6875rem;   /* 11px */
+    --m-text-sm: 0.75rem;     /* 12px */
+    --m-text-base: 0.8125rem; /* 13px */
+    --m-text-md: 0.875rem;    /* 14px */
+    --m-text-lg: 1rem;        /* 16px */
+    --m-text-xl: 1.125rem;    /* 18px */
+    --m-text-2xl: 1.375rem;   /* 22px */
+    --m-text-3xl: 1.625rem;   /* 26px */
+    --m-text-hero: clamp(1.75rem, 6vw, 2.5rem);
+
+    /* Layout */
+    --m-header-h: 52px;
+    --m-bottom-nav-h: 48px;  /* was 76, then 56 — founder 08-05: "the bottom
+       panel is still just a bit too high". The docked bar itself now measures a
+       flat 44px (see mobile-bottom-nav.css); 48 keeps a 4px cushion so overlays
+       that dock at exactly `token + env()` (monarch FAB, sheet anchors) still
+       clear the glass instead of kissing it. Every page's bottom padding reads
+       this one token, so the bar and the clearance can never drift apart. */
+    /* The device safe-area insets, routed through custom properties. Same
+       computed value as the raw env(), but a named knob: env() cannot be read
+       back or overridden, so standalone/notch geometry was impossible to verify
+       anywhere except on a physical device. Every surface that offsets for the
+       status bar or the home indicator reads THESE. */
+    --app-safe-top: env(safe-area-inset-top, 0px);
+    --app-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --m-content-pad: 8px;
+    --m-card-radius: 10px;
+    --m-card-radius-lg: 14px;
+
+    /* Performance */
+    --m-blur: blur(8px);
+    --m-blur-heavy: blur(12px);
+    --m-saturate: saturate(150%);
+
+    /* ── Cinematic tokens ── */
+
+    /* Spring easings - real spring physics via linear() */
+    --spring-snappy: linear(0, 0.009, 0.037 2.5%, 0.153 5.1%, 0.776 14%, 0.936 17.9%, 1.017 20.7%, 1.069 24%, 1.078 26%, 1.065 28.8%, 1.024 33.6%, 1.005 38%, 0.994 43%, 0.998 53%, 1 63%, 1);
+    --spring-bouncy: linear(0, 0.006, 0.025 2.2%, 0.101 4.4%, 0.417 11%, 0.858 18.8%, 1.039 23%, 1.118 26%, 1.147 28.8%, 1.134 32%, 1.074 37%, 1.026 42%, 0.998 49%, 0.989 56%, 1.001 72%, 1);
+    --spring-gentle: linear(0, 0.004, 0.016 2.8%, 0.065 5.6%, 0.263 11.2%, 0.72 22%, 0.893 27%, 0.991 33%, 1.032 38%, 1.046 43%, 1.035 49%, 1.013 57%, 1.003 68%, 1);
+
+    /* 5-tier elevation system */
+    --elevation-1: 0 1px 2px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.15), inset 0 0.5px 0 rgba(255,255,255,0.04);
+    --elevation-2: 0 2px 6px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.2), inset 0 0.5px 0 rgba(255,255,255,0.05);
+    --elevation-3: 0 4px 16px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06);
+    --elevation-4: 0 8px 32px rgba(0,0,0,0.45), 0 4px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.07);
+    --elevation-5: 0 16px 48px rgba(0,0,0,0.5), 0 8px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+
+    /* Cinematic glass surfaces */
+    --glass-cinematic: linear-gradient(165deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 50%, rgba(255,255,255,0.04) 100%);
+    --glass-cinematic-hover: linear-gradient(165deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.03) 50%, rgba(255,255,255,0.05) 100%);
+    --glass-cinematic-active: linear-gradient(165deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 50%, rgba(255,255,255,0.03) 100%);
+
+    /* Section spacing */
+    --m-section-gap: 24px;
+  }
+}
+
+/* ============================================================
+   ANTI-WOBBLE: Lock horizontal axis on mobile
+   Prevents rubber-banding, horizontal bounce, and "floating" feel
+   ============================================================ */
+@media (max-width: 768px) {
+  html {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior-x: none !important;
+    overscroll-behavior-y: contain !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior-x: none !important;
+    overscroll-behavior-y: contain !important;
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+  }
+
+  #root {
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    position: relative !important;
+  }
+
+  .app {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    -webkit-overflow-scrolling: touch;
+    /* Single scroll context - the .app is THE scroller.
+       iOS Safari measured: for this INNER scroller `100dvh` = the LARGE viewport
+       (956px) while the actually-visible area is 742px, so the bottom ~214px of
+       every page sits below the fold (behind the toolbar + nav) and can't be
+       scrolled to. --app-vh (set from window.visualViewport.height in the
+       index.html inline script) is the true visible height, so drive .app from
+       it. 100dvh stays as the pre-script fallback. The bottom nav is
+       viewport-fixed (verified GAP=0), so a shorter .app does NOT move it. */
+    height: 100vh !important;       /* fallback for old browsers */
+    height: 100dvh !important;
+    height: var(--app-vh, 100dvh) !important;
+    /* THE reason every height fix "didn't win": App.css sets
+       `.app { min-height: 100vh }` and used height = max(height, min-height),
+       so min-height floored .app back to the LARGE viewport (956px) no matter
+       what height said - even inline !important. Kill the floor on mobile. */
+    min-height: 0 !important;
+    /* The .app is the scroller on mobile, so IT (not body) must carry the dark
+       bg — otherwise short loading/error content leaves the uncovered region
+       painting the light system canvas (white corner block). */
+    background: var(--bg-base);
+  }
+}
+
+/* ============================================================
+   PWA STANDALONE MODE - iPhone home screen / Android TWA
+   Fixes layout collapse when app runs without browser chrome
+   ============================================================ */
+/* KEYBOARD OPEN — width-only, NOT display-mode.
+   🪤 This first landed inside `@media (display-mode: standalone)` a few lines
+   below, so it applied in the installed PWA and nowhere else — the reporting
+   user was in plain Safari, which is exactly where it had to work.
+   `html.kb-open` + `--kb-h` are published by the viewport script in
+   index.html, which holds `.app`'s height steady instead of shrinking the
+   scroller to whatever the keyboard left (the "lag and page cut" on any page
+   with an input, founder 08-07). The bottom nav is viewport-fixed, so with the
+   keyboard up it sits BEHIND it — a dead 76px reserve — and on browsers that
+   do lift fixed elements it lands on the field being typed into. Neither is
+   wanted while typing; it returns on blur. `!important` because the nav's own
+   sheet loads later. */
+@media (max-width: 768px) {
+  /* On the BASE state, not the kb-open state — a transition declared only on
+     the hidden state animates the hide but SNAPS the return (the property set
+     at class-removal time wins). Slides with the keyboard both ways. */
+  .mobile-bottom-nav {
+    transition: transform 0.22s ease-out;
+  }
+  html.kb-open .mobile-bottom-nav {
+    transform: translateY(100%) !important;
+    pointer-events: none !important;
+  }
+  html.kb-open .app.mobile-bottom-nav-visible .app-main-content {
+    padding-bottom: 0 !important;
+  }
+
+  /* THE CUT. Holding `.app`'s height (index.html) stops the SCROLLER from
+     shrinking, but it does not give the browser anywhere to scroll TO:
+     `.app-main-content` is `flex: 1` inside `.app`, so on a page whose content
+     fits, scrollHeight === clientHeight and the scroller has ZERO slack.
+     Measured on /roi-calculator with nothing selected: app scrollHeight 664,
+     clientHeight 664, slack 0. With no slack, iOS cannot lift the focused
+     field above the keyboard by scrolling `.app`, so it pans the whole PAGE
+     past the app's bottom edge instead — and what shows below the app is the
+     void, i.e. the black band the founder screenshotted ("opening keyboard
+     cuts the screen", 08-12).
+     Reserving the keyboard's own height as scrollable slack gives the
+     browser somewhere to scroll, so it scrolls instead of panning. `--kb-h`
+     is already published by the viewport script and is 0px whenever the
+     keyboard is closed, so this can only ever add height while typing. */
+  html.kb-open .app-main-content {
+    min-height: calc(100% + var(--kb-h, 0px)) !important;
+  }
+}
+
+@media (display-mode: standalone) {
+  /* Correct viewport height - no browser toolbar in standalone */
+  .app {
+    height: 100vh !important;
+    height: 100dvh !important;
+    height: var(--app-vh, 100dvh) !important;
+    /* min-height floors used height above the explicit height (App.css
+       min-height:100vh bug class) - keep it dead in standalone too. */
+    min-height: 0 !important;
+  }
+
+  /* Status-bar compensation = the real inset, nothing more. The old
+     max(..., 54px) floor was meant for iOS black-translucent, but iOS is
+     overridden back to plain env() below (@supports -webkit-touch-callout),
+     so the floor only ever fired on Android standalone - where the webview
+     already sits BELOW the status bar (inset 0). Result: a 54px dead band
+     above the header AND 54px of page content hidden under it, because every
+     content offset in the app (.app-main-content, .rzm, sticky bars) pads
+     plain env() with no floor. Header and content must use the same formula. */
+  .mobile-header {
+    padding-top: var(--app-safe-top, env(safe-area-inset-top, 0px)) !important;
+  }
+
+  /* Content area accounts for status bar + bottom nav.
+     `overflow-y: auto` only ever reaches DESKTOP standalone: at <=768px
+     `.app .app-main-content { overflow: visible !important }` is (0,2,0) and
+     beats this (0,1,0) rule, so on phones `.app` stays the only scroller. */
+  .app-main-content {
+    padding-top: var(--app-safe-top, env(safe-area-inset-top, 0px));
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Docked bar: inner bar handles the safe-area inset, wrapper stays flush */
+  .mobile-bottom-nav {
+    padding-bottom: 0 !important;
+  }
+
+  /* Ensure no horizontal overflow */
+  html, body, #root, .app {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+  }
+}
+
+/* iOS standalone fallback - @media (display-mode: standalone) may NOT fire on iOS
+   Use @supports (-webkit-touch-callout: none) which is iOS-only */
+@media (max-width: 768px) {
+  @supports (-webkit-touch-callout: none) {
+    /* iOS devices: ensure header always has safe-area top padding */
+    .mobile-header {
+      padding-top: env(safe-area-inset-top, 0px) !important;
+    }
+
+    /* iOS standalone content clearance (nav + safe-area + 20px buffer).
+       This used to hardcode 76px, so it kept reserving the ORIGINAL bar height
+       long after the token dropped — on a notch iPhone PWA that was a 130px
+       reserve under an 80px bar, i.e. 50px of dead air, and it is the only
+       clearance rule that wins on the founder's device. Reads the token now. */
+    .app.mobile-bottom-nav-visible .app-main-content {
+      padding-bottom: calc(var(--m-bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 20px) !important;
+    }
+  }
+}
+
+/* ============================================================
+   JS-DETECTED PWA STANDALONE - Bulletproof (works on iOS + Android)
+   .pwa-standalone class added via JavaScript navigator.standalone detection
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Header: push below status bar / Dynamic Island. Plain env() - no 54px
+     floor. The floor exceeded the content offset (.app-main-content pads
+     plain env() below) on any device where the inset is under 54px (all
+     Android standalone = 0), permanently hiding the top 54px of every page
+     under the fixed header. On notch iPhones env() is ~59px anyway. */
+  .app.pwa-standalone .mobile-header {
+    padding-top: var(--app-safe-top, env(safe-area-inset-top, 0px)) !important;
+  }
+
+  /* Main content: account for taller header in standalone.
+     `overflow-x` is repeated on purpose. This selector is (0,3,0) and the
+     shorthand below is (0,2,0), so a bare `overflow: visible` here reset the
+     horizontal clip that `.app .app-main-content` sets - in Home Screen mode
+     only, which is the one mode nobody tests in a browser tab. */
+  .app.pwa-standalone .app-main-content {
+    padding-top: var(--app-safe-top, env(safe-area-inset-top, 0px)) !important;
+    overflow: visible !important;
+    overflow-x: clip !important;
+  }
+
+  /* Docked bar: inner bar handles the safe-area inset, wrapper stays flush */
+  .app.pwa-standalone .mobile-bottom-nav {
+    padding-bottom: 0 !important;
+  }
+}
+
+/* ============================================================
+   GLOBAL MOBILE LAYOUT RESETS
+   ============================================================ */
+@media (max-width: 768px) {
+  /* The outer .app owns scrolling, including in Home Screen mode. Grow this
+     column with its content instead of creating a second, constrained scroller. */
+  .app .app-main-content {
+    flex: 1 0 auto;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    overflow-x: clip !important;
+  }
+
+  /* Children: full-width but NO overflow-x:hidden — setting overflow-x:hidden
+     while overflow-y is visible triggers CSS spec auto-conversion (visible→auto),
+     creating a scroll trap that eats touch events via overscroll-behavior:contain. */
+  .app-main-content > * {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Hide desktop navigation sidebar completely */
+  .navigation-sidebar {
+    display: none !important;
+    width: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    overflow: hidden !important;
+  }
+
+  /* Override ANY sidebar margin shifts */
+  .app.nav-sidebar-open .app-main-content > *,
+  .app.nav-sidebar-open.nav-sidebar-collapsed .app-main-content > * {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Kill desktop sidebar-row left padding on mobile */
+  .app.nav-sidebar-open .welcome-sidebar-row,
+  .welcome-sidebar-row {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* .app is the scroll container. .app-main-content must NOT scroll —
+     let content overflow into .app so there's a single scroll context. */
+  .app-main-content {
+    padding-top: 0 !important;
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Bottom nav spacing – reserve the nav height + safe-area + a 20px buffer
+     so the last row of content/interactive elements clears the docked nav
+     instead of sitting flush under it (was flush = last item tucked behind
+     the nav, untappable). Matches the +20px buffer used by the page-specific
+     reserves elsewhere in this file. */
+  .app.mobile-bottom-nav-visible .app-main-content {
+    padding-bottom: calc(var(--m-bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 20px) !important;
+  }
+  /* Anchored scrolls (scrollIntoView / focus) also stop above the nav. */
+  .app {
+    scroll-padding-bottom: calc(var(--m-bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 20px);
+  }
+}
+
+/* ============================================================
+   HEADER – MOBILE COMPACT
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Desktop header hidden on mobile (MobileHeader replaces it) */
+  /* Actual hide rules are further down - these are now no-ops */
+
+  .header-inner {
+    padding: 0 var(--m-content-pad) !important;
+    gap: var(--m-sm) !important;
+    min-height: var(--m-header-h) !important;
+  }
+
+  /* Compact logo */
+  .logo {
+    padding: 4px 6px !important;
+    min-height: 40px !important;
+    min-width: 40px !important;
+  }
+
+  .logo .logo-full {
+    height: 22px !important;
+    width: auto !important;
+  }
+
+  /* Search trigger – icon pill */
+  .search-trigger {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    padding: 8px !important;
+    border-radius: 12px !important;
+  }
+
+  /* Display mode toggle (Terminal/Cinema) – compact */
+  .header-display-mode-toggle {
+    height: 32px !important;
+    font-size: var(--m-text-xs) !important;
+    padding: 0 8px !important;
+    gap: 4px !important;
+  }
+
+  /* Profile avatar – 40px circle */
+  .profile {
+    padding: 4px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+  }
+
+  .profile .avatar {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  /* Day/Night toggle – smaller */
+  .header-theme-toggle {
+    width: 56px !important;
+    height: 28px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .header-theme-toggle-thumb {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .header-theme-toggle.day-active .header-theme-toggle-thumb {
+    transform: translateX(28px) !important;
+  }
+
+  .header-theme-toggle-icon {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .header-theme-toggle-icon svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+}
+
+/* ============================================================
+   MOBILE BOTTOM NAV – 2026 Glassmorphic (defers to MobileBottomNav.css)
+   Only safe-area and touch-target overrides here.
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Docked bar: no wrapper padding - the inner bar sits flush to the
+     bottom edge and handles its own safe-area inset. */
+  .mobile-bottom-nav {
+    padding-bottom: 0 !important;
+  }
+
+  .mobile-bottom-nav-label {
+    display: none !important;
+  }
+}
+
+/* ============================================================
+   WELCOME PAGE (TERMINAL MODE) – MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  /* padding-top handled by .welcome-mobile-content in welcome-page.mobile.css.
+     .app-main-content is the scroll container (flex:none on children lets them
+     grow to content height). No overflow-y:auto needed here. */
+  .welcome-page {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Welcome profile greeting */
+  .welcome-header {
+    padding: var(--m-md) 0 var(--m-sm) !important;
+  }
+
+  .welcome-greeting {
+    font-size: var(--m-text-2xl) !important;
+    font-weight: 700 !important;
+  }
+
+  .welcome-subtitle {
+    font-size: var(--m-text-sm) !important;
+  }
+
+  /* ── AI Brief Section ── */
+  .cab-container {
+    padding: var(--m-lg) !important;
+    border-radius: var(--m-card-radius) !important;
+    margin-bottom: var(--m-lg) !important;
+    touch-action: pan-y !important;  /* Allow vertical scroll, enable horizontal swipe */
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .cab-statement {
+    font-size: var(--m-text-lg) !important;
+    line-height: 1.5 !important;
+    max-width: 100% !important;
+  }
+
+  .cab-eyebrow {
+    flex-direction: column !important;
+    gap: var(--m-sm) !important;
+    margin-bottom: var(--m-lg) !important;
+  }
+
+  .cab-metrics {
+    gap: var(--m-sm) !important;
+    flex-wrap: wrap !important;
+  }
+
+  .cab-metric-chip {
+    min-width: 0 !important;
+    flex: 1 1 calc(50% - var(--m-sm)) !important;
+    padding: var(--m-sm) var(--m-md) !important;
+  }
+
+  .cab-metric-value {
+    font-size: var(--m-text-md) !important;
+  }
+
+  .cab-metric-label {
+    font-size: 8px !important;
+    letter-spacing: 1.2px !important;
+  }
+
+  /* ── Terminal Token List / Grid ── */
+  .welcome-tokens-grid,
+  .welcome-top-coins-grid,
+  .token-list-grid {
+    grid-template-columns: 1fr !important;
+    gap: var(--m-sm) !important;
+  }
+
+  /* Token cards in terminal mode – horizontal compact layout */
+  .welcome-token-card,
+  .top-coin-card {
+    padding: var(--m-md) !important;
+    border-radius: var(--m-card-radius) !important;
+    min-height: auto !important;
+  }
+
+  /* ── Horizontal Scroll Rows ── */
+  .welcome-row-scroll,
+  .token-scroll-row,
+  .horizontal-scroll-row {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    padding-bottom: var(--m-sm) !important;
+    scroll-snap-type: x mandatory !important;
+    scroll-padding: var(--m-content-pad) !important;
+  }
+
+  .welcome-row-scroll::-webkit-scrollbar,
+  .token-scroll-row::-webkit-scrollbar,
+  .horizontal-scroll-row::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Scroll children – snap points */
+  .welcome-row-scroll > *,
+  .token-scroll-row > *,
+  .horizontal-scroll-row > * {
+    scroll-snap-align: start !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Section headers */
+  .welcome-section-title,
+  .section-header-title {
+    font-size: var(--m-text-xl) !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  .welcome-section-subtitle,
+  .section-header-subtitle {
+    font-size: var(--m-text-sm) !important;
+  }
+
+  /* View toggle buttons (list/grid) */
+  .welcome-view-toggle {
+    display: none !important;
+  }
+
+  /* Terminal stats row */
+  .welcome-stats-row {
+    gap: var(--m-sm) !important;
+    flex-wrap: wrap !important;
+  }
+
+  .welcome-stat-card {
+    flex: 1 1 calc(50% - var(--m-sm)) !important;
+    min-width: 0 !important;
+    padding: var(--m-md) !important;
+    border-radius: var(--m-card-radius) !important;
+  }
+
+  /* ── Navigation Toolbar (terminal mode) ── */
+  .welcome-nav-toolbar {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    gap: var(--m-sm) !important;
+    padding: var(--m-sm) 0 !important;
+  }
+
+  .welcome-nav-toolbar::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .welcome-nav-toolbar-item {
+    flex-shrink: 0 !important;
+    padding: var(--m-sm) var(--m-md) !important;
+    font-size: var(--m-text-sm) !important;
+    border-radius: 10px !important;
+    white-space: nowrap !important;
+  }
+}
+
+/* ============================================================
+   CINEMA MODE – MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Cinema content – full width, no sidebar margin.
+     No top padding here: the sticky .cinema-welcome-bar's `top` offset (below)
+     already clears the fixed header. Adding padding here double-counts the gap. */
+  .cinema-welcome-content {
+    padding: 0 var(--m-content-pad) calc(var(--m-bottom-nav-h) + 20px) !important;
+    margin-right: 0 !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .cinema-welcome-content.sidebar-collapsed {
+    margin-right: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Hide watchlist sidebar on mobile */
+  .cinema-watchlist-sidebar {
+    display: none !important;
+  }
+
+  /* ── Cinema Welcome Bar ── */
+  .cinema-welcome-bar,
+  .cinema-welcome-bar.cwb-storybook {
+    flex-direction: column !important;
+    padding: var(--m-md) var(--m-content-pad) !important;
+    gap: var(--m-sm) !important;
+    overflow: hidden !important;
+    /* Ensure sticky bar always stacks above content with backdrop-filter.
+       Stick BELOW the fixed mobile header, not behind it. */
+    position: sticky !important;
+    top: calc(var(--m-header-h) + env(safe-area-inset-top, 0px)) !important;
+    z-index: 200 !important;
+    isolation: isolate !important;
+  }
+
+  /* Prevent cinema-main-grid children from creating competing stacking contexts */
+  .cinema-main-grid {
+    position: relative !important;
+    z-index: 1 !important;
+  }
+
+  .cinema-command-center {
+    position: relative !important;
+    z-index: 1 !important;
+  }
+
+  .cc-section {
+    position: relative !important;
+    z-index: 1 !important;
+  }
+
+  /* The single-row layout must stack on mobile */
+  .cwb-single-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: var(--m-md) 0 !important;
+    gap: var(--m-md) !important;
+  }
+
+  /* Greeting section – compact on mobile */
+  .cwb-greeting-section {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: var(--m-sm) !important;
+  }
+
+  .cwb-profile-avatar {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+  }
+
+  .cwb-profile-greeting {
+    font-size: var(--m-text-lg) !important;
+    text-align: left !important;
+  }
+
+  .cwb-mood-line {
+    font-size: var(--m-text-xs) !important;
+  }
+
+  /* Hide center price cards – too wide for mobile */
+  .cwb-center {
+    display: none !important;
+  }
+
+  /* Hide right stat widgets – too much data for mobile bar */
+  .cwb-right {
+    display: none !important;
+  }
+
+  .cinema-bar-left,
+  .cinema-bar-right {
+    width: 100% !important;
+    flex-wrap: wrap !important;
+    gap: var(--m-sm) !important;
+  }
+
+  .cinema-bar-center {
+    display: none !important;
+  }
+
+  /* Profile greeting – mobile (old layout) */
+  .cinema-profile-greeting {
+    font-size: var(--m-text-2xl) !important;
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  .cinema-global-mcap-value {
+    font-size: var(--m-text-2xl) !important;
+  }
+
+  /* Price cards in welcome bar */
+  .cwb-price-card,
+  .cwb-stat-card {
+    flex: 1 1 calc(50% - var(--m-sm)) !important;
+    min-width: 0 !important;
+    padding: var(--m-md) !important;
+  }
+
+  /* ── AI Brief – FIRST section on mobile (Cinema) ── */
+  .cinema-main-grid {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Move AI Brief above everything in cinema mode */
+  .cab-container {
+    order: -1 !important;
+    margin-bottom: var(--m-lg) !important;
+  }
+
+  /* Hero comes second */
+  .cinema-hero-token,
+  .cinema-hero-section {
+    order: 0 !important;
+  }
+
+  /* ── Cinema Hero Token ── */
+  .cinema-hero-token {
+    height: auto !important;             /* CRITICAL: cancel desktop height: 540px */
+    min-height: 200px !important;
+    max-height: 320px !important;
+    padding: 24px 20px 20px !important;
+    border-radius: var(--m-card-radius-lg) !important;
+    margin-bottom: var(--m-lg) !important;
+    backdrop-filter: var(--m-blur-heavy) !important;
+    -webkit-backdrop-filter: var(--m-blur-heavy) !important;
+  }
+
+  /* Hide corner accent pseudo-elements on mobile for cleanliness */
+  .cinema-hero-token::before,
+  .cinema-hero-token::after {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  /* Logo: smaller on mobile */
+  .cinema-hero-logo {
+    width: 52px !important;
+    height: 52px !important;
+    animation: none !important;         /* Kill float animation for perf */
+  }
+
+  .cinema-hero-logo-glow {
+    width: 70px !important;
+    height: 70px !important;
+    filter: var(--m-blur) !important; /* was blur(24px) - exceeds mobile GPU limit */
+  }
+
+  .cinema-hero-logo-wrap {
+    margin-bottom: 10px !important;
+  }
+
+  /* Badge + Rank: compact */
+  .cinema-hero-badge {
+    padding: 4px 10px !important;
+    font-size: 9px !important;
+  }
+
+  .cinema-hero-rank {
+    gap: 8px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .cinema-hero-rank-label {
+    font-size: 9px !important;
+    padding: 3px 8px !important;
+    letter-spacing: 1.5px !important;
+  }
+
+  .cinema-hero-rank-meta {
+    font-size: 10px !important;
+  }
+
+  /* Token name - tight */
+  .cinema-hero-symbol {
+    font-size: clamp(24px, 7vw, 32px) !important;
+    line-height: 1 !important;
+  }
+
+  .cinema-hero-tagline {
+    font-size: 12px !important;
+    margin: 2px 0 8px !important;
+  }
+
+  /* Price section - compact */
+  .cinema-hero-price {
+    gap: 8px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .cinema-hero-price-value {
+    font-size: clamp(20px, 5vw, 26px) !important;
+  }
+
+  .cinema-hero-price-change {
+    font-size: 13px !important;
+  }
+
+  /* Content overlay padding */
+  .cinema-hero-content {
+    padding: 20px 16px !important;
+  }
+
+  .cinema-hero-dots {
+    display: none !important;
+  }
+
+  .cinema-hero-name {
+    font-size: var(--m-text-sm) !important;
+  }
+
+  .cinema-hero-exchanges-list {
+    gap: var(--m-xs) !important;
+    flex-wrap: wrap !important;
+  }
+
+  .cinema-hero-exchange-badge {
+    padding: 3px 8px !important;
+    font-size: 9px !important;
+  }
+
+  /* Description / stats under hero - hide or compact */
+  .cinema-hero-stats-row {
+    gap: 12px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .cinema-hero-stat-value {
+    font-size: 13px !important;
+  }
+
+  .cinema-hero-stat-label {
+    font-size: 9px !important;
+  }
+
+  /* ── Cinema Discovery Rows ── */
+  .cinema-discovery-rows {
+    gap: var(--m-2xl) !important;
+  }
+
+  .cinema-category-title {
+    font-size: var(--m-text-xl) !important;
+    padding-left: var(--m-xs) !important;
+    margin-bottom: var(--m-md) !important;
+  }
+
+  .cinema-category-subtitle {
+    font-size: var(--m-text-xs) !important;
+  }
+
+  /* Token cards – horizontal scroll
+     CRITICAL FIX: JSX uses .cinema-category-scroll, NOT .cinema-token-row */
+  .cinema-category-scroll {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    scroll-snap-type: x proximity !important;
+    overscroll-behavior-x: contain !important;
+    gap: 10px !important;
+    padding: 4px 2px 12px !important;
+  }
+
+  .cinema-category-scroll::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Edge fades - thinner on mobile */
+  .cinema-category-fade {
+    width: 32px !important;
+  }
+
+  /* Hide desktop scroll arrows on mobile */
+  .cinema-category-arrow {
+    display: none !important;
+  }
+
+  .cinema-token-card {
+    width: 155px !important;
+    min-width: 155px !important;
+    min-height: 190px !important;
+    height: auto !important;
+    padding: 14px 14px 12px !important;
+    border-radius: var(--m-card-radius) !important;
+    scroll-snap-align: start !important;
+    flex-shrink: 0 !important;
+    backdrop-filter: var(--m-blur) !important;
+    -webkit-backdrop-filter: var(--m-blur) !important;
+  }
+
+  /* Kill hover transforms on touch – causes jank */
+  .cinema-token-card:hover {
+    transform: none !important;
+  }
+
+  .cinema-token-card-logo {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .cinema-token-card-symbol {
+    font-size: var(--m-text-md) !important;
+  }
+
+  .cinema-token-card-name {
+    font-size: var(--m-text-xs) !important;
+  }
+
+  .cinema-token-card-price {
+    font-size: var(--m-text-md) !important;
+  }
+
+  .cinema-token-card-change {
+    font-size: var(--m-text-xs) !important;
+  }
+
+  .cinema-token-card-sparkline {
+    height: 36px !important;
+  }
+
+  /* Gainers row – stack on mobile */
+  .cinema-gainers-row {
+    flex-direction: column !important;
+    gap: var(--m-sm) !important;
+  }
+
+  /* ── Cinema AI Brief ── */
+  .cab-container {
+    border-radius: var(--m-card-radius) !important;
+    padding: var(--m-lg) !important;
+  }
+
+  .cab-statement {
+    font-size: var(--m-text-lg) !important;
+    line-height: 1.5 !important;
+  }
+
+  /* ── Cinema Main Grid (Command Center etc) ── */
+  .cinema-main-grid {
+    gap: var(--m-2xl) !important;
+  }
+
+  .cc-grid {
+    grid-template-columns: 1fr !important;
+    gap: var(--m-md) !important;
+  }
+
+  .cc-section-alpha {
+    grid-column: auto !important;
+  }
+
+  .cc-master-title {
+    font-size: var(--m-text-2xl) !important;
+  }
+
+  /* ── Performance: reduce backdrop-filter on heavy elements ── */
+  .cc-section {
+    backdrop-filter: var(--m-blur) !important;
+    -webkit-backdrop-filter: var(--m-blur) !important;
+    padding: 18px 16px !important;
+  }
+
+  .cinema-discovery-rows {
+    gap: 24px !important;
+  }
+
+  .cinema-category-scroll-wrapper {
+    overflow: visible !important;
+  }
+
+  /* Reduce category title spacing */
+  .cinema-category-header {
+    margin-bottom: 8px !important;
+    padding: 0 2px !important;
+  }
+
+  /* Disable desktop hover transforms on all cinema elements */
+  .cinema-hero-token:hover,
+  .cc-section:hover {
+    transform: none !important;
+  }
+
+  /* ── KILL PROBLEMATIC ANIMATIONS ON MOBILE ──
+     1. Infinite animations: ring pulses, logo floats, breathes → GPU thrash
+     2. cardFadeIn entrance animations: restart every 5s on price re-renders
+        making logos/cards flash. Must be killed on frequently-updating elements.
+     Do NOT use * selector - breaks watchlist add, scroll perf, etc. */
+
+  /* Infinite ring/pulse/float/breathe animations - kill globally */
+  .cinema-token-card-logo-ring,
+  .cwb-profile-ring,
+  .cwb-price-ring,
+  .cwb-price-ring-1,
+  .cwb-price-ring-2,
+  .cinema-hero-logo,
+  .cinematic-hero-logo,
+  .cinema-hero-badge-dot,
+  .cinema-sentiment-bg,
+  .cinema-sentiment-bg-layer,
+  .cwb-live-dot,
+  .cab-pulse-ring,
+  .live-dot,
+  .cinema-hero-content,
+  .cinema-token-card-sparkline,
+  .welcome-topcoins .live-dot,
+  .watchlist .live-dot {
+    animation: none !important;
+  }
+
+  /* cardFadeIn/cardFadeUp entrance animations - these restart on every price update re-render
+     NOTE: Do NOT include .watchlist-item here - it breaks watchlist add transitions */
+  .cinema-token-card,
+  .cinema-token-card *,
+  .cc-section-items > *,
+  .cwb-price-card,
+  .cwb-stat-card,
+  .welcome-topcoins-item,
+  .cinema-category-chip,
+  .token-card,
+  .token-list-row,
+  .token-list-row .token-avatar-ring,
+  .token-list-screener .token-avatar-ring,
+  .token-grid .token-avatar-ring,
+  .token-card .token-avatar-ring {
+    animation: none !important;
+    animation-delay: 0s !important;
+  }
+
+  /* Watchlist items: only kill infinite sub-animations, not the item itself */
+  .watchlist-item .live-dot,
+  .watchlist-item .cwb-live-dot,
+  .watchlist-item [class*="ring"],
+  .watchlist-item [class*="pulse"] {
+    animation: none !important;
+  }
+
+  /* ── SENTIMENT OVERLAY - toned down on mobile ──
+     The bearish/bullish radial-gradient overlays are too intense on mobile,
+     especially in Firefox which renders opacity differently. Reduce to subtle hint. */
+  .cinema-welcome::before {
+    opacity: 0.35 !important;
+    animation: none !important;
+  }
+
+  .cinema-welcome-overlay {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(10, 10, 15, 0.50) 0%,
+        rgba(10, 10, 15, 0.15) 20%,
+        rgba(10, 10, 15, 0.25) 60%,
+        rgba(10, 10, 15, 0.85) 100%
+      ) !important;
+  }
+
+  /* Bearish: much softer red on mobile */
+  .welcome-page.cinema-mode.sentiment-bearish .cinema-welcome::before {
+    background:
+      radial-gradient(ellipse 90% 60% at 50% 20%, rgba(153, 27, 27, 0.10) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 40% at 80% 60%, rgba(127, 29, 29, 0.06) 0%, transparent 50%) !important;
+    opacity: 0.4 !important;
+  }
+
+  /* Bullish: softer green on mobile */
+  .welcome-page.cinema-mode.sentiment-bullish .cinema-welcome::before {
+    background:
+      radial-gradient(ellipse 90% 60% at 50% 20%, rgba(16, 185, 129, 0.10) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 40% at 80% 60%, rgba(20, 160, 100, 0.06) 0%, transparent 50%) !important;
+    opacity: 0.4 !important;
+  }
+
+  /* ── SCROLL PERFORMANCE ──
+     `.app` is the scroll container on mobile - not .welcome-page, and not
+     .app-main-content either (see the resets above and App.css). Do NOT set
+     overflow-y:auto or overscroll-behavior:contain on .welcome-page - it
+     creates a scroll trap that eats touch events. */
+  .cinema-welcome-content {
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Promote scroll containers to their own GPU layer */
+  .cinema-category-scroll,
+  .cinema-welcome-content,
+  .welcome-page,
+  .discover-page {
+    will-change: scroll-position;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
+  /* Reduce heavy backdrop-filter on card elements during scroll */
+  .cinema-token-card,
+  .cc-section,
+  .cwb-price-card,
+  .cwb-stat-card,
+  .cinema-hero-token,
+  .cinematic-hero-card {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  /* Completely remove backdrop-filter on deeply nested elements */
+  .cinema-token-card-glow,
+  .cinema-hero-overlay,
+  .cinematic-hero-cta {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Token list - GPU compositing for smooth scroll */
+  .token-list-wrap,
+  .token-list-screener {
+    transform: translateZ(0) !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Kill all backdrop-filter on token list rows for perf */
+  .token-list-screener .token-list-row,
+  .token-grid .token-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+/* ============================================================
+   DISCOVER PAGE – MOBILE (Seamless & Fluid)
+   ============================================================ */
+@media (max-width: 768px) {
+  .discover-page {
+    padding-top: calc(var(--m-header-h) + env(safe-area-inset-top, 0px) + var(--m-md)) !important;
+    padding-left: var(--m-content-pad) !important;
+    padding-right: var(--m-content-pad) !important;
+    padding-bottom: calc(var(--m-bottom-nav-h) + 20px) !important;
+  }
+
+  /* ── Discover Hero Section (above featured card) ── */
+  .discover-hero-section {
+    padding: 0 var(--m-content-pad) 20px !important;
+  }
+
+  .discover-hero-headline {
+    font-size: clamp(28px, 8vw, 36px) !important;
+    line-height: 1.05 !important;
+  }
+
+  .discover-hero-subheadline {
+    font-size: 13px !important;
+    margin-top: 6px !important;
+  }
+
+  .discover-hero-label {
+    font-size: 10px !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* Hero dots */
+  .hero-dots {
+    margin-top: 16px !important;
+    gap: 6px !important;
+  }
+
+  .hero-dot {
+    width: 7px !important;
+    height: 7px !important;
+  }
+
+  /* ── Featured/Cinematic Hero Card ── */
+  .cinematic-hero-card {
+    height: auto !important;            /* CRITICAL: cancel desktop height: 480px */
+    min-height: 220px !important;
+    max-height: 300px !important;
+    border-radius: 18px !important;
+    backdrop-filter: var(--m-blur-heavy) !important;
+    -webkit-backdrop-filter: var(--m-blur-heavy) !important;
+  }
+
+  /* Kill hover transforms on touch - janky on mobile */
+  .cinematic-hero-card:hover {
+    transform: none !important;
+  }
+
+  .cinematic-hero-content {
+    padding: 20px 18px !important;
+    justify-content: flex-end !important;
+  }
+
+  .cinematic-hero-live {
+    top: 14px !important;
+    left: 14px !important;
+    padding: 5px 10px !important;
+    font-size: 8px !important;
+    gap: 5px !important;
+  }
+
+  .live-dot {
+    width: 6px !important;
+    height: 6px !important;
+  }
+
+  .cinematic-hero-logo-wrap {
+    margin-bottom: 10px !important;
+  }
+
+  .cinematic-hero-logo-glow {
+    width: 70px !important;
+    height: 70px !important;
+    filter: var(--m-blur) !important; /* was blur(24px) - exceeds mobile GPU limit */
+  }
+
+  .cinematic-hero-logo {
+    width: 48px !important;
+    height: 48px !important;
+    animation: none !important;         /* Kill float for perf */
+  }
+
+  .cinematic-hero-rank {
+    font-size: 10px !important;
+    margin-bottom: 6px !important;
+    letter-spacing: 1.5px !important;
+  }
+
+  .cinematic-hero-title {
+    font-size: clamp(24px, 7vw, 32px) !important;
+    line-height: 1 !important;
+  }
+
+  .cinematic-hero-tagline {
+    font-size: 12px !important;
+    margin: 2px 0 8px !important;
+  }
+
+  .cinematic-hero-price-section {
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .cinematic-hero-price {
+    font-size: clamp(20px, 5vw, 26px) !important;
+  }
+
+  .cinematic-hero-change {
+    font-size: 13px !important;
+  }
+
+  .cinematic-hero-description {
+    font-size: 11px !important;
+    margin: 0 0 12px !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  .cinematic-hero-cta {
+    padding: 10px 24px !important;
+    font-size: 13px !important;
+    border-radius: 10px !important;
+  }
+
+  /* Corner accents - smaller on mobile */
+  .cinematic-hero-corner {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .cinematic-hero-corner.tl { top: 10px !important; left: 10px !important; }
+  .cinematic-hero-corner.br { bottom: 10px !important; right: 10px !important; }
+
+  /* ── Category Sections ── */
+  .discover-categories {
+    padding: 0 var(--m-content-pad) !important;
+    gap: 28px !important;
+  }
+
+  .category-section {
+    margin-bottom: 0 !important;
+  }
+
+  .category-header {
+    margin-bottom: 12px !important;
+    padding: 0 2px !important;
+  }
+
+  .category-title {
+    font-size: 20px !important;
+  }
+
+  .category-subtitle {
+    font-size: 11px !important;
+  }
+
+  /* Hide desktop scroll arrows - touch scrolling is native */
+  .category-nav,
+  .category-arrow {
+    display: none !important;
+  }
+
+  /* ── Category Scroll - Fluid Touch ── */
+  .category-scroll {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    scroll-snap-type: x proximity !important;
+    overscroll-behavior-x: contain !important;
+    gap: 10px !important;
+    padding: 4px 0 14px !important;
+  }
+
+  .category-scroll::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* ── Token Cards in Discover ── */
+  .discover-page .cinema-token-card {
+    width: 155px !important;
+    min-width: 155px !important;
+    height: auto !important;
+    min-height: 190px !important;
+    border-radius: 14px !important;
+    scroll-snap-align: start !important;
+    backdrop-filter: var(--m-blur) !important;
+    -webkit-backdrop-filter: var(--m-blur) !important;
+  }
+
+  .discover-page .cinema-token-card:hover {
+    transform: none !important;
+  }
+
+  .discover-page .cinema-card-content {
+    padding: 14px !important;
+  }
+
+  .discover-page .cinema-card-logo-section,
+  .discover-page .cinema-card-logo {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .discover-page .cinema-card-symbol {
+    font-size: 14px !important;
+  }
+
+  .discover-page .cinema-card-name {
+    font-size: 11px !important;
+  }
+
+  .discover-page .cinema-card-price {
+    font-size: 15px !important;
+  }
+
+  .discover-page .cinema-card-change {
+    font-size: 11px !important;
+  }
+
+  /* ── Legacy discover grid/hero (fallback) ── */
+  .discover-hero {
+    min-height: 180px !important;
+    border-radius: var(--m-card-radius-lg) !important;
+    padding: var(--m-xl) var(--m-lg) !important;
+    margin-bottom: var(--m-xl) !important;
+  }
+
+  .discover-hero-title {
+    font-size: var(--m-text-hero) !important;
+  }
+
+  .discover-hero-subtitle {
+    font-size: var(--m-text-sm) !important;
+  }
+
+  .discover-section-title {
+    font-size: var(--m-text-xl) !important;
+  }
+
+  .discover-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: var(--m-sm) !important;
+  }
+
+  .discover-card {
+    padding: var(--m-md) !important;
+    border-radius: var(--m-card-radius) !important;
+  }
+
+  /* Filter chips – scrollable */
+  .discover-filters,
+  .discover-category-tabs {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    flex-wrap: nowrap !important;
+    gap: var(--m-sm) !important;
+  }
+
+  .discover-filters::-webkit-scrollbar,
+  .discover-category-tabs::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .discover-filter-chip,
+  .discover-category-tab {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    padding: var(--m-sm) var(--m-md) !important;
+    font-size: var(--m-text-sm) !important;
+    border-radius: 10px !important;
+  }
+
+  /* Kill problematic animations in discover mode */
+  .discover-page .cinematic-hero-logo,
+  .discover-page .live-dot,
+  .discover-page .cinema-token-card,
+  .discover-page .cinema-token-card *,
+  .discover-page .cinema-token-card-logo-ring {
+    animation: none !important;
+  }
+
+  /* Discover scroll performance */
+  .discover-page .cinema-token-card,
+  .discover-page .cinematic-hero-card {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  .category-scroll {
+    will-change: scroll-position;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+}
+
+/* ============================================================
+   RESEARCH ZONE – MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  .research-zone-lite {
+    padding-top: calc(var(--m-header-h) + env(safe-area-inset-top, 0px)) !important;
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .app.nav-sidebar-open .research-zone-lite,
+  .app.nav-sidebar-open.nav-sidebar-collapsed .research-zone-lite {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  /* TradingChart – full width, edge-to-edge */
+  .trading-chart-wrapper {
+    border-radius: 0 !important;
+    margin: 0 calc(var(--m-content-pad) * -1) !important;
+    width: calc(100% + var(--m-content-pad) * 2) !important;
+  }
+
+  .trading-chart-canvas {
+    touch-action: pan-x pan-y !important;
+  }
+
+  .trading-chart {
+    border-radius: 6px !important;
+  }
+}
+
+/* ============================================================
+   HEATMAPS & BUBBLES – MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  .heatmaps-page {
+    padding-top: 6px;
+    padding-left: var(--m-content-pad) !important;
+    padding-right: var(--m-content-pad) !important;
+  }
+
+  .heatmap-container {
+    border-radius: var(--m-card-radius) !important;
+    min-height: 60vh !important;
+    touch-action: pan-x pan-y pinch-zoom !important;
+  }
+
+  /* Bubbles container — touch & flex */
+  .bubbles-container {
+    touch-action: pan-x pan-y pinch-zoom !important;
+  }
+
+  .heatmap-controls {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    gap: var(--m-sm) !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .heatmap-controls::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Bottom nav spacing */
+  .heatmaps-page {
+    padding-bottom: calc(var(--m-bottom-nav-h) + 20px) !important;
+  }
+  .bubbles-page {
+    padding-bottom: calc(var(--m-bottom-nav-h) + 4px) !important;
+  }
+
+  /* Control buttons - touch friendly */
+  .heatmap-controls button,
+  .heatmap-controls select {
+    min-height: 38px !important;
+    padding: 6px 12px !important;
+    font-size: 0.75rem !important;
+    border-radius: 10px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Bubbles controls — compact touch targets */
+  .bubbles-controls button,
+  .bubbles-controls select {
+    min-height: 32px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Top movers strip - stack on narrow screens */
+  .heatmaps-movers {
+    flex-direction: column !important;
+    gap: 8px !important;
+    padding: 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .heatmaps-movers-divider {
+    display: none !important;
+  }
+
+  .heatmaps-mover-item {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .heatmaps-mover-label {
+    font-size: 0.7rem !important;
+    min-width: 72px !important;
+  }
+
+  .heatmaps-mover-token {
+    font-size: 0.8rem !important;
+  }
+
+  .heatmaps-mover-logo {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  /* Hero stats - compact */
+  .heatmaps-hero-stats {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .heatmaps-hero-stat {
+    font-size: 0.75rem !important;
+  }
+
+  /* Fullscreen button - touch friendly */
+  .heatmaps-fullscreen-btn {
+    min-height: 40px !important;
+    min-width: 40px !important;
+  }
+
+  /* Reduce blur on containers */
+  .heatmap-container {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+}
+
+/* ============================================================
+   FEAR & GREED – MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  .fear-greed-page,
+  .fg-page {
+    padding-top: calc(var(--m-header-h) + env(safe-area-inset-top, 0px) + var(--m-lg)) !important;
+    padding-left: var(--m-content-pad) !important;
+    padding-right: var(--m-content-pad) !important;
+  }
+
+  .fear-greed-gauge {
+    max-width: 280px !important;
+    margin: 0 auto var(--m-xl) !important;
+  }
+
+  .fear-greed-grid {
+    grid-template-columns: 1fr !important;
+    gap: var(--m-md) !important;
+  }
+
+  .fear-greed-page,
+  .fg-page {
+    padding-bottom: calc(var(--m-bottom-nav-h) + 20px) !important;
+  }
+
+  .fear-greed-chart-card {
+    padding: 16px !important;
+    border-radius: 14px !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  .fear-greed-title {
+    font-size: 1.25rem !important;
+  }
+
+  .fear-greed-subtitle {
+    font-size: 0.8rem !important;
+  }
+}
+
+/* ============================================================
+   WATCHLISTS PAGE – MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  .watchlists-page {
+    padding-top: calc(var(--m-header-h) + env(safe-area-inset-top, 0px)) !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .watchlist-header {
+    padding: var(--m-lg) var(--m-content-pad) var(--m-md) !important;
+  }
+
+  .watchlist-item {
+    padding: var(--m-md) var(--m-content-pad) !important;
+    min-height: 64px !important;
+    border-radius: 0 !important;
+  }
+
+  .watchlist-item:active {
+    background: rgba(255, 255, 255, 0.06) !important;
+  }
+
+  .watchlists-page {
+    padding-bottom: calc(var(--m-bottom-nav-h) + 20px) !important;
+  }
+
+  /* Hide desktop table, show mobile cards */
+  .watchlists-table {
+    display: none !important;
+  }
+
+  .watchlists-mobile-cards {
+    display: block !important;
+  }
+
+  /* Name bar actions - wrap */
+  .watchlists-name-actions,
+  .watchlists-name-bar {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .watchlists-name-actions button {
+    min-height: 36px !important;
+    font-size: 0.75rem !important;
+    padding: 6px 12px !important;
+  }
+
+  /* View mode toggle - full width */
+  .watchlists-view-mode-toggle {
+    width: 100% !important;
+  }
+
+  .watchlists-view-mode-toggle button {
+    flex: 1 !important;
+    min-height: 40px !important;
+  }
+
+  /* Search - full width */
+  .watchlists-search-container {
+    width: 100% !important;
+  }
+
+  .watchlists-search-input {
+    min-height: 44px !important;
+    font-size: 16px !important; /* prevent iOS zoom */
+  }
+}
+
+/* ============================================================
+   SEARCH MODAL – MOBILE FULLSCREEN
+   ============================================================ */
+@media (max-width: 768px) {
+  .search-modal-v2 {
+    inset: 0 !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+    max-height: 100dvh !important;
+    max-height: 100vh !important; /* fallback */
+    margin: 0 !important;
+    padding-top: env(safe-area-inset-top, 0) !important;
+  }
+
+  .search-modal-v2-input {
+    font-size: 16px !important; /* prevent iOS zoom */
+    padding: var(--m-md) var(--m-lg) !important;
+    min-height: 48px !important;
+  }
+
+  .search-modal-v2-results {
+    padding: var(--m-sm) !important;
+  }
+
+  .search-modal-v2-result-item {
+    padding: var(--m-md) !important;
+    min-height: 56px !important;
+    border-radius: var(--m-card-radius) !important;
+  }
+}
+
+/* ============================================================
+   MODALS & OVERLAYS – MOBILE FULLSCREEN
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Token detail modal – slide up sheet style */
+  .token-detail-modal,
+  .token-modal,
+  .detail-modal {
+    position: fixed !important;
+    inset: 0 !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+    max-height: 100dvh !important;
+    margin: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Agent chat – full screen on mobile */
+  .spectre-agent-chat {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 0 !important;
+  }
+
+}
+
+/* ============================================================
+   HORIZONTAL SCROLLING – SNAP & MOMENTUM
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Generic scrollable containers – contained so they don't bleed wobble */
+  [class*="-scroll-row"],
+  [class*="-scroll-container"],
+  .horizontal-scroll {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    scroll-snap-type: x proximity !important;
+    overscroll-behavior-x: contain !important;
+    overscroll-behavior-y: none !important;
+  }
+
+  /* Exception: storybook-scroll-container scrolls VERTICALLY (not horizontal) */
+  .storybook-scroll-container {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scroll-snap-type: none !important;
+    overscroll-behavior-x: auto !important;
+    overscroll-behavior-y: contain !important;
+  }
+
+  [class*="-scroll-row"]::-webkit-scrollbar,
+  [class*="-scroll-container"]::-webkit-scrollbar,
+  .horizontal-scroll::-webkit-scrollbar {
+    display: none !important;
+  }
+}
+
+/* ============================================================
+   CARDS & GLASS COMPONENTS – MOBILE OPTIMIZATION
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Reduce backdrop-filter usage on mobile for performance */
+  .glass-card,
+  .glass-panel,
+  [class*="glass-"] {
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+  }
+
+  /* Token cards – compact */
+  .token-card,
+  .coin-card {
+    border-radius: var(--m-card-radius) !important;
+    padding: var(--m-md) !important;
+  }
+
+  /* Sparklines – shorter on mobile */
+  .mini-sparkline,
+  .mini-chart,
+  [class*="sparkline"] {
+    height: 32px !important;
+    max-height: 32px !important;
+  }
+}
+
+/* ============================================================
+   TYPOGRAPHY – FLUID MOBILE SCALE
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Page titles */
+  .page-title,
+  .section-title,
+  h1 {
+    font-size: clamp(1.25rem, 5vw, 1.75rem) !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  h2 {
+    font-size: clamp(1.125rem, 4vw, 1.5rem) !important;
+  }
+
+  /* Body text */
+  .body-text,
+  p {
+    font-size: var(--m-text-md) !important;
+    line-height: 1.6 !important;
+  }
+
+  /* Stat values */
+  .stat-value,
+  .price-value,
+  [class*="price-value"],
+  [class*="stat-value"] {
+    font-size: var(--m-text-lg) !important;
+  }
+
+  /* Labels */
+  .stat-label,
+  .price-label,
+  [class*="stat-label"],
+  [class*="price-label"] {
+    font-size: var(--m-text-xs) !important;
+    letter-spacing: 0.06em !important;
+  }
+}
+
+/* ============================================================
+   TOUCH INTERACTIONS – HAPTIC FEEDBACK FEEL
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Press-down effect for all interactive cards */
+  .cinema-token-card:active,
+  .welcome-token-card:active,
+  .discover-card:active,
+  .top-coin-card:active,
+  .watchlist-item:active,
+  .cwb-price-card:active,
+  .cwb-stat-card:active {
+    transform: scale(0.97) !important;
+    transition: transform 0.08s ease !important;
+  }
+
+  /* Buttons – press effect */
+  button:active,
+  [role="button"]:active {
+    transform: scale(0.95) !important;
+    transition: transform 0.08s ease !important;
+  }
+
+  /* Disable hover effects on touch devices */
+  @media (hover: none) {
+    .cinema-token-card:hover,
+    .welcome-token-card:hover,
+    .discover-card:hover,
+    .cwb-price-card:hover {
+      transform: none !important;
+      box-shadow: inherit !important;
+    }
+  }
+}
+
+/* ============================================================
+   PERFORMANCE – REDUCE ANIMATIONS ON MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Reduce non-essential animations */
+  .bg-gradient,
+  .bg-grid,
+  .sentiment-wall,
+  .welcome-bg::before,
+  .welcome-bg::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* But keep UI transitions smooth (exclude bottom nav - has its own timing) */
+  .mobile-tab-item,
+  .cinema-token-card,
+  button:not(.mobile-bottom-nav-item),
+  [role="button"] {
+    transition-duration: 0.15s !important;
+  }
+
+  /* Reduce particle/canvas effects */
+  .particle-background canvas,
+  .particle-bg canvas {
+    opacity: 0.3 !important;
+  }
+
+  /* Simplify background effects */
+  .cinema-welcome-canvas {
+    opacity: 0.4 !important;
+  }
+}
+
+/* ============================================================
+   SAFE AREA – NOTCH & HOME INDICATOR
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Desktop header hidden - notch padding now on .mobile-header */
+
+  /* Bottom nav safe-area - handled in MobileBottomNav.css, no duplicate here */
+
+  /* Full-screen modals respect both */
+  .search-modal-v2,
+  .token-detail-modal,
+  .spectre-agent-chat {
+    padding-top: env(safe-area-inset-top, 0px) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  }
+
+  /* Landscape safe areas */
+  @supports (padding: env(safe-area-inset-left, 0)) {
+    .welcome-page,
+    .cinema-welcome-content,
+    .discover-page,
+    .research-zone-lite {
+      padding-left: max(var(--m-content-pad), env(safe-area-inset-left, 0px)) !important;
+      padding-right: max(var(--m-content-pad), env(safe-area-inset-right, 0px)) !important;
+    }
+  }
+}
+
+/* ============================================================
+   LANDSCAPE MODE – PHONE HORIZONTAL
+   ============================================================ */
+@media (max-width: 768px) and (orientation: landscape) {
+  /* Desktop header hidden on mobile - no landscape adjustments needed */
+
+  /* Bottom nav – only the horizontal gutter widens in landscape. The portrait
+     geometry is already exactly one 44px touch target tall, and the old
+     `height: 52px` + `padding` SHORTHAND here made the bar TALLER than portrait
+     while silently wiping the inner bar's env(safe-area-inset-bottom) padding,
+     so the home indicator overlapped the glyphs in landscape. */
+  .mobile-bottom-nav-inner {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  /* Cinema hero – shorter */
+  .cinema-hero-token {
+    min-height: 160px !important;
+  }
+}
+
+/* ============================================================
+   TABLET (769px – 1024px) OPTIMIZATIONS
+   ============================================================ */
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* Sidebar – collapsed by default on tablet */
+  .navigation-sidebar {
+    width: 56px !important;
+  }
+
+  .navigation-sidebar .navigation-sidebar-label {
+    display: none !important;
+  }
+
+  .navigation-sidebar .navigation-sidebar-link {
+    justify-content: center !important;
+    padding: 12px !important;
+  }
+
+  /* Adjust main content margin for collapsed sidebar.
+     IMPORTANT: must also cover .page-layout (used by the welcome page,
+     intelligence, news, etc.) — otherwise the page-layout.css rule
+     reserves the full 220px for the sidebar even though the visible
+     sidebar is only 56px wide, leaving a ~164px empty gap. */
+  .app.nav-sidebar-open .main-layout,
+  .app.nav-sidebar-open .research-zone-lite,
+  .app.nav-sidebar-open .discover-page,
+  .app.nav-sidebar-open .fear-greed-page,
+  .app.nav-sidebar-open .glossary-page,
+  .app.nav-sidebar-open .page-layout:not(.page-layout--no-sidebar) {
+    margin-left: 56px !important;
+    width: calc(100% - 56px) !important;
+  }
+
+  /* Cinema sidebar – narrower on tablet */
+  .cinema-watchlist-sidebar {
+    width: 220px !important;
+  }
+
+  .cinema-welcome-content {
+    margin-right: 220px !important;
+    max-width: calc(100% - 220px) !important;
+  }
+
+  /* 2-column grids */
+  .discover-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .cc-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* ============================================================
+   ULTRA SMALL SCREENS (≤375px) – iPhone SE, older devices
+   ============================================================ */
+@media (max-width: 375px) {
+  :root {
+    --m-content-pad: 12px;
+  }
+
+  .cinema-token-card {
+    width: 140px !important;
+    min-width: 140px !important;
+    min-height: 180px !important;
+  }
+
+  .cinema-hero-symbol {
+    font-size: var(--m-text-2xl) !important;
+  }
+
+  .cinema-hero-price-value {
+    font-size: var(--m-text-xl) !important;
+  }
+
+  .cinema-profile-greeting {
+    font-size: var(--m-text-xl) !important;
+  }
+
+  /* Metrics – single column */
+  .cab-metric-chip {
+    flex: 1 1 100% !important;
+  }
+}
+
+/* ============================================================
+   SCROLLBAR HIDING – GLOBAL MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Hide all scrollbars on mobile for cleaner look */
+  *::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  * {
+    scrollbar-width: none !important;
+  }
+}
+
+/* ============================================================
+   DAY MODE – MOBILE SPECIFIC
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Bottom nav day mode - deferred to MobileBottomNav.css */
+
+  /* Glass effects – lighter on day mode mobile */
+  .app.app-day-mode .glass-card,
+  .app.app-day-mode .glass-panel {
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+    background: rgba(255, 255, 255, 0.8) !important;
+  }
+
+  .app.app-day-mode .cinema-token-card:active,
+  .app.app-day-mode .discover-card:active,
+  .app.app-day-mode .watchlist-item:active {
+    background: rgba(0, 0, 0, 0.04) !important;
+  }
+}
+
+/* ============================================================
+   WELCOME PAGE TERMINAL MODE – DETAILED MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  /* ── AI Brief (Terminal) ── */
+  .cab-tab-content {
+    padding: var(--m-lg) var(--m-md) !important;
+    border-radius: var(--m-card-radius) !important;
+    margin-bottom: var(--m-md) !important;
+    touch-action: pan-y !important;  /* Allow vertical scroll, enable horizontal swipe */
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .cab-tab-eyebrow {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: var(--m-sm) !important;
+    margin-bottom: var(--m-md) !important;
+  }
+
+  .cab-tab-statement {
+    font-size: var(--m-text-md) !important;
+    line-height: 1.6 !important;
+    padding: 0 !important;
+  }
+
+  .cab-tab-chips {
+    gap: var(--m-sm) !important;
+    flex-wrap: wrap !important;
+  }
+
+  .cab-tab-chip {
+    flex: 1 1 calc(50% - var(--m-sm)) !important;
+    min-width: 0 !important;
+    padding: var(--m-sm) var(--m-md) !important;
+    border-radius: 10px !important;
+  }
+
+  .cab-tab-chip-value {
+    font-size: var(--m-text-md) !important;
+  }
+
+  .cab-tab-chip-label {
+    font-size: 9px !important;
+  }
+
+  .cab-tab-rotation-nav {
+    margin-top: var(--m-md) !important;
+  }
+
+  /* ═══ Token List Screener – Premium Mobile ═══ */
+  .token-list-screener {
+    border-radius: 0 !important;
+    margin: 0 calc(var(--m-content-pad) * -1) !important;
+    width: calc(100% + var(--m-content-pad) * 2) !important;
+  }
+
+  .token-list-header {
+    display: none !important;
+  }
+
+  .token-list-row {
+    padding: var(--m-md) var(--m-content-pad) !important;
+    min-height: 64px !important;
+    border-bottom: none !important;
+    /* Performance: GPU compositing */
+    transform: translateZ(0) !important;
+    contain: layout style paint !important;
+    will-change: transform !important;
+  }
+
+  .token-list-row:active {
+    background: rgba(255, 255, 255, 0.06) !important;
+    transition: background 0.08s ease !important;
+  }
+
+  /* ═══ Token Grid – Premium 2-col on mobile ═══ */
+  .token-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: var(--m-sm) !important;
+    padding: 0 !important;
+  }
+
+  .token-grid .token-card {
+    min-width: 0 !important;
+    padding: 14px !important;
+    border-radius: 14px !important;
+    background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%) !important;
+    border: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    /* GPU compositing */
+    transform: translateZ(0) !important;
+    contain: layout style paint !important;
+    will-change: transform !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  /* Top shimmer line on grid cards */
+  .token-grid .token-card::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 15% !important;
+    right: 15% !important;
+    height: 1px !important;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent) !important;
+    opacity: 0.5 !important;
+  }
+
+  .token-grid .token-card:active {
+    transform: translateZ(0) scale(0.97) !important;
+    background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%) !important;
+  }
+
+  /* Grid card price */
+  .token-grid .token-card .price-value {
+    font-variant-numeric: tabular-nums !important;
+    letter-spacing: -0.01em !important;
+  }
+
+  .token-grid .token-card .price-change {
+    font-size: 0.75rem !important;
+  }
+
+  /* Grid card action button - hide on mobile for cleaner look */
+  .token-grid .token-card .token-action {
+    display: none !important;
+  }
+
+  /* Grid card metrics - compact */
+  .token-grid .token-card .token-metrics {
+    gap: 8px !important;
+  }
+  .token-grid .token-card .metric-label {
+    font-size: 0.6rem !important;
+  }
+  .token-grid .token-card .metric-value {
+    font-size: 0.78rem !important;
+  }
+
+  /* ── Discovery Block ── */
+  .welcome-discovery-block {
+    gap: 0 !important;
+  }
+
+  /* ── Discovery Filters ── */
+  .discovery-filters {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    flex-wrap: nowrap !important;
+    padding: var(--m-sm) 0 !important;
+    gap: var(--m-sm) !important;
+    /* 🪤 This was `margin: 0 -8px` + `padding: 8px` — the full-bleed scroller
+       trick, which only works while the PARENT still has 8px of padding to eat
+       the negative margin. The discovery section is full-bleed now, so the
+       negative margin pulled the row clean outside the window: measured
+       `.trending-tier-pills` at x=-7 and the "Trending" pill itself at x=-2,
+       i.e. its left edge off-screen — the founder's "onchain trending is
+       overlapping left out of the window". No negative margin; the padding IS
+       the gutter, and it matches the token list's 20px so the two agree. */
+    margin: 0 !important;
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  .discovery-filters::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .discovery-filter-btn,
+  .discovery-tab-btn {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    padding: 8px 14px !important;
+    font-size: var(--m-text-sm) !important;
+    border-radius: 10px !important;
+    min-height: 36px !important;
+  }
+
+  /* ── On-Chain Views ── */
+  .onchain-token-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: var(--m-sm) !important;
+  }
+
+  .onchain-table-wrap {
+    margin: 0 calc(var(--m-content-pad) * -1) !important;
+    width: calc(100% + var(--m-content-pad) * 2) !important;
+    border-radius: 0 !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* ── Sidebar Row → Stacked on Mobile ── */
+  .welcome-sidebar-row {
+    flex-direction: column !important;
+    gap: var(--m-md) !important;
+  }
+
+  .welcome-panel-wrap,
+  .welcome-watchlist-panel-wrap {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* ── Mobile Navigation Toolbar ── */
+  .welcome-mobile-nav-toolbar {
+    margin: 0 calc(var(--m-content-pad) * -1) !important;
+    padding: var(--m-sm) var(--m-content-pad) !important;
+  }
+
+  .welcome-mobile-nav-scroll {
+    gap: var(--m-sm) !important;
+  }
+
+  .welcome-mobile-nav-item {
+    min-width: 56px !important;
+    min-height: 44px !important;
+    padding: var(--m-sm) var(--m-md) !important;
+    font-size: var(--m-text-xs) !important;
+    border-radius: 10px !important;
+  }
+
+  /* ── Compare Modal – Full Screen ── */
+  .compare-modal {
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100dvh !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .compare-tokens-header {
+    grid-template-columns: 1fr 1fr !important;
+    gap: var(--m-sm) !important;
+  }
+
+  .compare-section {
+    padding: var(--m-md) !important;
+  }
+
+  /* ═══ SCROLL PERFORMANCE – Token List ═══ */
+  .token-list-wrap {
+    /* Smooth momentum scrolling */
+    -webkit-overflow-scrolling: touch !important;
+    /* Create compositing layer */
+    transform: translateZ(0) !important;
+  }
+
+  /* Disable expensive backdrop-filter on scroll children for perf */
+  .token-list-screener .token-list-row {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Token grid cards - no blur during scroll */
+  .token-grid .token-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Kill hover effects on mobile (reduce paint) */
+  .token-list-row:hover,
+  .token-card:hover {
+    transform: none !important;
+  }
+
+  .token-card:hover::before,
+  .token-card:hover::after {
+    opacity: 0 !important;
+  }
+
+  /* ═══ Pagination - Premium Mobile Style ═══ */
+  .topcoins-pagination {
+    padding: 12px 8px !important;
+    gap: 10px !important;
+  }
+
+  .topcoins-pagination-btn {
+    padding: 10px 18px !important;
+    font-size: 0.78rem !important;
+    border-radius: 10px !important;
+    background: rgba(255,255,255,0.06) !important;
+    border: none !important;
+    min-height: 42px !important;
+    font-weight: 600 !important;
+    font-family: var(--font-body, 'Inter', sans-serif) !important;
+  }
+
+  .topcoins-pagination-btn:active:not(:disabled) {
+    background: rgba(255,255,255,0.1) !important;
+    transform: scale(0.97) !important;
+  }
+
+  .topcoins-pagination-info {
+    font-size: 0.75rem !important;
+    color: rgba(255,255,255,0.5) !important;
+  }
+}
+
+/* ============================================================
+   WELCOME PAGE – DAY MODE MOBILE SPECIFIC
+   ============================================================ */
+@media (max-width: 768px) {
+  .welcome-page.day-mode .token-list-row {
+    border-bottom: none !important;
+  }
+
+  .welcome-page.day-mode .token-list-row:active {
+    background: rgba(0, 0, 0, 0.05) !important;
+  }
+
+  .welcome-page.day-mode .cab-tab-content {
+    background: rgba(255, 255, 255, 0.8) !important;
+  }
+
+  /* Day mode grid cards */
+  .welcome-page.day-mode .token-grid .token-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(248,250,252,0.7) 100%) !important;
+    border: none !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+  }
+
+  .welcome-page.day-mode .token-grid .token-card::before {
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06), transparent) !important;
+  }
+
+  /* Day mode pagination */
+  .welcome-page.day-mode .topcoins-pagination-btn {
+    background: rgba(15,23,42,0.05) !important;
+    color: #334155 !important;
+  }
+
+  .welcome-page.day-mode .topcoins-pagination-info {
+    color: #64748b !important;
+  }
+}
+
+/* ============================================================
+   CATEGORIES PAGE – MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  .categories-page {
+    padding-top: calc(var(--m-header-h) + env(safe-area-inset-top, 0px) + var(--m-md)) !important;
+    padding-left: var(--m-content-pad) !important;
+    padding-right: var(--m-content-pad) !important;
+    padding-bottom: calc(var(--m-bottom-nav-h) + 20px) !important;
+  }
+
+  .categories-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: var(--m-sm) !important;
+  }
+
+  .category-card {
+    padding: var(--m-md) !important;
+    border-radius: var(--m-card-radius) !important;
+    min-height: auto !important;
+  }
+
+  /* Header row - stack on mobile */
+  .categories-header-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .categories-header-title {
+    font-size: 1.25rem !important;
+  }
+
+  .categories-header-stats {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .categories-header-stat-val {
+    font-size: 0.85rem !important;
+  }
+
+  .categories-header-stat-lbl {
+    font-size: 0.55rem !important;
+  }
+
+  /* Controls - full width search */
+  .categories-controls {
+    flex-direction: column !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+  }
+
+  .categories-search-wrap {
+    flex: 1 1 100% !important;
+    min-width: unset !important;
+  }
+
+  .categories-search {
+    min-height: 44px !important;
+    font-size: 0.875rem !important;
+    border-radius: 12px !important;
+  }
+
+  .categories-search-clear {
+    padding: 10px !important;
+  }
+
+  /* Table - tight grid for 393px */
+  .categories-table-header,
+  .categories-table-row {
+    grid-template-columns: 26px 1fr 64px 64px !important;
+    padding: 8px 8px !important;
+    gap: 4px !important;
+  }
+
+  .cat-col-vol,
+  .cat-col-spark,
+  .cat-col-top {
+    display: none !important;
+  }
+
+  .cat-name-text {
+    font-size: 0.75rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .cat-col-mcap,
+  .cat-col-change {
+    font-size: 0.7rem !important;
+  }
+
+  .categories-table-wrap {
+    border-radius: 14px !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  /* Pagination - touch friendly */
+  .categories-pagination {
+    gap: 4px !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+  }
+
+  .cat-page-btn {
+    min-width: 40px !important;
+    height: 40px !important;
+    font-size: 0.7rem !important;
+    border-radius: 10px !important;
+  }
+
+  .cat-page-ellipsis {
+    height: 40px !important;
+  }
+
+  /* Trending cards - scrollable row */
+  .cat-trending-scroll {
+    gap: 8px !important;
+  }
+
+  .cat-trending-card {
+    flex: 0 0 130px !important;
+    min-width: 130px !important;
+    padding: 10px !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  /* Widget cards - reduce blur */
+  .cat-widget {
+    border-radius: 14px !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  .cat-widgets-row {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* ── Detail view overrides ── */
+  .catdetail-hero {
+    padding: 16px 12px !important;
+    border-radius: 14px !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  .catdetail-hero-inner {
+    flex-direction: column !important;
+    gap: 12px !important;
+    align-items: flex-start !important;
+  }
+
+  .catdetail-title {
+    font-size: 1.2rem !important;
+  }
+
+  .catdetail-hero-stats {
+    width: 100% !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+  }
+
+  .catdetail-hero-stat {
+    flex: 0 1 calc(50% - 6px) !important;
+  }
+
+  .catdetail-hero-stat-divider {
+    display: none !important;
+  }
+
+  .catdetail-hero-stat-val {
+    font-size: 1rem !important;
+  }
+
+  /* Detail table */
+  .catdetail-tokens-header,
+  .catdetail-tokens-row {
+    grid-template-columns: 26px 1fr 64px 60px !important;
+    padding: 8px 8px !important;
+    gap: 4px !important;
+  }
+
+  .catdetail-col-change7d,
+  .catdetail-col-vol,
+  .catdetail-col-spark,
+  .catdetail-col-mcap {
+    display: none !important;
+  }
+
+  .catdetail-back-btn {
+    min-height: 44px !important;
+    padding: 10px 16px !important;
+  }
+}
+
+/* ============================================================
+   AI CHARTS PAGE – MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  .ai-charts-page {
+    padding-top: calc(var(--m-header-h) + env(safe-area-inset-top, 0px)) !important;
+    padding-left: var(--m-content-pad) !important;
+    padding-right: var(--m-content-pad) !important;
+  }
+
+  .ai-charts-grid {
+    grid-template-columns: 1fr !important;
+    gap: var(--m-md) !important;
+  }
+
+  /* Chart cards - taller for visibility */
+  .ai-chart-card-body {
+    height: 320px !important;
+    min-height: 280px !important;
+  }
+
+  .ai-chart-card-body iframe {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* Chart card header - compact */
+  .ai-chart-card-header {
+    padding: 8px 10px !important;
+  }
+
+  .ai-chart-card-label {
+    font-size: 0.8rem !important;
+  }
+
+  .ai-chart-card-tf-btn {
+    padding: 4px 8px !important;
+    font-size: 0.65rem !important;
+    min-height: 28px !important;
+  }
+
+  .ai-chart-card-badge {
+    font-size: 0.6rem !important;
+    padding: 2px 6px !important;
+  }
+
+  /* AI Charts header */
+  .ai-charts-header {
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .ai-charts-title {
+    font-size: 1.25rem !important;
+  }
+
+  .ai-charts-header-controls {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .ai-charts-mode-btn {
+    font-size: 0.75rem !important;
+    padding: 6px 12px !important;
+    min-height: 34px !important;
+  }
+
+  .ai-charts-tf-select {
+    font-size: 0.75rem !important;
+    padding: 6px 10px !important;
+    min-height: 34px !important;
+  }
+}
+
+/* ============================================================
+   SOCIAL ZONE – MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  .social-zone-page {
+    padding-top: calc(var(--m-header-h) + env(safe-area-inset-top, 0px)) !important;
+    padding-left: var(--m-content-pad) !important;
+    padding-right: var(--m-content-pad) !important;
+    padding-bottom: calc(var(--m-bottom-nav-h) + 20px) !important;
+  }
+
+  /* Tabs - horizontal scroll */
+  .social-zone-tabs {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+  }
+
+  .social-zone-tabs::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .social-zone-tab {
+    flex-shrink: 0 !important;
+    min-height: 38px !important;
+    padding: 8px 14px !important;
+    font-size: 0.8rem !important;
+    white-space: nowrap !important;
+  }
+
+  /* Leaderboard - single column */
+  .leaderboard-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .leaderboard-card {
+    padding: 14px !important;
+    border-radius: 12px !important;
+    width: 100% !important;
+  }
+
+  /* Leaderboard filters - scrollable */
+  .leaderboard-filters {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+  }
+
+  .leaderboard-filters::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .leaderboard-filter-btn {
+    flex-shrink: 0 !important;
+    min-height: 36px !important;
+    padding: 6px 12px !important;
+    font-size: 0.75rem !important;
+    white-space: nowrap !important;
+  }
+}
+
+/* ============================================================
+   ROI CALCULATOR – MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  .roi-calculator-page,
+  .roi-calculator-container {
+    padding: var(--m-lg) var(--m-content-pad) !important;
+    padding-top: calc(var(--m-header-h) + env(safe-area-inset-top, 0px) + var(--m-lg)) !important;
+  }
+
+  .roi-calculator-card {
+    padding: var(--m-lg) !important;
+    border-radius: var(--m-card-radius) !important;
+  }
+
+  .roi-calculator-inputs {
+    gap: var(--m-md) !important;
+  }
+
+  .roi-input-group input {
+    min-height: 48px !important;
+    font-size: 16px !important; /* prevent iOS zoom */
+    border-radius: 10px !important;
+  }
+}
+
+/* ============================================================
+   LOGS PAGE – MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  .logs-page {
+    padding-top: calc(var(--m-header-h) + env(safe-area-inset-top, 0px)) !important;
+    padding-left: var(--m-content-pad) !important;
+    padding-right: var(--m-content-pad) !important;
+  }
+
+  .log-entry {
+    padding: var(--m-md) !important;
+    font-size: var(--m-text-sm) !important;
+  }
+}
+
+/* ============================================================
+   ECONOMIC CALENDAR – MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  .economic-calendar-page,
+  .ai-market-analysis-page {
+    padding-top: calc(var(--m-header-h) + env(safe-area-inset-top, 0px)) !important;
+    padding-left: var(--m-content-pad) !important;
+    padding-right: var(--m-content-pad) !important;
+  }
+
+  .analytics-grid {
+    grid-template-columns: 1fr !important;
+    gap: var(--m-md) !important;
+  }
+}
+
+/* ============================================================
+   AGENT CHAT – MOBILE FULLSCREEN
+   ============================================================ */
+@media (max-width: 768px) {
+  .spectre-agent-chat {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100dvh !important;
+    border-radius: 0 !important;
+    z-index: 200 !important;
+  }
+
+  .spectre-agent-chat-messages {
+    padding: var(--m-md) !important;
+  }
+
+  .spectre-agent-chat-input {
+    padding: var(--m-md) !important;
+    padding-bottom: calc(var(--m-md) + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .spectre-agent-chat-input input,
+  .spectre-agent-chat-input textarea {
+    font-size: 16px !important; /* prevent iOS zoom */
+    min-height: 44px !important;
+  }
+
+  /* Agent FAB – move above bottom nav */
+  .agent-fab {
+    bottom: calc(var(--m-bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 16px) !important;
+    right: var(--m-content-pad) !important;
+  }
+}
+
+/* ============================================================
+   SEARCH ENGINE PAGE – MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  .search-engine-page {
+    padding: calc(var(--m-header-h) + 20px) var(--m-content-pad) 100px !important;
+  }
+
+  .search-engine-header {
+    margin-top: var(--m-xl) !important;
+  }
+
+  .search-engine-logo {
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 16px !important;
+  }
+
+  .search-engine-logo-img {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .search-engine-title {
+    font-size: var(--m-text-2xl) !important;
+  }
+
+  .search-engine-box {
+    padding: var(--m-md) !important;
+    min-height: 64px !important;
+    border-radius: 16px !important;
+  }
+
+  .search-engine-input {
+    font-size: 16px !important; /* prevent iOS zoom */
+  }
+
+  .search-engine-attach,
+  .search-engine-btn {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .search-engine-trending-grid {
+    grid-template-columns: 1fr !important;
+    gap: var(--m-sm) !important;
+  }
+
+  .search-engine-quick {
+    flex-wrap: wrap !important;
+    gap: var(--m-sm) !important;
+  }
+
+  .search-engine-quick-btn {
+    flex: 1 1 calc(50% - var(--m-sm)) !important;
+    justify-content: center !important;
+  }
+}
+
+/* ============================================================
+   TOKEN BANNER – MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  .token-banner {
+    padding: 10px var(--m-content-pad) !important;
+    min-height: auto !important;
+  }
+
+  .token-banner-actions {
+    gap: var(--m-sm) !important;
+  }
+
+  .token-banner-btn {
+    min-width: 40px !important;
+    min-height: 40px !important;
+    padding: var(--m-sm) !important;
+    border-radius: 10px !important;
+  }
+}
+
+/* ============================================================
+   TRADING CHART – MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  .trading-chart {
+    border-radius: 6px !important;
+  }
+
+  .trading-chart-canvas {
+    touch-action: pan-x pan-y !important;
+    min-height: 250px !important;
+  }
+
+  .chart-controls {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none !important;
+    gap: 3px !important;
+    padding: 4px 6px !important;
+  }
+
+  .chart-controls::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .chart-control-btn {
+    flex-shrink: 0 !important;
+    min-width: 32px !important;
+    min-height: 30px !important;
+    padding: 4px 8px !important;
+    font-size: var(--m-text-xs) !important;
+    border-radius: 6px !important;
+  }
+
+  /* Chart content area - mobile min, no upper cap (drag handle drives height) */
+  .chart-content-area {
+    min-height: 0px !important;
+  }
+
+  /* TradingView iframe - proportional on mobile */
+  .chart-body.chart-body-tradingview {
+    min-height: 250px !important;
+  }
+
+  .tradingview-chart-iframe {
+    min-height: 250px !important;
+  }
+}
+
+/* ============================================================
+   MOBILE HEADER – DESKTOP HEADER HIDE
+   ============================================================ */
+@media (max-width: 768px) {
+  /* When MobileHeader exists, hide the desktop header bar but keep search modal */
+  .header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    pointer-events: none !important;
+    border: none !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: 0 !important;
+    z-index: 0 !important;
+  }
+  .header-inner {
+    display: none !important;
+  }
+  .header .search-modal-overlay {
+    pointer-events: auto !important;
+  }
+  .header .search-modal-v2 {
+    pointer-events: auto !important;
+  }
+
+  /* Hide old mobile nav toolbar – replaced by MobileHeader left dropdown */
+  .welcome-mobile-nav-toolbar {
+    display: none !important;
+  }
+}
+
+/* ============================================================
+   AI BRIEF – FIRST ON MOBILE (TERMINAL MODE)
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Terminal mode welcome page – flex column to reorder sections */
+  .welcome-page {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Background stays as positioned overlay */
+  .welcome-bg {
+    order: -100 !important;
+  }
+
+  /* Ticker always first */
+  .welcome-section-trending {
+    order: -10 !important;
+  }
+
+  /* Sidebar row (contains welcome widget + command center) comes BEFORE token list */
+  .welcome-sidebar-row,
+  #welcome-widget {
+    order: -5 !important;
+  }
+
+  /* Command Center / AI Brief – pull to very top within sidebar row */
+  .welcome-experimental-bottom {
+    display: flex !important;
+    flex-direction: column !important;
+    order: -1 !important;
+  }
+
+  /* The Command Center widget with AI Brief goes first */
+  .welcome-market-ai-widget {
+    order: -2 !important;
+    width: 100% !important;
+  }
+
+  /* Top coins tabs (Top Coins | On-Chain | Predictions) - between sidebar row & discovery block */
+  .welcome-topcoins-header-row,
+  #top-coins {
+    order: 5 !important;
+  }
+
+  /* Discovery block (filters + token list) - comes after tabs */
+  .welcome-discovery-block {
+    order: 6 !important;
+  }
+
+  /* AI Brief tab content styling */
+  .cab-tab-content {
+    padding: var(--m-md) !important;
+    border-radius: var(--m-card-radius) !important;
+  }
+
+  .cab-tab-statement {
+    font-size: var(--m-text-lg) !important;
+    line-height: 1.5 !important;
+    padding: var(--m-md) 0 !important;
+  }
+
+  .cab-tab-eyebrow {
+    flex-wrap: wrap !important;
+    gap: var(--m-sm) !important;
+  }
+
+  .cab-tab-label {
+    font-size: var(--m-text-xs) !important;
+  }
+
+  .cab-tab-chips {
+    flex-wrap: wrap !important;
+    gap: var(--m-xs) !important;
+  }
+
+  .cab-tab-chip {
+    font-size: var(--m-text-xs) !important;
+    padding: 4px 8px !important;
+  }
+
+  /* ── Welcome sidebar row – stack vertically on mobile ── */
+  /* Override the horizontal-layout hide rule (.welcome-page.horizontal-layout .welcome-sidebar-row { display: none }) */
+  .welcome-page.horizontal-layout .welcome-sidebar-row,
+  .welcome-page .welcome-sidebar-row,
+  .welcome-sidebar-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: var(--m-lg) !important;
+  }
+
+  /* Welcome widget takes full width on mobile */
+  .welcome-panel-wrap {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Watchlist section below welcome widget */
+  .welcome-watchlist-wrap {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* ── Cinema AI Brief mobile styling ── */
+  .cab-container {
+    padding: var(--m-lg) var(--m-md) !important;
+    border-radius: var(--m-card-radius) !important;
+  }
+
+  .cab-statement,
+  .cab-eyebrow-statement {
+    font-size: var(--m-text-lg) !important;
+    line-height: 1.6 !important;
+  }
+
+  .cab-eyebrow {
+    flex-wrap: wrap !important;
+    gap: var(--m-sm) !important;
+  }
+
+  .cab-metrics {
+    flex-wrap: wrap !important;
+    gap: var(--m-sm) !important;
+  }
+
+  .cab-metric {
+    flex: 1 1 calc(50% - var(--m-sm)) !important;
+    min-width: 0 !important;
+  }
+
+  .cab-rotation-nav {
+    justify-content: center !important;
+    gap: var(--m-sm) !important;
+  }
+}
+
+/* ============================================================
+   FIX: WATCHLIST ON MOBILE – compact, no toggle, show more tokens
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Hide ALL open/close toggle chevrons – not needed on mobile */
+  .welcome-sidebar-toggle,
+  .welcome-sidebar-toggle--left,
+  .welcome-sidebar-toggle--right,
+  .watchlist-panel-toggle {
+    display: none !important;
+  }
+
+  /* Watchlist panel – full width, auto height, compact */
+  .welcome-watchlist-panel-wrap {
+    width: 100% !important;
+    max-width: 100% !important;
+    position: relative !important;
+  }
+
+  .welcome-watchlist-widget {
+    padding: 12px !important;
+    gap: 8px !important;
+  }
+
+  /* Compact the watchlist header row */
+  .welcome-watchlist-panel-wrap .welcome-watchlist-header {
+    padding: 0 !important;
+    margin-bottom: 4px !important;
+    gap: 8px !important;
+  }
+
+  /* Hide the "See All" button text, keep compact */
+  .welcome-watchlist-panel-wrap .welcome-watchlist-header h3 {
+    font-size: 0.85rem !important;
+  }
+
+  /* Compact the portfolio/watchlist dropdown selector */
+  .welcome-watchlist-panel-wrap select,
+  .welcome-watchlist-panel-wrap .welcome-watchlist-dropdown {
+    font-size: 0.75rem !important;
+    padding: 6px 8px !important;
+    height: 32px !important;
+  }
+
+  /* Compact search input */
+  .welcome-watchlist-panel-wrap input[type="text"],
+  .welcome-watchlist-panel-wrap .watchlist-search-input {
+    font-size: 0.8rem !important;
+    padding: 6px 10px !important;
+    height: 34px !important;
+  }
+
+  /* Compact sort/filter row */
+  .welcome-watchlist-panel-wrap .watchlist-sort-row,
+  .welcome-watchlist-panel-wrap .welcome-watchlist-controls {
+    gap: 6px !important;
+    margin: 2px 0 !important;
+  }
+
+  /* Make watchlist items more compact to show more tokens */
+  .welcome-watchlist-inner .watchlist-item,
+  .welcome-watchlist-inner .token-list-row {
+    padding: 8px 10px !important;
+    min-height: 42px !important;
+    gap: 8px !important;
+  }
+
+  .welcome-watchlist-inner .watchlist-item img,
+  .welcome-watchlist-inner .token-list-row img {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  /* Show scrollable list with reasonable max height */
+  .welcome-watchlist-inner {
+    max-height: 240px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+}
+
+/* ============================================================
+   FIX: STOP LOGO FLOAT/BOUNCE ANIMATIONS ON MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Kill floating logo animations everywhere */
+  .cinematic-hero-logo,
+  .storybook-hero-logo,
+  .cinema-hero-logo,
+  [class*="hero-logo"] {
+    animation: none !important;
+  }
+
+  /* Kill trending bounce animation */
+  .trending-icon {
+    animation: none !important;
+  }
+
+  /* Kill token ticker float animations */
+  .token-ticker-float,
+  .animate-float {
+    animation: none !important;
+  }
+
+  /* Stop any logo/coin spinning */
+  .logo-spin,
+  [class*="logo-float"],
+  [class*="logoFloat"] {
+    animation: none !important;
+  }
+}
+
+/* ============================================================
+   FIX: AI BRIEF TEXT SIZE + SLIDESHOW STYLING
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Terminal mode AI Brief – LARGE readable text */
+  .cab-tab-statement {
+    font-size: 1.3rem !important;
+    line-height: 1.7 !important;
+    letter-spacing: -0.01em !important;
+    padding: 12px 4px !important;
+  }
+
+  /* Cinema mode AI Brief – larger text */
+  .cab-statement,
+  .cab-eyebrow-statement {
+    font-size: 1.3rem !important;
+    line-height: 1.7 !important;
+  }
+
+  /* Rotation nav dots – bigger hit targets, slideshow feel */
+  .cab-tab-rotation-nav,
+  .cab-rotation-nav {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    padding: 14px 0 !important;
+  }
+
+  .cab-tab-rotation-nav .cab-tab-dot,
+  .cab-rotation-nav .cab-dot,
+  .cab-rotation-nav button,
+  .cab-tab-dot {
+    width: 12px !important;
+    height: 12px !important;
+    min-width: 12px !important;
+    min-height: 12px !important;
+    border-radius: 50% !important;
+    opacity: 0.35 !important;
+    transition: all 0.3s ease !important;
+    border: none !important;
+    background: rgba(255, 255, 255, 0.5) !important;
+    cursor: pointer !important;
+  }
+
+  .cab-tab-rotation-nav .cab-tab-dot.active,
+  .cab-rotation-nav .cab-dot.active,
+  .cab-rotation-nav button.active,
+  .cab-tab-dot.active {
+    opacity: 1 !important;
+    transform: scale(1.4) !important;
+    background: var(--text-primary, #f5f5f7) !important;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2) !important;
+  }
+
+  /* AI Brief eyebrow – more prominent */
+  .cab-tab-eyebrow,
+  .cab-eyebrow {
+    font-size: 0.65rem !important;
+    letter-spacing: 0.15em !important;
+    text-transform: uppercase !important;
+  }
+
+  /* Attribution line */
+  .cab-tab-attribution,
+  .cab-attribution {
+    font-size: 0.7rem !important;
+    opacity: 0.5 !important;
+    padding-top: 8px !important;
+  }
+}
+
+/* ============================================================
+   FIX: WEIRD BORDERS ON WELCOME WIDGET + DISCOVER
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Simplify welcome widget borders on mobile – clean single border */
+  .welcome-widget,
+  .welcome-widget.welcome-widget-glass {
+    border-radius: 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3) !important;
+    padding: 14px !important;
+  }
+
+  /* Remove double inset border effects on mobile */
+  .welcome-page .welcome-widget {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  /* Price cards – remove double-inset border effect (match .welcome-widget-restyled specificity) */
+  .welcome-widget-restyled .welcome-widget-price-card,
+  .welcome-page .welcome-widget-price-card,
+  .welcome-widget-price-card {
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+    border-radius: 12px !important;
+  }
+
+  .welcome-widget-restyled .welcome-widget-price-card-head,
+  .welcome-widget-price-card-head {
+    box-shadow: none !important;
+  }
+
+  /* Stat/indicator cards – clean single border */
+  .welcome-widget-fear-greed,
+  .welcome-widget-alt-season,
+  .welcome-widget-dominance,
+  .welcome-widget-market-status,
+  .welcome-widget-cme-gaps,
+  [class*="welcome-widget-stat"],
+  [class*="welcome-widget-card"] {
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  /* Discover page cards – clean borders */
+  .cinematic-hero-card {
+    border-radius: 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    overflow: hidden !important;
+  }
+
+  /* Day mode widget borders */
+  .app-day-mode .welcome-widget,
+  .app-day-mode .welcome-widget.welcome-widget-glass,
+  .welcome-day-mode .welcome-widget {
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  }
+
+  /* TokenStorybook – clean border */
+  .storybook-card,
+  .token-storybook-card {
+    border-radius: 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+}
+
+/* ============================================================
+   FIX: DISCOVER HERO LOGOS CUT/CLIPPED
+   ============================================================ */
+@media (max-width: 768px) {
+  .cinematic-hero-logo {
+    overflow: hidden !important;
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  .cinematic-hero-logo img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 50% !important;
+  }
+
+  .cinematic-hero-logo-wrap {
+    margin-bottom: 16px !important;
+    overflow: visible !important;
+  }
+
+  /* Storybook hero logo also – prevent clipping */
+  .storybook-hero-logo {
+    overflow: hidden !important;
+    width: 80px !important;
+    height: 80px !important;
+  }
+
+  .storybook-hero-logo img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+}
+
+/* ============================================================
+   FIX: COMMAND CENTER SUBPAGE TEXT WARPING
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Command center widget – full width, tighter padding on mobile */
+  .welcome-market-ai-widget {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    padding: 12px 10px !important;
+    border-radius: 12px !important;
+  }
+
+  /* Tabs – proper horizontal scroll on mobile */
+  .welcome-market-ai-tabs {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 2px !important;
+    padding: 4px !important;
+    margin: 0 !important;
+  }
+
+  .welcome-market-ai-tab {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    font-size: 0.7rem !important;
+    padding: 6px 10px !important;
+    min-height: unset !important;
+  }
+
+  /* Content area – prevent text warping/overflow */
+  .welcome-market-ai-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* All text inside command center content – prevent warping */
+  .welcome-market-ai-content * {
+    max-width: 100% !important;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+  }
+
+  /* Tables inside command center – scrollable */
+  .welcome-market-ai-content table {
+    display: block !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* News items – proper wrapping */
+  .news-feed-item,
+  .news-item {
+    padding: 10px !important;
+  }
+
+  .news-feed-item .news-title,
+  .news-item-title {
+    font-size: 0.85rem !important;
+    line-height: 1.4 !important;
+    word-break: break-word !important;
+  }
+
+  /* Flows/Liquidation panels – prevent horizontal overflow */
+  .market-flows-panel,
+  .liquidation-panel,
+  .sector-panel,
+  .mindshare-panel,
+  .economic-calendar-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  /* AI Market analysis text */
+  .ai-analysis-text,
+  .welcome-market-ai-placeholder {
+    font-size: 0.82rem !important;
+    line-height: 1.55 !important;
+    word-break: break-word !important;
+  }
+
+  /* Footer text */
+  .welcome-market-ai-footer {
+    font-size: 0.65rem !important;
+    padding: 8px 0 4px !important;
+    opacity: 0.5 !important;
+  }
+
+  /* ── AI MARKET HERO – Mobile Layout ── */
+  .ai-mkt-hero {
+    border-radius: 14px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .ai-mkt-hero-content {
+    flex-direction: column !important;
+    gap: 14px !important;
+    padding: 14px !important;
+  }
+
+  .ai-mkt-hero-left,
+  .ai-mkt-hero-right {
+    width: 100% !important;
+  }
+
+  .ai-mkt-hero-bias {
+    font-size: 1.25rem !important;
+  }
+
+  .ai-mkt-hero-meter {
+    max-width: 100% !important;
+  }
+
+  .ai-mkt-hero-stats {
+    gap: 8px !important;
+  }
+
+  .ai-mkt-hero-stat {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .ai-mkt-hero-stat-val {
+    font-size: 0.85rem !important;
+  }
+
+  .ai-mkt-hero-stat-label {
+    font-size: 0.58rem !important;
+  }
+
+  .ai-mkt-hero-chips {
+    flex-wrap: wrap !important;
+    gap: 5px !important;
+  }
+
+  .ai-mkt-chip {
+    padding: 3px 8px !important;
+    font-size: 0.68rem !important;
+  }
+
+  /* ── AI TERMINAL – Mobile ── */
+  .ai-mkt-terminal {
+    border-radius: 10px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .ai-mkt-terminal-header {
+    padding: 8px 12px !important;
+    gap: 8px !important;
+  }
+
+  .ai-mkt-terminal-title {
+    font-size: 0.65rem !important;
+  }
+
+  .ai-mkt-terminal-body {
+    padding: 10px 12px !important;
+  }
+
+  .ai-mkt-terminal-line {
+    font-size: 0.72rem !important;
+    line-height: 1.5 !important;
+  }
+
+  /* ── AI TRIO – Mobile Stack ── */
+  .ai-mkt-trio {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .ai-mkt-trio-card {
+    padding: 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .ai-mkt-trio-text {
+    font-size: 0.75rem !important;
+    line-height: 1.5 !important;
+  }
+
+  .ai-mkt-trio-center {
+    min-width: unset !important;
+    padding: 12px !important;
+    order: -1 !important; /* show confidence orb first on mobile */
+  }
+
+  /* ── AI MARKET V2 HERO – Mobile Stack ── */
+  .ai-market-hero {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    padding: 14px !important;
+    border-radius: 14px !important;
+  }
+
+  .ai-market-hero .ai-mkt-trio-center {
+    order: -1 !important;
+    padding: 12px !important;
+  }
+}
+
+/* ============================================================
+   FIX: DOUBLE BORDER ON NAME INPUT (Bug 1)
+   ============================================================ */
+@media (max-width: 768px) {
+  .welcome-widget-input {
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: none !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-radius: 10px !important;
+    padding: 8px 12px !important;
+    font-size: 0.9rem !important;
+  }
+
+  .welcome-widget-input:focus {
+    border-color: rgba(245, 245, 247, 0.1) !important;
+    box-shadow: 0 0 0 2px rgba(245, 245, 247, 0.06) !important;
+    outline: none !important;
+  }
+
+  /* Day mode name input */
+  .app-day-mode .welcome-widget-input,
+  .welcome-day-mode .welcome-widget-input {
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    background: rgba(0, 0, 0, 0.03) !important;
+    color: #1e293b !important;
+  }
+}
+
+/* ============================================================
+   FIX: SEARCH FAVORITES BUTTON SQUARE → ROUNDED (Bug 4)
+   ============================================================ */
+@media (max-width: 768px) {
+  .token-card-left-strip {
+    border-radius: 12px 0 0 12px !important;
+  }
+
+  .token-card-v2 {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+  }
+}
+
+/* ============================================================
+   FIX: WATCHLIST PANEL TOKENS HIDDEN (Bug 5)
+   ============================================================ */
+@media (max-width: 768px) {
+  .welcome-watchlist-inner {
+    max-height: 50vh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    /* Bottom fade to indicate scrollability */
+    mask-image: linear-gradient(to bottom, black 85%, transparent 100%) !important;
+    -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%) !important;
+  }
+
+  /* Compact the watchlist controls to leave more room for tokens */
+  .welcome-watchlist-search,
+  .welcome-watchlist-panel-search {
+    padding: 6px 10px !important;
+    font-size: 0.8rem !important;
+    min-height: 36px !important;
+  }
+
+  .welcome-watchlist-sort-controls,
+  .welcome-watchlist-panel-controls {
+    gap: 4px !important;
+    padding: 4px 0 !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .welcome-watchlist-sort-btn {
+    padding: 4px 8px !important;
+    font-size: 0.65rem !important;
+    min-height: 28px !important;
+  }
+}
+
+/* ============================================================
+   RESEARCH ZONE – MOBILE: see research-zone-mobile.css (rzm-* classes).
+   The previous ~340-line block here targeted .research-zone-lite-*
+   selectors, but research-zone-lite.jsx early-returns to the mobile
+   component at max-width: 768px so those styles never matched any
+   element. Removed 2026-05-17.
+   ============================================================ */
+
+
+/* ============================================================
+   FIX: AI SCREENER BANNER TOO LARGE (Bug 7)
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Compact the page container – tight side padding for max width */
+  .ai-charts-page {
+    padding: calc(60px + env(safe-area-inset-top, 0px)) 6px 100px !important;
+    gap: 8px !important;
+    overflow-x: hidden !important;
+  }
+
+  /* ── Hide scrolling ticker on mobile – saves ~52px vertical space ── */
+  .token-ticker {
+    display: none !important;
+  }
+
+  /* ── Mobile Token View Tabs - pill bar style ── */
+  .mobile-token-view-tabs {
+    display: flex !important;
+    align-items: center;
+    gap: 3px;
+    padding: 3px 4px !important;
+    height: 40px;
+    background: rgba(18, 18, 22, 0.95);
+    backdrop-filter: var(--m-blur-heavy) var(--m-saturate);
+    -webkit-backdrop-filter: var(--m-blur-heavy) var(--m-saturate);
+    border-radius: 20px;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+      0 4px 16px rgba(0, 0, 0, 0.35);
+    margin: 0 0 4px !important;
+  }
+
+  .mobile-token-view-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    padding: 0 8px !important;
+    border: none;
+    border-radius: 18px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.35);
+    font-family: var(--font-glass, 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  .mobile-token-view-tab:active {
+    transform: scale(0.92);
+  }
+
+  .mobile-token-view-tab.active {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+      0 0 16px rgba(255, 255, 255, 0.06),
+      0 0 6px rgba(255, 255, 255, 0.04);
+    font-weight: 600;
+  }
+
+  /* Day mode token view tabs */
+  .app-day-mode .mobile-token-view-tabs,
+  .welcome-day-mode .mobile-token-view-tabs {
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.06) inset,
+      0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+
+  .app-day-mode .mobile-token-view-tab,
+  .welcome-day-mode .mobile-token-view-tab {
+    color: rgba(0, 0, 0, 0.35);
+  }
+
+  .app-day-mode .mobile-token-view-tab.active,
+  .welcome-day-mode .mobile-token-view-tab.active {
+    color: #1a1a2e;
+    background: rgba(0, 0, 0, 0.06);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.04) inset,
+      0 0 12px rgba(0, 0, 0, 0.06);
+  }
+
+  /* ── Token Banner – 2-row compact mobile layout ── */
+  .ai-charts-page .token-banner,
+  .token-banner {
+    padding: 10px 8px !important;
+    border-radius: 8px !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+
+  /* Main container: use display:contents to flatten, let banner be the flex parent */
+  .token-banner .token-banner-main {
+    display: contents !important;
+  }
+
+  /* Flatten .token-left so its children are direct banner children */
+  .token-banner .token-left {
+    display: contents !important;
+  }
+
+  /* ─── ROW 1: Avatar + Name/Symbol + Price + Change ─── */
+  .token-banner .token-left-top {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    order: 1 !important;
+  }
+
+  .token-banner .token-avatar {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    flex-shrink: 0 !important;
+    border-radius: 10px !important;
+  }
+
+  .token-banner .token-avatar-ring {
+    display: none !important;
+  }
+
+  .token-banner .token-identity {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  .token-banner .token-symbol {
+    font-size: 1.1rem !important;
+  }
+
+  .token-banner .token-fullname {
+    display: none !important;
+  }
+
+  .token-banner .token-name-row {
+    gap: 6px !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+  }
+
+  /* Show price section - positioned absolutely in Row 1 (top-right) */
+  .token-banner .token-right {
+    display: flex !important;
+    position: absolute !important;
+    top: 10px !important;
+    right: 8px !important;
+    flex-shrink: 0 !important;
+    align-items: flex-end !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    width: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .token-banner .price-section {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    gap: 2px !important;
+  }
+
+  /* Price + % on same row, baseline-aligned */
+  .token-banner .price-main-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: baseline !important;
+    gap: 6px !important;
+  }
+
+  .token-banner .price-amount {
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+  }
+
+  .token-banner .price-change-row {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 4px !important;
+  }
+
+  .token-banner .price-change {
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+    padding: 2px 5px !important;
+    border-radius: 4px !important;
+  }
+
+  .token-banner .price-historical {
+    display: none !important;
+  }
+
+  /* MCap + Volume stats row - flush right with price */
+  .token-banner .price-mcap-vol {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 10px !important;
+    margin-top: 2px !important;
+    width: 100% !important;
+  }
+
+  .token-banner .mcap-stat,
+  .token-banner .vol-stat {
+    display: flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    font-size: 0.65rem !important;
+    line-height: 1 !important;
+  }
+
+  .token-banner .mcap-label,
+  .token-banner .vol-label {
+    color: rgba(255, 255, 255, 0.35) !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.03em !important;
+  }
+
+  .token-banner .mcap-value,
+  .token-banner .vol-value {
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-weight: 600 !important;
+    font-family: var(--font-mono) !important;
+  }
+
+  /* Day mode MCap/Vol */
+  .app-day-mode .token-banner .mcap-label,
+  .app-day-mode .token-banner .vol-label {
+    color: rgba(0, 0, 0, 0.35) !important;
+  }
+
+  .app-day-mode .token-banner .mcap-value,
+  .app-day-mode .token-banner .vol-value {
+    color: rgba(0, 0, 0, 0.6) !important;
+  }
+
+  /* Hide timeframe toggle on mobile (chart has its own) */
+  .token-banner .timeframe-toggle {
+    display: none !important;
+  }
+
+  .token-banner .live-badge {
+    display: none !important;
+  }
+
+  /* Watchlist heart - smaller */
+  .token-banner .watchlist-btn {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  /* ─── Banner expand/collapse toggle arrow ─── */
+  .token-banner .banner-toggle-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 24px !important;
+    height: 24px !important;
+    padding: 0 !important;
+    border: none !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-radius: 6px !important;
+    color: rgba(255, 255, 255, 0.45) !important;
+    cursor: pointer !important;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s, color 0.2s !important;
+    flex-shrink: 0 !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+
+  .token-banner .banner-toggle-btn svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  .token-banner .banner-toggle-btn.expanded {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: var(--text-primary, #f5f5f7) !important;
+  }
+
+  .token-banner .banner-toggle-btn.expanded svg {
+    transform: rotate(180deg) !important;
+  }
+
+  .token-banner .banner-toggle-btn:active {
+    transform: scale(0.9) !important;
+  }
+
+  /* Day mode toggle arrow */
+  .app-day-mode .token-banner .banner-toggle-btn {
+    background: rgba(0, 0, 0, 0.05) !important;
+    color: rgba(0, 0, 0, 0.35) !important;
+  }
+
+  .app-day-mode .token-banner .banner-toggle-btn.expanded {
+    background: rgba(0, 0, 0, 0.08) !important;
+    color: #0f172a !important;
+  }
+
+  /* ─── ROW 2: CA + Actions – collapsible ─── */
+  .token-banner .token-left-bottom {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    flex-wrap: nowrap !important;
+    order: 2 !important;
+    overflow: hidden !important;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, margin 0.3s ease !important;
+  }
+
+  .token-banner .token-left-bottom.banner-row-hidden {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    pointer-events: none !important;
+  }
+
+  .token-banner .token-left-bottom.banner-row-visible {
+    max-height: 60px !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  .token-banner .token-ca {
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    padding: 5px 8px !important;
+    gap: 4px !important;
+    font-size: 0.7rem !important;
+  }
+
+  .token-banner .ca-address {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: nowrap !important;
+    max-width: none !important;
+  }
+
+  .token-banner .ca-btn {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+  }
+
+  .token-banner .token-actions {
+    flex-shrink: 0 !important;
+    gap: 4px !important;
+    margin-left: 0 !important;
+  }
+
+  .token-banner .action-btn {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+  }
+
+  /* Hide middle section (socials + description) - keep banner to 2 rows */
+  .token-banner .token-middle {
+    display: none !important;
+  }
+
+  /* Hide description + badges */
+  .token-banner .token-description {
+    display: none !important;
+  }
+
+  .token-banner .smart-badges {
+    display: none !important;
+  }
+
+  /* Glow layers – subtler on mobile */
+  .token-banner .token-banner-glow,
+  .token-banner .token-banner-glow-secondary {
+    opacity: 0.3 !important;
+  }
+
+  /* AI Charts header – compact */
+  .ai-charts-header {
+    padding: 8px 0 10px !important;
+    gap: 10px !important;
+  }
+
+  .ai-charts-title {
+    font-size: 1rem !important;
+  }
+
+  .ai-charts-header-controls {
+    gap: 6px !important;
+  }
+
+  .ai-charts-header-controls button,
+  .ai-charts-header-controls select {
+    padding: 6px 10px !important;
+    font-size: 0.75rem !important;
+    min-height: 34px !important;
+  }
+}
+
+/* ============================================================
+   FIX: CATEGORY/TIMEFRAME DROPDOWNS + VIEW ALL (Bug 8)
+   Now uses GlassSelect custom dropdown component
+   ============================================================ */
+@media (max-width: 768px) {
+  /* GlassSelect integration within filter groups */
+  .filter-group .glass-select {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 180px;
+  }
+
+  .discovery-filters-mobile .filter-group .glass-select {
+    max-width: none;
+  }
+
+  .discovery-filters-onchain-inline,
+  .discovery-filters-onchain-mobile {
+    justify-content: space-between !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .discovery-filters-onchain-mobile .glass-select {
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: none;
+  }
+
+  /* ═══ GlassSelect trigger - the unified chip recipe ═══
+     Was a 44px "premium glass chip": 12px radius, 15px/600 type, a top AND
+     bottom inset edge plus a drop shadow. Next to the unified 38px pills it
+     shares a row with (styles/unified-chips.css: 135deg glass, hairline,
+     one gleam, full-round), the two selects read as two dark slabs (founder
+     screenshot 2026-09-03). Same recipe now, one size up for the chevron. */
+  .glass-select-trigger {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.015) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    border-radius: 999px !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    outline: none !important;
+    min-height: 38px !important;
+    padding: 0 12px 0 14px !important;
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+    letter-spacing: 0 !important;
+    color: rgba(245, 245, 247, 0.75) !important;
+    gap: 6px !important;
+    transition: transform 0.1s ease, box-shadow 0.15s ease, background 0.15s ease, color 0.15s ease !important;
+  }
+
+  .glass-select-trigger:active {
+    transform: scale(0.96) !important;
+  }
+
+  .glass-select-trigger:focus,
+  .glass-select-trigger:focus-visible,
+  .glass-select-trigger:focus-within {
+    outline: none !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .glass-select-trigger .glass-select-value {
+    outline: none !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .glass-select-trigger .glass-select-chevron {
+    width: 12px !important;
+    height: 12px !important;
+    opacity: 0.5 !important;
+    margin-right: 0 !important;
+    stroke-width: 2.25 !important;
+    backdrop-filter: none !important;
+  }
+
+  /* Open = the recipe's active state: lit glass, brighter gleam, a whisper of glow */
+  .glass-select.open .glass-select-trigger {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.05) 100%) !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+    color: #f5f5f7 !important;
+    font-weight: 600 !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      0 0 12px rgba(245, 245, 247, 0.06) !important;
+  }
+
+  .glass-select.open .glass-select-trigger .glass-select-chevron {
+    opacity: 0.85 !important;
+  }
+
+  /* Day mode glass select - unified-chips day recipe */
+  .app-day-mode .glass-select-trigger,
+  .welcome-day-mode .glass-select-trigger {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.55) 100%) !important;
+    border-color: rgba(15, 23, 42, 0.1) !important;
+    color: #64748b !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  }
+
+  .app-day-mode .glass-select.open .glass-select-trigger,
+  .welcome-day-mode .glass-select.open .glass-select-trigger {
+    background: #ffffff !important;
+    border-color: rgba(15, 23, 42, 0.16) !important;
+    color: #0f172a !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 1),
+      0 1px 6px rgba(15, 23, 42, 0.08) !important;
+  }
+
+  /* Filter group: stack on narrow screens */
+  .discovery-filters-mobile .filter-group {
+    min-width: 0;
+    flex: 1 1 auto;
+    gap: 8px;
+  }
+
+  /* Filter label compact on mobile */
+  .filter-label {
+    min-width: auto !important;
+    font-size: 0.7rem !important;
+    gap: 5px !important;
+  }
+
+  /* Fallback: any remaining native <select> with discovery-filter-select */
+  .discovery-filter-select {
+    min-height: 38px !important;
+    padding: 8px 28px 8px 12px !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-radius: 10px !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+  }
+
+  /* View All button – make it a proper styled button */
+  .categories-view-all-link {
+    padding: 8px 14px !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    color: var(--text-primary, #f5f5f7) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 10px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    transition: all 0.15s ease !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+
+  .categories-view-all-link:active {
+    transform: scale(0.95) !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  /* Day mode View All */
+  .app-day-mode .categories-view-all-link,
+  .welcome-day-mode .categories-view-all-link {
+    color: #0f172a !important;
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+  }
+}
+
+/* ============================================================
+   REDUCED MOTION PREFERENCE
+   ============================================================ */
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.1s !important;
+    scroll-behavior: auto !important;
+  }
+
+  .mobile-tab-indicator {
+    transition: none !important;
+  }
+}
+
+/* ============================================================
+   FIX: WATCHLIST TOKEN VALUES OVERFLOWING
+   Price + change + market cap clipping outside card bounds
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Watchlist item - prevent children from overflowing */
+  .welcome-experimental-bottom .watchlist-item {
+    overflow: hidden !important;
+    gap: 8px !important;
+    padding: 10px 10px !important;
+  }
+
+  /* Info section (avatar + name) - shrink to fit, don't hog space */
+  .welcome-experimental-bottom .watchlist-item-info {
+    flex: 1 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .welcome-experimental-bottom .watchlist-item-text {
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .welcome-experimental-bottom .watchlist-item-symbol {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 80px !important;
+  }
+
+  .welcome-experimental-bottom .watchlist-item-name {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 80px !important;
+    font-size: 11px !important;
+  }
+
+  /* Stats section (price + change) - shrink with proper truncation */
+  .welcome-experimental-bottom .watchlist-item-stats {
+    flex-shrink: 0 !important;
+    max-width: 120px !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .welcome-experimental-bottom .watchlist-item-price {
+    font-size: 13px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .welcome-experimental-bottom .watchlist-item-change {
+    font-size: 11px !important;
+    white-space: nowrap !important;
+  }
+
+  /* Hide actions (pin/remove) on mobile - they clip outside */
+  .welcome-experimental-bottom .watchlist-item-actions {
+    display: none !important;
+  }
+
+  /* Hide drag handle on mobile */
+  .welcome-experimental-bottom .watchlist-item-drag {
+    display: none !important;
+  }
+
+  /* Avatar smaller on mobile */
+  .welcome-experimental-bottom .watchlist-item-avatar {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+  }
+
+  .welcome-experimental-bottom .watchlist-item-avatar img {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+/* ============================================================
+   FIX: PAST/PRESENT/FUTURE CARD LAYOUT ON MOBILE
+   3-column grid → stacked vertical on mobile
+   ============================================================ */
+@media (max-width: 768px) {
+  /* The popup overlay - full screen on mobile */
+  .token-card-popup-overlay {
+    padding: 0 !important;
+    align-items: flex-start !important;
+  }
+
+  /* The popup container - full width, scrollable */
+  .token-card-popup {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 100dvh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 16px !important;
+    padding-top: calc(16px + env(safe-area-inset-top, 0px)) !important;
+  }
+
+  /* Close button - bigger touch target */
+  .token-card-popup-close {
+    width: 40px !important;
+    height: 40px !important;
+    top: 12px !important;
+    right: 12px !important;
+  }
+
+  /* Header - compact */
+  .token-card-popup-header {
+    margin-bottom: 12px !important;
+  }
+
+  .token-card-popup-header-avatar {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .token-card-popup-title {
+    font-size: 1.1rem !important;
+  }
+
+  .token-card-popup-subtitle {
+    font-size: 0.7rem !important;
+  }
+
+  /* Grid → single column stack */
+  .token-card-popup-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* Each card - no expand animation (would clip on mobile) */
+  .token-card-popup .token-card-popup-grid .token-card {
+    border-radius: 14px !important;
+    overflow: hidden !important;
+  }
+
+  .token-card-popup .token-card-popup-grid .token-card-expanded {
+    transform: none !important;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  /* Card header labels */
+  .token-card-head {
+    padding: 10px 14px !important;
+  }
+
+  /* Card body */
+  .token-card-body {
+    padding: 10px 14px !important;
+  }
+
+  /* Footer */
+  .token-card-footer {
+    padding: 10px 14px !important;
+  }
+
+  /* Live price text */
+  .token-card-live-price {
+    font-size: 1.5rem !important;
+  }
+
+  /* Predictions - more compact */
+  .token-card-pred-row {
+    padding: 6px 0 !important;
+    gap: 6px !important;
+  }
+
+  .token-card-pred-text {
+    font-size: 0.8rem !important;
+  }
+
+  /* View full details button */
+  .token-card-popup-actions {
+    padding: 12px 0 !important;
+  }
+
+  .token-card-popup-view-details {
+    width: 100% !important;
+    padding: 14px !important;
+    font-size: 0.9rem !important;
+    border-radius: 12px !important;
+  }
+}
+
+/* ============================================================
+   FIX: SEARCH RESULTS TEXT/PRICE OVERFLOWING
+   Token badge + price overlapping on mobile
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Search token card - ensure children don't overflow */
+  .token-card-v2 {
+    overflow: hidden !important;
+    max-width: 100% !important;
+  }
+
+  /* Token info section - flex shrink with truncation */
+  .token-card-v2 .token-info-v2 {
+    flex: 1 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    padding-left: 2px !important;
+  }
+
+  /* Token header row (symbol + badge) - prevent line break push */
+  .token-card-v2 .token-header-row {
+    flex-wrap: nowrap !important;
+    overflow: hidden !important;
+    gap: 6px !important;
+  }
+
+  .token-card-v2 .token-symbol-v2 {
+    font-size: 0.9375rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Network badge - smaller so it doesn't push price off-screen */
+  .token-card-v2 .token-network-badge {
+    font-size: 0.5625rem !important;
+    padding: 2px 6px !important;
+    max-width: 70px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    flex-shrink: 1 !important;
+  }
+
+  .token-card-v2 .token-name-v2 {
+    font-size: 0.75rem !important;
+  }
+
+  /* Stats section (price + change) - fixed width, don't overflow */
+  .token-card-v2 .token-stats-v2 {
+    flex-shrink: 0 !important;
+    max-width: 130px !important;
+    margin-right: 12px !important;
+  }
+
+  .token-card-v2 .token-price-v2 {
+    font-size: 1rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .token-card-v2 .token-price-row {
+    gap: 8px !important;
+  }
+
+  /* Change badge - compact */
+  .token-card-v2 .token-change-badge {
+    font-size: 0.75rem !important;
+    padding: 3px 8px !important;
+    white-space: nowrap !important;
+  }
+
+  /* Sub-stats row (MC, Liq) - hide or compact */
+  .token-card-v2 .token-sub-stats {
+    font-size: 0.625rem !important;
+    gap: 6px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+  }
+
+  /* Left strip (heart/favorite) - narrower on mobile */
+  .token-card-left-strip {
+    width: 42px !important;
+    min-width: 42px !important;
+  }
+
+  /* Token logo - slightly smaller */
+  .token-card-v2 > .token-logo-v2 {
+    width: 42px !important;
+    height: 42px !important;
+    margin: 10px 0 10px 10px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   MOBILE BORDER CLEANUP - Remove faint/ugly thin separator lines
+   ═══════════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── Name input double-border fix ── */
+  .welcome-widget-input {
+    box-shadow: none !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+  }
+
+  /* ── Row/item separators - kill thin border lines ── */
+  .mp-card-header,
+  .mp-scenario-header,
+  .mp-intel-row,
+  .mp-flows-row,
+  .mp-correlation-row,
+  .welcome-horizontal-market,
+  .welcome-chart-overlay-header,
+  .welcome-section-header,
+  .welcome-section-header-collapsible,
+  .narrative-lifecycle-timeline,
+  .watchlist-header-row,
+  .watchlist-search-result,
+  .watchlist-picker-row,
+  .token-list-row,
+  .token-list-item,
+  .onchain-row,
+  .prediction-row,
+  .discovery-section-header,
+  .mp-summary-row,
+  .mp-card-footer,
+  .cab-tab-content,
+  .insight-row,
+  .welcome-tabs-bar,
+  .welcome-tabs-inner {
+    border-bottom: none !important;
+    border-top: none !important;
+  }
+
+  /* ── Intel/flow rows - remove full border ── */
+  .mp-intel-row,
+  .mp-flows-row,
+  .mp-correlation-row,
+  .mp-summary-row {
+    border: none !important;
+  }
+
+  /* ── Kill inset shadows creating hairlines ── */
+  .cwb-stat-card,
+  .mp-card,
+  .welcome-widget-input {
+    box-shadow: none !important;
+  }
+
+  /* ── Day mode mobile ── */
+  .app-day-mode .welcome-widget-input {
+    box-shadow: none !important;
+    border-color: rgba(0, 0, 0, 0.06) !important;
+  }
+
+  .app-day-mode .mp-card-header,
+  .app-day-mode .mp-scenario-header,
+  .app-day-mode .mp-intel-row,
+  .app-day-mode .welcome-horizontal-market,
+  .app-day-mode .welcome-chart-overlay-header,
+  .app-day-mode .narrative-lifecycle-timeline,
+  .app-day-mode .watchlist-header-row,
+  .app-day-mode .token-list-row,
+  .app-day-mode .welcome-tabs-bar {
+    border-bottom: none !important;
+    border-top: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   PERFORMANCE PASS 2 - Deep mobile optimization
+   Kill remaining backdrop-filters, heavy filter blurs, infinite animations,
+   and expensive transitions on scroll-child elements.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── 1. MOBILE HEADER - reduce blur cost ──
+     Header is fixed and renders on every page. 20px blur is expensive. */
+  .mobile-header {
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+  }
+
+  /* ── 2. MOBILE BOTTOM NAV - kill extreme blur + saturate + brightness ──
+     50px blur + saturate(200%) + brightness(1.1) is GPU murder.
+     Replace with lightweight translucent solid background. */
+  .mobile-bottom-nav-inner {
+    backdrop-filter: var(--m-blur-heavy) var(--m-saturate) !important;
+    -webkit-backdrop-filter: var(--m-blur-heavy) var(--m-saturate) !important;
+  }
+
+  /* ── 3. GLASS SELECT DROPDOWN - kill blur on popup ── */
+  .glass-select-dropdown {
+    backdrop-filter: var(--m-blur-heavy) !important;
+    -webkit-backdrop-filter: var(--m-blur-heavy) !important;
+  }
+
+  /* ── 4. CINEMA RESEARCH ZONE - kill all heavy blurs ── */
+  .research-zone-cinema,
+  .crz-hero-section,
+  .crz-panel,
+  .crz-card,
+  .crz-metric-card,
+  .crz-section-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* ── 6. RESEARCH ZONE LITE - kill all blurs ── */
+  .research-zone-lite,
+  .research-zone-lite-header,
+  .research-zone-lite-section,
+  .rz-lite-card,
+  .rz-metric-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* ── 7. RESEARCH ZONE PRO - kill blurs ── */
+  .research-zone-pro,
+  .rzp-panel,
+  .rzp-card,
+  .rzp-header {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* ── 8. TOKEN BANNER - kill blurs on banner overlays ── */
+  .token-banner,
+  .token-banner-content,
+  .token-banner-overlay {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* ── 9. TOKEN STORYBOOK - kill blurs ── */
+  .token-storybook,
+  .token-storybook-card,
+  .token-storybook-header {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* ── 10. RIGHT PANEL - kill blurs and animated filters ── */
+  .right-panel,
+  .right-panel-inner,
+  .banner-bg-blur {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .banner-bg-blur {
+    filter: none !important;
+    transition: opacity 0.3s ease !important; /* remove filter transition, keep opacity */
+  }
+
+  /* ── HEAVY FILTER BLUR KILLS ──
+     These CSS filter: blur() values are extremely expensive on mobile GPU.
+     Kill or dramatically reduce them. */
+
+  /* WelcomePage hero glow - 80px blur → kill on mobile */
+  .cinema-welcome-hero-glow,
+  .cinema-hero-glow,
+  .welcome-hero-glow {
+    filter: none !important;
+    opacity: 0 !important;
+  }
+
+  /* Welcome background orbs - 80px blur is GPU killer */
+  .welcome-bg::before,
+  .welcome-bg::after {
+    filter: none !important;
+    opacity: 0 !important;
+  }
+
+  /* Token banner background blurs */
+  .token-banner-bg-blur,
+  .banner-bg-blur,
+  .token-storybook-bg-blur {
+    filter: blur(8px) !important; /* reduce from 50-60px to 8px */
+  }
+
+  /* Research Zone Lite background glow elements */
+  .rz-bg-glow,
+  .rz-bg-glow-1,
+  .rz-bg-glow-2,
+  .rz-bg-glow-3,
+  .research-zone-lite-bg-glow,
+  .rzl-glow {
+    filter: none !important;
+    opacity: 0 !important;
+  }
+
+  /* Research Zone Lite ambient glow pseudo-elements (40-60px blurs) */
+  .research-zone-lite::before,
+  .research-zone-lite::after,
+  .research-zone-lite.day-mode::before,
+  .research-zone-lite.day-mode::after {
+    filter: none !important;
+    opacity: 0 !important;
+  }
+
+  /* Discover page background blur */
+  .discover-bg-glow,
+  .discover-hero-glow {
+    filter: none !important;
+    opacity: 0 !important;
+  }
+
+  /* ── KILL REMAINING INFINITE ANIMATIONS ──
+     Components not caught by the first kill list */
+
+  /* Cinema Research Zone infinite animations */
+  .crz-breathe,
+  .crz-logo-pulse,
+  .crz-intel-pulse,
+  [class*="crz-"][class*="pulse"],
+  [class*="crz-"][class*="breathe"] {
+    animation: none !important;
+  }
+
+  /* Smart Money Pulse infinite animations */
+  .smp-live-pulse,
+  .smp-signal-ping,
+  .smp-dot-pulse,
+  [class*="smp-"][class*="pulse"],
+  [class*="smp-"][class*="ping"] {
+    animation: none !important;
+  }
+
+  /* Research Zone Lite pulse */
+  .rz-trend-pulse,
+  [class*="rz-"][class*="pulse"] {
+    animation: none !important;
+  }
+
+  /* Token Banner infinite animations */
+  .token-avatar-ring,
+  .token-banner-pulse,
+  .token-banner-ring,
+  [class*="token-banner-"][class*="pulse"],
+  [class*="token-banner-"][class*="ring"] {
+    animation: none !important;
+  }
+
+  /* XBubbles page - all bubble/particle animations */
+  [class*="bubble-"][class*="float"],
+  [class*="bubble-"][class*="pulse"],
+  [class*="particle-"],
+  .xbubbles-particle,
+  .xbubbles-bubble {
+    animation: none !important;
+  }
+
+  /* ── TRANSITION CLEANUP ──
+     Kill expensive transition: all on scroll children.
+     Replace with targeted transitions only. */
+  .token-list-row,
+  .token-card,
+  .cinema-token-card,
+  .watchlist-item {
+    transition: background 0.15s ease, opacity 0.15s ease !important;
+  }
+
+  /* ── GPU COMPOSITING for scroll containers ──
+     Force compositing layers on main scroll areas. */
+  .cinema-category-scroll,
+  .token-list-screener,
+  .token-list-wrap,
+  .welcome-topcoins-content,
+  .watchlist-list,
+  .discover-grid,
+  .discover-sections {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: scroll-position;
+    contain: layout style;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ── CONTAIN on repeated card elements ──
+     Prevents layout recalculation from propagating to siblings */
+  .token-list-row,
+  .cinema-token-card,
+  .token-card,
+  .watchlist-item,
+  .discover-section {
+    contain: layout style paint;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   MOBILE DAY MODE - CINEMA / LANDING PAGE
+   Comprehensive light theme for all cinema-mode elements on mobile.
+   Ensures readability, consistent Apple-light palette, smooth scrolling.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ─────────────────────────────────────────────────────────
+     1. PAGE BASE - light background, remove dark overlays
+     ───────────────────────────────────────────────────────── */
+  .app-day-mode .cinema-welcome,
+  .welcome-day-mode .cinema-welcome {
+    background: #f5f5f7 !important;
+  }
+
+  .app-day-mode .cinema-welcome::before,
+  .welcome-day-mode .cinema-welcome::before {
+    opacity: 0.15 !important;
+  }
+
+  .app-day-mode .cinema-welcome-overlay,
+  .welcome-day-mode .cinema-welcome-overlay {
+    background: linear-gradient(
+      180deg,
+      rgba(245, 245, 247, 0.3) 0%,
+      rgba(245, 245, 247, 0.1) 30%,
+      rgba(245, 245, 247, 0.2) 60%,
+      rgba(245, 245, 247, 0.85) 100%
+    ) !important;
+  }
+
+  /* LiveChartBackground canvas - handled via JS dayMode prop */
+
+  /* ─────────────────────────────────────────────────────────
+     2. MOBILE HEADER - day mode glass
+     ───────────────────────────────────────────────────────── */
+  .app-day-mode .mobile-header,
+  .welcome-day-mode .mobile-header {
+    background: rgba(245, 245, 247, 0.92) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+  }
+
+  .app-day-mode .mobile-header-logo,
+  .welcome-day-mode .mobile-header-logo {
+    color: #1e293b !important;
+  }
+
+  .app-day-mode .mobile-header-btn,
+  .welcome-day-mode .mobile-header-btn {
+    color: #475569 !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     3. CINEMA WELCOME BAR - stat cards, price cards, profile
+     ───────────────────────────────────────────────────────── */
+  .app-day-mode .cinema-welcome-bar.cwb-storybook,
+  .welcome-day-mode .cinema-welcome-bar.cwb-storybook {
+    background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.92) 100%) !important;
+    border-bottom-color: rgba(0,0,0,0.06) !important;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06) !important;
+  }
+
+  /* Profile greeting */
+  .app-day-mode .cwb-profile-greeting,
+  .welcome-day-mode .cwb-profile-greeting {
+    color: #1e293b !important;
+  }
+
+  .app-day-mode .cwb-mood-line,
+  .welcome-day-mode .cwb-mood-line {
+    color: #64748b !important;
+  }
+
+  /* Stat cards (Fear & Greed, AltSeason, Dominance) */
+  .app-day-mode .cwb-stat-card,
+  .welcome-day-mode .cwb-stat-card {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .app-day-mode .cwb-stat-label,
+  .welcome-day-mode .cwb-stat-label {
+    color: rgba(0,0,0,0.45) !important;
+  }
+
+  .app-day-mode .cwb-stat-value,
+  .welcome-day-mode .cwb-stat-value {
+    color: #0f172a !important;
+  }
+
+  .app-day-mode .cwb-stat-sublabel,
+  .welcome-day-mode .cwb-stat-sublabel {
+    color: #64748b !important;
+  }
+
+  .app-day-mode .cwb-fng-range,
+  .welcome-day-mode .cwb-fng-range {
+    color: rgba(0,0,0,0.3) !important;
+  }
+
+  .app-day-mode .cwb-fng-indicator,
+  .welcome-day-mode .cwb-fng-indicator {
+    background: #1e293b !important;
+  }
+
+  .app-day-mode .cwb-dom-bar,
+  .welcome-day-mode .cwb-dom-bar {
+    background: rgba(0,0,0,0.06) !important;
+  }
+
+  .app-day-mode .cwb-dom-legend span,
+  .welcome-day-mode .cwb-dom-legend span {
+    color: #64748b !important;
+  }
+
+  /* Price cards */
+  .app-day-mode .cwb-price-card,
+  .welcome-day-mode .cwb-price-card {
+    background: rgba(255,255,255,0.7) !important;
+    border-color: rgba(0,0,0,0.06) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .app-day-mode .cwb-price-symbol,
+  .welcome-day-mode .cwb-price-symbol {
+    color: #1e293b !important;
+  }
+
+  .app-day-mode .cwb-price-value,
+  .welcome-day-mode .cwb-price-value {
+    color: #0f172a !important;
+  }
+
+  .app-day-mode .cwb-price-name,
+  .welcome-day-mode .cwb-price-name {
+    color: #94a3b8 !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     4. HERO TOKEN SECTION
+     ───────────────────────────────────────────────────────── */
+  .app-day-mode .cinema-hero-token,
+  .welcome-day-mode .cinema-hero-token {
+    background: linear-gradient(135deg, rgba(255,255,255,0.6) 0%, rgba(248,250,252,0.55) 60%, rgba(var(--brand-rgb),0.04) 100%) !important;
+    border-color: rgba(0,0,0,0.06) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.06) !important;
+  }
+
+  .app-day-mode .cinema-hero-overlay,
+  .welcome-day-mode .cinema-hero-overlay {
+    background: linear-gradient(180deg, rgba(245,245,247,0.3) 0%, rgba(245,245,247,0.5) 40%, rgba(245,245,247,0.92) 100%) !important;
+  }
+
+  .app-day-mode .cinema-hero-symbol,
+  .welcome-day-mode .cinema-hero-symbol {
+    color: #1e293b !important;
+    text-shadow: none !important;
+  }
+
+  .app-day-mode .cinema-hero-tagline,
+  .welcome-day-mode .cinema-hero-tagline {
+    color: #64748b !important;
+  }
+
+  .app-day-mode .cinema-hero-price-value,
+  .welcome-day-mode .cinema-hero-price-value {
+    color: #0f172a !important;
+  }
+
+  .app-day-mode .cinema-hero-rank-label,
+  .welcome-day-mode .cinema-hero-rank-label {
+    background: rgba(255,255,255,0.5) !important;
+    color: #64748b !important;
+  }
+
+  .app-day-mode .cinema-hero-exchange-badge,
+  .welcome-day-mode .cinema-hero-exchange-badge {
+    color: #64748b !important;
+    background: rgba(0,0,0,0.03) !important;
+    border-color: rgba(0,0,0,0.08) !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     5. TOP MOVERS RIBBON
+     ───────────────────────────────────────────────────────── */
+  .app-day-mode .cinema-gainers-row,
+  .welcome-day-mode .cinema-gainers-row {
+    background: rgba(255,255,255,0.5) !important;
+    border-color: rgba(0,0,0,0.06) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .app-day-mode .cinema-gainers-label,
+  .welcome-day-mode .cinema-gainers-label {
+    color: #64748b !important;
+  }
+
+  .app-day-mode .cinema-gainer-chip,
+  .welcome-day-mode .cinema-gainer-chip {
+    background: rgba(0,0,0,0.02) !important;
+    border-color: rgba(0,0,0,0.06) !important;
+  }
+
+  .app-day-mode .cinema-gainer-chip-symbol,
+  .welcome-day-mode .cinema-gainer-chip-symbol {
+    color: #1e293b !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     6. CATEGORY ROWS (Netflix-style scroll sections)
+     ───────────────────────────────────────────────────────── */
+  .app-day-mode .cinema-category-chapter-line,
+  .welcome-day-mode .cinema-category-chapter-line {
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.08), transparent) !important;
+  }
+
+  .app-day-mode .cinema-category-chapter-label,
+  .welcome-day-mode .cinema-category-chapter-label {
+    color: #94a3b8 !important;
+  }
+
+  .app-day-mode .cinema-category-title,
+  .welcome-day-mode .cinema-category-title {
+    color: #1e293b !important;
+  }
+
+  .app-day-mode .cinema-category-subtitle,
+  .welcome-day-mode .cinema-category-subtitle {
+    color: #94a3b8 !important;
+  }
+
+  .app-day-mode .cinema-category-count,
+  .welcome-day-mode .cinema-category-count {
+    color: #94a3b8 !important;
+  }
+
+  .app-day-mode .cinema-category-arrow,
+  .welcome-day-mode .cinema-category-arrow {
+    background: rgba(0,0,0,0.03) !important;
+    border-color: rgba(0,0,0,0.08) !important;
+    color: #64748b !important;
+  }
+
+  /* Edge fades match light bg */
+  .app-day-mode .cinema-category-fade--left,
+  .welcome-day-mode .cinema-category-fade--left {
+    background: linear-gradient(90deg, rgba(245,245,247,0.95) 0%, transparent 100%) !important;
+  }
+  .app-day-mode .cinema-category-fade--right,
+  .welcome-day-mode .cinema-category-fade--right {
+    background: linear-gradient(270deg, rgba(245,245,247,0.95) 0%, transparent 100%) !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     7. CINEMA TOKEN CARDS (horizontal scroll cards)
+     ───────────────────────────────────────────────────────── */
+  .app-day-mode .cinema-token-card,
+  .welcome-day-mode .cinema-token-card {
+    background: rgba(255,255,255,0.75) !important;
+    border-color: rgba(0,0,0,0.06) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04) !important;
+  }
+
+  .app-day-mode .cinema-token-card:active,
+  .welcome-day-mode .cinema-token-card:active {
+    background: rgba(0,0,0,0.03) !important;
+  }
+
+  .app-day-mode .cinema-token-card-symbol,
+  .welcome-day-mode .cinema-token-card-symbol {
+    color: #1e293b !important;
+  }
+
+  .app-day-mode .cinema-token-card-name,
+  .welcome-day-mode .cinema-token-card-name {
+    color: #94a3b8 !important;
+  }
+
+  .app-day-mode .cinema-token-card-price,
+  .welcome-day-mode .cinema-token-card-price {
+    color: #0f172a !important;
+  }
+
+  .app-day-mode .cinema-token-card-meta,
+  .welcome-day-mode .cinema-token-card-meta {
+    color: #94a3b8 !important;
+  }
+
+  .app-day-mode .cinema-token-card-bottom,
+  .welcome-day-mode .cinema-token-card-bottom {
+    border-top-color: rgba(0,0,0,0.04) !important;
+  }
+
+  .app-day-mode .cinema-token-card-star,
+  .welcome-day-mode .cinema-token-card-star {
+    color: rgba(0,0,0,0.2) !important;
+  }
+
+  /* Corner accent borders - softer on light */
+  .app-day-mode .cinema-token-card::before,
+  .welcome-day-mode .cinema-token-card::before {
+    border-top-color: rgba(var(--brand-rgb),0.2) !important;
+    border-left-color: rgba(var(--brand-rgb),0.2) !important;
+  }
+  .app-day-mode .cinema-token-card::after,
+  .welcome-day-mode .cinema-token-card::after {
+    border-bottom-color: rgba(var(--brand-rgb),0.2) !important;
+    border-right-color: rgba(var(--brand-rgb),0.2) !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     8. AI BRIEF SECTION
+     ───────────────────────────────────────────────────────── */
+  .app-day-mode .cab-container,
+  .welcome-day-mode .cab-container {
+    background: rgba(255,255,255,0.7) !important;
+    border-color: rgba(0,0,0,0.06) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .app-day-mode .cab-statement,
+  .welcome-day-mode .cab-statement {
+    color: #1e293b !important;
+  }
+
+  .app-day-mode .cab-quote-mark,
+  .welcome-day-mode .cab-quote-mark {
+    color: rgba(0,0,0,0.1) !important;
+  }
+
+  .app-day-mode .cab-attribution,
+  .welcome-day-mode .cab-attribution,
+  .app-day-mode .cab-timestamp,
+  .welcome-day-mode .cab-timestamp {
+    color: #94a3b8 !important;
+  }
+
+  .app-day-mode .cab-metric-chip,
+  .welcome-day-mode .cab-metric-chip {
+    background: rgba(255,255,255,0.75) !important;
+    border-color: rgba(0,0,0,0.07) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+  }
+
+  .app-day-mode .cab-metric-label,
+  .welcome-day-mode .cab-metric-label {
+    color: rgba(0,0,0,0.45) !important;
+  }
+
+  .app-day-mode .cab-metric-value,
+  .welcome-day-mode .cab-metric-value {
+    color: #0f172a !important;
+  }
+
+  .app-day-mode .cab-metric-sublabel,
+  .welcome-day-mode .cab-metric-sublabel {
+    color: #64748b !important;
+  }
+
+  .app-day-mode .cab-metric-change.positive,
+  .welcome-day-mode .cab-metric-change.positive {
+    color: #059669 !important;
+  }
+  .app-day-mode .cab-metric-change.negative,
+  .welcome-day-mode .cab-metric-change.negative {
+    color: #dc2626 !important;
+  }
+
+  .app-day-mode .cab-dot-fill,
+  .welcome-day-mode .cab-dot-fill {
+    background: rgba(0,0,0,0.15) !important;
+  }
+
+  .app-day-mode .cab-glow,
+  .welcome-day-mode .cab-glow {
+    opacity: 0.15 !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     9. COMMAND CENTER
+     ───────────────────────────────────────────────────────── */
+  .app-day-mode .cc-master-label,
+  .welcome-day-mode .cc-master-label {
+    color: #94a3b8 !important;
+  }
+
+  .app-day-mode .cc-master-title,
+  .welcome-day-mode .cc-master-title {
+    color: #1e293b !important;
+  }
+
+  .app-day-mode .cc-section,
+  .welcome-day-mode .cc-section {
+    background: rgba(255,255,255,0.7) !important;
+    border-color: rgba(0,0,0,0.06) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .app-day-mode .cc-chapter-line,
+  .welcome-day-mode .cc-chapter-line {
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.08), transparent) !important;
+  }
+
+  .app-day-mode .cc-chapter-title,
+  .welcome-day-mode .cc-chapter-title {
+    color: #1e293b !important;
+  }
+
+  .app-day-mode .cc-news-card,
+  .welcome-day-mode .cc-news-card {
+    background: rgba(0,0,0,0.02) !important;
+    border-color: rgba(0,0,0,0.04) !important;
+  }
+
+  .app-day-mode .cc-news-title,
+  .welcome-day-mode .cc-news-title {
+    color: #1e293b !important;
+  }
+
+  .app-day-mode .cc-news-source,
+  .welcome-day-mode .cc-news-source,
+  .app-day-mode .cc-news-time,
+  .welcome-day-mode .cc-news-time {
+    color: #94a3b8 !important;
+  }
+
+  .app-day-mode .cc-activity-item,
+  .welcome-day-mode .cc-activity-item {
+    background: rgba(0,0,0,0.02) !important;
+    border-color: rgba(0,0,0,0.04) !important;
+  }
+
+  .app-day-mode .cc-activity-token,
+  .welcome-day-mode .cc-activity-token {
+    color: #1e293b !important;
+  }
+
+  .app-day-mode .cc-activity-desc,
+  .welcome-day-mode .cc-activity-desc {
+    color: #64748b !important;
+  }
+
+  .app-day-mode .cc-alpha-card,
+  .welcome-day-mode .cc-alpha-card {
+    background: rgba(0,0,0,0.02) !important;
+    border-color: rgba(0,0,0,0.04) !important;
+  }
+
+  .app-day-mode .cc-alpha-headline,
+  .welcome-day-mode .cc-alpha-headline {
+    color: #1e293b !important;
+  }
+
+  .app-day-mode .cc-alpha-detail,
+  .welcome-day-mode .cc-alpha-detail {
+    color: #64748b !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     10. WATCHLIST SIDEBAR (collapsed on mobile, but style it)
+     ───────────────────────────────────────────────────────── */
+  .app-day-mode .cinema-watchlist-sidebar,
+  .welcome-day-mode .cinema-watchlist-sidebar {
+    background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.95) 100%) !important;
+    border-left-color: rgba(0,0,0,0.06) !important;
+  }
+
+  .app-day-mode .cinema-watchlist-title,
+  .welcome-day-mode .cinema-watchlist-title {
+    color: #1e293b !important;
+  }
+
+  .app-day-mode .cinema-watchlist-item,
+  .welcome-day-mode .cinema-watchlist-item {
+    background: rgba(0,0,0,0.02) !important;
+    border-color: rgba(0,0,0,0.06) !important;
+  }
+
+  .app-day-mode .cinema-watchlist-item-symbol,
+  .welcome-day-mode .cinema-watchlist-item-symbol {
+    color: #1e293b !important;
+  }
+
+  .app-day-mode .cinema-watchlist-item-price-value,
+  .welcome-day-mode .cinema-watchlist-item-price-value {
+    color: #0f172a !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     11. TOP COINS TABS + CONTROLS (day mode on mobile)
+     ───────────────────────────────────────────────────────── */
+  .app-day-mode .welcome-topcoins-header,
+  .welcome-day-mode .welcome-topcoins-header {
+    background: transparent !important;
+    border-color: rgba(0,0,0,0.06) !important;
+  }
+
+  .app-day-mode .welcome-topcoins-tabs,
+  .welcome-day-mode .welcome-topcoins-tabs {
+    background: transparent !important;
+    border: none !important;
+  }
+
+  .app-day-mode .welcome-topcoins-header-tab,
+  .welcome-day-mode .welcome-topcoins-header-tab {
+    color: #64748b !important;
+    background: transparent !important;
+    border: none !important;
+  }
+
+  .app-day-mode .welcome-topcoins-header-tab:hover,
+  .app-day-mode .welcome-topcoins-header-tab.active,
+  .welcome-day-mode .welcome-topcoins-header-tab:hover,
+  .welcome-day-mode .welcome-topcoins-header-tab.active {
+    color: #0f172a !important;
+    background: rgba(0,0,0,0.04) !important;
+  }
+
+  /* View toggle (list/grid) */
+  .app-day-mode .view-toggle,
+  .welcome-day-mode .view-toggle {
+    background: rgba(0,0,0,0.03) !important;
+    border: none !important;
+  }
+
+  .app-day-mode .view-toggle button,
+  .welcome-day-mode .view-toggle button {
+    color: #94a3b8 !important;
+  }
+
+  .app-day-mode .view-toggle button.active,
+  .welcome-day-mode .view-toggle button.active {
+    color: #1e293b !important;
+    background: rgba(0,0,0,0.06) !important;
+  }
+
+  /* GlassSelect day mode */
+  .app-day-mode .glass-select-trigger,
+  .welcome-day-mode .glass-select-trigger {
+    background: rgba(0,0,0,0.03) !important;
+    border-color: rgba(0,0,0,0.06) !important;
+    color: #1e293b !important;
+  }
+
+  .app-day-mode .glass-select-value,
+  .welcome-day-mode .glass-select-value {
+    color: #1e293b !important;
+  }
+
+  .app-day-mode .glass-select-dropdown,
+  .welcome-day-mode .glass-select-dropdown {
+    background: rgba(255,255,255,0.95) !important;
+    border-color: rgba(0,0,0,0.08) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12) !important;
+  }
+
+  .app-day-mode .glass-select-option,
+  .welcome-day-mode .glass-select-option {
+    color: #1e293b !important;
+  }
+
+  .app-day-mode .glass-select-option:hover,
+  .welcome-day-mode .glass-select-option:hover,
+  .app-day-mode .glass-select-option.selected,
+  .welcome-day-mode .glass-select-option.selected {
+    background: rgba(0,0,0,0.04) !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     12. MOBILE TOKEN VIEW TABS (AI Charts page)
+     ───────────────────────────────────────────────────────── */
+  .app-day-mode .mobile-token-view-tabs,
+  .welcome-day-mode .mobile-token-view-tabs {
+    background: rgba(255,255,255,0.92) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04) inset !important;
+  }
+
+  .app-day-mode .mobile-token-view-tab,
+  .welcome-day-mode .mobile-token-view-tab {
+    color: #94a3b8 !important;
+  }
+
+  .app-day-mode .mobile-token-view-tab.active,
+  .welcome-day-mode .mobile-token-view-tab.active {
+    color: #0f172a !important;
+    background: rgba(0,0,0,0.06) !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     13. DISCOVER PAGE - day mode mobile
+     ───────────────────────────────────────────────────────── */
+  .app-day-mode .discover-page,
+  .welcome-day-mode .discover-page {
+    background: #f5f5f7 !important;
+  }
+
+  .app-day-mode .discover-hero-label,
+  .welcome-day-mode .discover-hero-label {
+    color: #94a3b8 !important;
+  }
+
+  .app-day-mode .discover-hero-headline,
+  .welcome-day-mode .discover-hero-headline {
+    color: #1e293b !important;
+  }
+
+  .app-day-mode .discover-hero-subheadline,
+  .welcome-day-mode .discover-hero-subheadline {
+    color: #64748b !important;
+  }
+
+  /* Discover category title + subtitle */
+  .app-day-mode .category-title,
+  .welcome-day-mode .category-title,
+  .app-day-mode .discover-section-title,
+  .welcome-day-mode .discover-section-title {
+    color: #1e293b !important;
+  }
+
+  .app-day-mode .category-subtitle,
+  .welcome-day-mode .category-subtitle {
+    color: #94a3b8 !important;
+  }
+
+  /* Discover cards */
+  .app-day-mode .discover-card,
+  .welcome-day-mode .discover-card,
+  .app-day-mode .discover-page .cinema-token-card,
+  .welcome-day-mode .discover-page .cinema-token-card {
+    background: rgba(255,255,255,0.75) !important;
+    border-color: rgba(0,0,0,0.06) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04) !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     14. FONT CONSISTENCY - ensure Inter for body, Playfair for editorial
+     ───────────────────────────────────────────────────────── */
+
+  /* All day mode text defaults to Inter */
+  .app-day-mode .cinema-welcome,
+  .welcome-day-mode .cinema-welcome,
+  .app-day-mode .discover-page,
+  .welcome-day-mode .discover-page {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  }
+
+  /* Editorial headings - Playfair Display */
+  .app-day-mode .cinema-category-title,
+  .welcome-day-mode .cinema-category-title,
+  .app-day-mode .cc-master-title,
+  .welcome-day-mode .cc-master-title,
+  .app-day-mode .cwb-profile-greeting,
+  .welcome-day-mode .cwb-profile-greeting,
+  .app-day-mode .cinema-hero-symbol,
+  .welcome-day-mode .cinema-hero-symbol,
+  .app-day-mode .discover-hero-headline,
+  .welcome-day-mode .discover-hero-headline {
+    font-family: 'Playfair Display', Georgia, serif !important;
+  }
+
+  /* Data values - tabular nums, system font for clarity */
+  .app-day-mode .cwb-price-value,
+  .welcome-day-mode .cwb-price-value,
+  .app-day-mode .cwb-stat-value,
+  .welcome-day-mode .cwb-stat-value,
+  .app-day-mode .cinema-hero-price-value,
+  .welcome-day-mode .cinema-hero-price-value,
+  .app-day-mode .cinema-token-card-price,
+  .welcome-day-mode .cinema-token-card-price,
+  .app-day-mode .cab-metric-value,
+  .welcome-day-mode .cab-metric-value,
+  .app-day-mode .list-col.price,
+  .welcome-day-mode .list-col.price {
+    font-variant-numeric: tabular-nums !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     15. DAY MODE SCROLL PERFORMANCE
+     Kill all backdrop-filter on day mode (light bg doesn't need blur)
+     ───────────────────────────────────────────────────────── */
+  .app-day-mode .cinema-token-card,
+  .app-day-mode .cab-container,
+  .app-day-mode .cc-section,
+  .app-day-mode .cinema-hero-token,
+  .app-day-mode .cinema-gainers-row,
+  .app-day-mode .cwb-price-card,
+  .app-day-mode .cab-metric-chip,
+  .app-day-mode .discover-card,
+  .welcome-day-mode .cinema-token-card,
+  .welcome-day-mode .cab-container,
+  .welcome-day-mode .cc-section,
+  .welcome-day-mode .cinema-hero-token,
+  .welcome-day-mode .cinema-gainers-row,
+  .welcome-day-mode .cwb-price-card,
+  .welcome-day-mode .cab-metric-chip,
+  .welcome-day-mode .discover-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Sentiment bearish/bullish overlays - barely visible on light bg */
+  .app-day-mode.sentiment-bearish .cinema-welcome::before,
+  .welcome-day-mode.sentiment-bearish .cinema-welcome::before,
+  .app-day-mode.sentiment-bullish .cinema-welcome::before,
+  .welcome-day-mode.sentiment-bullish .cinema-welcome::before {
+    opacity: 0.08 !important;
+  }
+
+  /* ─── US Market + CME Gap – Mobile Stack ─── */
+  .welcome-widget-us-market-cme-row {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .welcome-widget-us-market,
+  .welcome-page .welcome-widget-cme-gap {
+    border-radius: 14px !important;
+    padding: 12px 14px !important;
+  }
+
+  .welcome-widget-us-market-icon-wrap {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+  }
+
+  .welcome-widget-us-market-icon-wrap svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .welcome-widget-us-market-time {
+    font-size: 0.8125rem !important;
+  }
+
+  .welcome-widget-cme-gap-icon-wrap {
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 6px !important;
+  }
+
+  .welcome-widget-cme-gap-icon-wrap svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  .welcome-widget-cme-gap-item {
+    padding: 6px 10px !important;
+    border-radius: 8px !important;
+  }
+
+  /* Horizontal bar – stack on mobile */
+  .welcome-horizontal-market-cme {
+    max-width: none !important;
+    padding: 0 8px !important;
+  }
+}
+
+/* ============================================================
+   MOBILE UTILITY CLASSES
+   Reusable helpers for mobile layouts. Use in component CSS or JSX.
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Vertical flex stack with mobile gap */
+  .m-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--m-md);
+  }
+
+  .m-stack--tight {
+    gap: var(--m-sm);
+  }
+
+  .m-stack--loose {
+    gap: var(--m-lg);
+  }
+
+  /* Apple HIG 44px minimum touch target enforcer */
+  .m-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Fixed bottom positioning (above bottom nav) */
+  .m-sticky-bottom {
+    position: fixed;
+    bottom: calc(var(--m-bottom-nav-h) + env(safe-area-inset-bottom, 0px));
+    left: 0;
+    right: 0;
+    z-index: 100;
+  }
+
+  /* Safe area bottom padding (for content above bottom nav) */
+  .m-safe-area {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}

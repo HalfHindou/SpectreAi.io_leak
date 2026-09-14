@@ -1,0 +1,631 @@
+/* ═══════════════════════════════════════════════════════
+   MonarchChart v2 — Immersive Interactive Chart
+   Stat cards · Type toggle · Hover tooltip · Timeline slider · Source pills
+   Apple Cinematic Design System
+   ═══════════════════════════════════════════════════════ */
+
+.monarch-chart-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-4);
+  margin-top: var(--sp-2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+/* ── Stat Cards Row ── */
+.monarch-chart-stats {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.monarch-chart-stats::-webkit-scrollbar { display: none; }
+
+.monarch-chart-stat {
+  flex: 1;
+  min-width: 92px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.045);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  transition: border-color 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              background 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.monarch-chart-stat:hover {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.025) 100%);
+  border-color: rgba(255, 255, 255, 0.07);
+  transform: translateY(-1px);
+}
+
+.monarch-chart-stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.42);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.monarch-chart-stat-value {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.98);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.monarch-chart-stat-detail {
+  font-size: 10px;
+  color: rgba(245, 245, 247, 0.4);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Header + Chart Type Toggle ── */
+.monarch-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: var(--sp-3);
+}
+
+.monarch-chart-header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.monarch-chart-title {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.95);
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.monarch-chart-source {
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.32);
+  font-style: normal;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+/* Chart Type Toggle — single connected pill, not 3 islands */
+.monarch-chart-type-toggle {
+  display: flex;
+  gap: 0;
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.025);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.045);
+  flex-shrink: 0;
+}
+
+.monarch-chart-type-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: rgba(245, 245, 247, 0.32);
+  cursor: pointer;
+  transition: color 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              background 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0;
+}
+
+.monarch-chart-type-btn:hover {
+  color: rgba(245, 245, 247, 0.7);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.monarch-chart-type-btn-active {
+  background: rgba(245, 245, 247, 0.09);
+  color: rgba(245, 245, 247, 0.95);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+              0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.monarch-chart-type-btn-active:hover {
+  color: rgba(245, 245, 247, 1);
+  background: rgba(245, 245, 247, 0.11);
+}
+
+/* ── Asset-chart variant (3-way: Spectre / Line / TradingView) ── */
+.monarch-chart-card-asset {
+  /* Tighter padding so the embedded chart canvas gets more usable area
+     inside a 400px search rail. Was 16; 12px on the horizontal sides
+     leaves ~376px of inner width which is enough for TradingView to
+     render without compression artifacts. */
+  padding: 12px;
+}
+
+/* Header controls cluster: mode toggle + timeframe pills.
+   At narrow widths (e.g. inside the 400px search rail), the mode toggle
+   and timeframe pills used to crash into each other. Now: the asset-
+   controls is its own column that the header lets wrap below the title.
+   Inside the cluster, mode + timeframe stack vertically with consistent
+   right-alignment so the right edge stays clean. */
+.monarch-chart-asset-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+/* Allow the parent header to wrap so controls drop below the title in a
+   narrow container without overflowing horizontally. */
+.monarch-chart-header {
+  flex-wrap: wrap;
+  row-gap: 10px;
+}
+
+/* When the card is narrower than ~440px (rail width), stack mode + tf
+   pills vertically so neither row overflows. */
+@media (max-width: 440px) {
+  .monarch-chart-asset-controls {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+}
+
+/* Same effect when the chart card sits inside a narrow grid track —
+   container queries aren't reliable in all targets, so use a class
+   hook the chart card sets when its bounding box is below threshold.
+   Until that lands, we rely on the search-engine rail at 400px having
+   enough room for one row of mode + tf via the row-gap above. */
+
+/* Render-mode toggle — text-button group (Spectre / Line / TradingView) */
+.monarch-chart-mode-toggle {
+  display: flex;
+  gap: 0;
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.025);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.045);
+  flex-shrink: 0;
+}
+
+.monarch-chart-mode-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: rgba(245, 245, 247, 0.42);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: color 180ms cubic-bezier(0.16, 1, 0.3, 1),
+              background 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.monarch-chart-mode-btn:hover {
+  color: rgba(245, 245, 247, 0.85);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.monarch-chart-mode-btn-active {
+  color: rgba(245, 245, 247, 1);
+  background: rgba(245, 245, 247, 0.10);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+              0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.monarch-chart-mode-btn-active:hover {
+  background: rgba(245, 245, 247, 0.13);
+}
+
+/* Error fallback inside the chart area */
+.monarch-chart-tv-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.4);
+  padding: 24px;
+  text-align: center;
+}
+
+.monarch-chart-tf-pills {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.025);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.045);
+  flex-shrink: 0;
+}
+
+.monarch-chart-tf-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 22px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: rgba(245, 245, 247, 0.45);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: color 180ms cubic-bezier(0.16, 1, 0.3, 1),
+              background 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.monarch-chart-tf-pill:hover {
+  color: rgba(245, 245, 247, 0.85);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.monarch-chart-tf-pill-active {
+  color: rgba(245, 245, 247, 1);
+  background: rgba(245, 245, 247, 0.10);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.monarch-chart-tf-pill-active:hover {
+  background: rgba(245, 245, 247, 0.13);
+}
+
+.monarch-chart-tf-expand {
+  min-width: 26px;
+  padding: 0 6px;
+  margin-left: 2px;
+}
+
+/* TradingView chart wrapper — give it a fixed minimum height and let it
+   resize naturally inside the bubble. Border-radius matches the parent
+   card so the chart doesn't break the glass aesthetic. */
+.monarch-chart-tv-wrap {
+  width: 100%;
+  /* Bumped 360 -> 440px. The chart was rendering visibly cut/squished
+     in the search-engine right rail because TradingView's internal
+     toolbar + axes consumed ~80px of the 360px outer, leaving only
+     ~280px of usable canvas. 440px gives the chart room to breathe at
+     the 380-400px rail width. Also bumped the inner card padding to
+     reduce ambient scroll pressure. */
+  min-height: 440px;
+  height: 440px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: transparent;
+  position: relative;
+  transition: opacity 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* While the next timeframe's bars are loading, keep the previous chart
+   visible but dim it ~30% so the user sees motion without blanking. */
+.monarch-chart-tv-wrap.is-loading {
+  opacity: 0.55;
+}
+
+/* Subtle progress shimmer along the top edge during refetch */
+.monarch-chart-tv-wrap.is-loading::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(245, 158, 11, 0.6) 50%,
+    transparent 100%);
+  background-size: 200% 100%;
+  animation: monarchTvShimmer 1.4s linear infinite;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.monarch-chart-tv-wrap > * {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* When MonarchChart is nested inside the asset wrap (Spectre/Line modes),
+   strip the inner card chrome so the canvas fills the 360px container. */
+.monarch-chart-tv-wrap .monarch-chart-card {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.monarch-chart-tv-wrap .monarch-chart-card-asset { padding: 0 !important; }
+.monarch-chart-tv-wrap .monarch-chart-stats,
+.monarch-chart-tv-wrap .monarch-chart-header,
+.monarch-chart-tv-wrap .monarch-chart-sources { display: none; }
+.monarch-chart-tv-wrap .monarch-chart-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.monarch-chart-tv-skeleton {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.02) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.02) 100%);
+  background-size: 200% 100%;
+  animation: monarchTvShimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes monarchTvShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.monarch-chart-type-icon { display: block; }
+
+/* Expand/Fullscreen button in chart header */
+.monarch-chart-expand-btn {
+  width: 28px !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.04) !important;
+  margin-left: 2px;
+}
+
+.monarch-chart-expand-btn:hover {
+  color: rgba(245, 245, 247, 0.8) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ── Legend ── */
+.monarch-chart-legend {
+  display: flex;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.monarch-chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+}
+
+.monarch-chart-legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Canvas ── */
+.monarch-chart-canvas {
+  width: 100%;
+  height: 220px;
+  display: block;
+  cursor: crosshair;
+}
+
+/* ── Timeline Slider ── */
+.monarch-chart-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-1) 0;
+}
+
+.monarch-chart-slider-label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  min-width: 36px;
+}
+
+.monarch-chart-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 9999px;
+  outline: none;
+  cursor: pointer;
+}
+
+.monarch-chart-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(245, 245, 247, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  cursor: grab;
+  transition: transform 0.15s ease;
+}
+
+.monarch-chart-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.monarch-chart-slider::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.1);
+}
+
+.monarch-chart-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(245, 245, 247, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  cursor: grab;
+}
+
+/* ── Source Pills ── */
+.monarch-chart-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: var(--sp-3);
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  margin-top: var(--sp-3);
+}
+
+.monarch-chart-source-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  transition: all 0.2s ease;
+}
+
+.monarch-chart-source-pill:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+}
+
+.monarch-chart-source-pill a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.monarch-chart-source-pill a:hover {
+  text-decoration: underline;
+}
+
+.monarch-chart-source-pill svg {
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+
+/* ═══════════════════════════════════════════
+   Day Mode
+   ═══════════════════════════════════════════ */
+
+.app.app-day-mode .monarch-chart-card {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.app.app-day-mode .monarch-chart-title { color: #0f172a; }
+.app.app-day-mode .monarch-chart-source { color: #94a3b8; }
+.app.app-day-mode .monarch-chart-legend-item { color: #475569; }
+
+/* Day mode: stat cards */
+.app.app-day-mode .monarch-chart-stat {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+.app.app-day-mode .monarch-chart-stat:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+.app.app-day-mode .monarch-chart-stat-label { color: #94a3b8; }
+.app.app-day-mode .monarch-chart-stat-value { color: #0f172a; }
+.app.app-day-mode .monarch-chart-stat-detail { color: #64748b; }
+
+/* Day mode: expand button */
+.app.app-day-mode .monarch-chart-expand-btn {
+  border-left-color: rgba(0, 0, 0, 0.06) !important;
+}
+.app.app-day-mode .monarch-chart-expand-btn:hover {
+  color: #0f172a !important;
+  background: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Day mode: chart type toggle */
+.app.app-day-mode .monarch-chart-type-toggle {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+.app.app-day-mode .monarch-chart-type-btn { color: rgba(15, 23, 42, 0.25); }
+.app.app-day-mode .monarch-chart-type-btn:hover { color: rgba(15, 23, 42, 0.5); background: rgba(0, 0, 0, 0.04); }
+.app.app-day-mode .monarch-chart-type-btn-active {
+  background: rgba(0, 0, 0, 0.06);
+  color: #0f172a;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Day mode: slider */
+.app.app-day-mode .monarch-chart-slider {
+  background: rgba(0, 0, 0, 0.06);
+}
+.app.app-day-mode .monarch-chart-slider::-webkit-slider-thumb {
+  background: #0f172a;
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.app.app-day-mode .monarch-chart-slider::-moz-range-thumb {
+  background: #0f172a;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+.app.app-day-mode .monarch-chart-slider-label { color: #64748b; }
+
+/* Day mode: source pills */
+.app.app-day-mode .monarch-chart-sources {
+  border-color: rgba(0, 0, 0, 0.04);
+}
+.app.app-day-mode .monarch-chart-source-pill {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: #64748b;
+}
+.app.app-day-mode .monarch-chart-source-pill:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #334155;
+}

@@ -1,0 +1,400 @@
+/* ═══════════════════════════════════════════════
+   Commodities tab — Vault Composition rich breakdown
+   Scoped styles (prefix: tac-) for the per-metal
+   composition card. Consumes the page glass tokens
+   (--ta-glass-*) so it renders identically to every
+   other tab. Every dark rule has a day-mode counterpart.
+   ═══════════════════════════════════════════════ */
+
+/* The whole composition section is a single canonical glass card. */
+.tac-vault {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ta-gap-section);
+  padding: var(--ta-pad-card-lg);
+}
+
+/* ── Header: title + dominance note + total ── */
+.tac-vault__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+.tac-vault__titles { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.tac-vault__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+.tac-vault__hint {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.tac-vault__total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  text-align: right;
+}
+.tac-vault__total-val {
+  font-family: var(--font-mono);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.tac-vault__total-lbl {
+  font-family: var(--font-body);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ── "Gold dominates the tokenized market today" note ── */
+.tac-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(245, 179, 65, 0.10) 0%, rgba(245, 179, 65, 0.03) 100%);
+  border: 1px solid rgba(245, 179, 65, 0.20);
+}
+.tac-note__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: #F5B341;
+  box-shadow: 0 0 0 3px rgba(245, 179, 65, 0.16);
+}
+.tac-note__text {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.tac-note__text strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.tac-note__text .mono { font-variant-numeric: tabular-nums; color: #F5B341; }
+
+/* ── Full-width stacked comparison bar ── */
+.tac-bar-wrap { display: flex; flex-direction: column; gap: var(--sp-2); }
+.tac-bar {
+  display: flex;
+  height: 56px;
+  width: 100%;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.02);
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.28), inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+}
+.tac-seg {
+  position: relative;
+  border: none;
+  padding: 0;
+  min-width: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: rgba(9, 9, 11, 0.92);
+  transition: opacity var(--duration-fast) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out),
+              filter var(--duration-fast) var(--ease-out);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+.tac-seg:hover { transform: translateY(-1px); filter: brightness(1.08); }
+.tac-seg.is-active { outline: 2px solid var(--text-primary); outline-offset: -2px; }
+.tac-seg__label {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(9, 9, 11, 0.9);
+  white-space: nowrap;
+  padding: 0 var(--sp-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tac-seg--pending {
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(245, 245, 247, 0.18) 0,
+    rgba(245, 245, 247, 0.18) 6px,
+    rgba(245, 245, 247, 0.06) 6px,
+    rgba(245, 245, 247, 0.06) 12px
+  );
+  box-shadow: inset 0 0 0 1px rgba(245, 245, 247, 0.20);
+}
+.tac-seg--pending .tac-seg__label { color: rgba(245, 245, 247, 0.72); font-style: italic; }
+.tac-bar-axis {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+.tac-bar-axis .mono { font-variant-numeric: tabular-nums; }
+
+/* ── Per-metal card grid — every sub-type is a distinct card ── */
+.tac-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(208px, 1fr));
+  gap: var(--sp-3);
+}
+.tac-metal {
+  --tac-accent: #64748B;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: var(--ta-pad-card);
+  text-align: left;
+  appearance: none;
+  cursor: pointer;
+  background: var(--ta-glass-bg-quiet);
+  border: 1px solid var(--ta-glass-border);
+  border-radius: var(--ta-glass-radius-sm);
+  box-shadow: var(--ta-glass-shadow-quiet);
+  transition: transform var(--duration-base) var(--ease-out),
+              border-color var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out);
+  overflow: hidden;
+}
+/* Left accent rail tinted to the metal color. */
+.tac-metal::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--tac-accent);
+  opacity: 0.85;
+}
+.tac-metal:hover {
+  transform: translateY(-2px);
+  border-color: var(--ta-glass-border-hover);
+  box-shadow: var(--ta-glass-shadow-hover);
+}
+.tac-metal.is-active {
+  border-color: var(--ta-glass-border-hover);
+  box-shadow: var(--ta-glass-shadow-hover);
+  background: var(--ta-glass-bg);
+}
+.tac-metal.is-dim { opacity: 0.45; }
+.tac-metal--pending { cursor: default; }
+.tac-metal--pending::before { opacity: 0.4; }
+
+.tac-metal__top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.tac-metal__dot {
+  flex: none;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--tac-accent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 0 3px rgba(255, 255, 255, 0.04);
+}
+.tac-metal__name {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tac-metal__badge {
+  margin-left: auto;
+  flex: none;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.tac-metal__badge--lead {
+  background: rgba(245, 179, 65, 0.16);
+  border: 1px solid rgba(245, 179, 65, 0.3);
+  color: #F5B341;
+}
+.tac-metal__badge--pending {
+  background: rgba(245, 245, 247, 0.05);
+  border: 1px dashed rgba(245, 245, 247, 0.24);
+  color: var(--text-muted);
+}
+.tac-metal__badge--audit {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  color: var(--amber);
+}
+
+.tac-metal__figures { display: flex; align-items: baseline; gap: 8px; }
+.tac-metal__pct {
+  font-family: var(--font-mono);
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.tac-metal__val {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Mini share track inside each card. */
+.tac-metal__track {
+  position: relative;
+  height: 5px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+.tac-metal__track-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: var(--radius-full);
+  background: var(--tac-accent);
+}
+.tac-metal--pending .tac-metal__track-fill {
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(245, 245, 247, 0.28) 0,
+    rgba(245, 245, 247, 0.28) 4px,
+    rgba(245, 245, 247, 0.10) 4px,
+    rgba(245, 245, 247, 0.10) 8px
+  );
+}
+
+.tac-metal__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.tac-metal__products {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+.tac-metal__products .mono { font-variant-numeric: tabular-nums; color: var(--text-tertiary); }
+.tac-metal__state {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+/* Skeleton grid (shimmer, never spinner). */
+.tac-skel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(208px, 1fr));
+  gap: var(--sp-3);
+}
+.tac-skel-card {
+  height: 132px;
+  border-radius: var(--ta-glass-radius-sm);
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.03) 100%);
+  background-size: 200% 100%;
+  animation: ta-skel-slide 2s linear infinite;
+}
+.tac-skel-bar {
+  height: 56px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.03) 100%);
+  background-size: 200% 100%;
+  animation: ta-skel-slide 2s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tac-skel-card, .tac-skel-bar { animation: none; }
+}
+
+@media (max-width: 768px) {
+  .tac-grid, .tac-skel-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .tac-vault { padding: var(--ta-pad-card); gap: var(--sp-4); }
+}
+
+/* ═══════════════════════════════════════════════
+   Day mode
+   ═══════════════════════════════════════════════ */
+.app.app-day-mode .tac-vault__title { color: #0F172A; }
+.app.app-day-mode .tac-vault__hint,
+.app.app-day-mode .tac-vault__total-lbl { color: #94A3B8; }
+.app.app-day-mode .tac-vault__total-val { color: #0F172A; }
+
+.app.app-day-mode .tac-note {
+  background: linear-gradient(135deg, rgba(245, 179, 65, 0.12) 0%, rgba(245, 179, 65, 0.04) 100%);
+  border-color: rgba(245, 179, 65, 0.30);
+}
+.app.app-day-mode .tac-note__text { color: #475569; }
+.app.app-day-mode .tac-note__text strong { color: #0F172A; }
+.app.app-day-mode .tac-note__text .mono { color: #B07B16; }
+
+.app.app-day-mode .tac-bar { background: rgba(0, 0, 0, 0.04); }
+.app.app-day-mode .tac-bar-axis { color: #94A3B8; }
+
+.app.app-day-mode .tac-metal {
+  background: #fcfcfd;
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.app.app-day-mode .tac-metal:hover,
+.app.app-day-mode .tac-metal.is-active {
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+.app.app-day-mode .tac-metal.is-active { background: #ffffff; }
+.app.app-day-mode .tac-metal__name { color: #0F172A; }
+.app.app-day-mode .tac-metal__pct { color: #0F172A; }
+.app.app-day-mode .tac-metal__val { color: #475569; }
+.app.app-day-mode .tac-metal__track { background: rgba(0, 0, 0, 0.06); }
+.app.app-day-mode .tac-metal__products,
+.app.app-day-mode .tac-metal__state { color: #94A3B8; }
+.app.app-day-mode .tac-metal__products .mono { color: #475569; }
+.app.app-day-mode .tac-metal__badge--lead {
+  background: rgba(245, 179, 65, 0.14);
+  border-color: rgba(245, 179, 65, 0.34);
+  color: #B07B16;
+}
+.app.app-day-mode .tac-metal__badge--pending {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.14);
+  color: #94A3B8;
+}
+.app.app-day-mode .tac-skel-card,
+.app.app-day-mode .tac-skel-bar {
+  background: linear-gradient(90deg,
+    rgba(0, 0, 0, 0.03) 0%, rgba(0, 0, 0, 0.06) 50%, rgba(0, 0, 0, 0.03) 100%);
+  background-size: 200% 100%;
+}

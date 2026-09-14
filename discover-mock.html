@@ -1,0 +1,1822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Spectre AI — Discover Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&display=swap" rel="stylesheet" />
+<style>
+/* ════════════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS — Spectre Terminal
+   ════════════════════════════════════════════════════════════════════════════ */
+:root {
+  --bg-void: #000000;
+  --bg-base: #08080d;
+  --bg-surface: #0e0e14;
+  --bg-elevated: #14141c;
+  --bg-overlay: #1a1a24;
+
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255,255,255,0.72);
+  --text-tertiary: rgba(255,255,255,0.48);
+  --text-muted: rgba(255,255,255,0.32);
+  --text-dim: rgba(255,255,255,0.18);
+
+  --bull: #10B981; --bull-bright: #34D399;
+  --bull-muted: rgba(16,185,129,0.12);
+  --bear: #EF4444; --bear-bright: #F87171;
+  --bear-muted: rgba(239,68,68,0.12);
+
+  --accent: #8B5CF6; --accent-s: #A78BFA; --accent-dim: rgba(139,92,246,0.08);
+  --accent-muted: rgba(139,92,246,0.12);
+  --accent-glow: rgba(139,92,246,0.4);
+
+  --btc: #f7931a; --eth: #627eea; --sol: #9945ff;
+  --amber: #fbbf24; --cyan: #06b6d4; --pink: #ec4899;
+
+  --font-glass: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+  --font-display: 'Space Grotesk', sans-serif;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --sidebar-w: 260px;
+  --header-h: 52px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-mono);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   AMBIENT BACKGROUND — Subtle grid + orbs
+   ════════════════════════════════════════════════════════════════════════════ */
+.ambient {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+}
+.ambient-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black, transparent 80%);
+}
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.12;
+  animation: orbFloat 20s ease-in-out infinite;
+}
+.ambient-orb.orb-1 { width: 400px; height: 400px; background: var(--accent); top: -10%; left: -5%; }
+.ambient-orb.orb-2 { width: 300px; height: 300px; background: var(--cyan); top: 40%; right: -8%; animation-delay: -7s; }
+.ambient-orb.orb-3 { width: 250px; height: 250px; background: var(--bull); bottom: -5%; left: 30%; animation-delay: -13s; }
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(12px, -18px) scale(1.05); }
+  66% { transform: translate(-8px, 10px) scale(0.95); }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   TOP HEADER BAR — Thin terminal strip
+   ════════════════════════════════════════════════════════════════════════════ */
+.top-bar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--header-h);
+  background: linear-gradient(180deg, rgba(8,8,13,0.97) 0%, rgba(8,8,13,0.94) 100%);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  backdrop-filter: blur(24px) saturate(1.2);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 16px;
+}
+/* 6-color scanline */
+.top-bar::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    var(--btc) 0%, var(--btc) 16.66%,
+    var(--eth) 16.66%, var(--eth) 33.33%,
+    var(--sol) 33.33%, var(--sol) 50%,
+    var(--bull) 50%, var(--bull) 66.66%,
+    var(--bear) 66.66%, var(--bear) 83.33%,
+    var(--accent) 83.33%, var(--accent) 100%);
+  opacity: 0.5;
+}
+.top-bar-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-display);
+  font-size: 15px; font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+.top-bar-logo .logo-icon {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--accent) 0%, rgba(139,92,246,0.4) 100%);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.top-bar-logo .logo-icon::before {
+  content: '◆';
+  font-size: 12px;
+  color: white;
+}
+.top-bar-nav {
+  display: flex; gap: 2px;
+  margin-left: 24px;
+}
+.top-bar-nav-btn {
+  padding: 7px 14px;
+  font-family: var(--font-mono);
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.top-bar-nav-btn:hover {
+  color: var(--text-secondary);
+  background: rgba(255,255,255,0.03);
+}
+.top-bar-nav-btn.active {
+  color: var(--accent-s);
+  background: rgba(139,92,246,0.06);
+  border-color: rgba(139,92,246,0.2);
+}
+.top-bar-nav-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 20%; right: 20%;
+  height: 1px;
+  background: var(--accent);
+}
+.top-bar-spacer { flex: 1; }
+.top-bar-clock {
+  font-size: 11px; font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.top-bar-status {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--bull);
+}
+.top-bar-status .pulse {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--bull);
+  box-shadow: 0 0 8px var(--bull);
+  animation: livePulse 2s ease-in-out infinite;
+}
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   LAYOUT — Sidebar + Main
+   ════════════════════════════════════════════════════════════════════════════ */
+.shell {
+  display: flex;
+  min-height: 100vh;
+  padding-top: var(--header-h);
+  position: relative;
+  z-index: 1;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   LEFT SIDEBAR — Navigation + Search
+   ════════════════════════════════════════════════════════════════════════════ */
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  position: fixed;
+  top: var(--header-h);
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(180deg, rgba(10,10,16,0.98) 0%, rgba(6,6,10,0.99) 100%);
+  border-right: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 50;
+}
+/* Subtle left-edge accent */
+.sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 1px;
+  background: linear-gradient(180deg, var(--accent) 0%, transparent 40%, transparent 60%, rgba(139,92,246,0.3) 100%);
+  opacity: 0.3;
+}
+
+/* ── Search Module ── */
+.sidebar-search {
+  padding: 16px 14px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  position: relative;
+}
+.search-container {
+  position: relative;
+}
+.search-icon {
+  position: absolute;
+  left: 12px; top: 50%;
+  transform: translateY(-50%);
+  width: 14px; height: 14px;
+  color: var(--text-dim);
+  pointer-events: none;
+  transition: color 0.2s;
+}
+.search-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 40px 0 36px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 2px;
+  outline: none;
+  transition: all 0.25s var(--ease);
+  letter-spacing: 0.02em;
+}
+.search-input::placeholder {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+.search-input:focus {
+  background: rgba(139,92,246,0.04);
+  border-color: rgba(139,92,246,0.3);
+  box-shadow: 0 0 0 3px rgba(139,92,246,0.08), inset 0 0 20px rgba(139,92,246,0.03);
+}
+.search-input:focus ~ .search-icon {
+  color: var(--accent-s);
+}
+.search-shortcut {
+  position: absolute;
+  right: 10px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+}
+
+/* ── Quick Filters (below search) ── */
+.search-filters {
+  display: flex;
+  gap: 4px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.search-filter-chip {
+  padding: 4px 10px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.search-filter-chip:hover {
+  color: var(--text-secondary);
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.1);
+}
+.search-filter-chip.active {
+  color: var(--accent-s);
+  background: rgba(139,92,246,0.08);
+  border-color: rgba(139,92,246,0.25);
+}
+
+/* ── Sidebar Navigation ── */
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+.sidebar-nav::-webkit-scrollbar { width: 3px; }
+.sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 4px; }
+
+.nav-section {
+  padding: 0 10px;
+  margin-bottom: 4px;
+}
+.nav-section-label {
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 12px 10px 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.nav-section-label .line {
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.04);
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  border: 1px solid transparent;
+}
+.nav-item:hover {
+  background: rgba(255,255,255,0.03);
+}
+.nav-item.active {
+  background: rgba(139,92,246,0.06);
+  border-color: rgba(139,92,246,0.15);
+}
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 20%; bottom: 20%;
+  width: 2px;
+  background: var(--accent);
+  border-radius: 0 2px 2px 0;
+}
+.nav-item-icon {
+  width: 16px; height: 16px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  transition: color 0.15s;
+  font-size: 12px;
+}
+.nav-item.active .nav-item-icon { color: var(--accent-s); }
+.nav-item:hover .nav-item-icon { color: var(--text-tertiary); }
+.nav-item-text {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  transition: color 0.15s;
+}
+.nav-item.active .nav-item-text { color: var(--text-secondary); font-weight: 600; }
+.nav-item:hover .nav-item-text { color: var(--text-secondary); }
+.nav-item-badge {
+  margin-left: auto;
+  font-size: 8px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 2px;
+  letter-spacing: 0.5px;
+}
+.nav-item-badge.live {
+  color: var(--bull);
+  background: var(--bull-muted);
+}
+.nav-item-badge.new {
+  color: var(--accent-s);
+  background: var(--accent-muted);
+}
+.nav-item-badge.count {
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.04);
+}
+.nav-item-badge.soon {
+  color: var(--text-dim);
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  font-style: italic;
+}
+
+/* ── Sidebar Footer ── */
+.sidebar-footer {
+  padding: 12px 14px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sidebar-session {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sidebar-avatar {
+  width: 28px; height: 28px;
+  border-radius: 3px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(59,130,246,0.1));
+  border: 1px solid rgba(139,92,246,0.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700;
+  color: var(--accent-s);
+  position: relative;
+}
+.sidebar-avatar::before {
+  content: '';
+  position: absolute; top: 1px; left: 1px;
+  width: 5px; height: 5px;
+  border-top: 1px solid rgba(139,92,246,0.4);
+  border-left: 1px solid rgba(139,92,246,0.4);
+}
+.sidebar-avatar::after {
+  content: '';
+  position: absolute; bottom: 1px; right: 1px;
+  width: 5px; height: 5px;
+  border-bottom: 1px solid rgba(139,92,246,0.4);
+  border-right: 1px solid rgba(139,92,246,0.4);
+}
+.sidebar-session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.sidebar-session-name {
+  font-family: var(--font-glass);
+  font-size: 11px; font-weight: 600;
+  color: var(--text-secondary);
+}
+.sidebar-session-meta {
+  font-size: 8px;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   MAIN CONTENT
+   ════════════════════════════════════════════════════════════════════════════ */
+.main {
+  flex: 1;
+  margin-left: var(--sidebar-w);
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - var(--header-h));
+}
+
+/* ── Command Search Bar (Hero) ── */
+.search-hero {
+  padding: 40px 32px 24px;
+  position: relative;
+}
+.search-hero-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.search-hero-tag {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent-s);
+  opacity: 0.6;
+}
+.search-hero-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(139,92,246,0.15), transparent 60%);
+}
+
+.search-hero-box {
+  position: relative;
+  max-width: 780px;
+}
+.search-hero-input {
+  width: 100%;
+  height: 54px;
+  padding: 0 160px 0 52px;
+  font-family: var(--font-glass);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: linear-gradient(180deg, rgba(14,14,22,0.95) 0%, rgba(10,10,16,0.98) 100%);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 2px;
+  outline: none;
+  transition: all 0.3s var(--ease);
+  letter-spacing: -0.01em;
+}
+.search-hero-input::placeholder {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+.search-hero-input:focus {
+  border-color: rgba(139,92,246,0.35);
+  background: linear-gradient(180deg, rgba(139,92,246,0.03) 0%, rgba(10,10,16,0.98) 100%);
+  box-shadow:
+    0 0 0 4px rgba(139,92,246,0.06),
+    0 8px 32px rgba(0,0,0,0.3),
+    inset 0 0 40px rgba(139,92,246,0.02);
+}
+.search-hero-icon {
+  position: absolute;
+  left: 18px; top: 50%;
+  transform: translateY(-50%);
+  width: 18px; height: 18px;
+  color: var(--text-dim);
+  transition: color 0.2s;
+  pointer-events: none;
+}
+.search-hero-input:focus ~ .search-hero-icon {
+  color: var(--accent-s);
+}
+.search-hero-actions {
+  position: absolute;
+  right: 8px; top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.search-hero-cmd {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 4px 8px;
+  border-radius: 3px;
+}
+.search-hero-submit {
+  height: 36px;
+  padding: 0 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent) 0%, rgba(139,92,246,0.7) 100%);
+  border: 1px solid rgba(139,92,246,0.4);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.search-hero-submit:hover {
+  background: linear-gradient(135deg, rgba(167,139,250,0.9) 0%, var(--accent) 100%);
+  box-shadow: 0 4px 20px rgba(139,92,246,0.3);
+}
+
+/* Scope + AI buttons below search */
+.search-scope-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.search-scope-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: 0.03em;
+}
+.search-scope-chip:hover {
+  color: var(--text-secondary);
+  border-color: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+}
+.search-scope-chip.active {
+  color: var(--accent-s);
+  background: rgba(139,92,246,0.06);
+  border-color: rgba(139,92,246,0.2);
+}
+.search-scope-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+}
+.search-scope-dot.all { background: var(--accent); }
+.search-scope-dot.crypto { background: var(--btc); }
+.search-scope-dot.stocks { background: var(--bull); }
+.search-scope-dot.onchain { background: var(--cyan); }
+.search-scope-dot.predictions { background: var(--amber); }
+.search-scope-sep {
+  width: 1px; height: 16px;
+  background: rgba(255,255,255,0.06);
+  margin: 0 4px;
+}
+.search-ai-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent-s);
+  background: linear-gradient(135deg, rgba(139,92,246,0.06), rgba(139,92,246,0.02));
+  border: 1px solid rgba(139,92,246,0.15);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.04em;
+}
+.search-ai-chip:hover {
+  background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(139,92,246,0.04));
+  border-color: rgba(139,92,246,0.3);
+  box-shadow: 0 0 16px rgba(139,92,246,0.1);
+}
+.search-ai-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+  animation: livePulse 2s ease-in-out infinite;
+}
+
+/* ── Trending Tickers — live tape under search ── */
+.trending-tape {
+  padding: 0 32px;
+  margin-bottom: 20px;
+}
+.trending-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.trending-label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.trending-live {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--bull);
+  box-shadow: 0 0 6px var(--bull);
+  animation: livePulse 2s ease-in-out infinite;
+}
+.trending-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.03);
+}
+.trending-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+.trending-row::-webkit-scrollbar { height: 2px; }
+.trending-row::-webkit-scrollbar-track { background: transparent; }
+.trending-row::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); }
+
+.trending-token {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(255,255,255,0.015);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.trending-token:hover {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.1);
+  transform: translateY(-1px);
+}
+.trending-token-rank {
+  font-size: 8px;
+  font-weight: 800;
+  color: var(--text-dim);
+  min-width: 12px;
+}
+.trending-token-logo {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.trending-token-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.trending-token-sym {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+}
+.trending-token-name {
+  font-family: var(--font-glass);
+  font-size: 9px;
+  color: var(--text-dim);
+}
+.trending-token-price {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+.trending-token-val {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.trending-token-chg {
+  font-size: 9px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.trending-token-chg.up { color: var(--bull-bright); }
+.trending-token-chg.dn { color: var(--bear-bright); }
+
+/* ── Content Area — Table Zone ── */
+.content-zone {
+  flex: 1;
+  padding: 0 32px 32px;
+}
+
+/* Content Toolbar */
+.content-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.toolbar-tab {
+  padding: 6px 14px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.toolbar-tab:hover {
+  color: var(--text-secondary);
+  background: rgba(255,255,255,0.02);
+}
+.toolbar-tab.active {
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.08);
+}
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toolbar-view-btn {
+  width: 30px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 2px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.toolbar-view-btn:hover { color: var(--text-secondary); border-color: rgba(255,255,255,0.1); }
+.toolbar-view-btn.active {
+  color: var(--accent-s);
+  background: rgba(139,92,246,0.06);
+  border-color: rgba(139,92,246,0.2);
+}
+.toolbar-sort {
+  padding: 5px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: 0.03em;
+  -webkit-appearance: none;
+}
+.toolbar-sort:hover { border-color: rgba(255,255,255,0.12); color: var(--text-secondary); }
+
+/* ── Token Table ── */
+.token-table {
+  width: 100%;
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 2px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.01);
+}
+
+.token-table-header {
+  display: grid;
+  grid-template-columns: 42px 2.2fr 1.1fr 0.9fr 0.9fr 0.9fr 1fr 1.2fr 80px;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.th {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: color 0.15s;
+  user-select: none;
+}
+.th:hover { color: var(--text-tertiary); }
+.th.right { justify-content: flex-end; }
+.th.center { justify-content: center; }
+.th .sort-arrow {
+  font-size: 7px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.th:hover .sort-arrow { opacity: 1; }
+
+/* Table rows */
+.token-row {
+  display: grid;
+  grid-template-columns: 42px 2.2fr 1.1fr 0.9fr 0.9fr 0.9fr 1fr 1.2fr 80px;
+  gap: 8px;
+  padding: 14px 20px;
+  align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.025);
+  transition: all 0.15s ease;
+  cursor: pointer;
+  position: relative;
+}
+.token-row::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: transparent;
+  transition: background 0.2s;
+}
+.token-row:hover {
+  background: rgba(139,92,246,0.03);
+}
+.token-row:hover::before {
+  background: var(--accent);
+}
+.token-row:last-child { border-bottom: none; }
+
+.tr-rank {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.tr-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tr-logo {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+.tr-name-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.tr-symbol {
+  font-family: var(--font-glass);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.tr-fullname {
+  font-size: 10px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tr-price {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.tr-change {
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.tr-change.up { color: var(--bull-bright); }
+.tr-change.dn { color: var(--bear-bright); }
+.tr-mcap, .tr-vol {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.tr-spark {
+  display: flex;
+  justify-content: center;
+}
+.tr-spark svg {
+  width: 56px;
+  height: 20px;
+}
+.tr-spark polyline {
+  fill: none;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── Pagination ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px 0;
+}
+.pagination-btn {
+  padding: 7px 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.pagination-btn:hover:not(:disabled) {
+  color: var(--text-secondary);
+  border-color: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+}
+.pagination-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.pagination-info {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.pagination-page {
+  font-weight: 700;
+  color: var(--accent-s);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SEARCH RESULTS OVERLAY (appears when typing)
+   ════════════════════════════════════════════════════════════════════════════ */
+.search-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0; right: 0;
+  background: linear-gradient(180deg, rgba(14,14,22,0.98) 0%, rgba(10,10,16,0.99) 100%);
+  border: 1px solid rgba(139,92,246,0.2);
+  border-radius: 2px;
+  max-height: 420px;
+  overflow-y: auto;
+  z-index: 200;
+  box-shadow:
+    0 16px 64px rgba(0,0,0,0.6),
+    0 0 0 1px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  display: none;
+}
+.search-results.visible { display: block; }
+
+.search-results::-webkit-scrollbar { width: 4px; }
+.search-results::-webkit-scrollbar-track { background: transparent; }
+.search-results::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.2); border-radius: 4px; }
+
+.sr-section {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.sr-section:last-child { border-bottom: none; }
+.sr-section-label {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 4px 16px;
+}
+.sr-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.sr-item:hover {
+  background: rgba(139,92,246,0.05);
+}
+.sr-item-logo {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+.sr-item-info {
+  flex: 1;
+  min-width: 0;
+}
+.sr-item-name {
+  font-family: var(--font-glass);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.sr-item-name .highlight {
+  color: var(--accent-s);
+  font-weight: 700;
+}
+.sr-item-meta {
+  font-size: 9px;
+  color: var(--text-dim);
+  display: flex;
+  gap: 8px;
+}
+.sr-item-price {
+  text-align: right;
+}
+.sr-item-price-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.sr-item-price-chg {
+  font-size: 9px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.sr-item-price-chg.up { color: var(--bull-bright); }
+.sr-item-price-chg.dn { color: var(--bear-bright); }
+
+/* AI Suggestion inside search results */
+.sr-ai-suggestion {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.04), rgba(139,92,246,0.01));
+  border: 1px solid rgba(139,92,246,0.1);
+  margin: 8px 12px;
+  border-radius: 2px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.sr-ai-icon {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--accent-muted);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--accent-s);
+}
+.sr-ai-text {
+  font-family: var(--font-glass);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.sr-ai-text strong {
+  color: var(--accent-s);
+  font-weight: 700;
+}
+
+/* Search recent / popular */
+.sr-recent-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px 4px;
+}
+.sr-recent-clear {
+  font-size: 9px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.sr-recent-clear:hover { color: var(--accent-s); }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SIDEBAR SEARCH RESULTS (compact)
+   ════════════════════════════════════════════════════════════════════════════ */
+.sidebar-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: rgba(14,14,22,0.98);
+  border: 1px solid rgba(139,92,246,0.2);
+  border-radius: 2px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 200;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.6);
+  display: none;
+}
+.sidebar-results.visible { display: block; }
+
+.sbr-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.sbr-item:hover { background: rgba(139,92,246,0.05); }
+.sbr-item-logo {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.sbr-item-sym {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.sbr-item-chg {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.sbr-item-chg.up { color: var(--bull-bright); }
+.sbr-item-chg.dn { color: var(--bear-bright); }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ════════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 1100px) {
+  .token-table-header, .token-row {
+    grid-template-columns: 36px 2fr 1fr 0.9fr 0.9fr 1fr 70px;
+  }
+  /* Hide 24h change and 7d change, merge into one */
+  .hide-md { display: none; }
+}
+@media (max-width: 900px) {
+  :root { --sidebar-w: 220px; }
+  .search-hero { padding: 24px 20px 16px; }
+  .trending-tape { padding: 0 20px; }
+  .content-zone { padding: 0 20px 20px; }
+}
+@media (max-width: 700px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; }
+  .search-hero-input { padding-right: 60px; }
+  .search-hero-cmd { display: none; }
+  .token-table-header, .token-row {
+    grid-template-columns: 30px 2fr 1fr 0.8fr 60px;
+  }
+  .hide-sm { display: none; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ════════════════════════════════════════════════════════════════════════════ */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn 0.5s var(--ease) backwards; }
+.fade-in-1 { animation-delay: 0.05s; }
+.fade-in-2 { animation-delay: 0.1s; }
+.fade-in-3 { animation-delay: 0.15s; }
+.fade-in-4 { animation-delay: 0.2s; }
+.fade-in-5 { animation-delay: 0.25s; }
+
+/* Row stagger */
+.token-row { animation: fadeIn 0.35s var(--ease) backwards; }
+.token-row:nth-child(1) { animation-delay: 0.05s; }
+.token-row:nth-child(2) { animation-delay: 0.08s; }
+.token-row:nth-child(3) { animation-delay: 0.11s; }
+.token-row:nth-child(4) { animation-delay: 0.14s; }
+.token-row:nth-child(5) { animation-delay: 0.17s; }
+.token-row:nth-child(6) { animation-delay: 0.20s; }
+.token-row:nth-child(7) { animation-delay: 0.23s; }
+.token-row:nth-child(8) { animation-delay: 0.26s; }
+.token-row:nth-child(9) { animation-delay: 0.29s; }
+.token-row:nth-child(10) { animation-delay: 0.32s; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SCROLLBAR
+   ════════════════════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.1); }
+</style>
+</head>
+<body>
+
+<!-- Ambient Background -->
+<div class="ambient">
+  <div class="ambient-grid"></div>
+  <div class="ambient-orb orb-1"></div>
+  <div class="ambient-orb orb-2"></div>
+  <div class="ambient-orb orb-3"></div>
+</div>
+
+<!-- ══ TOP HEADER BAR ══ -->
+<header class="top-bar">
+  <div class="top-bar-logo">
+    <div class="logo-icon"></div>
+    Spectre
+  </div>
+  <nav class="top-bar-nav">
+    <button class="top-bar-nav-btn" onclick="window.location.href='welcome-widget-mock.html'">Home</button>
+    <button class="top-bar-nav-btn active">Discover</button>
+    <button class="top-bar-nav-btn">Research</button>
+    <button class="top-bar-nav-btn">Portfolio</button>
+  </nav>
+  <div class="top-bar-spacer"></div>
+  <span class="top-bar-clock" id="top-clock">22:18:45</span>
+  <div class="top-bar-status">
+    <span class="pulse"></span>
+    Live
+  </div>
+</header>
+
+<!-- ══ LAYOUT SHELL ══ -->
+<div class="shell">
+
+  <!-- ══ LEFT SIDEBAR ══ -->
+  <aside class="sidebar">
+
+    <!-- Search in sidebar -->
+    <div class="sidebar-search">
+      <div class="search-container">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" type="text" id="sidebar-search" placeholder="Quick search..." autocomplete="off" />
+        <span class="search-shortcut">⌘K</span>
+        <div class="sidebar-results" id="sidebar-results">
+          <div class="sbr-item">
+            <img class="sbr-item-logo" src="https://assets.coingecko.com/coins/images/1/small/bitcoin.png" alt="" />
+            <span class="sbr-item-sym">BTC</span>
+            <span class="sbr-item-chg up">+2.3%</span>
+          </div>
+          <div class="sbr-item">
+            <img class="sbr-item-logo" src="https://assets.coingecko.com/coins/images/279/small/ethereum.png" alt="" />
+            <span class="sbr-item-sym">ETH</span>
+            <span class="sbr-item-chg dn">-1.1%</span>
+          </div>
+          <div class="sbr-item">
+            <img class="sbr-item-logo" src="https://assets.coingecko.com/coins/images/4128/small/solana.png" alt="" />
+            <span class="sbr-item-sym">SOL</span>
+            <span class="sbr-item-chg up">+4.5%</span>
+          </div>
+        </div>
+      </div>
+      <div class="search-filters">
+        <span class="search-filter-chip active">All</span>
+        <span class="search-filter-chip">Tokens</span>
+        <span class="search-filter-chip">Pairs</span>
+        <span class="search-filter-chip">News</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+
+      <div class="nav-section">
+        <div class="nav-section-label">Markets <span class="line"></span></div>
+        <div class="nav-item active">
+          <span class="nav-item-icon">◈</span>
+          <span class="nav-item-text">Top Coins</span>
+          <span class="nav-item-badge count">250</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-item-icon">◇</span>
+          <span class="nav-item-text">On-Chain</span>
+          <span class="nav-item-badge live">Live</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-item-icon">⬡</span>
+          <span class="nav-item-text">Predictions</span>
+          <span class="nav-item-badge new">New</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-item-icon">▣</span>
+          <span class="nav-item-text">Sectors</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-label">Intelligence <span class="line"></span></div>
+        <div class="nav-item">
+          <span class="nav-item-icon">◉</span>
+          <span class="nav-item-text">AI Screener</span>
+          <span class="nav-item-badge new">Beta</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-item-icon">⊡</span>
+          <span class="nav-item-text">Whale Tracker</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-item-icon">◎</span>
+          <span class="nav-item-text">Heat Map</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-item-icon">⊞</span>
+          <span class="nav-item-text">Compare</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-label">Tools <span class="line"></span></div>
+        <div class="nav-item">
+          <span class="nav-item-icon">⌗</span>
+          <span class="nav-item-text">Watchlist</span>
+          <span class="nav-item-badge count">12</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-item-icon">⚡</span>
+          <span class="nav-item-text">Alerts</span>
+          <span class="nav-item-badge soon">Soon</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-item-icon">⬢</span>
+          <span class="nav-item-text">Portfolio</span>
+          <span class="nav-item-badge soon">Soon</span>
+        </div>
+      </div>
+
+    </nav>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+      <div class="sidebar-session">
+        <div class="sidebar-avatar">S</div>
+        <div class="sidebar-session-info">
+          <span class="sidebar-session-name">Sunny</span>
+          <span class="sidebar-session-meta">Active · Operator</span>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ══ MAIN CONTENT ══ -->
+  <main class="main">
+
+    <!-- Search Hero -->
+    <div class="search-hero fade-in fade-in-1">
+      <div class="search-hero-label">
+        <span class="search-hero-tag">Discover Terminal</span>
+        <span class="search-hero-line"></span>
+      </div>
+
+      <div class="search-hero-box">
+        <input class="search-hero-input" type="text" id="main-search" placeholder="Search tokens, protocols, pairs, addresses..." autocomplete="off" />
+        <svg class="search-hero-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <div class="search-hero-actions">
+          <span class="search-hero-cmd">⌘K</span>
+          <button class="search-hero-submit">Search</button>
+        </div>
+
+        <!-- Search Results Dropdown -->
+        <div class="search-results" id="main-search-results">
+          <div class="sr-ai-suggestion">
+            <span class="sr-ai-icon">◆</span>
+            <div class="sr-ai-text">
+              <strong>AI Insight:</strong> Based on your search, SOL has seen a 12.4% volume spike in the last 4h with unusual whale accumulation. Worth investigating the on-chain flow.
+            </div>
+          </div>
+          <div class="sr-section">
+            <div class="sr-recent-header">
+              <span class="sr-section-label">Tokens</span>
+            </div>
+            <div class="sr-item">
+              <img class="sr-item-logo" src="https://assets.coingecko.com/coins/images/4128/small/solana.png" alt="" />
+              <div class="sr-item-info">
+                <div class="sr-item-name"><span class="highlight">Sol</span>ana</div>
+                <div class="sr-item-meta"><span>SOL</span> <span>Rank #5</span> <span>L1</span></div>
+              </div>
+              <div class="sr-item-price">
+                <div class="sr-item-price-val">$176.42</div>
+                <div class="sr-item-price-chg up">+4.56%</div>
+              </div>
+            </div>
+            <div class="sr-item">
+              <img class="sr-item-logo" src="https://assets.coingecko.com/coins/images/1/small/bitcoin.png" alt="" />
+              <div class="sr-item-info">
+                <div class="sr-item-name">Bitcoin</div>
+                <div class="sr-item-meta"><span>BTC</span> <span>Rank #1</span> <span>Store of Value</span></div>
+              </div>
+              <div class="sr-item-price">
+                <div class="sr-item-price-val">$96,432</div>
+                <div class="sr-item-price-chg up">+2.34%</div>
+              </div>
+            </div>
+            <div class="sr-item">
+              <img class="sr-item-logo" src="https://assets.coingecko.com/coins/images/279/small/ethereum.png" alt="" />
+              <div class="sr-item-info">
+                <div class="sr-item-name">Ethereum</div>
+                <div class="sr-item-meta"><span>ETH</span> <span>Rank #2</span> <span>Smart Contracts</span></div>
+              </div>
+              <div class="sr-item-price">
+                <div class="sr-item-price-val">$2,681</div>
+                <div class="sr-item-price-chg dn">-1.12%</div>
+              </div>
+            </div>
+          </div>
+          <div class="sr-section">
+            <span class="sr-section-label">On-Chain</span>
+            <div class="sr-item">
+              <div class="sr-item-logo" style="background: linear-gradient(135deg, rgba(153,69,255,0.3), rgba(20,241,149,0.2)); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color: var(--sol);">◈</div>
+              <div class="sr-item-info">
+                <div class="sr-item-name">SOL/USDC</div>
+                <div class="sr-item-meta"><span>Raydium</span> <span>Solana</span> <span>$48M vol</span></div>
+              </div>
+              <div class="sr-item-price">
+                <div class="sr-item-price-val">$176.38</div>
+                <div class="sr-item-price-chg up">+4.51%</div>
+              </div>
+            </div>
+          </div>
+          <div class="sr-section">
+            <span class="sr-section-label">Predictions</span>
+            <div class="sr-item">
+              <div class="sr-item-logo" style="background: rgba(251,191,36,0.1); display:flex; align-items:center; justify-content:center; font-size:12px;">⬡</div>
+              <div class="sr-item-info">
+                <div class="sr-item-name">Will SOL reach $200 by March?</div>
+                <div class="sr-item-meta"><span>Polymarket</span> <span>$2.1M volume</span></div>
+              </div>
+              <div class="sr-item-price">
+                <div class="sr-item-price-val" style="color: var(--bull-bright);">67% Yes</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="search-scope-row">
+        <div class="search-scope-chip active">
+          <span class="search-scope-dot all"></span>
+          All
+        </div>
+        <div class="search-scope-chip">
+          <span class="search-scope-dot crypto"></span>
+          Crypto
+        </div>
+        <div class="search-scope-chip">
+          <span class="search-scope-dot stocks"></span>
+          Stocks
+        </div>
+        <div class="search-scope-chip">
+          <span class="search-scope-dot onchain"></span>
+          On-Chain
+        </div>
+        <div class="search-scope-chip">
+          <span class="search-scope-dot predictions"></span>
+          Predictions
+        </div>
+        <div class="search-scope-sep"></div>
+        <div class="search-ai-chip">
+          <span class="search-ai-dot"></span>
+          AI Search
+        </div>
+      </div>
+    </div>
+
+    <!-- Trending Tickers Tape -->
+    <div class="trending-tape fade-in fade-in-2">
+      <div class="trending-header">
+        <span class="trending-live"></span>
+        <span class="trending-label">Trending Now</span>
+        <span class="trending-line"></span>
+      </div>
+      <div class="trending-row" id="trending-row">
+        <!-- JS populated -->
+      </div>
+    </div>
+
+    <!-- Content Zone -->
+    <div class="content-zone fade-in fade-in-3">
+
+      <!-- Toolbar -->
+      <div class="content-toolbar">
+        <div class="toolbar-left">
+          <button class="toolbar-tab active">All Tokens</button>
+          <button class="toolbar-tab">Gainers</button>
+          <button class="toolbar-tab">Losers</button>
+          <button class="toolbar-tab">New</button>
+          <button class="toolbar-tab">Trending</button>
+        </div>
+        <div class="toolbar-right">
+          <button class="toolbar-view-btn active" title="List view">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="14" y2="8"/><line x1="2" y1="12" x2="14" y2="12"/></svg>
+          </button>
+          <button class="toolbar-view-btn" title="Grid view">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+          </button>
+          <select class="toolbar-sort">
+            <option>Market Cap ↓</option>
+            <option>Price ↓</option>
+            <option>24h Change ↓</option>
+            <option>Volume ↓</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Token Table -->
+      <div class="token-table">
+        <div class="token-table-header">
+          <div class="th"># <span class="sort-arrow">▼</span></div>
+          <div class="th">Name <span class="sort-arrow">▼</span></div>
+          <div class="th right">Price <span class="sort-arrow">▼</span></div>
+          <div class="th right">24h <span class="sort-arrow">▼</span></div>
+          <div class="th right hide-md">7d <span class="sort-arrow">▼</span></div>
+          <div class="th right hide-sm">Market Cap <span class="sort-arrow">▼</span></div>
+          <div class="th right hide-sm">Volume <span class="sort-arrow">▼</span></div>
+          <div class="th right hide-md">Mcap <span class="sort-arrow">▼</span></div>
+          <div class="th center">7d Chart</div>
+        </div>
+        <div id="token-rows">
+          <!-- JS populated -->
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination">
+        <button class="pagination-btn" disabled>← Prev</button>
+        <span class="pagination-info">Page <span class="pagination-page">1</span> of 25</span>
+        <button class="pagination-btn">Next →</button>
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+//  CLOCK
+// ══════════════════════════════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const s = String(now.getSeconds()).padStart(2, '0');
+  document.getElementById('top-clock').textContent = `${h}:${m}:${s}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ══════════════════════════════════════════════════════════════════
+//  MOCK DATA
+// ══════════════════════════════════════════════════════════════════
+const TOKENS = [
+  { rank: 1, sym: 'BTC', name: 'Bitcoin', logo: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png', price: 96432, chg24: 2.34, chg7d: 5.12, mcap: '1.91T', vol: '42.8B', spark: [14,12,13,10,9,10,7,6,4,3,2], color: '#34d399' },
+  { rank: 2, sym: 'ETH', name: 'Ethereum', logo: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png', price: 2681, chg24: -1.12, chg7d: -3.45, mcap: '322.5B', vol: '18.2B', spark: [3,4,3,5,4,7,6,9,10,13,14], color: '#f87171' },
+  { rank: 3, sym: 'XRP', name: 'Ripple', logo: 'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png', price: 2.78, chg24: 1.89, chg7d: 8.34, mcap: '160.2B', vol: '8.4B', spark: [12,10,11,8,7,6,5,4,5,3,2], color: '#34d399' },
+  { rank: 4, sym: 'BNB', name: 'BNB', logo: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png', price: 654.20, chg24: 0.87, chg7d: 2.15, mcap: '94.1B', vol: '2.1B', spark: [8,9,7,8,6,7,5,6,4,5,3], color: '#34d399' },
+  { rank: 5, sym: 'SOL', name: 'Solana', logo: 'https://assets.coingecko.com/coins/images/4128/small/solana.png', price: 176.42, chg24: 4.56, chg7d: 12.34, mcap: '85.6B', vol: '6.8B', spark: [15,13,14,11,10,9,7,5,4,2,1], color: '#34d399' },
+  { rank: 6, sym: 'DOGE', name: 'Dogecoin', logo: 'https://assets.coingecko.com/coins/images/5/small/dogecoin.png', price: 0.2648, chg24: -2.31, chg7d: -5.67, mcap: '38.9B', vol: '3.2B', spark: [4,5,3,6,5,8,7,10,11,13,14], color: '#f87171' },
+  { rank: 7, sym: 'ADA', name: 'Cardano', logo: 'https://assets.coingecko.com/coins/images/975/small/cardano.png', price: 0.812, chg24: 3.12, chg7d: 7.89, mcap: '28.7B', vol: '1.8B', spark: [13,11,12,9,8,7,6,5,4,3,2], color: '#34d399' },
+  { rank: 8, sym: 'AVAX', name: 'Avalanche', logo: 'https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png', price: 38.94, chg24: -0.45, chg7d: 1.23, mcap: '15.8B', vol: '892M', spark: [7,8,6,7,8,6,7,5,6,5,6], color: '#f87171' },
+  { rank: 9, sym: 'LINK', name: 'Chainlink', logo: 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png', price: 19.87, chg24: 5.67, chg7d: 14.56, mcap: '12.5B', vol: '1.4B', spark: [14,12,13,10,8,7,5,4,3,2,1], color: '#34d399' },
+  { rank: 10, sym: 'DOT', name: 'Polkadot', logo: 'https://assets.coingecko.com/coins/images/12171/small/polkadot.png', price: 7.42, chg24: 1.23, chg7d: 4.56, mcap: '10.2B', vol: '456M', spark: [10,9,10,8,7,6,5,4,5,3,4], color: '#34d399' },
+];
+
+const TRENDING = [
+  { rank: '01', sym: 'SOL', name: 'Solana', logo: 'https://assets.coingecko.com/coins/images/4128/small/solana.png', price: '$176.42', chg: '+4.56%', up: true },
+  { rank: '02', sym: 'LINK', name: 'Chainlink', logo: 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png', price: '$19.87', chg: '+5.67%', up: true },
+  { rank: '03', sym: 'ADA', name: 'Cardano', logo: 'https://assets.coingecko.com/coins/images/975/small/cardano.png', price: '$0.812', chg: '+3.12%', up: true },
+  { rank: '04', sym: 'BTC', name: 'Bitcoin', logo: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png', price: '$96,432', chg: '+2.34%', up: true },
+  { rank: '05', sym: 'XRP', name: 'Ripple', logo: 'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png', price: '$2.78', chg: '+1.89%', up: true },
+  { rank: '06', sym: 'DOGE', name: 'Dogecoin', logo: 'https://assets.coingecko.com/coins/images/5/small/dogecoin.png', price: '$0.2648', chg: '-2.31%', up: false },
+  { rank: '07', sym: 'PEPE', name: 'Pepe', logo: 'https://assets.coingecko.com/coins/images/29850/small/pepe-token.jpeg', price: '$0.00001241', chg: '+8.92%', up: true },
+  { rank: '08', sym: 'SUI', name: 'Sui', logo: 'https://assets.coingecko.com/coins/images/26375/small/sui_asset.jpeg', price: '$3.42', chg: '+6.78%', up: true },
+];
+
+// ══════════════════════════════════════════════════════════════════
+//  RENDER TRENDING
+// ══════════════════════════════════════════════════════════════════
+const trendingRow = document.getElementById('trending-row');
+TRENDING.forEach(t => {
+  trendingRow.innerHTML += `
+    <div class="trending-token">
+      <span class="trending-token-rank">${t.rank}</span>
+      <img class="trending-token-logo" src="${t.logo}" alt="" />
+      <div class="trending-token-info">
+        <span class="trending-token-sym">${t.sym}</span>
+        <span class="trending-token-name">${t.name}</span>
+      </div>
+      <div class="trending-token-price">
+        <span class="trending-token-val">${t.price}</span>
+        <span class="trending-token-chg ${t.up ? 'up' : 'dn'}">${t.chg}</span>
+      </div>
+    </div>
+  `;
+});
+
+// ══════════════════════════════════════════════════════════════════
+//  RENDER TOKEN TABLE
+// ══════════════════════════════════════════════════════════════════
+const tokenRows = document.getElementById('token-rows');
+TOKENS.forEach(t => {
+  const sparkPoints = t.spark.map((v, i) => `${i * (56/10)},${v}`).join(' ');
+  const priceStr = t.price >= 1000
+    ? '$' + t.price.toLocaleString('en-US')
+    : t.price >= 1
+    ? '$' + t.price.toFixed(2)
+    : '$' + t.price.toFixed(4);
+
+  tokenRows.innerHTML += `
+    <div class="token-row">
+      <span class="tr-rank">${t.rank}</span>
+      <div class="tr-name">
+        <img class="tr-logo" src="${t.logo}" alt="" />
+        <div class="tr-name-text">
+          <span class="tr-symbol">${t.sym}</span>
+          <span class="tr-fullname">${t.name}</span>
+        </div>
+      </div>
+      <span class="tr-price">${priceStr}</span>
+      <span class="tr-change ${t.chg24 >= 0 ? 'up' : 'dn'}">${t.chg24 >= 0 ? '+' : ''}${t.chg24.toFixed(2)}%</span>
+      <span class="tr-change hide-md ${t.chg7d >= 0 ? 'up' : 'dn'}">${t.chg7d >= 0 ? '+' : ''}${t.chg7d.toFixed(2)}%</span>
+      <span class="tr-mcap hide-sm">${t.mcap}</span>
+      <span class="tr-vol hide-sm">${t.vol}</span>
+      <span class="tr-mcap hide-md">${t.mcap}</span>
+      <div class="tr-spark">
+        <svg viewBox="0 0 56 16"><polyline points="${sparkPoints}" stroke="${t.color}" /></svg>
+      </div>
+    </div>
+  `;
+});
+
+// ══════════════════════════════════════════════════════════════════
+//  SEARCH INTERACTION
+// ══════════════════════════════════════════════════════════════════
+const mainSearch = document.getElementById('main-search');
+const mainResults = document.getElementById('main-search-results');
+const sidebarSearch = document.getElementById('sidebar-search');
+const sidebarResults = document.getElementById('sidebar-results');
+
+// Main search
+mainSearch.addEventListener('focus', () => {
+  mainResults.classList.add('visible');
+});
+mainSearch.addEventListener('blur', () => {
+  setTimeout(() => mainResults.classList.remove('visible'), 200);
+});
+mainSearch.addEventListener('input', (e) => {
+  if (e.target.value.length > 0) {
+    mainResults.classList.add('visible');
+  }
+});
+
+// Sidebar search
+sidebarSearch.addEventListener('focus', () => {
+  sidebarResults.classList.add('visible');
+});
+sidebarSearch.addEventListener('blur', () => {
+  setTimeout(() => sidebarResults.classList.remove('visible'), 200);
+});
+
+// ⌘K keyboard shortcut — focus search
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    mainSearch.focus();
+  }
+});
+
+// Nav item clicks
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+  });
+});
+
+// Filter chip clicks
+document.querySelectorAll('.search-filter-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.search-filter-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+  });
+});
+
+// Scope chip clicks
+document.querySelectorAll('.search-scope-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.search-scope-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+  });
+});
+
+// Toolbar tab clicks
+document.querySelectorAll('.toolbar-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.toolbar-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+  });
+});
+
+// View toggle
+document.querySelectorAll('.toolbar-view-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.toolbar-view-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════
+//  SCANLINE ON SIDEBAR (subtle)
+// ══════════════════════════════════════════════════════════════════
+const sidebar = document.querySelector('.sidebar');
+if (sidebar) {
+  const scanline = document.createElement('div');
+  scanline.style.cssText = 'position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(139,92,246,0.08),transparent);pointer-events:none;z-index:10;animation:sidebarScan 6s linear infinite;';
+  sidebar.appendChild(scanline);
+  const style = document.createElement('style');
+  style.textContent = '@keyframes sidebarScan{0%{top:0}100%{top:100%}}';
+  document.head.appendChild(style);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,440 @@
+/* RzEarningsBanner — "Next Earnings" band above the stock chart.
+   Pro glass language (same treatment as cc-earnings-panel): one restrained
+   surface, near-invisible border, warm-white type, numbers in tabular figures.
+   Urgency is carried by scale + weight, never by a colour wash — there is no
+   red tint, no red text and no accent bar anywhere in this file.
+
+   Layout: a WRAPPING flex row. Every child is either shrink-safe (min-width: 0)
+   or free to move to the next line, so the band reflows at any container width
+   and at any browser zoom instead of overflowing its rounded surface.
+
+   flex: 0 0 auto is load-bearing, not decoration. The band's parent
+   (.research-zone-lite-center) is a flex COLUMN scroller whose content is
+   ~2x the viewport, so the default flex-shrink: 1 let the column squeeze this
+   band vertically (measured: 87px of content crushed into a 65px box, the
+   remainder clipped). Raising browser zoom shortens the CSS viewport, deepens
+   the overflow and squeezes it further - that is the ">90% zoom" break. */
+
+.rze-banner {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 26px;
+  margin: 0 0 14px;
+  padding: 14px 18px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid var(--border-default);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-inner);
+  transition: border-color var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out);
+}
+
+/* the whole header row is the open/close control (founder: "open close?") */
+.rze-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px 18px;
+  flex-wrap: wrap;
+  flex: 1 1 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rze-chevron {
+  margin-left: auto;
+  color: rgba(245, 245, 247, 0.4);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.rze-banner:not(.rze-banner--closed) .rze-chevron { transform: rotate(180deg); }
+.rze-banner--closed { padding-top: 11px; padding-bottom: 11px; }
+.app.app-day-mode .rze-chevron { color: rgba(15, 23, 42, 0.4); }
+
+/* ── Proximity tiers — surface weight only ───────────────────────────────── */
+.rze-banner--imminent {
+  border-color: var(--border-strong);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.065) 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+.rze-banner--past {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.012) 100%);
+}
+
+/* ── Anchor: kicker + countdown ──────────────────────────────────────────── */
+.rze-lead {
+  flex: 0 0 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rze-kicker {
+  font-size: 0.56rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.rze-count {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.rze-count b {
+  font-size: 2.1rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.rze-count i {
+  font-style: normal;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.rze-banner--far .rze-count b,
+.rze-banner--past .rze-count b { color: var(--text-secondary); }
+
+/* Same proximity ramp as the hero rail (see the RzHeroEarnings block below for
+   the reasoning) — the two faces must never disagree about urgency. */
+.rze-banner--imminent .rze-count b { color: var(--amber); }
+.rze-banner--near .rze-count b { color: rgba(245, 158, 11, 0.78); }
+
+/* ── Date ────────────────────────────────────────────────────────────────── */
+.rze-when {
+  flex: 0 0 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.rze-when b {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.rze-when i {
+  font-style: normal;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ── Gap risk: a small neutral chip + one quiet line ─────────────────────── */
+.rze-risk {
+  flex: 1 1 250px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+/* Renders on the imminent tier only, so it carries the warning hue outright —
+   and must match .rzh-earn-chip exactly, or the desktop and mobile faces of the
+   same print disagree about how urgent it is. */
+.rze-chip {
+  flex: 0 0 auto;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.1);
+  font-size: 0.57rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--amber);
+  white-space: nowrap;
+}
+.rze-risk-note {
+  margin: 0;
+  flex: 1 1 180px;
+  min-width: 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--text-tertiary);
+  overflow-wrap: anywhere;
+}
+
+/* ── Street estimates ────────────────────────────────────────────────────── */
+.rze-ests {
+  flex: 0 0 auto;
+  margin-left: auto;
+  display: flex;
+  gap: 22px;
+}
+
+/* A far-out print has no gap-risk note, so nothing occupied the middle and the
+   band read as two islands with a void between them. With no risk block the
+   date takes auto margins on both sides, so the three groups distribute across
+   the full width instead of clumping left with the estimates pinned right. */
+.rze-banner:not(:has(.rze-risk)) .rze-when {
+  margin-inline: auto;
+}
+.rze-est {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.rze-est i {
+  font-style: normal;
+  font-size: 0.56rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.rze-est b {
+  font-size: 0.86rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Narrow container / high browser zoom ────────────────────────────────── */
+@media (max-width: 720px) {
+  .rze-banner { gap: 10px 18px; padding: 13px 15px; }
+  /* Once the row wraps, auto margins would strand the date on its own line. */
+  .rze-banner:not(:has(.rze-risk)) .rze-when { margin-inline: 0; }
+  .rze-count b { font-size: 1.7rem; }
+  .rze-when b { font-size: 0.88rem; }
+  .rze-risk { flex-basis: 100%; }
+  .rze-ests {
+    margin-left: 0;
+    width: 100%;
+    gap: 26px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-subtle);
+  }
+}
+
+/* ── Day mode ────────────────────────────────────────────────────────────── */
+.app.app-day-mode .rze-banner {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.62) 100%);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.app.app-day-mode .rze-banner--imminent {
+  border-color: rgba(15, 23, 42, 0.16);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.7) 100%);
+}
+.app.app-day-mode .rze-banner--past {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.34) 100%);
+}
+.app.app-day-mode .rze-count b,
+.app.app-day-mode .rze-when b,
+.app.app-day-mode .rze-est b { color: #0f172a; }
+.app.app-day-mode .rze-banner--far .rze-count b,
+.app.app-day-mode .rze-banner--past .rze-count b { color: rgba(15, 23, 42, 0.62); }
+/* Amber-500 on white fails contrast, so day mode drops to amber-700. */
+.app.app-day-mode .rze-banner--imminent .rze-count b { color: #b45309; }
+.app.app-day-mode .rze-banner--near .rze-count b { color: rgba(180, 83, 9, 0.85); }
+.app.app-day-mode .rze-chip {
+  border-color: rgba(180, 83, 9, 0.3);
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+}
+.app.app-day-mode .rze-risk-note { color: rgba(15, 23, 42, 0.55); }
+.app.app-day-mode .rze-kicker,
+.app.app-day-mode .rze-count i,
+.app.app-day-mode .rze-when i,
+.app.app-day-mode .rze-est i { color: rgba(15, 23, 42, 0.42); }
+.app.app-day-mode .rze-ests { border-top-color: rgba(15, 23, 42, 0.07); }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   RzHeroEarnings — the same print, rendered inside the hero banner.
+
+   Not a scaled-down band: the band is a standalone surface that owns its row,
+   this one shares the hero row with the identity block and the price, so it is
+   a single line of label-over-value cells in the same language as the left
+   rail's stat tiles. It wraps as ONE unit (the hero is a wrapping flex row) —
+   never internally, which is what made the band read as two islands.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.rzh-earn {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+  padding: 9px 16px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.018) 100%);
+  border: 1px solid var(--border-default);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-inner);
+}
+
+/* Proximity carries weight, never colour — same rule as the band. */
+.rzh-earn--imminent {
+  border-color: var(--border-strong);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+.rzh-earn--past {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.028) 0%, rgba(255, 255, 255, 0.012) 100%);
+}
+
+.rzh-earn-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.rzh-earn-cell i {
+  font-style: normal;
+  font-size: 0.54rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.rzh-earn-cell b {
+  font-size: 0.86rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The countdown is the anchor: it outsizes its neighbours instead of tinting. */
+.rzh-earn-cell--lead b {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+.rzh-earn-cell--lead b em {
+  font-style: normal;
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.rzh-earn--far .rzh-earn-cell--lead b,
+.rzh-earn--past .rzh-earn-cell--lead b { color: var(--text-secondary); }
+
+/* ── Proximity colour ────────────────────────────────────────────────────────
+   The ONE place hue is allowed in this file, and it is semantic, not decoration:
+   amber is the design system's warning channel, and an earnings print is the one
+   scheduled event that gaps a position straight through a stop. So intensity
+   tracks proximity — full amber inside the gap-risk window, a calmer amber while
+   it approaches, and NO hue at all beyond a month out, which is why most tickers
+   stay warm-white. Colour lands on the countdown digits only; the surface,
+   border and labels stay neutral (a red-tinted slab + accent bar was the version
+   the founder rejected, and this must not drift back into one). */
+.rzh-earn--imminent .rzh-earn-cell--lead b { color: var(--amber); }
+.rzh-earn--near .rzh-earn-cell--lead b { color: rgba(245, 158, 11, 0.78); }
+
+/* Gap risk: the band carries the full sentence, the hero carries the chip and
+   hands the sentence over on hover — the hero has no room for a paragraph.
+   The chip only ever renders on the imminent tier, so it carries the warning
+   hue outright rather than a proximity ramp. */
+.rzh-earn-chip {
+  flex: 0 0 auto;
+  align-self: center;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.1);
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--amber);
+  white-space: nowrap;
+  cursor: default;
+}
+
+/* Narrow hero (collapsed sidebars off, small viewport): drop the estimates
+   rather than let the row squeeze the countdown into two lines. */
+@media (max-width: 1100px) {
+  .rzh-earn { gap: 14px; padding: 8px 13px; }
+  .rzh-earn-cell--lead b { font-size: 1.05rem; }
+}
+
+/* ── Day mode ────────────────────────────────────────────────────────────── */
+.app.app-day-mode .rzh-earn {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.62) 100%);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.app.app-day-mode .rzh-earn--imminent {
+  border-color: rgba(15, 23, 42, 0.16);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.7) 100%);
+}
+.app.app-day-mode .rzh-earn--past {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.34) 100%);
+}
+.app.app-day-mode .rzh-earn-cell b { color: #0f172a; }
+.app.app-day-mode .rzh-earn--far .rzh-earn-cell--lead b,
+.app.app-day-mode .rzh-earn--past .rzh-earn-cell--lead b { color: rgba(15, 23, 42, 0.62); }
+/* Amber-500 on white fails contrast, so day mode drops to amber-700. */
+.app.app-day-mode .rzh-earn--imminent .rzh-earn-cell--lead b { color: #b45309; }
+.app.app-day-mode .rzh-earn--near .rzh-earn-cell--lead b { color: rgba(180, 83, 9, 0.85); }
+.app.app-day-mode .rzh-earn-cell i,
+.app.app-day-mode .rzh-earn-cell--lead b em { color: rgba(15, 23, 42, 0.42); }
+.app.app-day-mode .rzh-earn-chip {
+  border-color: rgba(180, 83, 9, 0.3);
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+}
+
+/* "Figures pending" is a STATE, not a warning — amber is reserved for gap risk
+   (a thing the reader can act on). This one is neutral warm-white so the two
+   chips never compete for the same meaning. */
+/* A result verdict is semantic, so it takes the market colours — amber stays
+   reserved for gap risk (a thing you act on BEFORE the print). */
+.rzh-earn-chip.is-beat {
+  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.14);
+  color: var(--bull-bright, #34D399);
+}
+.rzh-earn-chip.is-miss {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.14);
+  color: var(--bear-bright, #F87171);
+}
+.rzh-earn-chip.is-mixed {
+  border-color: var(--border-strong, rgba(255, 255, 255, 0.06));
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+}
+.rzh-earn-cell--reported b.up { color: var(--bull-bright, #34D399); }
+.rzh-earn-cell--reported b.down { color: var(--bear-bright, #F87171); }
+.app.app-day-mode .rzh-earn-chip.is-mixed { color: #475569; background: rgba(15, 23, 42, 0.05); }
+
+.rzh-earn-chip.is-pending {
+  border-color: var(--border-strong, rgba(255, 255, 255, 0.06));
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+}
+.app.app-day-mode .rzh-earn-chip.is-pending {
+  border-color: rgba(15, 23, 42, 0.12);
+  background: rgba(15, 23, 42, 0.04);
+  color: #475569;
+}

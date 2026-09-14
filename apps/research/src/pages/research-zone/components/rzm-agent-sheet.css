@@ -1,0 +1,377 @@
+/* ────────────────────────────────────────────────────────────────────────────
+   RzmAgentSheet — mobile bottom-sheet for the Research Zone AI Agent + feed.
+   Terminal/minimal, warm-white only, solid overlay. Prefix: rzas-
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.rzas-root {
+  position: fixed;
+  inset: 0;
+  z-index: 6000;
+  pointer-events: none;
+}
+
+/* Scrim above the sheet */
+.rzas-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transition: opacity 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rzas-root.rzas-open {
+  pointer-events: auto;
+}
+.rzas-root.rzas-open .rzas-scrim {
+  opacity: 1;
+}
+
+/* ── Sheet ─────────────────────────────────────────────────────────────────── */
+.rzas-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 94vh;
+  height: 94dvh;
+  display: flex;
+  flex-direction: column;
+  background: #09090b;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.6);
+  transform: translateY(100%);
+  transition: transform 360ms cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+.rzas-root.rzas-open .rzas-sheet {
+  transform: translateY(0);
+}
+
+/* ── Header (drag grabber + segments + close) ──────────────────────────────── */
+/* `touch-action: none` so the browser can't read the dismiss drag as a page
+   pull and fire its own pull-to-refresh. JS touch events fire either way. */
+.rzas-header {
+  flex: 0 0 auto;
+  padding: 8px 12px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  touch-action: none;
+  cursor: grab;
+}
+
+.rzas-grabber {
+  width: 36px;
+  height: 4px;
+  margin: 0 auto 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.rzas-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rzas-seg {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+}
+
+.rzas-seg-btn {
+  min-height: 34px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.5);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: color 200ms ease, background 200ms ease;
+}
+.rzas-seg-btn.is-active {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.06) 100%);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 2px 8px rgba(0, 0, 0, 0.28);
+  color: #f5f5f7;
+}
+
+.rzas-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  color: rgba(245, 245, 247, 0.7);
+  cursor: pointer;
+  transition: color 200ms ease, background 200ms ease, border-color 200ms ease;
+}
+.rzas-close:active {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f5f5f7;
+}
+
+/* ── Body / panes ──────────────────────────────────────────────────────────── */
+.rzas-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+}
+
+.rzas-pane {
+  height: 100%;
+  min-height: 0;
+}
+.rzas-pane-chat {
+  flex-direction: column;
+}
+.rzas-pane-feed {
+  overflow-y: auto;
+  /* Don't chain the scroll to the page at either end - overscrolling at the
+     top is what triggers the browser's pull-to-refresh. */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 14px calc(16px + env(safe-area-inset-bottom));
+}
+
+/* ── Chat overrides: make the desktop <RzAgentChat/> fill the sheet ─────────── */
+.rzas-sheet .rz-agent-chat {
+  width: 100%;
+  max-width: 390px;
+  margin: 0 auto;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Keep the chat input above the home-indicator / safe area */
+.rzas-sheet .rz-agent-input-bar {
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+}
+
+/* 16px input prevents iOS focus-zoom */
+.rzas-sheet .rz-agent-input {
+  font-size: 16px;
+}
+
+/* 44px touch targets on the chat controls */
+.rzas-sheet .rz-agent-send-btn,
+.rzas-sheet .rz-agent-mic-btn,
+.rzas-sheet .rz-agent-stop-btn,
+.rzas-sheet .rz-agent-clear-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
+.rzas-sheet .rz-agent-row {
+  min-height: 44px;
+}
+.rzas-sheet .rz-agent-followup {
+  min-height: 40px;
+}
+
+/* Mobile blur budget: never above 8px inside the sheet (Android frame rate) */
+.rzas-sheet .rz-agent-input-bar,
+.rzas-sheet .rz-agent-topbar,
+.rzas-sheet .rz-voice-overlay {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ── Agent-RSS feed list ───────────────────────────────────────────────────── */
+.rzas-feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* No left colour rail. Direction already reads from the headline and the
+   score; a green/red bar down the edge of every card is the accent-rail
+   pattern the founder has rejected repeatedly. */
+.rzas-feed-item {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.018) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+}
+
+.rzas-feed-item-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.rzas-feed-cat {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.5);
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.rzas-feed-cat--keyevent {
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.rzas-feed-score {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.75);
+}
+
+.rzas-feed-time {
+  margin-left: auto;
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.35);
+}
+
+.rzas-feed-headline {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #f5f5f7;
+}
+
+.rzas-feed-detail {
+  margin-top: 5px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.rzas-feed-empty {
+  padding: 40px 20px;
+  text-align: center;
+  font-size: 13px;
+  color: rgba(245, 245, 247, 0.4);
+}
+
+/* Feed loading skeleton (shimmer, never spinner) */
+.rzas-feed-skel {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.rzas-feed-skel-head {
+  width: 72px;
+  height: 12px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+.rzas-feed-skel-line {
+  width: 100%;
+  height: 12px;
+  border-radius: 4px;
+  margin-bottom: 7px;
+}
+.rzas-feed-skel-line--short {
+  width: 62%;
+  margin-bottom: 0;
+}
+
+/* ── Day mode ──────────────────────────────────────────────────────────────── */
+.rzas-root.app-day-mode .rzas-scrim {
+  background: rgba(15, 23, 42, 0.35);
+}
+.rzas-root.app-day-mode .rzas-sheet {
+  background: #ffffff;
+  border-top-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 -8px 40px rgba(15, 23, 42, 0.18);
+}
+.rzas-root.app-day-mode .rzas-header {
+  border-bottom-color: rgba(15, 23, 42, 0.07);
+}
+.rzas-root.app-day-mode .rzas-grabber {
+  background: rgba(15, 23, 42, 0.2);
+}
+.rzas-root.app-day-mode .rzas-seg {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.5) 100%);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.rzas-root.app-day-mode .rzas-seg-btn {
+  color: rgba(71, 85, 105, 0.85);
+}
+.rzas-root.app-day-mode .rzas-seg-btn.is-active {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+  color: #0f172a;
+}
+.rzas-root.app-day-mode .rzas-close {
+  color: rgba(71, 85, 105, 0.85);
+}
+.rzas-root.app-day-mode .rzas-close {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.rzas-root.app-day-mode .rzas-close:active {
+  background: rgba(15, 23, 42, 0.06);
+  color: #0f172a;
+}
+.rzas-root.app-day-mode .rzas-feed-item {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.85) 100%);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+.rzas-root.app-day-mode .rzas-feed-cat {
+  color: rgba(71, 85, 105, 0.9);
+  background: rgba(15, 23, 42, 0.06);
+}
+.rzas-root.app-day-mode .rzas-feed-cat--keyevent {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.1);
+}
+.rzas-root.app-day-mode .rzas-feed-score {
+  color: rgba(15, 23, 42, 0.75);
+}
+.rzas-root.app-day-mode .rzas-feed-time {
+  color: rgba(71, 85, 105, 0.55);
+}
+.rzas-root.app-day-mode .rzas-feed-headline {
+  color: #0f172a;
+}
+.rzas-root.app-day-mode .rzas-feed-detail {
+  color: rgba(71, 85, 105, 0.9);
+}
+.rzas-root.app-day-mode .rzas-feed-empty {
+  color: rgba(71, 85, 105, 0.6);
+}
+.rzas-root.app-day-mode .rzas-feed-skel {
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.05);
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .rzas-sheet,
+  .rzas-scrim {
+    transition: none;
+  }
+}

@@ -1,0 +1,130 @@
+/* Container Scroll Animation */
+
+.cs-container {
+  height: 300vh; /* extended runway: animation + dwell time */
+  position: relative;
+}
+
+/* Phase 1: Fixed — card stays centered during scroll animation */
+.cs-fixed {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* Phase 2: Anchored — card locks to container bottom, scrolls away naturally */
+.cs-fixed.cs-anchored {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 100vh;
+}
+
+.cs-perspective-wrapper {
+  width: 100%;
+  position: relative;
+  perspective: 1000px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  pointer-events: auto;
+}
+
+.cs-header {
+  max-width: 64rem;
+  width: 100%;
+  text-align: center;
+  padding: 0 24px;
+  pointer-events: none;
+}
+
+/* ── Card ── */
+.cs-card {
+  position: relative;
+  margin: 0 auto;
+  border: 2px solid;
+  box-sizing: border-box;
+  background: var(--bg-surface, #111113);
+  will-change: transform, width, height, border-radius;
+  overflow: hidden;
+}
+
+.cs-card-inner {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--bg-base, #09090b);
+  position: relative;
+  z-index: 2;
+}
+
+/* ── Gleam — animated border highlight ── */
+.cs-card-gleam {
+  position: absolute;
+  inset: -1px;
+  z-index: 1;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.cs-card-gleam::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 60deg,
+    rgba(139, 92, 246, 0.25) 100deg,
+    rgba(255, 255, 255, 0.15) 140deg,
+    transparent 180deg,
+    transparent 240deg,
+    rgba(139, 92, 246, 0.15) 300deg,
+    transparent 360deg
+  );
+  animation: cs-gleam-spin 6s linear infinite;
+}
+
+@keyframes cs-gleam-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ── Radial glow behind the card ── */
+.cs-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70vw;
+  height: 70vh;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(139, 92, 246, 0.07) 0%,
+    rgba(139, 92, 246, 0.03) 30%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(40px);
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .cs-container {
+    height: 260vh;
+  }
+
+  .cs-glow {
+    width: 90vw;
+    height: 50vh;
+  }
+}

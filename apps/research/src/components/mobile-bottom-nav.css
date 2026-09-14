@@ -1,0 +1,936 @@
+/**
+ * MobileBottomNav – Robinhood-style 4+1 layout
+ * Floating transparent glass bar with elevated center search button,
+ * warm-white active indicators, Apple-level glass morphism
+ */
+
+/* ============================================================
+   OUTER WRAPPER - invisible, just positioning + safe area
+   ============================================================ */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-nav);
+  padding: 0;
+  pointer-events: none;
+  /* No padding - the inner bar docks flush edge-to-edge and handles
+     its own safe-area inset. */
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Showcase iframe embed: parent page already handles the outer
+   chrome/safe-area; drop the safe-area inset so the bar sits at the
+   real iframe viewport bottom instead of floating above it. */
+.mobile-bottom-nav[data-embed="showcase"] .mobile-bottom-nav-inner {
+  padding-bottom: 7px;
+}
+
+/* ============================================================
+   FLOATING GLASS BAR - the only visible container
+   Premium transparent glass with metallic rim
+   ============================================================ */
+.mobile-bottom-nav-inner {
+  /* env() routed through a custom property so the geometry can be reasoned
+     about (and probed in a desktop browser, where env() is always 0). */
+  --mbn-safe: var(--app-safe-bottom, env(safe-area-inset-bottom, 0px));
+  /* The home indicator is a ~5px pill sitting ~8px off the bottom edge, so it
+     needs REAL clearance — but paying the WHOLE inset as internal padding is
+     what made this bar 80px tall on a notch iPhone (46px of bar + all 34px of
+     inset) while it measures 46px in a browser. Founder 08-05: "the bottom
+     panel is still just a bit too high". Reserve 10px of real clearance, then
+     pay only a THIRD of the rest above and below the icon row. The glass still
+     fills to the very bottom edge, the indicator still has room, and the bar
+     now measures 44px flat / 70px on a notch iPhone.
+     `--m-bottom-nav-h` (48px) stays >= the flat height and every consumer adds
+     the FULL env() on top, so page bottom-clearance still clears the bar in
+     both cases with room to spare. */
+  --mbn-clear: min(var(--mbn-safe), 10px);
+  --mbn-slack: max(0px, calc(var(--mbn-safe) - 10px));
+  pointer-events: auto;
+  display: flex;
+  align-items: center; /* flat docked bar - no elevated center */
+  justify-content: space-around;
+  gap: 2px;
+  /* Exactly one 44px touch target tall — the bar carries no vertical padding
+     of its own, the icon row IS the height. */
+  min-height: 44px;
+  padding: 0 6px;
+  /* Safe-area inset lives INSIDE the bar so the glass fills to the very
+     bottom edge on iOS/PWA. Resolves to 0 in a normal browser = flush. */
+  padding-top: calc(var(--mbn-slack) / 3);
+  padding-bottom: calc(var(--mbn-clear) + var(--mbn-slack) / 3);
+  /* Docked glass bar - fuller than the old pill so content behind it
+     stays legible edge-to-edge. */
+  background:
+    linear-gradient(
+      180deg,
+      rgba(16, 16, 20, 0.82) 0%,
+      rgba(9, 9, 11, 0.9) 100%
+    ) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  /* Rounded top corners, flush bottom edge */
+  border-radius: 20px 20px 0 0 !important;
+  /* Top hairline instead of a floating rim */
+  border: none !important;
+  box-shadow:
+    /* Top separator hairline */
+    inset 0 0.5px 0 0 rgba(255, 255, 255, 0.08),
+    /* Lift the bar off the content above it */
+    0 -4px 20px rgba(0, 0, 0, 0.35) !important;
+  position: relative;
+  overflow: visible; /* allow center button to extend above */
+  isolation: isolate;
+}
+
+/* Top-edge shine - full width now that the bar spans edge to edge */
+.mobile-bottom-nav-inner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  /* A 0.5px line inset 20px each side is invisible at DPR3 and stops short of
+     the corners, which is what made the bar read as a flat slab rather than a
+     lit edge. Full-bleed, a brighter core, and a soft bloom beneath it —
+     founder 08-04: "the bar needs a line gleam or some glass feel". */
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.1) 12%,
+      rgba(255, 255, 255, 0.34) 50%,
+      rgba(255, 255, 255, 0.1) 88%,
+      transparent 100%
+    );
+  box-shadow: 0 1px 6px rgba(255, 255, 255, 0.07);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ============================================================
+   NAV ITEMS - circle icon buttons (tabs 1, 2, 4, 5)
+   ============================================================ */
+.mobile-bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* Invisible 44px hit box. The VISIBLE chip is the 36px
+     `.mobile-bottom-nav-icon` inside it — that split is what lets the bar be a
+     flat 44px tall without the lit disc touching its top gleam. */
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  padding: 0;
+  border: none !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    color 0.3s ease,
+    background 0.3s ease,
+    transform 0.4s var(--spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)),
+    box-shadow 0.35s ease,
+    border 0.3s ease !important;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  position: relative;
+  z-index: 1;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  gap: 0 !important;
+  /* Align to the center of the bar's lower portion */
+  align-self: center;
+}
+
+/* Hover - faint glass brighten (on the chip, not the hit box) */
+.mobile-bottom-nav-item:hover {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.mobile-bottom-nav-item:hover .mobile-bottom-nav-icon {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Press - spring squish with depth */
+.mobile-bottom-nav-item:active {
+  transform: scale(0.85) !important;
+  transition: transform 0.08s ease !important;
+}
+
+/* ============================================================
+   ACTIVE STATE - Clean minimal warm-white indicator
+   ============================================================ */
+.mobile-bottom-nav-item.active {
+  color: var(--text-primary, #f5f5f7);
+  border: none !important;
+}
+
+/* The lit chip */
+.mobile-bottom-nav-item.active .mobile-bottom-nav-icon {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 0.5px 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 0.5px rgba(255, 255, 255, 0.1),
+    0 0 10px rgba(255, 255, 255, 0.04);
+}
+
+/* No glass sheen on active */
+.mobile-bottom-nav-item.active .mobile-bottom-nav-icon::before {
+  content: none;
+}
+
+/* Indicator dot under active tab */
+.mobile-bottom-nav-item::after {
+  content: '';
+  position: absolute;
+  /* 6px from the hit box = 2px inside the 36px chip's lower edge (the chip is
+     centred, so it spans 4px..40px). Same optical position as before. */
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text-primary, #f5f5f7);
+  opacity: 0;
+  transition: opacity 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mobile-bottom-nav-item.active::after {
+  opacity: 1;
+}
+
+/* Active press */
+.mobile-bottom-nav-item.active:active {
+  transform: scale(0.95) !important;
+  opacity: 0.7;
+  transition: transform 100ms ease, opacity 100ms ease !important;
+}
+
+/* ============================================================
+   ICON CONTAINER
+   ============================================================ */
+.mobile-bottom-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* THE visible chip — full-round glass, hairline ring + inner gleam when lit.
+     36px inside the 44px hit box: 4px of breathing on every side, so the bar
+     can lose its own padding without the disc kissing the top gleam. */
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50%;
+  background: transparent;
+  flex-shrink: 0;
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.3s ease,
+    box-shadow 0.35s ease,
+    filter 0.35s ease;
+  position: relative;
+  z-index: 3;
+}
+
+.mobile-bottom-nav-icon svg {
+  /* Smaller AND finer. A 2.1 stroke on a 22px glyph is what read as heavy;
+     20px at 1.75 is the same mark drawn with a finer nib — "a bit smaller but
+     better looking. premium" (founder, 08-04). */
+  width: 19px !important;
+  height: 19px !important;
+  stroke-width: 1.7 !important;
+  transition:
+    stroke-width 0.3s ease,
+    filter 0.3s ease;
+}
+
+/* Active icon - clean warm-white */
+.mobile-bottom-nav-item.active .mobile-bottom-nav-icon {
+  color: var(--text-primary, #f5f5f7);
+}
+
+.mobile-bottom-nav-item.active .mobile-bottom-nav-icon svg {
+  stroke-width: 2 !important;
+  stroke: var(--text-primary, #f5f5f7);
+}
+
+/* ============================================================
+   HIDE LABELS - icon only in the bar
+   ============================================================ */
+.mobile-bottom-nav-label {
+  display: none !important;
+}
+
+/* ============================================================
+   CENTER SEARCH BUTTON - elevated circle
+   ============================================================ */
+.mobile-bottom-nav-center-btn {
+  /* Same split as the row items: 44px hit box, 38px painted disc on ::before
+     (slightly larger than the row chips — it stays the elevated mark). */
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  align-self: center;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: none;
+  transition: transform 0.4s var(--spring-snappy, cubic-bezier(0.16, 1, 0.3, 1));
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  position: relative;
+  z-index: 2;
+  padding: 0;
+}
+
+.mobile-bottom-nav-center-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 38px;
+  height: 38px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.1) 60%, rgba(255, 255, 255, 0.14) 100%);
+  border: 0.5px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.18),
+    0 6px 20px rgba(0, 0, 0, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.15);
+  transition: background 0.2s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  pointer-events: none;
+}
+
+.mobile-bottom-nav-center-btn svg {
+  /* Matches the row glyphs' new weight — the centre mark was the heaviest
+     stroke in the bar and the first thing that read as chunky. */
+  width: 21px;
+  height: 21px;
+  stroke-width: 2;
+  stroke: #ffffff;
+  position: relative;
+  z-index: 1;
+}
+
+.mobile-bottom-nav-center-btn:hover::before {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.mobile-bottom-nav-center-btn:active {
+  transform: scale(0.9);
+  transition: transform 0.08s ease;
+}
+
+.mobile-bottom-nav-center-btn:active::before {
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: box-shadow 0.08s ease;
+}
+
+/* ============================================================
+   EXPANDED STATE (dropdown trigger active)
+   ============================================================ */
+.mobile-bottom-nav-item.expanded {
+  color: #fff;
+  transform: scale(1.06);
+}
+
+.mobile-bottom-nav-item.expanded .mobile-bottom-nav-icon {
+  background:
+    radial-gradient(
+      ellipse at 30% 20%,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.06) 60%,
+      rgba(255, 255, 255, 0.02) 100%
+    );
+  box-shadow:
+    inset 0 0.5px 1px 0 rgba(255, 255, 255, 0.15),
+    0 0 0 0.5px rgba(255, 255, 255, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.mobile-bottom-nav-item.expanded .mobile-bottom-nav-icon::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 15%;
+  right: 15%;
+  height: 40%;
+  border-radius: 50% 50% 60% 60% / 100% 100% 40% 40%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+}
+
+/* ============================================================
+   DROPDOWN MENU - Glass panel subpage nav
+   ============================================================ */
+/* ── Portal container (rendered at body level) ── */
+.mobile-bottom-nav-portal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay, 500);
+  pointer-events: none;
+}
+
+.mobile-bottom-nav-portal > * {
+  pointer-events: auto;
+}
+
+.mobile-bottom-nav-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  animation: mbn-backdropFadeIn 0.2s ease;
+}
+
+@keyframes mbn-backdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mobile-bottom-nav-dropdown {
+  position: fixed;
+  bottom: calc(var(--m-bottom-nav-h, 48px) + env(safe-area-inset-bottom, 0px) + 8px);
+  right: 12px;
+  z-index: 1;
+  min-width: 200px;
+  max-width: 240px;
+  animation: mbn-dropdownSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Scrollable variant for dropdowns with 6+ items */
+.mobile-bottom-nav-dropdown.scrollable .mobile-bottom-nav-dropdown-inner {
+  max-height: 320px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mobile-bottom-nav-dropdown.scrollable .mobile-bottom-nav-dropdown-inner::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes mbn-dropdownSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.mobile-bottom-nav-dropdown-inner {
+  background: linear-gradient(170deg, rgba(14, 14, 17, 0.97) 0%, rgba(10, 10, 13, 0.98) 100%) !important;
+  backdrop-filter: var(--m-blur-heavy, blur(12px)) var(--m-saturate, saturate(150%)) !important;
+  -webkit-backdrop-filter: var(--m-blur-heavy, blur(12px)) var(--m-saturate, saturate(150%)) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 4px !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Remove old glass sheen */
+.mobile-bottom-nav-dropdown-inner::before {
+  display: none;
+}
+
+.mobile-bottom-nav-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: auto !important;
+  padding: 10px 12px !important;
+  border: none !important;
+  border-radius: 10px;
+  background: transparent !important;
+  color: rgba(245, 245, 247, 0.6);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.15s ease, color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  box-shadow: none !important;
+}
+
+.mobile-bottom-nav-dropdown-item:last-child {
+  box-shadow: none !important;
+}
+
+.mobile-bottom-nav-dropdown-item:active {
+  background: rgba(255, 255, 255, 0.04) !important;
+  transform: scale(0.98);
+  transition-duration: 0.06s;
+}
+
+/* Active item - ghost capsule glow */
+.mobile-bottom-nav-dropdown-item.active {
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 0 12px rgba(245, 245, 247, 0.06), inset 0 0.5px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+.mobile-bottom-nav-dropdown-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.mobile-bottom-nav-dropdown-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.mobile-bottom-nav-dropdown-item.active .mobile-bottom-nav-dropdown-icon {
+  opacity: 0.9;
+}
+
+.mobile-bottom-nav-dropdown-label {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.mobile-bottom-nav-dropdown-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  color: rgba(245, 245, 247, 0.5);
+}
+
+.mobile-bottom-nav-dropdown-check svg {
+  width: 12px;
+  height: 12px;
+  filter: none;
+}
+
+/* Chevron (kept for backward compat) */
+.mobile-bottom-nav-chevron {
+  width: 10px;
+  height: 10px;
+  margin-left: 2px;
+  vertical-align: middle;
+  transition: transform 0.2s ease;
+}
+
+.mobile-bottom-nav-chevron.up {
+  transform: rotate(180deg);
+}
+
+/* Hidden legacy emoji slot */
+.mobile-bottom-nav-dropdown-emoji {
+  display: none;
+}
+
+/* ============================================================
+   DAY MODE - Frosted white glass bar
+   ============================================================ */
+
+/* Day mode bar */
+.app.app-day-mode .mobile-bottom-nav-inner,
+.app.welcome-day-mode .mobile-bottom-nav-inner,
+[data-day-mode="true"] .mobile-bottom-nav-inner,
+.day-mode .mobile-bottom-nav-inner {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.92) 0%,
+      rgba(248, 248, 255, 0.95) 100%
+    ) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  box-shadow:
+    inset 0 0.5px 0 0 rgba(0, 0, 0, 0.08),
+    0 -4px 20px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Day mode bar sheen */
+.app.app-day-mode .mobile-bottom-nav-inner::before,
+.app.welcome-day-mode .mobile-bottom-nav-inner::before,
+[data-day-mode="true"] .mobile-bottom-nav-inner::before,
+.day-mode .mobile-bottom-nav-inner::before {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.5) 30%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(255, 255, 255, 0.5) 70%,
+    transparent 100%
+  ) !important;
+}
+
+/* Day mode inactive items */
+.app.app-day-mode .mobile-bottom-nav-item,
+.app.welcome-day-mode .mobile-bottom-nav-item,
+[data-day-mode="true"] .mobile-bottom-nav-item,
+.day-mode .mobile-bottom-nav-item {
+  color: rgba(15, 23, 42, 0.55) !important;
+}
+
+.app.app-day-mode .mobile-bottom-nav-item:hover,
+.app.welcome-day-mode .mobile-bottom-nav-item:hover,
+[data-day-mode="true"] .mobile-bottom-nav-item:hover,
+.day-mode .mobile-bottom-nav-item:hover {
+  color: rgba(15, 23, 42, 0.5) !important;
+}
+
+.app.app-day-mode .mobile-bottom-nav-item:hover .mobile-bottom-nav-icon,
+.app.welcome-day-mode .mobile-bottom-nav-item:hover .mobile-bottom-nav-icon,
+[data-day-mode="true"] .mobile-bottom-nav-item:hover .mobile-bottom-nav-icon,
+.day-mode .mobile-bottom-nav-item:hover .mobile-bottom-nav-icon {
+  background: rgba(0, 0, 0, 0.03) !important;
+}
+
+/* Day mode ACTIVE - clean dark indicator */
+.app.app-day-mode .mobile-bottom-nav-item.active,
+.app.welcome-day-mode .mobile-bottom-nav-item.active,
+[data-day-mode="true"] .mobile-bottom-nav-item.active,
+.day-mode .mobile-bottom-nav-item.active {
+  color: #0f172a !important;
+  border: none !important;
+}
+
+.app.app-day-mode .mobile-bottom-nav-item.active .mobile-bottom-nav-icon,
+.app.welcome-day-mode .mobile-bottom-nav-item.active .mobile-bottom-nav-icon,
+[data-day-mode="true"] .mobile-bottom-nav-item.active .mobile-bottom-nav-icon,
+.day-mode .mobile-bottom-nav-item.active .mobile-bottom-nav-icon {
+  background: rgba(0, 0, 0, 0.06) !important;
+  box-shadow:
+    inset 0 0.5px 1px 0 rgba(255, 255, 255, 0.4),
+    0 0 0 0.5px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Day mode active indicator dot */
+.app.app-day-mode .mobile-bottom-nav-item.active::after,
+.app.welcome-day-mode .mobile-bottom-nav-item.active::after,
+[data-day-mode="true"] .mobile-bottom-nav-item.active::after,
+.day-mode .mobile-bottom-nav-item.active::after {
+  background: #0f172a !important;
+}
+
+/* Day mode icon strokes */
+.app.app-day-mode .mobile-bottom-nav-icon svg,
+.app.welcome-day-mode .mobile-bottom-nav-icon svg,
+[data-day-mode="true"] .mobile-bottom-nav-icon svg,
+.day-mode .mobile-bottom-nav-icon svg {
+  stroke: rgba(15, 23, 42, 0.55) !important;
+}
+
+.app.app-day-mode .mobile-bottom-nav-item.active .mobile-bottom-nav-icon,
+.app.welcome-day-mode .mobile-bottom-nav-item.active .mobile-bottom-nav-icon,
+[data-day-mode="true"] .mobile-bottom-nav-item.active .mobile-bottom-nav-icon,
+.day-mode .mobile-bottom-nav-item.active .mobile-bottom-nav-icon {
+  color: #0f172a !important;
+  filter: none !important;
+}
+
+.app.app-day-mode .mobile-bottom-nav-item.active .mobile-bottom-nav-icon svg,
+.app.welcome-day-mode .mobile-bottom-nav-item.active .mobile-bottom-nav-icon svg,
+[data-day-mode="true"] .mobile-bottom-nav-item.active .mobile-bottom-nav-icon svg,
+.day-mode .mobile-bottom-nav-item.active .mobile-bottom-nav-icon svg {
+  stroke: #1a1a2e !important;
+  stroke-width: 2 !important;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.15)) !important;
+}
+
+/* Day mode CENTER BUTTON */
+.app.app-day-mode .mobile-bottom-nav-center-btn,
+.app.welcome-day-mode .mobile-bottom-nav-center-btn,
+[data-day-mode="true"] .mobile-bottom-nav-center-btn,
+.day-mode .mobile-bottom-nav-center-btn {
+  color: #0f172a;
+}
+
+.app.app-day-mode .mobile-bottom-nav-center-btn::before,
+.app.welcome-day-mode .mobile-bottom-nav-center-btn::before,
+[data-day-mode="true"] .mobile-bottom-nav-center-btn::before,
+.day-mode .mobile-bottom-nav-center-btn::before {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.06) 0%, rgba(0, 0, 0, 0.02) 100%);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.app.app-day-mode .mobile-bottom-nav-center-btn:hover::before,
+.app.welcome-day-mode .mobile-bottom-nav-center-btn:hover::before,
+[data-day-mode="true"] .mobile-bottom-nav-center-btn:hover::before,
+.day-mode .mobile-bottom-nav-center-btn:hover::before {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.03) 100%);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.app.app-day-mode .mobile-bottom-nav-center-btn svg,
+.app.welcome-day-mode .mobile-bottom-nav-center-btn svg,
+[data-day-mode="true"] .mobile-bottom-nav-center-btn svg,
+.day-mode .mobile-bottom-nav-center-btn svg {
+  stroke: #0f172a;
+}
+
+/* Day mode chevron */
+.app.app-day-mode .mobile-bottom-nav-chevron,
+.app.welcome-day-mode .mobile-bottom-nav-chevron,
+[data-day-mode="true"] .mobile-bottom-nav-chevron,
+.day-mode .mobile-bottom-nav-chevron {
+  stroke: rgba(15, 23, 42, 0.35) !important;
+}
+
+.app.app-day-mode .mobile-bottom-nav-item.active .mobile-bottom-nav-chevron,
+.app.welcome-day-mode .mobile-bottom-nav-item.active .mobile-bottom-nav-chevron,
+[data-day-mode="true"] .mobile-bottom-nav-item.active .mobile-bottom-nav-chevron,
+.day-mode .mobile-bottom-nav-item.active .mobile-bottom-nav-chevron {
+  stroke: #0f172a !important;
+}
+
+/* Day mode expanded */
+.app.app-day-mode .mobile-bottom-nav-item.expanded,
+.app.welcome-day-mode .mobile-bottom-nav-item.expanded,
+[data-day-mode="true"] .mobile-bottom-nav-item.expanded,
+.day-mode .mobile-bottom-nav-item.expanded {
+  color: #0f172a !important;
+}
+
+.app.app-day-mode .mobile-bottom-nav-item.expanded .mobile-bottom-nav-icon,
+.app.welcome-day-mode .mobile-bottom-nav-item.expanded .mobile-bottom-nav-icon,
+[data-day-mode="true"] .mobile-bottom-nav-item.expanded .mobile-bottom-nav-icon,
+.day-mode .mobile-bottom-nav-item.expanded .mobile-bottom-nav-icon {
+  background:
+    radial-gradient(
+      ellipse at 30% 20%,
+      rgba(0, 0, 0, 0.06) 0%,
+      rgba(0, 0, 0, 0.03) 100%
+    ) !important;
+  box-shadow:
+    inset 0 0.5px 1px 0 rgba(255, 255, 255, 0.5),
+    0 0 0 0.5px rgba(0, 0, 0, 0.04),
+    0 2px 6px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Day mode dropdown (portal has .app-day-mode class) */
+.app-day-mode .mobile-bottom-nav-dropdown-inner {
+  background: linear-gradient(170deg, rgba(255, 255, 255, 0.97) 0%, rgba(248, 249, 250, 0.98) 100%) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.06) !important;
+}
+
+.app-day-mode .mobile-bottom-nav-dropdown-item {
+  color: #475569 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.app-day-mode .mobile-bottom-nav-dropdown-item:active {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+.app-day-mode .mobile-bottom-nav-dropdown-item.active {
+  color: #0f172a !important;
+  background: rgba(0, 0, 0, 0.04) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: none !important;
+}
+
+.app-day-mode .mobile-bottom-nav-dropdown-icon {
+  color: #64748b;
+}
+
+.app-day-mode .mobile-bottom-nav-dropdown-item.active .mobile-bottom-nav-dropdown-icon {
+  color: #0f172a;
+  opacity: 1;
+}
+
+.app-day-mode .mobile-bottom-nav-dropdown-check {
+  color: #0f172a !important;
+}
+
+.app-day-mode .mobile-bottom-nav-backdrop {
+  background: rgba(0, 0, 0, 0.15) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Showcase-embed lock state (mobile bottom nav)
+   Mirrors the desktop nav-locked styling: dim the affected control,
+   stamp a "Beta" pill, and decorate the center search button with
+   a small lock badge.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Locked dropdown row */
+.mobile-bottom-nav-dropdown-item.is-locked {
+  opacity: 0.42;
+  cursor: not-allowed;
+  filter: grayscale(0.4);
+}
+.mobile-bottom-nav-dropdown-item.is-locked:hover,
+.mobile-bottom-nav-dropdown-item.is-locked:active {
+  background: transparent;
+}
+.mobile-bottom-nav-dropdown-beta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 2px 7px 2px 5px;
+  border-radius: 999px;
+  background: rgba(245, 245, 247, 0.08);
+  border: 0.5px solid rgba(245, 245, 247, 0.14);
+  color: rgba(245, 245, 247, 0.68);
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.mobile-bottom-nav-dropdown-beta svg {
+  width: 10px;
+  height: 10px;
+}
+
+/* Coming Soon / status badge for dropdown items (right-aligned pill).
+   Same visual language as the Beta lock pill, minus the icon. */
+.mobile-bottom-nav-dropdown-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(245, 245, 247, 0.06);
+  border: 0.5px solid rgba(245, 245, 247, 0.12);
+  color: rgba(245, 245, 247, 0.62);
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Locked center search button: keep the elevated treatment so it
+   still reads as a button, but mute the icon and add a corner lock. */
+.mobile-bottom-nav-center-btn.is-locked {
+  opacity: 0.7;
+  cursor: not-allowed;
+  filter: grayscale(0.3);
+}
+.mobile-bottom-nav-center-lock {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 8, 11, 0.92);
+  border: 0.5px solid rgba(245, 245, 247, 0.22);
+  border-radius: 999px;
+  color: rgba(245, 245, 247, 0.85);
+  pointer-events: none;
+}
+.mobile-bottom-nav-center-lock svg {
+  width: 9px;
+  height: 9px;
+}
+
+/* Day mode */
+.app-day-mode .mobile-bottom-nav-dropdown-beta {
+  background: rgba(15, 23, 42, 0.06);
+  border-color: rgba(15, 23, 42, 0.14);
+  color: rgba(15, 23, 42, 0.55);
+}
+.app-day-mode .mobile-bottom-nav-dropdown-badge {
+  background: rgba(15, 23, 42, 0.06);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: rgba(15, 23, 42, 0.55);
+}
+.app-day-mode .mobile-bottom-nav-center-lock {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(15, 23, 42, 0.18);
+  color: rgba(15, 23, 42, 0.85);
+}
+
+/* ============================================================
+   THE TRAVELLING LIGHT
+   A ring on the active tab that stretches into a rod while it
+   moves. Purely decorative: it sits under the icons and never
+   takes a tap. See mobile-bottom-nav-light.jsx for the physics.
+   ============================================================ */
+.mbn-light {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 0;
+}
+.mbn-light path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+/* The halo is the only blurred thing here — one small filtered element rather
+   than a filter on the whole bar, which would repaint the glass every frame. */
+.mbn-light__halo { filter: blur(7px); }
+
+/* The icons must sit ABOVE the light, or the ring reads as a scribble over the
+   glyph instead of a rim around it. */
+.mobile-bottom-nav-item,
+.mobile-bottom-nav-center-btn { position: relative; z-index: 1; }
+
+/* The active tab's own chip fill is redundant once a lit ring surrounds it —
+   two highlights on one target is what made the old bar look busy. */
+.mobile-bottom-nav-item.active .mobile-bottom-nav-icon { background: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mbn-light__halo { display: none; }
+}
+
+/* The active dot under the icon predates the travelling light and now sits
+   INSIDE the ring — two indicators marking the same tab. The ring is the
+   indicator; the dot goes. */
+.mobile-bottom-nav-item.active::after { display: none !important; }

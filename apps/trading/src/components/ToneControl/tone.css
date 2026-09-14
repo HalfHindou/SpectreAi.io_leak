@@ -1,0 +1,449 @@
+/**
+ * ToneControl — header pill + popover.
+ *
+ * Visual language mirrors EnvironmentCapsule (same glass pill recipe,
+ * same portal-popover surface) so the two read as one instrument
+ * cluster in the header-left group.
+ */
+
+/* --- The pill --------------------------------------------------- */
+
+.tone-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.07));
+  border-radius: var(--r-pill, 999px);
+  background: var(--glass-fill, rgba(255, 255, 255, 0.025));
+  color: var(--text-2, rgba(255, 255, 255, 0.62));
+  font-family: var(--font-body, system-ui, sans-serif);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  touch-action: none; /* horizontal drag must win over page pan on touch */
+  transition:
+    background-color var(--dur-base, 240ms) var(--ease-out),
+    border-color     var(--dur-base, 240ms) var(--ease-out),
+    color            var(--dur-base, 240ms) var(--ease-out);
+}
+
+.tone-pill:hover,
+.tone-pill:focus-visible,
+.tone-pill--open,
+.tone-pill--dragging {
+  background: var(--glass-fill-hover, rgba(255, 255, 255, 0.045));
+  border-color: var(--glass-border-lit, rgba(255, 255, 255, 0.13));
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+}
+
+.tone-pill:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.tone-pill--dragging {
+  cursor: ew-resize;
+}
+
+.tone-pill-icon {
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+}
+
+.tone-pill:hover .tone-pill-icon,
+.tone-pill--open .tone-pill-icon,
+.tone-pill--dragging .tone-pill-icon {
+  color: var(--accent);
+  transition: color var(--dur-base, 240ms) var(--ease-out);
+}
+
+/* Non-default marker: the icon carries a faint accent even at rest */
+.tone-pill--active .tone-pill-icon {
+  color: var(--accent);
+  filter: drop-shadow(0 0 4px var(--accent-glow));
+}
+
+.tone-pill-value {
+  font-family: var(--font-num-chip, inherit);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+  min-width: 24px;
+  text-align: center;
+}
+
+/* --- The popover ------------------------------------------------ */
+
+.tone-popover {
+  z-index: 2147483647;
+  width: 300px;
+  padding: 14px 16px 12px;
+  border-radius: var(--r-md, 16px);
+  /* Same solid premium dark surface as env-popover so the pair match */
+  background:
+    linear-gradient(180deg,
+      rgba(20, 22, 26, 0.96) 0%,
+      rgba(14, 16, 19, 0.97) 100%),
+    rgba(0, 0, 0, 0.30);
+  border: 1px solid var(--glass-border-lit, rgba(255, 255, 255, 0.13));
+  box-shadow:
+    var(--shadow-3, 0 24px 60px -16px rgba(0, 0, 0, 0.85)),
+    0 0 0 1px rgba(255, 255, 255, 0.025) inset;
+  backdrop-filter: blur(36px) saturate(160%);
+  -webkit-backdrop-filter: blur(36px) saturate(160%);
+  color: var(--text-1);
+  font-family: var(--font-body);
+  font-size: 12px;
+  isolation: isolate;
+  animation: tone-popover-in 180ms var(--ease-out, cubic-bezier(0.16, 1, 0.30, 1));
+}
+
+@keyframes tone-popover-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.tone-popover-arrow {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  transform: translateX(-50%) rotate(45deg);
+  background: rgba(20, 22, 26, 0.97);
+  border-top: 1px solid var(--glass-border-lit, rgba(255, 255, 255, 0.13));
+  border-left: 1px solid var(--glass-border-lit, rgba(255, 255, 255, 0.13));
+}
+
+.tone-popover-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tone-popover-title {
+  font-size: var(--t-caption, 0.6875rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3, rgba(255, 255, 255, 0.40));
+}
+
+.tone-popover-value {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+}
+
+/* --- Tone swatches ------------------------------------------------ */
+
+.tone-swatches {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.tone-swatch {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 9px;
+  border: 1px solid var(--glass-border-lit, rgba(255, 255, 255, 0.13));
+  cursor: pointer;
+  padding: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition:
+    border-color var(--dur-micro, 120ms) var(--ease-out),
+    transform    var(--dur-micro, 120ms) var(--ease-out);
+}
+
+.tone-swatch:hover {
+  border-color: var(--glass-highlight, rgba(255, 255, 255, 0.10));
+  transform: translateY(-1px);
+}
+
+.tone-swatch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tone-swatch--active {
+  border-color: var(--accent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 0 1px var(--accent),
+    0 0 10px var(--accent-wash, rgba(198, 255, 58, 0.08));
+}
+
+/* Selected dot in the swatch centre */
+.tone-swatch--active::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translate(-50%, -50%);
+}
+
+/* --- Depth row ---------------------------------------------------- */
+
+.tone-depth-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.tone-depth-label {
+  font-size: var(--t-caption, 0.6875rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3, rgba(255, 255, 255, 0.40));
+}
+
+.tone-depth-value {
+  font-family: var(--font-num-chip, inherit);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+  font-weight: 500;
+  font-size: 11px;
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+}
+
+.tone-depth-value--default {
+  color: var(--text-3, rgba(255, 255, 255, 0.40));
+}
+
+.tone-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tone-slider-end {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-3, rgba(255, 255, 255, 0.40));
+  flex-shrink: 0;
+}
+
+.tone-slider-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Centre detent tick above the track (pseudo-elements don't render on
+   <input>, so it lives on the wrapper) */
+.tone-slider-wrap::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 1px;
+  width: 1px;
+  height: 4px;
+  background: var(--text-4, rgba(255, 255, 255, 0.24));
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.tone-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 20px;               /* generous hit area, track drawn thinner */
+  min-width: 0;
+  margin: 0;
+  background: transparent;
+  cursor: ew-resize;
+}
+
+/* Track — deeper on the left, softer on the right */
+.tone-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #000000 0%, #101114 50%, #26282c 100%);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.07));
+}
+
+.tone-slider::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #000000 0%, #101114 50%, #26282c 100%);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.07));
+}
+
+.tone-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -6px;           /* (track 4px + 2px border - thumb 14px) / 2 */
+  border-radius: 50%;
+  background: var(--text-1, rgba(255, 255, 255, 0.95));
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  transition: box-shadow var(--dur-micro, 120ms) var(--ease-out);
+}
+
+.tone-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-1, rgba(255, 255, 255, 0.95));
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  transition: box-shadow var(--dur-micro, 120ms) var(--ease-out);
+}
+
+.tone-slider:hover::-webkit-slider-thumb,
+.tone-slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6), 0 0 0 4px var(--accent-wash, rgba(198, 255, 58, 0.08));
+}
+
+.tone-slider:hover::-moz-range-thumb,
+.tone-slider:focus-visible::-moz-range-thumb {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6), 0 0 0 4px var(--accent-wash, rgba(198, 255, 58, 0.08));
+}
+
+.tone-slider:focus-visible {
+  outline: none;
+}
+
+/* --- Studio entry ------------------------------------------------- */
+
+.tone-studio-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 32px;
+  margin-top: 12px;
+  padding: 0 10px;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.07));
+  border-radius: var(--r-sm, 10px);
+  background: var(--glass-fill, rgba(255, 255, 255, 0.025));
+  color: var(--text-2, rgba(255, 255, 255, 0.62));
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-micro, 120ms) var(--ease-out),
+    border-color     var(--dur-micro, 120ms) var(--ease-out),
+    color            var(--dur-micro, 120ms) var(--ease-out);
+}
+
+.tone-studio-btn:hover {
+  background: var(--glass-fill-hover, rgba(255, 255, 255, 0.045));
+  border-color: var(--glass-border-lit, rgba(255, 255, 255, 0.13));
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+}
+
+.tone-studio-btn:hover svg:first-child {
+  color: var(--accent);
+}
+
+.tone-studio-btn-label {
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+.tone-studio-btn-arrow {
+  color: var(--text-4, rgba(255, 255, 255, 0.24));
+  transition: transform var(--dur-micro, 120ms) var(--ease-out);
+}
+
+.tone-studio-btn:hover .tone-studio-btn-arrow {
+  transform: translateX(2px);
+  color: var(--text-2, rgba(255, 255, 255, 0.62));
+}
+
+/* --- Footer ------------------------------------------------------ */
+
+.tone-popover-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.tone-popover-hint {
+  font-size: var(--t-micro, 0.625rem);
+  color: var(--text-4, rgba(255, 255, 255, 0.24));
+  letter-spacing: 0.01em;
+  min-width: 0;
+}
+
+.tone-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  height: 24px;
+  padding: 0 9px;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.07));
+  border-radius: var(--r-pill, 999px);
+  background: transparent;
+  color: var(--text-2, rgba(255, 255, 255, 0.62));
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-micro, 120ms) var(--ease-out),
+    border-color     var(--dur-micro, 120ms) var(--ease-out),
+    color            var(--dur-micro, 120ms) var(--ease-out);
+}
+
+.tone-reset:hover:not(:disabled) {
+  background: var(--glass-fill-hover, rgba(255, 255, 255, 0.045));
+  border-color: var(--glass-border-lit, rgba(255, 255, 255, 0.13));
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+}
+
+.tone-reset:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* --- Modes ------------------------------------------------------- */
+
+/* Day mode paints explicit light colors per component — the obsidian
+   ladder isn't in play, so the control hides rather than lying. */
+body.theme-light .tone-pill { display: none; }
+
+/* Tight header widths: EnvironmentCapsule collapses at 1440px; the
+   tone pill is icon-sized so it survives until true mobile. */
+@media (max-width: 768px) {
+  .tone-pill { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tone-pill,
+  .tone-popover,
+  .tone-swatch,
+  .tone-slider::-webkit-slider-thumb,
+  .tone-slider::-moz-range-thumb,
+  .tone-reset {
+    transition: none !important;
+    animation: none !important;
+  }
+}

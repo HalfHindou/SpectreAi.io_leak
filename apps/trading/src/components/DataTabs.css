@@ -1,0 +1,7364 @@
+/**
+ * DataTabs Styles
+ * Figma Reference: Tabs section below chart
+ */
+/* Bento surface treatment (v2 Observatory: translucent for gradient bleed). */
+.data-tabs {
+  /* The Transactions table can sit in a narrow middle column even when
+     the viewport is wide. Mark this element as the responsive container
+     so the table's collapse tiers (below) react to the PANEL width, not
+     the viewport width. */
+  container-type: inline-size;
+  container-name: data-tabs-panel;
+  /* Grow to fill the center column. The column is stretched by the grid to
+     match the tallest sibling (usually the right stats panel); without this
+     the fixed-height transactions box leaves a dead gap below it. */
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.025) 0%,
+      rgba(255, 255, 255, 0.006) 45%,
+      transparent 100%
+    ),
+    var(--bg-surface, #0e0f12);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 16px;
+  overflow: hidden;
+  overflow-anchor: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 12px 32px rgba(0, 0, 0, 0.55),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+  transition:
+    border-color 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.data-tabs:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 16px 40px rgba(0, 0, 0, 0.62),
+    0 2px 4px rgba(0, 0, 0, 0.42);
+}
+
+/* Tabs Navigation - Ghost Terminal */
+.tabs-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  padding: 0 var(--sp-3);
+  border-bottom: 1px solid var(--border-subtle);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.tabs-scroll {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  height: 100%;
+}
+
+/* Tab pill — sentence-case, modern, breathable.
+   Was uppercase + wide tracking (the "early Bloomberg" eyebrow style)
+   which felt utilitarian next to the rest of the Apple-cinematic page.
+   Sentence case + tight tracking + Geist sans matches the header search,
+   the AI Dossier eyebrow, and the rest of the v2 chrome — feels like
+   the same product, not a separate panel. The labels are already
+   Title Case in the JSX `tabs` array (`Transactions`, `Holders`, etc.),
+   so `text-transform: none` simply lets them render as-typed. */
+.tab-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 0.8125rem;        /* 13px — readable without shouting */
+  font-weight: 500;
+  letter-spacing: -0.005em;    /* tight, modern */
+  text-transform: none;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  /* GMGN-feel: hover eases briefly; the ACTIVE state snaps (rule below).
+     font-weight is NOT transitioned and NOT bumped on active - the 500->600
+     jump changed tab width (layout shift, stale underglow measurements). */
+  transition:
+    color 100ms cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 100ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 100ms cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.tab-item:hover {
+  color: rgba(245, 245, 247, 0.88);
+  background-color: rgba(245, 245, 247, 0.04);
+}
+
+.tab-item.active {
+  color: rgba(245, 245, 247, 1);
+  background-color: rgba(245, 245, 247, 0.07);
+  border-color: rgba(245, 245, 247, 0.10);
+  transition: none;            /* selected state = instant snap */
+}
+
+.tab-item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(245, 245, 247, 0.16);
+}
+
+/* Lift the tabs nav slightly to give the pills breathing room */
+.tabs-nav {
+  height: 48px;
+  align-items: center;
+  gap: 2px;
+}
+.tabs-scroll { gap: 6px; align-items: center; }
+
+.tab-icon {
+  font-size: 0.875rem;
+}
+
+.tabs-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+/* Kill the browser's double-tap-zoom wait (~300ms) on the toolbar controls.
+   The app viewport is zoomable (no maximum-scale), so without this every tap
+   here is held back while the browser waits for a possible second tap - on the
+   filter funnel that read as the sheet taking a beat to open. The sheets
+   themselves (mfs-/mmk-/mtx-) already carry this; their triggers did not. */
+.tab-item,
+.tabs-actions button,
+.action-icon,
+.tx-icon-btn {
+  touch-action: manipulation;
+}
+
+/* Action icons - ghost */
+.action-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: rgba(245, 245, 247, 0.50);
+  cursor: pointer;
+  transition: color 100ms ease, background-color 100ms ease;
+}
+
+.action-icon:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(245, 245, 247, 0.6);
+}
+
+.action-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Expand button */
+.expand-btn {
+  transition: color 100ms ease, background-color 100ms ease;
+}
+
+.expand-btn.expanded {
+  color: rgba(245, 245, 247, 0.7);
+}
+
+.expand-btn svg {
+  transition: transform 120ms ease;
+}
+
+/* Tabs Content - scrollable. Fills the remaining height of the (stretched)
+   data-tabs panel via flex:1, but never shrinks below the viewport-based size
+   so on short columns it behaves exactly as before. */
+.tabs-content {
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* flex-basis:0 (not auto) so we fill the column's free space and scroll the
+     table internally — basis:auto would size to the full 50-row table and blow
+     the column height out. min-height keeps the old viewport-based floor on
+     short columns. */
+  flex: 1 1 0;
+  min-height: calc(100vh - var(--header-height, 56px) - var(--ticker-height, 48px) - 80px);
+}
+
+.data-tabs.expanded .tabs-content {
+  height: calc(100vh - var(--header-height, 56px) - var(--ticker-height, 48px) - 80px);
+}
+
+/* Data Table */
+.table-wrapper {
+  overflow-x: auto;
+  overflow-y: auto;
+  height: 100%;
+  position: relative;
+}
+
+/* Table structure */
+.data-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.data-table thead th {
+  position: relative;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  /* Floor so the 7 columns never crush below readability. When the panel is
+     narrower than this (e.g. both side panels open), the table keeps this width
+     and `.table-wrapper` (overflow-x: auto) scrolls horizontally instead of
+     dropping columns - every column stays reachable at any screen size. */
+  min-width: 720px;
+}
+
+/* Column widths - a fixed 34px PFP gutter + 6 data columns. MAKER was 36%
+   holding ~204px of right-aligned content, so on a wide panel ~230px died as
+   a void in the middle of the table between the bars and the addresses. The
+   slack goes to SIZE, where it buys longer bars - the one column that gets
+   MORE informative with width. */
+.data-table col.col-pfp    { width: 34px; }
+.data-table col.col-age    { width: 8%; }
+.data-table col.col-type   { width: 7%; }
+.data-table col.col-price  { width: 12%; }
+.data-table col.col-amount { width: 12%; }
+.data-table col.col-size   { width: 30%; }
+.data-table col.col-maker  { width: 27%; }
+
+/* The pfp gutter: no right padding so the 22px face sits tight against the
+   row's left edge, vertically centred on both densities. */
+.data-table td.cell-pfp,
+.data-table th.th-pfp { padding-right: 0; }
+.data-table td.cell-pfp { text-align: left; }
+.cell-pfp .row-pfp { vertical-align: middle; }
+
+.data-table th {
+  padding: 0 var(--sp-3);
+  text-align: left;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  /* No per-cell backdrop-filter: at 97% opacity the blur was invisible but
+     forced 7 isolated composite layers re-blurred on every scroll frame and
+     every streamed-trade repaint (the scroll-heaviness of this table).
+     Opaque --ob-surface-2, NOT the old hardcoded rgba(14,14,16,0.97): the
+     substrate pass moved the panel to that token, and a near-black one shade
+     off the panel behind it reads as a seam across the whole header. */
+  background: var(--ob-surface-2, #0E0F11);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  height: 30px;
+  line-height: 30px;
+  vertical-align: middle;
+}
+
+/* Sticky header cells paint in DOM order - a later column (PRICE, AMOUNT...)
+   can paint OVER a filter dropdown that overflows out of an earlier column
+   (TYPE). `:has()` lifts only the cell that currently owns an open menu above
+   its siblings, so the popover is never covered. Resets when the menu closes.
+   (Historically each cell also carried backdrop-filter, which made this worse
+   via isolated stacking contexts - the blur is gone, the lift rules stay.) */
+.data-table th:has(.filter-dropdown-menu),
+.data-table th:has(.active-filter-badge):hover {
+  z-index: 50;
+}
+
+.th-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  opacity: 0.5;
+}
+
+.filter-btn:hover {
+  opacity: 1;
+  background: var(--bg-elevated);
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.filter-btn.active {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--ui-accent-border);
+  color: var(--ui-accent);
+  position: relative;
+}
+
+/* Active-filter indicator dot on the funnel - the at-rest signal that a filter
+   is applied (the value itself shows in the hover tooltip). */
+.filter-btn.active::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 2px var(--bg-base, #09090b);
+}
+
+.filter-btn svg {
+  width: 10px;
+  height: 10px;
+}
+
+.sort {
+  opacity: 0.4;
+  margin-left: 4px;
+  font-size: 0.8125rem;
+}
+
+.data-table td {
+  padding: 0 var(--tx-cell-px, 12px);
+  /* Use the chip-numerals font (Geist sans with rounded zeros) instead
+     of Geist Mono whose default slashed zero is too noisy at table
+     density. `tabular-nums` keeps digit widths consistent so columns
+     still align cleanly; `'zero' 0` is belt-and-suspenders for any
+     font that has the slashed alternate. See `--font-num-chip` in
+     design-tokens.css. */
+  font-family: var(--font-num-chip);
+  font-size: 13.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+  letter-spacing: -0.01em;
+  color: rgba(245, 245, 247, 0.82);
+  /* 0.028, not 0.04: at 0.04 the per-cell rules read as a drawn GRID rather
+     than a separation - "visible thin separator borders" is a listed instant
+     failure in the design system. */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.028);
+  white-space: nowrap;
+  height: var(--tx-row-h, 50px);
+  vertical-align: middle;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tr {
+  transition: background-color 120ms var(--ease-out, ease), box-shadow 120ms var(--ease-out, ease);
+}
+
+/* Virtualization-lite: the browser skips layout/paint for off-screen rows.
+   Column widths come from the fixed colgroup, so alignment stays stable. */
+.data-table tbody tr {
+  content-visibility: auto;
+  /* Must track --tx-row-h. A hardcoded 50px under compact (38px) makes the
+     browser over-estimate every off-screen row, so the scrollbar lies. */
+  contain-intrinsic-size: auto var(--tx-row-h, 50px);
+}
+
+/* The per-row volume tint that used to live here is GONE. It encoded trade size
+   as a 5%-alpha full-row gradient (width = --data-bar-fill, hue = direction).
+   The SIZE column now carries that same fact as an explicit bar with the USD
+   laid on it, so the row wash was a second, weaker encoding of one number.
+   --data-bar-fill is still set on the row; the SIZE cell reads it. */
+
+.data-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.045);
+}
+
+/* Hover spine in the trade's own direction - the terminal tell that you are on
+   a BUY vs a SELL without moving your eye back to the TYPE column.
+   `:not(.whale)` so a whale keeps its own heavier spine + glow on hover; the
+   two rules are the same specificity and this one lands later, so without the
+   guard hovering a whale would quietly demote it. */
+.data-table tbody tr.buy:not(.whale):hover {
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--up, #34E89E) 55%, transparent);
+}
+.data-table tbody tr.sell:not(.whale):hover {
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--down, #FF5169) 55%, transparent);
+}
+
+/* GMGN-flat rows: the volume data-bar above carries the size signal, so
+   the old per-tier left spine ladder is retired. Only WHALE prints keep
+   a spine + glow — the one tier worth an extra flag. */
+.data-table tbody tr.whale.buy{box-shadow:inset 3px 0 0 var(--up,#34E89E),0 0 7px -2px var(--up-glow,rgba(52,232,158,.6))}
+.data-table tbody tr.whale.sell{box-shadow:inset 3px 0 0 var(--down,#FF5169),0 0 7px -2px var(--down-glow,rgba(255,81,105,.6))}
+
+.data-table td.cell-date {
+  color: rgba(245, 245, 247, 0.52);
+  text-align: center;
+  font-size: 11px;
+}
+
+/* Date/Age toggle in header */
+.date-age-toggle {
+  cursor: default;
+}
+
+.date-age-toggle .toggle-option {
+  cursor: pointer;
+  transition: color 120ms var(--ease-out, ease);
+  color: var(--text-3, var(--text-muted));
+}
+
+.date-age-toggle .toggle-option:hover {
+  color: var(--text-2, var(--text-secondary));
+}
+
+.date-age-toggle .toggle-option.active {
+  color: var(--text-1, var(--text-primary));
+}
+
+.date-age-toggle .toggle-separator,
+.type-filter-toggle .toggle-separator {
+  color: var(--text-muted);
+  margin: 0 1px;
+}
+
+/* Filter dropdown */
+.filter-dropdown-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.filter-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 120px;
+  background: rgba(12, 12, 15, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 3px;
+  z-index: 9999;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.filter-dropdown-menu.amount-filter-menu {
+  left: auto;
+  right: 0;
+}
+
+/* TradingChart.css ships a GLOBAL `.filter-dropdown-menu` (for the chart's own
+   filter) that bleeds onto this table's filter because both stylesheets load
+   app-wide - it forces a 22px radius + 8px/0 padding. Re-scope with `.data-tabs`
+   (higher specificity, wins regardless of load order) for a tighter, cleaner
+   popover: smaller radius, balanced compact padding. */
+.data-tabs .filter-dropdown-menu {
+  border-radius: 10px;
+  padding: 4px;
+  /* The global rule also leaks `min-width: 240px` - the simple option menus
+     (Type) only hold short labels, so override it back to a sane base. */
+  min-width: 150px;
+}
+/* Type / simple option menus hug their content instead of stretching to a
+   fixed 240px. width:max-content lets "Remove" set the width, not the global. */
+.data-tabs .filter-dropdown-menu:not(.amount-filter-menu):not(.maker-filter-menu) {
+  width: max-content;
+  min-width: 150px;
+}
+/* Item rows: rounded + inset so the active/hover fill never touches the menu
+   edge (the global `padding: 8px 0` would otherwise bleed it full-width). */
+.data-tabs .filter-menu-item {
+  border-radius: 6px;
+  padding: 7px 10px;
+}
+.data-tabs .amount-filter-menu {
+  padding: 10px;
+}
+.data-tabs .amount-filter-inputs {
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.data-tabs .amount-filter-actions {
+  padding-top: 10px;
+}
+.data-tabs .amount-input-group input {
+  padding: 7px 9px;
+  border-radius: 6px;
+}
+.data-tabs .clear-filter-btn,
+.data-tabs .apply-filter-btn {
+  padding: 7px 12px;
+  border-radius: 6px;
+}
+
+.filter-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.5);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  text-align: left;
+}
+
+.filter-menu-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 245, 247, 0.9);
+}
+
+.filter-menu-item.active {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.9);
+}
+
+.filter-menu-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.filter-menu-item .check-icon {
+  margin-left: auto;
+  color: var(--accent);
+}
+
+/* Filter badges - ghost with colored text */
+/* Active filter value - a glass tooltip revealed when the column's filter
+   control is hovered. It lives inside .filter-dropdown-wrapper so hovering the
+   icon (or the tooltip itself) keeps it open; the funnel's active dot is the
+   at-rest indicator, this shows the actual range. */
+.active-filter-badge {
+  --tx: -50%;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(var(--tx)) translateY(-3px);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 5px 4px 9px;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  text-transform: none;
+  color: rgba(245, 245, 247, 0.85);
+  background: rgba(16, 16, 20, 0.97);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 7px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.14s ease, transform 0.14s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 40;
+}
+
+/* invisible bridge across the gap to the icon so hover never drops mid-travel */
+.active-filter-badge::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 8px;
+}
+
+/* right-anchor the two right-most columns so the tooltip can't overflow */
+.active-filter-badge.usd,
+.active-filter-badge.maker {
+  --tx: 0;
+  left: auto;
+  right: -4px;
+}
+
+.filter-dropdown-wrapper:hover .active-filter-badge {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(var(--tx)) translateY(0);
+}
+
+/* while the dropdown menu is open, suppress the value tooltip */
+.filter-dropdown-wrapper:has(.filter-dropdown-menu) .active-filter-badge {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.active-filter-badge.buy { color: #34D399; }
+.active-filter-badge.sell { color: #F87171; }
+.active-filter-badge.add { color: #60A5FA; }
+.active-filter-badge.remove { color: #FB923C; }
+.active-filter-badge.amount { color: #22D3EE; }
+.active-filter-badge.price { color: #FBBF24; }
+.active-filter-badge.value { color: #34D399; }
+
+.active-filter-badge.eth { color: #818CF8; }
+.active-filter-badge.usd { color: #34D399; }
+.active-filter-badge.maker { color: #F472B6; }
+
+/* Filter badge close button */
+.filter-badge-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  margin-left: 4px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all 0.12s ease;
+}
+
+.filter-badge-close:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+/* Input with unit selector */
+.input-with-unit {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-with-unit input {
+  width: 100%;
+}
+
+/* Unit pill buttons - ghost */
+.unit-pills {
+  display: flex;
+  gap: 1px;
+}
+
+.unit-pill {
+  flex: 1;
+  padding: 3px 6px;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  color: rgba(245, 245, 247, 0.55);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  letter-spacing: 0.02em;
+}
+
+.unit-pill:hover {
+  color: rgba(245, 245, 247, 0.6);
+}
+
+.unit-pill.active {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.9);
+}
+
+/* Amount filter menu */
+.amount-filter-menu {
+  min-width: 200px;
+  padding: 12px;
+}
+
+.amount-filter-inputs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.amount-input-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.amount-input-group label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.amount-input-group input {
+  width: 100%;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  font-family: var(--font-num-chip);
+  color: var(--text-primary);
+  transition: all 0.12s ease;
+}
+
+.amount-input-group input:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.amount-input-group input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.amount-input-group input::placeholder {
+  color: var(--text-muted);
+  font-family: var(--font-num-chip);
+}
+
+/* Hide number input spinners */
+.amount-input-group input[type="number"]::-webkit-outer-spin-button,
+.amount-input-group input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.amount-input-group input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.amount-filter-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.clear-filter-btn,
+.apply-filter-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.clear-filter-btn {
+  background: transparent;
+  border: none;
+  color: rgba(245, 245, 247, 0.60);
+}
+
+.clear-filter-btn:hover {
+  color: rgba(245, 245, 247, 0.7);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.apply-filter-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  color: rgba(245, 245, 247, 0.6);
+}
+
+.apply-filter-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.9);
+}
+
+/* Maker filter menu
+   NOTE: the right/left alignment MUST be set on the two-class selector
+   `.filter-dropdown-menu.maker-filter-menu` (specificity 0,2,0) so it beats
+   the global `.filter-dropdown-menu { left: 0 }` shipped by TradingChart.css
+   regardless of stylesheet load order - same guard the amount menu uses. A
+   single-class `.maker-filter-menu` (0,1,0) loses to the global rule and the
+   popover left-aligns off the right edge, disappearing under the swap panel. */
+.filter-dropdown-menu.maker-filter-menu {
+  right: 0;
+  left: auto;
+}
+.maker-filter-menu {
+  min-width: 240px;
+  padding: 12px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.maker-filter-input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.maker-filter-input label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.maker-filter-input input {
+  width: 100%;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-family: var(--font-num-chip);
+  color: var(--text-primary);
+  transition: all 0.12s ease;
+}
+
+.maker-filter-input input:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.maker-filter-input input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.02);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.04);
+}
+
+.maker-filter-input input::placeholder {
+  color: var(--text-muted);
+  font-family: var(--font-num-chip);
+}
+
+.maker-quick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.maker-quick-list label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.maker-quick-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.maker-quick-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.maker-quick-item.active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.maker-quick-address {
+  font-size: 0.8125rem;
+  font-family: var(--font-num-chip);
+  color: var(--text-primary);
+}
+
+.maker-quick-count {
+  font-family: var(--font-num-chip);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  padding: 0;
+  background: transparent;
+}
+
+.maker-quick-item.active .maker-quick-count {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.7);
+}
+
+/* Filter button active state for maker row */
+.maker-action-btn.filter-btn-icon.active {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.9);
+}
+
+/* Load More */
+.load-more-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.load-more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.60);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.load-more-btn:hover:not(:disabled) {
+  color: rgba(245, 245, 247, 0.7);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.load-more-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.loaded-count {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.spinner-small {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-top-color: rgba(245, 245, 247, 0.6);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.cell-type {
+  text-align: center;
+}
+
+.cell-amount {
+  text-align: left;
+  color: rgba(245, 245, 247, 0.82);
+}
+
+/* Center headers for all columns */
+.data-table th {
+  text-align: center;
+}
+
+.data-table th .th-content {
+  justify-content: center;
+}
+
+.cell-price {
+  text-align: left;
+  color: #ECEDEF;
+  font-weight: 600;
+}
+
+/* ── Recessed row field ───────────────────────────────────────────────────
+   The reference board's rows sit on `.xb-stage` (rgba(10,10,14,0.65) over a
+   near-black page ≈ #0A0A0D) while its header band is a ~2% lift ABOVE that.
+   Ours had header and rows on the same --ob-surface-2, so the table read as one
+   flat slab. Dropping the row field to page level restores that relationship:
+   the panel becomes a FRAME and the data is a window through it.
+
+   Going flush with the page is safe here specifically because the panel is
+   defined by a 1px border + 16px radius + a `0 14px 38px` drop shadow, not by
+   its fill - and that shadow only became visible once the substrate pass lifted
+   the page off pure black. The sticky header keeps its own opaque
+   --ob-surface-2, so it now reads as the lighter band, exactly like the
+   reference. In light mode the same token gives #F4F5F7 rows under white
+   chrome, which is the correct inversion rather than a special case. */
+.data-tabs--i7 .table-wrapper--txns {
+  background: var(--ob-page, #0A0B0D);
+}
+
+/* ── Column alignment ─────────────────────────────────────────────────────
+   Gleb 2026-09-11: AGE, MCAP/PRICE, AMOUNT and SIZE all read from the LEFT
+   edge of their column (the GMGN convention - every value starts on one x,
+   the header label sits directly above it); TYPE is centred. Headers follow
+   their own column; they are position-selected because the `th`s carry no
+   per-column class. Column 1 is the pfp gutter, so AGE is 2, TYPE 3,
+   MCAP/PRICE 4, AMOUNT 5, SIZE 6. */
+.data-table thead th:nth-child(2),
+.data-table thead th:nth-child(4),
+.data-table thead th:nth-child(5),
+.data-table thead th:nth-child(6) { text-align: left; }
+.data-table thead th:nth-child(2) .th-content,
+.data-table thead th:nth-child(4) .th-content,
+.data-table thead th:nth-child(5) .th-content,
+.data-table thead th:nth-child(6) .th-content { justify-content: flex-start; }
+
+/* TYPE: the label must sit on the column's centre line, exactly above the
+   badges - so the filter icon cannot take part in the centring. A 3-track
+   grid puts the label in the middle track and hangs the icon in the right
+   one; minmax(0,1fr) keeps the side tracks equal even when the icon is wider
+   than its track, so the label never drifts. */
+.data-table thead th:nth-child(3) .th-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0;
+  align-items: center;
+  justify-items: start;
+}
+.data-table thead th:nth-child(3) .th-content > .filter-dropdown-wrapper {
+  grid-column: 3;
+  justify-self: start;
+  /* Hug the label: the column is narrow (72px at the 676px tier), so the
+     icon may only spill into the cell paddings, never over the next label. */
+  margin-left: 3px;
+}
+.data-table thead th:nth-child(3) .th-content > .filter-dropdown-wrapper .filter-btn {
+  margin-left: 0;
+}
+.data-table thead th:nth-child(3) .th-content::before {
+  content: '';
+  grid-column: 1;
+}
+
+.data-table td.cell-date { text-align: left; }
+
+/* The standalone `.cell-eth` (NATIVE) rules are gone with the column - the
+   native amount now renders as `.tx-size-native` inside the SIZE cell. */
+
+.cell-size {
+  text-align: left;
+  font-weight: 600;
+  position: relative;
+  z-index: 1;
+  font-size: 13px;
+}
+
+.cell-mono {
+  font-family: var(--font-num-chip);
+  color: var(--text-primary);
+}
+
+.cell-rank {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.cell-address {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.cell-address .mono {
+  font-family: var(--font-num-chip);
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.copy-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.data-table tr:hover .copy-btn {
+  opacity: 1;
+}
+
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  font-family: var(--font-num-chip);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: transparent;
+}
+
+/* Direction label = text, so it takes the soft pair like the money values.
+   Bars, spines and glows keep --up/--down. */
+/* Same text pair as the USD value so the row carries ONE green and ONE red,
+   not a mint label beside a deeper green number. */
+.type-badge.buy {
+  color: var(--up-text, #46B87D);
+}
+
+.type-badge.sell {
+  color: var(--down-text, #DE5759);
+}
+
+.holder-type {
+  display: inline-block;
+  padding: 0;
+  font-family: var(--font-num-chip);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: transparent;
+}
+
+.holder-type.team {
+  color: rgba(245, 245, 247, 0.5);
+}
+
+.holder-type.vc {
+  color: rgba(245, 245, 247, 0.5);
+}
+
+.holder-type.whale {
+  color: rgba(245, 245, 247, 0.5);
+}
+
+.holder-type.retail {
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.cell-maker {
+  position: relative;
+  overflow: visible;
+}
+
+/* Two stacked lines: IDENTITY (address + badges) over BEHAVIOUR (position bar,
+   tx count, PnL), with the actions column spanning both. Seven chips in one
+   run-on flex row was the densest, least scannable cell in the table. Grid
+   rather than nested flex so actions can span both rows without a wrapper. */
+.cell-maker-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 1px;
+  /* Anchor for the floating action tooltip (overlays the right edge on hover). */
+  position: relative;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.maker-line {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+  grid-column: 1;
+}
+
+.maker-line--id { grid-row: 1; }
+
+/* The stats line is a fixed 122px block, right-anchored like the identity
+   line above it and left-packed inside, so the position bar starts exactly
+   under the address: 122 = address 70 + gap 6 + badge slot 46, i.e. the
+   identity line minus the platform tile hanging to its left. The count then
+   sits at a constant x under the badge instead of drifting with its width. */
+.maker-line--stats {
+  grid-row: 2;
+  justify-self: end;
+  width: 122px;
+  justify-content: flex-start;
+}
+
+.cell-maker-inner > .maker-actions {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+/* Allow tooltip to overflow table cell */
+.data-table td:last-child {
+  overflow: visible;
+}
+
+/* Maker type badge - compact pill, semi-fill, sharp corners */
+/* Spectre-executed trade marker (the user's own trades via Spectre).
+   The icon is a black tile with a white phoenix, so it needs a WHITE frame
+   (always white, never the token accent) to read against the dark row. */
+.spectre-trade-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.55);
+  cursor: help;
+}
+
+.spectre-trade-badge > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Custom hover tooltip - lean terminal label, flat, no glass/shadow */
+.spectre-trade-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(2px);
+  padding: 3px 7px;
+  white-space: nowrap;
+  background: #0d0d0f;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  font-family: var(--font-num-chip, inherit);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.72);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 130ms ease, transform 130ms cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 99999;
+}
+
+.spectre-trade-badge:hover .spectre-trade-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Day mode */
+body.theme-light .spectre-trade-tooltip {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #475569;
+}
+
+.maker-type-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 5px;
+  background: color-mix(in srgb, currentColor 16%, transparent);
+  border: none;
+  border-radius: 2px;
+  font-family: var(--font-num-chip);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  position: relative;
+  cursor: help;
+  z-index: 1;
+  opacity: 1;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.maker-type-badge:hover {
+  z-index: 1000;
+  opacity: 1;
+}
+
+/* Maker Label Tooltip - Apple/Terminal: lifted glass card, hairline, quiet shadow */
+.maker-tooltip {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  flex-direction: column;
+  gap: 0;
+  width: 240px;
+  padding: 0;
+  background: rgba(18, 18, 21, 0.94);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  z-index: 99999;
+  pointer-events: auto;
+  animation: makerTooltipFadeIn 0.18s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  white-space: normal;
+  text-align: left;
+  overflow: hidden;
+}
+
+/* Invisible hover bridge between badge and tooltip */
+.maker-tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  height: 8px;
+}
+
+@keyframes makerTooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Tooltip arrow pointing up - sits on top of hover bridge */
+.maker-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom-color: rgba(18, 18, 21, 0.94);
+  pointer-events: none;
+}
+
+.maker-type-badge:hover .maker-tooltip,
+.maker-tx-count:hover .maker-tooltip,
+.maker-tooltip:hover {
+  display: flex;
+}
+
+/* Header row - maker label name; inherits color from inline style */
+.tooltip-title {
+  font-family: var(--font-num-chip);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* Description row */
+.tooltip-desc {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  padding: 10px 14px 12px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  text-align: left;
+  letter-spacing: -0.005em;
+}
+
+.maker-address {
+  font-family: var(--font-num-chip);
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.52);
+  /* Fixed basis, never shrinks: a longer address (bigger font at narrow
+     widths) grows the box instead of clipping. */
+  flex: 0 0 70px;
+  min-width: 70px;
+}
+
+.maker-address-tail {
+  color: rgba(245, 245, 247, 0.5);
+}
+
+/* The identity line is right-packed, so anything of variable width to the
+   right of the address would walk the address around from row to row. Both
+   neighbours therefore sit in fixed slots: the platform tile (present or
+   not) and the maker-type badge (natural pill width, left-packed in a slot
+   wide enough for the longest label, "PANIC"). Result: the address starts
+   on the same x on every row, badge or no badge, tile or no tile. */
+.maker-src-slot {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.maker-type-slot {
+  min-width: 46px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* The app the swap was routed through renders as a TradeSourceIcon brand
+   tile left of the address (see TradeSourceIcon.jsx). On the Holders row the
+   tile is a touch smaller so it sits inside the wallet cell's line-height. */
+.hld-wallet-inner .tsrc.hld-src { width: 16px; height: 16px; border-radius: 3.5px; }
+.hld-wallet-inner .tsrc.hld-src .tsrc-mark { font-size: 8px; }
+
+/* Maker row actions - hidden by default, reveal on row hover */
+.maker-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 1; /* always visible (copy / explorer / filter) */
+}
+
+.maker-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: rgba(245, 245, 247, 0.5);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.maker-action-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+}
+
+.maker-action-btn svg {
+  width: 12px;
+  height: 12px;
+}
+
+.maker-action-btn.copy-btn {
+  color: rgba(245, 245, 247, 0.5);
+}
+
+.maker-action-btn.copy-btn:hover {
+  color: var(--text-primary);
+}
+
+/* Chart/explorer button - ghost like others */
+.maker-action-btn.chart-btn {
+  color: rgba(245, 245, 247, 0.50);
+}
+
+.maker-action-btn.chart-btn:hover {
+  color: rgba(245, 245, 247, 0.6);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Transaction count - hoverable with tooltip */
+.maker-tx-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-num-chip);
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.70);
+  min-width: 20px;
+  min-height: 0;
+  padding: 0 3px;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  cursor: help;
+  position: relative;
+  transition: all 0.12s ease;
+}
+
+.maker-tx-count:hover {
+  color: rgba(245, 245, 247, 0.6);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.maker-tx-count.high {
+  color: rgba(245, 245, 247, 0.60);
+}
+
+/* TX summary tooltip - tabular grid layout */
+.tx-summary-tooltip {
+  width: 280px;
+}
+
+/* Title: token amount + USD */
+.tx-summary-tooltip .tooltip-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  text-transform: none;
+  letter-spacing: -0.005em;
+  color: var(--text-primary);
+}
+
+.tx-title-usd {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary) !important;
+}
+
+.tx-summary-body {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 14px 12px;
+  gap: 0;
+}
+
+/* Column header row */
+.tx-summary-header {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr 40px;
+  gap: 4px;
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.tx-col-head {
+  font-family: var(--font-num-chip);
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-align: right;
+}
+
+/* Data rows */
+.tx-summary-grid-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr 40px;
+  gap: 4px;
+  padding: 5px 0;
+  align-items: center;
+}
+
+.tx-col-label {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.tx-col-val {
+  font-family: var(--font-num-chip);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  text-align: right;
+}
+
+.tx-col-val.bull {
+  color: var(--up, #34E89E);
+  font-weight: 600;
+}
+
+.tx-col-val.bear {
+  color: var(--down, #FF5169);
+  font-weight: 600;
+}
+
+/* Span remaining columns */
+.tx-col-span {
+  grid-column: 2 / -1;
+}
+
+.tx-summary-date {
+  font-weight: 400;
+  color: var(--text-tertiary);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+}
+
+.tx-summary-pnl {
+  padding-top: 6px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.tx-summary-time {
+  padding-top: 6px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.tx-summary-sub {
+  font-weight: 400;
+  color: var(--text-tertiary);
+  font-size: 0.6875rem;
+}
+
+/* Partial data indicators */
+.tx-partial-hint {
+  color: var(--text-muted);
+  margin-right: 1px;
+}
+
+.tx-partial-notice {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-align: left;
+  letter-spacing: 0.02em;
+}
+
+/* Maker PnL - plain text, no bg */
+.maker-pnl {
+  font-family: var(--font-num-chip);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0;
+  border-radius: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: transparent;
+}
+
+.maker-pnl.profit {
+  color: var(--up, #34E89E);
+}
+
+.maker-pnl.loss {
+  color: var(--down, #FF5169);
+}
+
+/* Filter button */
+.maker-action-btn.filter-btn-icon {
+  color: rgba(245, 245, 247, 0.50);
+}
+
+.maker-action-btn.filter-btn-icon:hover {
+  color: rgba(245, 245, 247, 0.6);
+}
+
+.eye-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.data-table tr:hover .eye-btn {
+  opacity: 1;
+}
+
+/* Swap badge - plain text */
+.type-badge.swap {
+  background: transparent;
+  color: rgba(245, 245, 247, 0.60);
+}
+
+/* Buy/sell row hover - hard instant, brighten spine, no transform */
+.data-table tbody tr.buy:hover{box-shadow:inset 3px 0 0 var(--up,#34E89E),inset 0 1px 0 rgba(255,255,255,.09),inset 0 -1px 0 rgba(255,255,255,.09);background-color:rgba(255,255,255,.06)}
+.data-table tbody tr.sell:hover{box-shadow:inset 3px 0 0 var(--down,#FF5169),inset 0 1px 0 rgba(255,255,255,.09),inset 0 -1px 0 rgba(255,255,255,.09);background-color:rgba(255,255,255,.06)}
+
+/* ============================================
+   BIG TRADE HIGHLIGHTING - Terminal Style
+   Left-border accent only, no gradients/glow
+   ============================================ */
+
+/* Medium trades ($1K - $10K) */
+.data-table tbody tr.medium {
+  position: relative;
+}
+/* medium.buy / medium.sell spine handled by the ladder above */
+
+/* Large trades ($10K - $50K) */
+.data-table tbody tr.large {
+  position: relative;
+}
+
+/* large left spine handled by the box-shadow inset rules near the row block
+   (mint/coral, no layout shift) - old border-left removed. */
+
+/* Large trades ($10K - $50K) - .cell-size font-weight handled by usd-value ladder */
+
+/* Whale trades ($50K+) */
+.data-table tbody tr.whale {
+  position: relative;
+}
+/* whale .cell-size font-weight handled by usd-value ladder */
+
+/* ============================================
+   USD IMPACT BAR - Visual trade size indicator
+   Shows how much the trade impacts the market
+   ============================================ */
+
+.usd-impact-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+  min-width: 70px;
+  padding: 0;
+  margin: 0;
+}
+
+/* Impact bar — 2px strip below the USD value, sized by tier */
+.impact-bar {
+  position: relative;
+  height: 2px;
+  border-radius: 1px;
+  transition: width 0.4s ease-out;
+  align-self: flex-end;
+}
+
+.impact-bar.impact-small { background: transparent; height: 0; }
+
+.impact-bar.buy.impact-mid { background: rgba(16, 185, 129, 0.35); }
+.impact-bar.sell.impact-mid { background: rgba(239, 68, 68, 0.35); }
+
+.impact-bar.buy.impact-big { background: var(--bull); }
+.impact-bar.sell.impact-big { background: var(--bear); }
+
+.impact-bar.buy.impact-whale { background: var(--bull-bright); }
+.impact-bar.sell.impact-whale { background: var(--bear-bright); }
+
+/* Cell-specific type scale — the USD value is the focal point: the one
+   number a hair above PRICE/AMOUNT (13.5px), and the brightest. */
+.cell-size .usd-value { font-size: 14px; }
+.cell-price { font-size: 13.5px; }
+.cell-date { font-size: 11.5px; }
+
+/* USD = the one coloured money value, set the way GMGN sets its PnL column:
+   Geist (our --font-num-chip already), 14px, weight 500, in their text
+   green/red (--up-text / --down-text). The soft mint at 13.5px/600 read as a
+   pale tint that lost to the white PRICE/AMOUNT digits beside it; a deeper,
+   truer green at a calmer weight reads as colour first. Tabular digits so
+   sizes line up at the "$". No glow: the colour carries it. */
+.usd-value {
+  position: relative;
+  z-index: 1;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  font-variant-numeric: tabular-nums;
+}
+.usd-value.usd-buy { color: var(--up-text, #46B87D); }
+.usd-value.usd-sell { color: var(--down-text, #DE5759); }
+
+/* ── SIZE cell — value, then the trade-size pill to its right ──────────────
+   One line: the USD value (native amount as a muted sub beside it) in a
+   fixed-width text column, then the 22px pill track filling the rest of the
+   cell with an absolutely-positioned gradient fill whose width comes from
+   --data-bar-fill, the market-cap-relative LOG scale already computed per
+   row in DataTabs.jsx - deliberately not a max-of-visible scale, because on
+   a streaming tape that would rescale every row the moment one whale print
+   lands. The value used to be laid ON the pill; a bright number on a
+   coloured ground read worse than either alone, so the number now sits on
+   the row ground and the pill keeps its look beside it. */
+.tx-size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Fixed column so every row's pill starts on the same x - bar lengths only
+   mean something if they share a start line. 118px clears
+   "$2,297  0.6563 ETH"; a longer value grows the column rather than clipping. */
+.tx-size-text {
+  flex: 0 0 auto;
+  min-width: 118px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+/* 500 on the row ground, GMGN's weight for a 14px value - the colour and the
+   size step mark it as the focal number; a heavier cut turned the green
+   muddy. */
+.tx-size-text .usd-value {
+  font-weight: 500;
+}
+
+.tx-size-track {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 24px;
+  height: 22px;
+  border-radius: 6px;
+  /* Quieter than the fill so the TRACK never competes with it. */
+  background: rgba(255, 255, 255, 0.022);
+  overflow: hidden;
+}
+
+.tx-size-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 6px;
+  transition: width 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* DEEP fills, not mid-tone tints - the reference board pairs accent #5CE6A1
+   with bg rgba(20,90,55) -> rgba(8,42,28), a dark saturated ground. The bar
+   reads as a bar because the deep green is lighter than the near-black
+   track. */
+.tx-size.is-buy .tx-size-fill {
+  background: linear-gradient(90deg, rgba(20, 90, 55, 0.95), rgba(10, 48, 32, 0.85));
+}
+.tx-size.is-sell .tx-size-fill {
+  background: linear-gradient(90deg, rgba(110, 30, 42, 0.95), rgba(62, 18, 28, 0.85));
+}
+
+/* Whale prints earn a glow - the row already carries the tier from sizeTier. */
+.data-table tbody tr.whale.buy .tx-size-fill {
+  box-shadow: 0 0 10px -1px var(--up-glow, rgba(52, 232, 158, 0.55));
+}
+.data-table tbody tr.whale.sell .tx-size-fill {
+  box-shadow: 0 0 10px -1px var(--down-glow, rgba(255, 81, 105, 0.55));
+}
+
+/* Native amount rides inline as a muted sub (the reference's `bar-sub`), not a
+   second line - so the row stays one line tall and compact density is a width
+   decision rather than a height one. */
+/* 11px/500 against the value's 14px/600 - the reference builds its hierarchy
+   from a real SIZE gap, not from alpha alone, which is why the secondary
+   reads as subordinate without disappearing. */
+.tx-size-native {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.theme-light .tx-size-track { background: rgba(15, 23, 42, 0.05); }
+body.theme-light .tx-size.is-buy .tx-size-fill {
+  background: linear-gradient(90deg, rgba(5, 150, 105, 0.30), rgba(5, 150, 105, 0.09));
+}
+body.theme-light .tx-size.is-sell .tx-size-fill {
+  background: linear-gradient(90deg, rgba(220, 38, 38, 0.28), rgba(220, 38, 38, 0.08));
+}
+body.theme-light .tx-size-native { color: rgba(17, 17, 19, 0.45); }
+
+/* Light mode: the luminous text pair is invisible on white, so the value and
+   the BUY/SELL label take the deep emerald/red already used by
+   `.price-change` in this file - direction at the same strength in both
+   themes. */
+body.theme-light .usd-value.usd-buy,
+body.theme-light .type-badge.buy { color: #047857; }
+body.theme-light .usd-value.usd-sell,
+body.theme-light .type-badge.sell { color: #b91c1c; }
+
+/* Impact bar for bigger trades */
+.data-table tbody tr.medium .impact-bar,
+.data-table tbody tr.large .impact-bar,
+.data-table tbody tr.whale .impact-bar {
+  opacity: 1;
+}
+
+/* Per-tier hover wash removed - base buy/sell hover above handles all tiers */
+
+/* Refresh button spinning */
+.refresh-btn.spinning .icon-wrap,
+.refresh-btn.spinning svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Loading, Error, Empty States */
+.loading-state,
+.error-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-10);
+  gap: var(--sp-3);
+  min-height: 200px;
+}
+
+.loading-state p,
+.error-state p,
+.empty-state p {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.empty-state span {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+/* Empty state rendered INSIDE the transactions table so the header filters
+   stay reachable - a zero-result filter must always be clearable */
+.empty-filter-row td {
+  padding: 0;
+  border: none;
+}
+
+.data-table tbody tr.empty-filter-row:hover {
+  background: transparent;
+}
+
+.empty-state--in-table {
+  min-height: 240px;
+}
+
+.clear-all-filters-btn {
+  margin-top: var(--sp-1);
+  padding: var(--sp-2) var(--sp-4);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  color: rgba(245, 245, 247, 0.7);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.clear-all-filters-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(245, 245, 247, 0.95);
+}
+
+body.theme-light .clear-all-filters-btn {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.08);
+  color: #475569;
+}
+
+body.theme-light .clear-all-filters-btn:hover {
+  background: rgba(15, 23, 42, 0.08);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+}
+
+.error-state button {
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.error-state button:hover {
+  opacity: 0.9;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border-subtle);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Placeholder Content */
+.placeholder-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-10);
+  gap: var(--sp-2);
+}
+
+.placeholder-icon {
+  font-size: 2rem;
+  opacity: 0.5;
+}
+
+.placeholder-content p {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.placeholder-content span {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+/* ============================================
+   BUBBLEMAPS INTEGRATION
+   ============================================ */
+
+.bubblemap-container {
+  width: 100%;
+  height: 700px;
+  min-height: 600px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  position: relative;
+  overflow-anchor: none; /* Prevent scroll anchoring */
+  contain: layout style paint; /* CSS containment to isolate iframe */
+}
+
+.bubblemap-iframe-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate; /* Create new stacking context */
+  display: flex;
+  flex-direction: column;
+}
+
+.bubblemap-fallback {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  background: rgba(10, 10, 15, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  z-index: 10;
+  backdrop-filter: blur(8px);
+}
+
+.bubblemap-fallback a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.bubblemap-fallback a:hover {
+  text-decoration: underline;
+}
+
+.bubblemap-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+  color: var(--text-secondary);
+}
+
+.bubblemap-loading .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.06);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* When bubblemap tab is active, allow content to expand */
+.tabs-content:has(.bubblemap-container) {
+  height: auto !important;
+  min-height: 700px;
+  overflow-anchor: none; /* Prevent scroll anchoring */
+}
+
+/* When holders tab is active, allow content to expand */
+.tabs-content:has(.holders-section) {
+  height: auto !important;
+  min-height: 600px;
+  max-height: none;
+}
+
+.bubblemap-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+}
+
+.bubblemap-unsupported {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: var(--sp-2);
+  color: var(--text-tertiary);
+}
+
+.bubblemap-unsupported .placeholder-icon {
+  font-size: 2.5rem;
+  opacity: 0.4;
+}
+
+.bubblemap-unsupported p {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.bubblemap-unsupported span {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+/* ========================================
+   ENHANCED HOLDERS SECTION - APPLE STYLE
+   ======================================== */
+
+/* Professional Apple-Style Holders Section */
+.holders-section.pro {
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.holders-analytics.pro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* Clean Stats Grid */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-3);
+}
+
+.stat-card {
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  transition: background 0.2s ease;
+  position: relative;
+}
+
+.stat-card:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Whisper labels */
+.stat-label {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+/* Large display numbers: 28–32px, 600–700, #f5f5f7 */
+.stat-value {
+  font-family: var(--font-num-chip);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-sublabel {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.6);
+}
+
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  width: fit-content;
+}
+
+.stat-badge.low {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+}
+
+.stat-badge.medium {
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+}
+
+.stat-badge.high {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+}
+
+/* Simple Progress Bar */
+.stat-bar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: auto;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+/* Movement Indicator */
+.stat-movement {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.movement-up {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #4ade80;
+}
+
+.movement-divider {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.movement-down {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f87171;
+}
+
+/* Distribution Section */
+.distribution-section {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: var(--sp-4);
+  overflow: visible;
+}
+
+.distribution-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--sp-3);
+}
+
+.distribution-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.distribution-subtitle {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.distribution-bar-pro {
+  display: flex;
+  height: 14px;
+  border-radius: 7px;
+  overflow: visible;
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+  position: relative;
+  margin-top: 24px; /* Space for tooltip above */
+}
+
+.distribution-bar-pro .dist-segment:first-child {
+  border-radius: 5px 0 0 5px;
+}
+
+.distribution-bar-pro .dist-segment:last-child {
+  border-radius: 0 5px 5px 0;
+}
+
+.distribution-bar-pro .dist-segment:only-child {
+  border-radius: 5px;
+}
+
+.dist-segment {
+  height: 100%;
+  transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Glossy effect on segments - using box-shadow instead of ::after */
+
+.dist-segment:hover {
+  filter: brightness(1.2);
+  transform: scaleY(1.3);
+  z-index: 2;
+}
+
+.dist-segment.others {
+  background: #374151;
+}
+
+/* Distribution Tooltip - Crisp Style */
+.dist-segment.has-tooltip {
+  position: relative;
+}
+
+.dist-segment.has-tooltip::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a22;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 1000;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
+
+.dist-segment.has-tooltip:hover::before {
+  opacity: 1;
+}
+
+/* Highlight segment when filter is active - subtle effect */
+.dist-segment.highlighted {
+  transform: scaleY(1.4);
+  filter: brightness(1.15);
+  z-index: 10;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+  transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dist-segment.dimmed {
+  opacity: 0.35;
+  transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.distribution-legend-pro {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+
+.legend-item-pro {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.12s ease;
+  user-select: none;
+}
+
+.legend-item-pro:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.legend-item-pro.active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.legend-item-pro.active .legend-dot {
+  box-shadow: 0 0 6px currentColor;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  transition: box-shadow 0.2s ease;
+}
+
+.legend-pct {
+  color: rgba(255, 255, 255, 0.35);
+  font-variant-numeric: tabular-nums;
+  margin-left: 2px;
+}
+
+.legend-item-pro:hover .legend-pct,
+.legend-item-pro.active .legend-pct {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Holders Chart
+   ═══════════════════════════════════════════════════════════════════ */
+
+.holders-chart-section {
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.holders-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 6px;
+}
+
+.holders-chart-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.holders-chart-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.holders-current {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.holders-change {
+  /* Delta-chip typography — see `--font-num-chip` token. */
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.holders-change.up { color: #10B981; }
+.holders-change.down { color: #EF4444; }
+
+.holders-chart-buckets {
+  display: flex;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.bucket-btn {
+  padding: 3px 10px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.12s;
+}
+
+.bucket-btn:hover { color: rgba(255, 255, 255, 0.7); }
+
+.bucket-btn.active {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.6);
+}
+
+.holders-chart-container {
+  position: relative;
+  min-height: 200px;
+}
+
+.holders-chart-loading,
+.holders-chart-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 12px;
+}
+
+/* Segmented Control */
+.holders-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.segmented-control {
+  display: flex;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  padding: 4px;
+  gap: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.segment {
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.segment:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.segment.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.segment.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(245, 245, 247, 0.5), rgba(245, 245, 247, 0.4));
+  border-radius: 1px;
+  opacity: 0;
+}
+
+.segment.active:hover::after {
+  opacity: 1;
+}
+
+.sort-control {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.sort-control label {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.sort-control select {
+  background: rgba(15, 15, 25, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 8px 32px 8px 12px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='rgba(255,255,255,0.5)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  min-width: 130px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.sort-control select:hover {
+  background: rgba(25, 25, 40, 0.9);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.sort-control select:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(25, 25, 40, 0.9);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06);
+}
+
+.sort-control select option {
+  background: #16161f;
+  color: rgba(255, 255, 255, 0.9);
+  padding: 10px 12px;
+  border: none;
+}
+
+.sort-control select option:checked {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.06) 100%);
+}
+
+/* Professional Table */
+/* Table wrapper */
+.holders-table-wrapper {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow-x: auto;
+}
+
+.holder-row.pro {
+  transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.holder-row.pro::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: transparent;
+  transition: background 0.2s ease;
+}
+
+.holder-row.pro:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.holder-row.pro:hover::after {
+  background: linear-gradient(180deg, rgba(245, 245, 247, 0.5), rgba(245, 245, 247, 0.4));
+}
+
+.holder-row.pro td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.025);
+  vertical-align: middle;
+}
+
+.holder-row.pro.tier-major {
+  background: rgba(59, 130, 246, 0.03);
+}
+
+.holder-row.pro.tier-major::after {
+  background: linear-gradient(180deg, #3b82f6, #2563eb);
+}
+
+.holder-row.pro.tier-significant {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.holder-row.pro.tier-significant::after {
+  background: linear-gradient(180deg, rgba(245, 245, 247, 0.5), rgba(245, 245, 247, 0.4));
+}
+
+/* Clean Rank */
+.holder-row.pro .rank-number {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Holder Info */
+.holder-info-pro {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.holder-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.holder-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #fff;
+}
+
+.holder-address {
+  font-size: 0.8125rem;
+  font-family: var(--font-num-chip);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.holder-tag {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid;
+  background: transparent;
+  transition: all 0.12s ease;
+}
+
+.holder-row.pro:hover .holder-tag {
+  background: currentColor;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+/* Balance */
+.holder-row.pro .balance-value {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #fff;
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  display: block;
+  text-align: right;
+}
+
+/* Share Cell */
+.share-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.share-bar-bg {
+  width: 60px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.share-bar-bg .share-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(245, 245, 247, 0.4), rgba(245, 245, 247, 0.5));
+  border-radius: 2px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.share-bar-bg .share-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.share-pct {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  font-variant-numeric: tabular-nums;
+  min-width: 45px;
+}
+
+/* Change Value */
+.change-val {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.change-val.up {
+  color: #4ade80;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.change-val.down {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.change-val.neutral {
+  color: rgba(255, 255, 255, 0.3);
+  background: transparent;
+}
+
+/* Activity */
+.activity-time-pro {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Action Buttons - Professional Style */
+.action-btns {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  flex-wrap: nowrap;
+}
+
+.holder-row.pro:hover .action-btns {
+  opacity: 1;
+}
+
+.action-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.action-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.action-btn:hover::before {
+  opacity: 1;
+}
+
+.action-btn:active {
+  transform: translateY(0) scale(0.95);
+}
+
+/* Copy Button */
+.action-btn.copy-btn:hover {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #60a5fa;
+}
+
+/* Explorer Button */
+.action-btn.explorer-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.6);
+}
+
+/* Track Button */
+.action-btn.track-btn:hover {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+.action-btn svg {
+  width: 10px;
+  height: 10px;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.2s ease;
+}
+
+.action-btn:hover svg {
+  transform: scale(1.1);
+}
+
+/* Removed old cartoon-style animations */
+
+/* Old styles removed - using professional .pro classes now */
+
+.holders-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.holders-table thead th {
+  padding: var(--sp-4) var(--sp-3);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  white-space: nowrap;
+}
+
+.holders-table thead th:first-child {
+  border-radius: 12px 0 0 0;
+}
+
+.holders-table thead th:last-child {
+  border-radius: 0 12px 0 0;
+}
+
+/* Column Alignment - Force alignment with !important */
+.holders-table {
+  width: 100%;
+}
+
+/* Rank column - Center aligned */
+.holders-table thead .th-rank,
+.holders-table .cell-rank {
+  width: 50px;
+  text-align: center !important;
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+}
+
+/* Holder/Address column - Left aligned */
+.holders-table thead .th-address,
+.holders-table .cell-holder {
+  text-align: left !important;
+}
+
+/* Supply column - Right aligned */
+.holders-table thead .th-balance,
+.holders-table .cell-balance {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+/* Value column - Right aligned */
+.holders-table thead .th-value,
+.holders-table .cell-value {
+  width: 120px;
+  text-align: right !important;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Share column - Left aligned */
+.holders-table thead .th-share,
+.holders-table .cell-share {
+  text-align: left !important;
+}
+
+/* 24h Change column - Center aligned */
+.holders-table thead .th-change,
+.holders-table .cell-change {
+  text-align: center !important;
+  white-space: nowrap;
+}
+
+/* Last Active column - Left aligned */
+.holders-table thead .th-activity,
+.holders-table .cell-activity {
+  text-align: left !important;
+  white-space: nowrap;
+}
+
+/* Actions column - Center aligned (header matches centered buttons) */
+.holders-table thead .th-actions,
+.holders-table .cell-actions {
+  text-align: center !important;
+  white-space: nowrap;
+  min-width: 90px;
+}
+
+.holder-row {
+  transition: all 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.holder-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: transparent;
+  transition: all 0.12s ease;
+}
+
+.holder-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.holder-row:hover::before {
+  background: linear-gradient(180deg, var(--accent), rgba(255, 255, 255, 0.1));
+}
+
+.holder-row.diamond {
+  background: linear-gradient(90deg, rgba(96, 165, 250, 0.08) 0%, transparent 40%);
+}
+
+.holder-row.diamond::before {
+  background: linear-gradient(180deg, #60a5fa, #3b82f6);
+}
+
+.holder-row.gold {
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.08) 0%, transparent 40%);
+}
+
+.holder-row.gold::before {
+  background: linear-gradient(180deg, #fbbf24, #f59e0b);
+}
+
+.holder-row.silver::before {
+  background: linear-gradient(180deg, #9ca3af, #6b7280);
+}
+
+.holder-row td {
+  padding: var(--sp-4) var(--sp-3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  vertical-align: middle;
+}
+
+/* Rank Cell */
+.rank-number {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+.tier-badge {
+  font-size: 1.1rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  animation: tierFloat 3s ease-in-out infinite;
+}
+
+@keyframes tierFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-3px) rotate(-5deg); }
+  75% { transform: translateY(-3px) rotate(5deg); }
+}
+
+/* Holder Info Cell */
+.holder-info {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.holder-type-icon {
+  font-size: 1.3rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.03));
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.holder-row:hover .holder-type-icon {
+  transform: scale(1.1);
+  box-shadow: 
+    0 6px 16px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.holder-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.holder-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+.holder-address {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: var(--font-num-chip);
+}
+
+.holder-type-tag {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  width: fit-content;
+  margin-top: 2px;
+}
+
+/* Balance Cell */
+.balance-value {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  display: block;
+  text-align: center;
+}
+
+/* Value Cell */
+.value-amount {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  display: block;
+}
+
+/* Share Cell */
+.share-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 140px;
+}
+
+.share-bar-container {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 100px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.share-bar-fill {
+  height: 100%;
+  border-radius: 100px;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.share-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.3), transparent);
+}
+
+.share-value {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.8);
+  font-family: var(--font-num-chip);
+  min-width: 55px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Change Cell */
+.change-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-family: var(--font-num-chip);
+  padding: 6px 12px;
+  border-radius: 100px;
+  font-variant-numeric: tabular-nums;
+  transition: all 0.12s ease;
+}
+
+.change-value.positive {
+  color: #34d399;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+}
+
+.change-value.negative {
+  color: #f87171;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.15);
+}
+
+.change-value.neutral {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Activity Cell */
+.activity-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: all 0.12s ease;
+}
+
+.activity-dot.recent {
+  background: #34d399;
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.6);
+  animation: activityPulse 2s ease-in-out infinite;
+}
+
+@keyframes activityPulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(52, 211, 153, 0.6); transform: scale(1); }
+  50% { box-shadow: 0 0 20px rgba(52, 211, 153, 0.8); transform: scale(1.2); }
+}
+
+.activity-time {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.holder-action-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.holder-action-btn svg {
+  width: 15px;
+  height: 15px;
+  transition: transform 0.3s ease;
+}
+
+.holder-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.holder-action-btn:hover svg {
+  transform: scale(1.1);
+}
+
+.holder-action-btn.copy:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(59, 130, 246, 0.15));
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25);
+}
+
+.holder-action-btn.explorer:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.06));
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.6);
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.06);
+}
+
+.holder-action-btn.track:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.15));
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.25);
+}
+
+/* =========================================
+   Responsive DataTabs System
+   ========================================= */
+
+/* Large Desktop (1400px) */
+@media (max-width: 1400px) {
+  .analytics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* =========================================
+   Transactions table — responsive collapse tiers.
+
+   The 7-column table (Age | Type | Price | Amount | ETH | USD | Maker)
+   uses table-layout: fixed with percentage column widths. The table
+   lives inside `.data-tabs`, which is a sized container — and the
+   panel can be narrow (~700-1000px) even when the viewport is wide
+   (~1500px+) because the page splits between left/middle/right panels.
+
+   So we use @container queries against `data-tabs-panel`, not viewport
+   media queries. Three tiers collapse the layout as the panel narrows.
+   The mobile path (.mdt overrides in MobileDataTabs.css) still applies
+   on phones below 768px because `useIsMobile` switches to a separate
+   render tree.
+   ========================================= */
+
+/* Tier 1 — container ≤1180px: hide the inactive toggle option + separator
+   so each header reads as a single label ("Age", "Price", "Amount").
+   Filter button stays. Cells get `overflow: hidden + text-overflow:
+   ellipsis` so any remaining bleed clips instead of painting over the
+   neighbouring column. */
+@container data-tabs-panel (max-width: 1180px) {
+  .data-table tbody td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* Header cells must NOT clip: each th hosts a filter dropdown that opens
+     downward. overflow:hidden here turned that dropdown into the clipped
+     "notch" bug. Labels are single short words at this width, so dropping the
+     clip causes no bleed - and the dropdown now renders fully over the rows. */
+  .data-table thead th {
+    overflow: visible;
+  }
+  .data-table thead th .th-content {
+    min-width: 0;
+  }
+  /* Age/Type/Price/Amount headers all share the .date-age-toggle wrapper
+     class. Hide the inactive option + separator in each so only the
+     currently selected label renders. */
+  .data-table thead .date-age-toggle .toggle-separator,
+  .data-table thead .date-age-toggle .toggle-option:not(.active),
+  .data-table thead .col-secondary,
+  .data-table thead .col-suffix {
+    display: none;
+  }
+  /* Trim the inline filter button so it fits inside its column. */
+  .data-tabs--i7 .data-table thead th .filter-btn {
+    width: 18px;
+    height: 18px;
+    margin-left: 4px;
+  }
+  .data-tabs--i7 .data-table thead th .filter-btn svg {
+    width: 10px;
+    height: 10px;
+  }
+  .data-tabs--i7 .data-table thead th {
+    /* Horizontal stays at the td's --sp-3 at this tier (tds only drop to 8px
+       below 1000px) so header labels and values share one x. */
+    padding: 12px var(--sp-3);
+  }
+}
+
+/* Tier 2 — container ≤1000px: redistribute column widths. Maker (30%)
+   is the slackest column; pull width out of it and into TYPE (must
+   clear "TYPE" header + filter icon) and the dense numeric columns.
+   Trim inter-cell padding so values clear their cell edge before the
+   next column's content starts. */
+@container data-tabs-panel (max-width: 1000px) {
+  .data-table col.col-age    { width: 9%;  }
+  .data-table col.col-type   { width: 10%; }
+  .data-table col.col-price  { width: 13%; }
+  .data-table col.col-amount { width: 13%; }
+  .data-table col.col-size   { width: 21%; }
+  .data-table col.col-maker  { width: 30%; }
+  .data-table th,
+  .data-table td { padding: 0 8px; font-size: 0.8125rem; }
+  .data-tabs--i7 .data-table thead th { padding: 10px 8px; }
+  .data-tabs--i7 .data-table tbody td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Tier 3 — container ≤860px: keep ALL seven columns (MAKER included) and just
+   tighten spacing. Below the table's 720px min-width the wrapper scrolls
+   horizontally, so no column is ever dropped - the table stays complete and
+   readable at every screen size. */
+@container data-tabs-panel (max-width: 860px) {
+  .data-tabs--i7 .data-table thead th { padding: 10px 6px; }
+  .data-table th, .data-table td { padding: 0 6px; }
+}
+
+/* Desktop catch-all from the original — broader chrome tweaks at
+   <=1200px that were not column-specific. Kept intact below the tiered
+   collapse so it still applies to layout/border-radius/heights. */
+@media (max-width: 1200px) {
+  .analytics-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .data-tabs {
+    border-radius: var(--radius-md);
+  }
+
+  .tabs-content {
+    height: 280px;
+  }
+
+  .data-tabs.expanded .tabs-content {
+    height: calc(100vh - 420px);
+  }
+}
+
+/* Tablet (900px) */
+@media (max-width: 900px) {
+  .tabs-nav {
+    padding: var(--sp-2);
+    gap: var(--sp-2);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  
+  .tabs-nav::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .tabs-scroll {
+    flex-shrink: 0;
+  }
+  
+  .tab-item {
+    padding: var(--sp-2) var(--sp-3);
+    font-size: 0.8125rem;
+  }
+  
+  .tabs-content {
+    height: 260px;
+  }
+  
+  .data-tabs.expanded .tabs-content {
+    height: auto;
+    max-height: 60vh;
+  }
+  
+  .tabs-actions {
+    gap: var(--sp-1);
+  }
+  
+  .action-icon {
+    width: 26px;
+    height: 26px;
+  }
+  
+  .analytics-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--sp-2);
+  }
+  
+  .stat-card {
+    padding: var(--sp-3);
+  }
+  
+  .stat-value {
+    font-size: 1.25rem;
+  }
+  
+  .holders-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-2);
+  }
+  
+  .segmented-control {
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  .segment {
+    padding: 6px 12px;
+    font-size: 0.8125rem;
+  }
+  
+  .distribution-bar-pro {
+    height: 12px;
+  }
+  
+  .bubblemap-container {
+    height: 500px;
+    min-height: 400px;
+  }
+}
+
+/* Tablet Portrait (768px) */
+@media (max-width: 768px) {
+  .data-tabs {
+    border-radius: 14px;
+  }
+
+  /* Mobile: filtering moves into the bottom sheet (Filters button in the
+     toolbar), so hide the per-column header funnels. The Price/MCap and
+     Amount/% toggles stay - they're .date-age-toggle, not .filter-btn. */
+  .data-tabs .filter-dropdown-wrapper {
+    display: none;
+  }
+
+  .tabs-nav {
+    padding: var(--sp-2) var(--sp-2);
+    flex-wrap: nowrap;
+  }
+  
+  .tabs-scroll {
+    display: flex;
+    gap: var(--sp-1);
+  }
+  
+  .tab-item {
+    padding: 6px 10px;
+    font-size: 0.8125rem;
+    gap: var(--sp-1);
+  }
+  
+  .tab-label {
+    display: none;
+  }
+  
+  .tab-icon {
+    font-size: 0.875rem;
+  }
+  
+  .tabs-actions {
+    display: none;
+  }
+  
+  .tabs-content {
+    height: 240px;
+  }
+  
+  .data-table th {
+    font-size: 0.8125rem;
+    padding: 6px;
+  }
+
+  /* Compact rows on mobile so the trades feed isn't an endless scroll.
+     Drop the vertical padding and shrink the row height (56px -> 42px). */
+  .data-table td {
+    font-size: 0.8125rem;
+    height: 42px;
+    padding: 0 8px;
+  }
+  .data-tabs--i7 .data-table tbody td,
+  .data-tabs--i7 .data-table tbody tr {
+    height: 42px;
+  }
+  .data-tabs--i7[data-density='compact'] .data-table tbody td,
+  .data-tabs--i7[data-density='compact'] .data-table tbody tr {
+    height: 36px;
+  }
+
+  .cell-date {
+    font-size: 0.8125rem;
+  }
+  
+  .type-badge {
+    font-size: 0.8125rem;
+    padding: 2px 6px;
+  }
+  
+  .cell-amount,
+  .cell-price,
+  .cell-size {
+    font-size: 0.8125rem;
+  }
+  
+  /* Simplify maker cell on mobile */
+  .cell-maker {
+    gap: 2px;
+  }
+
+  /* The hover action pill (copy / explorer / filter) can't be hovered on
+     touch and just clutters the column, overlapping the address. Hide it -
+     maker filtering lives in the bottom-sheet, the column stays clean. */
+  .maker-actions {
+    display: none;
+  }
+
+  .cell-maker-inner {
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .maker-address {
+    font-size: 0.8125rem;
+    min-width: 0;
+    color: var(--text-secondary);
+  }
+
+  /* Tapping a maker opens the action sheet (copy/explorer/filter). */
+  .cell-maker--tappable {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cell-maker--tappable:active {
+    background: rgba(255, 255, 255, 0.04);
+  }
+  .cell-maker--tappable .maker-address {
+    color: var(--text-primary);
+  }
+
+  .maker-type-badge {
+    font-size: 0.8125rem;
+    padding: 1px 4px;
+  }
+  
+  /* Analytics section */
+  .analytics-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .analytics-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--sp-2);
+  }
+  
+  .stat-card {
+    padding: var(--sp-2);
+    border-radius: 10px;
+  }
+  
+  .stat-label {
+    font-size: 0.8125rem;
+  }
+  
+  .stat-value {
+    font-size: 1.125rem;
+  }
+  
+  .stat-sublabel {
+    font-size: 0.8125rem;
+  }
+  
+  /* Holders section */
+  .holders-section.pro {
+    padding: var(--sp-3);
+    gap: var(--sp-3);
+  }
+  
+  .holders-filters {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .filter-buttons {
+    flex-wrap: wrap;
+  }
+  
+  .distribution-section {
+    padding: var(--sp-3);
+    border-radius: 10px;
+  }
+  
+  .distribution-legend-pro {
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+  }
+  
+  .legend-item-pro {
+    font-size: 0.8125rem;
+    padding: 3px 6px;
+  }
+  
+  /* Holders table */
+  .holders-table thead th {
+    padding: var(--sp-2);
+    font-size: 0.8125rem;
+  }
+  
+  .holder-row td {
+    padding: var(--sp-2);
+  }
+  
+  .holder-type-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+    border-radius: 8px;
+  }
+  
+  .holder-label {
+    font-size: 0.8125rem;
+  }
+  
+  .holder-address {
+    font-size: 0.8125rem;
+  }
+  
+  .balance-value,
+  .value-amount {
+    font-size: 0.8125rem;
+  }
+  
+  .share-wrapper {
+    min-width: 100px;
+  }
+  
+  .share-value {
+    font-size: 0.8125rem;
+    min-width: 45px;
+  }
+  
+  .action-buttons {
+    gap: 4px;
+  }
+  
+  .holder-action-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+  }
+  
+  .holder-action-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+  
+  /* Bubblemap */
+  .bubblemap-container {
+    height: 400px;
+    min-height: 350px;
+  }
+  
+  /* Filter dropdowns */
+  .filter-dropdown-menu {
+    min-width: 140px;
+    border-radius: 10px;
+  }
+  
+  .filter-menu-item {
+    padding: 6px 10px;
+    font-size: 0.8125rem;
+  }
+  
+  .amount-filter-menu {
+    min-width: 180px;
+    padding: 10px;
+  }
+  
+  .amount-input-group input {
+    padding: 6px 8px;
+    font-size: 0.8125rem;
+  }
+  
+  /* Load more */
+  .load-more-container {
+    padding: 12px;
+  }
+  
+  .load-more-btn {
+    padding: 8px 20px;
+    font-size: 0.8125rem;
+  }
+  
+  .loaded-count {
+    font-size: 0.8125rem;
+  }
+}
+
+/* Mobile (640px) */
+@media (max-width: 640px) {
+  .data-tabs {
+    border-radius: 12px;
+  }
+  
+  .tabs-nav {
+    padding: 6px;
+    gap: 4px;
+  }
+  
+  .tab-item {
+    padding: 5px 8px;
+    border-radius: 6px;
+  }
+  
+  .tab-icon {
+    font-size: 0.875rem;
+  }
+  
+  .tabs-content {
+    height: 220px;
+  }
+  
+  /* Hide less important columns on mobile */
+  .data-table th:nth-child(5),
+  .data-table td:nth-child(5),
+  .data-table th:nth-child(6),
+  .data-table td:nth-child(6) {
+    display: none;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 6px 4px;
+    font-size: 0.8125rem;
+  }
+  
+  .type-badge {
+    font-size: 0.8125rem;
+    padding: 1px 5px;
+  }
+  
+  .cell-maker {
+    gap: 1px;
+  }
+
+  .maker-address {
+    font-size: 0.8125rem;
+    min-width: 50px;
+  }
+
+  .maker-action-btn {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .maker-action-btn svg {
+    width: 10px;
+    height: 10px;
+  }
+  
+  .maker-type-badge {
+    display: none;
+  }
+  
+  .usd-impact-container {
+    min-width: 70px;
+    padding: 6px;
+  }
+
+  .usd-value {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  /* Analytics */
+  .analytics-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  
+  .stat-card {
+    padding: 10px;
+  }
+  
+  .stat-label {
+    font-size: 0.8125rem;
+  }
+  
+  .stat-value {
+    font-size: 1rem;
+  }
+  
+  .stat-sublabel,
+  .stat-badge {
+    font-size: 0.8125rem;
+  }
+  
+  /* Distribution */
+  .distribution-section {
+    padding: var(--sp-2);
+    border-radius: 8px;
+  }
+  
+  .distribution-header {
+    margin-bottom: var(--sp-2);
+  }
+  
+  .distribution-title {
+    font-size: 0.8125rem;
+  }
+  
+  .distribution-bar-pro {
+    height: 10px;
+    border-radius: 5px;
+    margin-top: 16px;
+  }
+  
+  .distribution-legend-pro {
+    margin-top: var(--sp-2);
+    gap: 6px;
+  }
+  
+  .legend-item-pro {
+    font-size: 0.8125rem;
+    padding: 2px 4px;
+  }
+  
+  .legend-dot {
+    width: 6px;
+    height: 6px;
+  }
+  
+  /* Holders table compact */
+  .holders-section.pro {
+    padding: var(--sp-2);
+    gap: var(--sp-2);
+  }
+  
+  .holder-type-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 0.875rem;
+    border-radius: 6px;
+  }
+  
+  .holder-label {
+    font-size: 0.8125rem;
+  }
+  
+  .holder-address {
+    font-size: 0.8125rem;
+  }
+  
+  .holder-type-tag {
+    font-size: 0.8125rem;
+    padding: 2px 6px;
+  }
+  
+  .balance-value,
+  .value-amount {
+    font-size: 0.8125rem;
+  }
+  
+  .share-wrapper {
+    min-width: 80px;
+  }
+  
+  .share-bar-container {
+    height: 6px;
+  }
+  
+  .share-value {
+    font-size: 0.8125rem;
+    min-width: 40px;
+  }
+  
+  .change-value {
+    font-size: 0.8125rem;
+    padding: 4px 8px;
+  }
+  
+  .activity-time {
+    font-size: 0.8125rem;
+  }
+  
+  .action-buttons {
+    gap: 3px;
+  }
+  
+  .holder-action-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
+  }
+  
+  .holder-action-btn svg {
+    width: 11px;
+    height: 11px;
+  }
+  
+  /* Segmented control */
+  .segmented-control {
+    padding: 3px;
+    border-radius: 8px;
+  }
+  
+  .segment {
+    padding: 5px 10px;
+    font-size: 0.8125rem;
+    border-radius: 6px;
+  }
+  
+  .sort-control select {
+    padding: 6px 24px 6px 10px;
+    font-size: 0.8125rem;
+    min-width: 100px;
+  }
+  
+  /* Bubblemap */
+  .bubblemap-container {
+    height: 350px;
+    min-height: 300px;
+  }
+  
+  .bubblemap-fallback {
+    padding: 6px 12px;
+    font-size: 0.8125rem;
+    border-radius: 6px;
+  }
+}
+
+/* Small Mobile (480px) */
+@media (max-width: 480px) {
+  .data-tabs {
+    border-radius: 10px;
+  }
+  
+  .tabs-nav {
+    padding: 4px;
+    gap: 2px;
+  }
+  
+  .tab-item {
+    padding: 4px 6px;
+    border-radius: 5px;
+    min-width: 32px;
+    justify-content: center;
+  }
+  
+  .tab-icon {
+    font-size: 0.8125rem;
+  }
+  
+  .tabs-content {
+    height: 200px;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 5px 3px;
+    font-size: 0.8125rem;
+  }
+  
+  .cell-date {
+    font-size: 0.8125rem;
+  }
+  
+  .type-badge {
+    font-size: 0.4375rem;
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+  
+  .cell-amount,
+  .cell-price {
+    font-size: 0.8125rem;
+  }
+  
+  .usd-impact-container {
+    min-width: 60px;
+    padding: 4px;
+  }
+  
+  .usd-value {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .impact-bar {
+    border-radius: 1px;
+  }
+  
+  .cell-maker {
+    display: none;
+  }
+  
+  /* Analytics */
+  .analytics-grid {
+    gap: 6px;
+  }
+  
+  .stat-card {
+    padding: 8px;
+    border-radius: 8px;
+  }
+  
+  .stat-label {
+    font-size: 0.4375rem;
+  }
+  
+  .stat-value {
+    font-size: 0.9375rem;
+  }
+  
+  .stat-bar {
+    height: 3px;
+  }
+  
+  /* Distribution */
+  .distribution-section {
+    padding: 8px;
+  }
+  
+  .distribution-title {
+    font-size: 0.8125rem;
+  }
+  
+  .distribution-bar-pro {
+    height: 8px;
+    margin-top: 12px;
+  }
+  
+  .legend-item-pro {
+    font-size: 0.8125rem;
+    padding: 2px 3px;
+  }
+  
+  .legend-dot {
+    width: 5px;
+    height: 5px;
+  }
+  
+  /* Holders */
+  .holders-section.pro {
+    padding: 8px;
+  }
+  
+  .holder-info {
+    gap: var(--sp-2);
+  }
+  
+  .holder-type-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 0.8125rem;
+    border-radius: 5px;
+  }
+  
+  .holder-label {
+    font-size: 0.8125rem;
+  }
+  
+  .holder-address {
+    font-size: 0.8125rem;
+  }
+  
+  .holder-type-tag {
+    font-size: 0.4375rem;
+    padding: 1px 4px;
+  }
+  
+  .balance-value,
+  .value-amount {
+    font-size: 0.8125rem;
+  }
+  
+  .share-wrapper {
+    min-width: 70px;
+    gap: var(--sp-1);
+  }
+  
+  .share-bar-container {
+    height: 5px;
+  }
+  
+  .share-value {
+    font-size: 0.8125rem;
+    min-width: 35px;
+  }
+  
+  .change-value {
+    font-size: 0.8125rem;
+    padding: 3px 6px;
+  }
+  
+  .activity-time {
+    font-size: 0.8125rem;
+  }
+  
+  .action-buttons {
+    gap: 2px;
+  }
+  
+  .holder-action-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+  }
+  
+  .holder-action-btn svg {
+    width: 10px;
+    height: 10px;
+  }
+  
+  /* Bubblemap */
+  .bubblemap-container {
+    height: 300px;
+    min-height: 260px;
+  }
+  
+  /* Loading states */
+  .loading-state,
+  .error-state,
+  .empty-state {
+    padding: var(--sp-6);
+    min-height: 150px;
+  }
+  
+  .loading-state p,
+  .error-state p,
+  .empty-state p {
+    font-size: 0.8125rem;
+  }
+  
+  .empty-state span {
+    font-size: 0.8125rem;
+  }
+  
+  .spinner {
+    width: 20px;
+    height: 20px;
+  }
+  
+  /* Load more */
+  .load-more-container {
+    padding: 10px;
+    gap: 6px;
+  }
+  
+  .load-more-btn {
+    padding: 6px 16px;
+    font-size: 0.8125rem;
+  }
+  
+  .loaded-count {
+    font-size: 0.8125rem;
+  }
+}
+
+/* Landscape mode */
+@media (orientation: landscape) and (max-height: 500px) {
+  .tabs-content {
+    height: 180px;
+  }
+  
+  .data-tabs.expanded .tabs-content {
+    height: calc(100vh - 200px);
+  }
+  
+  .bubblemap-container {
+    height: 300px;
+    min-height: 250px;
+  }
+  
+  .tabs-content:has(.bubblemap-container) {
+    min-height: 300px;
+  }
+  
+  .analytics-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   Analytics Tab
+   ═══════════════════════════════════════════ */
+
+.analytics-tab {
+  padding: 0;
+}
+
+.analytics-tab-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 13px;
+}
+
+.analytics-sub-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.analytics-sub-tab {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.analytics-sub-tab:hover {
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.analytics-sub-tab.active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.analytics-section {
+  padding: 0;
+}
+
+.analytics-summary-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.summary-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.summary-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.summary-pct {
+  font-size: 13px;
+  font-weight: 400;
+  opacity: 0.6;
+}
+
+.analytics-table .td-rank {
+  width: 30px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 13px;
+}
+
+.analytics-table .td-address a {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+}
+
+.analytics-table .td-address a:hover {
+  color: #fff;
+}
+
+.analytics-table .td-amount {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: right;
+}
+
+.analytics-table .td-pnl {
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.analytics-table .td-status {
+  text-align: center;
+}
+
+.analytics-table .td-count {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.badge-sniper {
+  background: rgba(244, 63, 94, 0.2);
+  color: #F43F5E;
+}
+
+.badge-bundle {
+  background: rgba(236, 72, 153, 0.2);
+  color: #EC4899;
+}
+
+.status-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.status-hold {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+}
+
+.status-sold {
+  background: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+}
+
+.status-partial {
+  background: rgba(245, 158, 11, 0.15);
+  color: #F59E0B;
+}
+
+.status-unknown {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.distribution-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 12px;
+}
+
+.distribution-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.distribution-card h4 {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 10px 0;
+  font-weight: 500;
+}
+
+.percentile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.percentile-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.percentile-row.avg {
+  border-bottom: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 8px;
+  margin-top: 2px;
+}
+
+.perc-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 600;
+  font-family: var(--font-mono, monospace);
+}
+
+.perc-value {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+.loading-cell, .empty-cell {
+  text-align: center;
+  padding: 30px 20px !important;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 12px;
+}
+
+/* ============================================================
+   LIQUIDATION TAB — Apple Cinematic Split Layout
+   ============================================================ */
+
+.liquidation-tab {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* --- Header (pinned top) --- */
+.liq-tab-header {
+  padding: 10px 16px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
+  flex-shrink: 0;
+}
+
+.liq-tab-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.liq-tab-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+}
+
+.liq-tab-title svg {
+  color: #F59E0B;
+}
+
+.liq-timeframe-pills {
+  display: flex;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.liq-tf-pill {
+  padding: 4px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.5);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.liq-tf-pill:hover {
+  color: rgba(245, 245, 247, 0.8);
+}
+
+.liq-tf-pill.active {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5f5f7;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* --- SPLIT LAYOUT: Heatmap left, AI right --- */
+.liq-split-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* --- LEFT: Heatmap Panel --- */
+.liq-heatmap-panel {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+/* Summary stats row */
+.liq-summary-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 8px 12px;
+  flex-shrink: 0;
+}
+
+.liq-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  transition: all 0.12s ease;
+}
+
+.liq-stat-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.liq-stat-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.60);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.liq-stat-value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #f5f5f7;
+  font-variant-numeric: tabular-nums;
+}
+
+.liq-stat-value.bull { color: #10B981; }
+.liq-stat-value.bear { color: #EF4444; }
+
+/* Scrollable heatmap rows */
+.liq-heatmap-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 12px 8px;
+}
+
+.liq-heatmap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* --- Current Price Line --- */
+.liq-current-price-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.liq-current-price-line::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(245, 245, 247, 0.3) 10%, rgba(245, 245, 247, 0.3) 90%, transparent 100%);
+}
+
+.liq-current-price-tag {
+  position: absolute;
+  right: -2px;
+  top: -10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #f5f5f7;
+  background: rgba(245, 245, 247, 0.1);
+  border: 1px solid rgba(245, 245, 247, 0.15);
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+}
+
+/* --- Heatmap Row --- */
+.liq-heatmap-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 15px;
+  position: relative;
+  transition: all 0.12s ease;
+  border-radius: 3px;
+}
+
+.liq-heatmap-row:hover,
+.liq-heatmap-row.hovered {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.liq-heatmap-row.near-current {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.liq-heatmap-row.near-current::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 3px;
+  border: 1px solid rgba(245, 245, 247, 0.06);
+  pointer-events: none;
+}
+
+/* --- Row Price Label --- */
+.liq-row-price {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 88px;
+  flex-shrink: 0;
+}
+
+.liq-price-val {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.6);
+  font-variant-numeric: tabular-nums;
+  width: 50px;
+  text-align: right;
+}
+
+.liq-price-dist {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  width: 34px;
+  text-align: right;
+}
+
+.liq-price-dist.up { color: rgba(16, 185, 129, 0.6); }
+.liq-price-dist.down { color: rgba(239, 68, 68, 0.6); }
+
+/* --- Bar Tracks --- */
+.liq-row-bars {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  height: 11px;
+  gap: 2px;
+}
+
+.liq-bar-track {
+  position: relative;
+  height: 100%;
+  flex: 1;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.liq-bar-track.long {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.liq-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+  position: relative;
+}
+
+.liq-bar-fill.long {
+  background: linear-gradient(270deg, #EF4444 0%, rgba(239, 68, 68, 0.4) 100%);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.15);
+}
+
+.liq-bar-fill.short {
+  background: linear-gradient(90deg, #10B981 0%, rgba(16, 185, 129, 0.4) 100%);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.15);
+}
+
+.liq-heatmap-row:hover .liq-bar-fill.long {
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+}
+
+.liq-heatmap-row:hover .liq-bar-fill.short {
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+}
+
+.liq-bar-divider {
+  width: 1px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.liq-bar-label {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 0 4px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.liq-bar-track.long .liq-bar-label {
+  right: 4px;
+}
+
+.liq-bar-track.short .liq-bar-label {
+  left: 4px;
+}
+
+/* --- Row Tooltip --- */
+.liq-row-tooltip {
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translate(100%, -50%);
+  background: rgba(12, 12, 15, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 8px 12px;
+  z-index: 20;
+  min-width: 140px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.liq-tooltip-price {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #f5f5f7;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.liq-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  color: rgba(245, 245, 247, 0.7);
+  padding: 2px 0;
+}
+
+.liq-tooltip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.liq-tooltip-dot.long { background: #EF4444; }
+.liq-tooltip-dot.short { background: #10B981; }
+
+/* --- Legend --- */
+.liq-heatmap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  margin-top: 8px;
+}
+
+.liq-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8125rem;
+  color: rgba(245, 245, 247, 0.60);
+}
+
+.liq-legend-swatch {
+  width: 8px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.liq-legend-swatch.long { background: #EF4444; }
+.liq-legend-swatch.short { background: #10B981; }
+.liq-legend-swatch.current {
+  background: rgba(245, 245, 247, 0.4);
+}
+
+/* ============================================================
+   RIGHT: AI ANALYSIS SECTION — Apple Cinematic
+   ============================================================ */
+
+.liq-ai-section {
+  padding: 12px 14px;
+  overflow-y: auto;
+  position: relative;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.015) 0%, transparent 100%);
+}
+
+/* Subtle gradient glow behind AI section */
+.liq-ai-section::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -20%;
+  width: 60%;
+  height: 120%;
+  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.02) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.liq-ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.liq-ai-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #f5f5f7;
+}
+
+.liq-ai-badge svg {
+  color: rgba(245, 245, 247, 0.5);
+}
+
+.liq-ai-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10B981;
+  animation: liq-ai-pulse 2s ease-in-out infinite;
+}
+
+@keyframes liq-ai-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+}
+
+.liq-ai-model {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: 0.02em;
+}
+
+/* --- AI Metrics Grid --- */
+.liq-ai-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.liq-ai-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  transition: all 0.12s ease;
+}
+
+.liq-ai-metric:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.07);
+  transform: translateY(-1px);
+}
+
+.liq-ai-metric-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.60);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.liq-ai-metric-value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #f5f5f7;
+}
+
+/* --- AI Signal Chips --- */
+.liq-ai-signals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.liq-ai-signal {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  transition: all 0.12s ease;
+}
+
+.liq-ai-signal:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.liq-ai-signal.bullish {
+  border-color: rgba(16, 185, 129, 0.15);
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.liq-ai-signal.bearish {
+  border-color: rgba(239, 68, 68, 0.15);
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.liq-signal-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.60);
+}
+
+.liq-signal-value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #f5f5f7;
+  font-variant-numeric: tabular-nums;
+}
+
+.liq-ai-signal.bullish .liq-signal-value { color: #10B981; }
+.liq-ai-signal.bearish .liq-signal-value { color: #EF4444; }
+
+/* --- AI Summary --- */
+.liq-ai-summary {
+  position: relative;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.liq-ai-summary p {
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: rgba(245, 245, 247, 0.6);
+  margin: 0;
+  font-weight: 400;
+}
+
+/* --- Disclaimer --- */
+.liq-ai-disclaimer {
+  font-size: 0.8125rem;
+  color: rgba(245, 245, 247, 0.50);
+  text-align: center;
+  padding-top: 2px;
+}
+
+/* ============================================================
+   LIQUIDATION TAB — Responsive
+   ============================================================ */
+/* Only stack on very narrow viewports (mobile) */
+@media (max-width: 500px) {
+  .liq-split-layout {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  .liq-heatmap-panel {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    max-height: 180px;
+  }
+
+  .liq-summary-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .liq-row-price {
+    min-width: 60px;
+  }
+
+  .liq-price-dist {
+    display: none;
+  }
+}
+
+/* ============================================
+   DAY MODE - Terminal Light Theme
+   ============================================ */
+
+body.theme-light .data-tabs {
+  /* Pure white — no grey fill (was a white->gray gradient). */
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.02);
+}
+
+body.theme-light .tabs-nav {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .tab-item {
+  color: rgba(15, 23, 42, 0.3);
+}
+
+body.theme-light .tab-item:hover {
+  color: rgba(15, 23, 42, 0.6);
+}
+
+body.theme-light .tab-item.active {
+  color: rgba(15, 23, 42, 0.9);
+  border-bottom-color: rgba(15, 23, 42, 0.5);
+}
+
+body.theme-light .action-icon {
+  color: rgba(15, 23, 42, 0.2);
+}
+
+body.theme-light .action-icon:hover {
+  color: rgba(15, 23, 42, 0.6);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .data-table th {
+  color: rgba(15, 23, 42, 0.5);
+  background: #ffffff;
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+body.theme-light .data-table thead {
+  background: #ffffff;
+}
+
+body.theme-light .data-table td {
+  color: #0f172a;
+  border-bottom-color: rgba(0, 0, 0, 0.07);
+  border-right-color: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .data-table tbody tr:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .data-table tbody tr.buy:hover {
+  background-color: color-mix(in srgb, var(--up, #34E89E) 13%, transparent);
+}
+
+body.theme-light .data-table tbody tr.sell:hover {
+  background-color: color-mix(in srgb, var(--down, #FF5169) 13%, transparent);
+}
+
+body.theme-light .cell-price,body.theme-light .cell-size{color:#0f172a}
+body.theme-light .cell-amount{color:rgba(15,23,42,.78)}
+body.theme-light .cell-date,body.theme-light .maker-address,body.theme-light .maker-tx-count{color:#64748b}
+body.theme-light .data-table th{border-right-color:rgba(0,0,0,.06)}
+
+body.theme-light .filter-dropdown-menu {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+body.theme-light .filter-menu-item {
+  color: rgba(15, 23, 42, 0.5);
+}
+
+body.theme-light .filter-menu-item:hover {
+  color: rgba(15, 23, 42, 0.9);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .filter-menu-item.active {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .amount-input-group input {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #0f172a;
+}
+
+body.theme-light .amount-input-group input:focus {
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+body.theme-light .unit-pill {
+  color: rgba(15, 23, 42, 0.25);
+}
+
+body.theme-light .unit-pill.active {
+  color: rgba(15, 23, 42, 0.9);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .stat-card:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+body.theme-light .stat-label {
+  color: rgba(15, 23, 42, 0.25);
+}
+
+body.theme-light .stat-value {
+  color: #0f172a;
+}
+
+body.theme-light .maker-tooltip {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+body.theme-light .maker-tooltip::after {
+  border-bottom-color: rgba(255, 255, 255, 0.98);
+}
+
+body.theme-light .tooltip-title {
+  color: #0f172a;
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .tooltip-desc {
+  color: rgba(15, 23, 42, 0.5);
+}
+
+body.theme-light .maker-actions {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+body.theme-light .active-filter-badge {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+body.theme-light .filter-badge-close {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+body.theme-light .filter-badge-close:hover {
+  background: rgba(0, 0, 0, 0.16);
+}
+
+body.theme-light .maker-action-btn {
+  color: rgba(15, 23, 42, 0.45);
+}
+
+body.theme-light .maker-action-btn:hover {
+  color: rgba(15, 23, 42, 0.6);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* CA/maker address tail was warm-white (rgba(245,245,247,0.5)) - invisible on
+   white. Match the visible slate prefix so the full address reads. */
+body.theme-light .maker-address-tail {
+  color: #475569;
+}
+
+/* Copy button is opacity:0 (row-hover reveal) while its chart/filter siblings
+   are always visible - on white the row-hover tint is gone so it reads as
+   "missing". Keep it visible in light mode, consistent with the siblings. */
+body.theme-light .maker-action-btn.copy-btn,
+body.theme-light .data-table tr .copy-btn {
+  opacity: 1;
+}
+
+body.theme-light .load-more-btn {
+  color: rgba(15, 23, 42, 0.35);
+}
+
+body.theme-light .load-more-btn:hover:not(:disabled) {
+  color: rgba(15, 23, 42, 0.7);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .zoom-indicator {
+  color: rgba(15, 23, 42, 0.35);
+}
+
+body.theme-light .clear-filter-btn {
+  color: rgba(15, 23, 42, 0.35);
+}
+
+body.theme-light .apply-filter-btn {
+  color: rgba(15, 23, 42, 0.6);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .apply-filter-btn:hover {
+  color: rgba(15, 23, 42, 0.9);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Shimmer skeleton rows for loading state */
+.skel-row td {
+  padding: 6px 8px;
+}
+
+.skel-cell {
+  height: 12px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.skel-pfp { width: 22px; height: 22px; border-radius: 50%; }
+.skel-age { width: 38px; }
+.skel-type { width: 30px; }
+.skel-price { width: 58px; }
+.skel-amount { width: 52px; }
+.skel-native { width: 48px; }
+.skel-usd { width: 56px; }
+.skel-maker { width: 72px; }
+
+body.theme-light .skel-cell {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* =========================================================================
+   Iteration 7 — Transactions Chrome Pass
+   =========================================================================
+   Scope: the chrome AROUND the rows. Rows untouched.
+   The `.data-tabs--i7` modifier carries every chrome change so the legacy
+   base rules above still describe the unmodified table; this block layers
+   the lifted-glass-shelf, segmented-tab-bar, designed-header-band, circular
+   icon cluster, and LIVE eyebrow on top.
+   ========================================================================= */
+
+/* ---------- Phase A — module surface ---------- */
+
+.data-tabs.data-tabs--i7 {
+  --tx-row-h: 50px;
+  --tx-cell-px: 12px;
+  position: relative;
+  isolation: isolate; /* anchor the accent-wash bloom + vignettes */
+  /* No own margin — the .content-main column already provides a 12px gap below
+     the chart. The extra 16px here stacked into a 28px dead band. */
+  margin-top: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.014) 0%,
+      transparent 40%
+    ),
+    /* --ob-surface-2, not -1. The page substrate (--ob-page #0A0B0D) now sits
+       ABOVE surface-1 (#08090A), so a panel left on surface-1 renders DARKER
+       than the page behind it - reading as a hole punched in the page rather
+       than a raised surface. Measured after the substrate lift: substrate
+       luminance 0.00333 vs surface-1 0.00269. surface-2 (#0E0F11, 0.00514)
+       puts it back above the floor. */
+    var(--ob-surface-2, #0E0F11);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--r-md, 16px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 14px 38px rgba(0, 0, 0, 0.6),
+    0 2px 6px rgba(0, 0, 0, 0.4);
+  overflow-anchor: none;
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+/* Accent-wash bloom — large radial glow behind the tab strip / upper-left.
+   color-mix so the bloom tracks the active token's accent automatically. */
+.data-tabs--i7::before {
+  content: '';
+  position: absolute;
+  top: -160px;
+  left: -120px;
+  width: 520px;
+  height: 360px;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--accent-wash) 100%, transparent) 0%,
+    color-mix(in srgb, var(--accent-wash) 45%, transparent) 35%,
+    transparent 70%
+  );
+  filter: blur(40px);
+  opacity: 0.28;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Bottom-edge accent fade + corner vignette framing */
+.data-tabs--i7::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--accent) 14%, transparent) 0%,
+      transparent 1px,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse at top left,
+      transparent 50%,
+      rgba(0, 0, 0, 0.30) 100%
+    ),
+    radial-gradient(
+      ellipse at top right,
+      transparent 50%,
+      rgba(0, 0, 0, 0.30) 100%
+    );
+}
+
+/* Lift all i7 inner content above the bloom + vignette layers.
+   The tab strip gets a higher stacking floor than the table so that any
+   absolute-positioned popover anchored inside the strip (overflow menu,
+   future tooltips) paints OVER the table rows below. Without this, both
+   children sat at z-index 1 and DOM order made the table win. */
+.data-tabs--i7 > * {
+  position: relative;
+  z-index: 1;
+}
+
+.data-tabs--i7 > .tabs-nav {
+  z-index: 20;
+}
+
+.data-tabs--i7 > .tabs-content {
+  z-index: 1;
+}
+
+.data-tabs--i7:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* LIVE eyebrow removed - the tab strip itself carries the section's
+   identity. Reclaim ~26px of vertical space. */
+
+/* ---------- Alpha Command Bar ----------
+   A horizontal stats strip rendered between tabs-nav and tabs-content.
+   JSX class: .tx-flow-bar; children are .tx-flow-cell groups + .tx-flow-split + .tx-flow-heat
+   ----------------------------------------------------------------------- */
+
+.tx-flow-bar {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  padding: 12px var(--sp-4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: #060708;
+  position: relative;
+  z-index: 2;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.tx-flow-bar::-webkit-scrollbar { display: none; }
+
+/* Flat black terminal blocks (matches the RightPanel stat rows — no glass). */
+.tx-flow-cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 13px;
+  min-width: 152px;
+  flex: 1 1 0;
+  background: var(--ob-surface-1, #08090A);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--r-sm, 10px);
+  transition:
+    border-color 120ms var(--ease-out),
+    background-color 120ms var(--ease-out);
+}
+.tx-flow-cell:hover {
+  border-color: rgba(255, 255, 255, 0.11);
+  background: #0b0c0e;
+}
+.tx-flow-cell__head {
+  justify-content: space-between;
+}
+
+.tx-flow-cell__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tx-flow-cell__label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.tx-flow-cell__value {
+  font-family: var(--font-num-chip);
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+  color: var(--text-1);
+  white-space: nowrap;
+  line-height: 1.1;
+}
+
+.tx-flow-cell__value.is-up {
+  color: var(--up, #34E89E);
+}
+
+.tx-flow-cell__value.is-down {
+  color: var(--down, #FF5169);
+}
+
+/* The Odometer sets its own text color on .odo — pull it back to the tile's
+   directional color so Pressure / Net Flow / Accum read up/down, not flat white. */
+.tx-flow-cell__value.is-up .odo { color: var(--up, #34E89E); }
+.tx-flow-cell__value.is-down .odo { color: var(--down, #FF5169); }
+/* The Odometer defaults to --font-mono (Geist Mono = slashed zero). Force the
+   clean round-zero chip font used across the table so "0%" / "$0.0" read clean. */
+.tx-flow-cell__value .odo {
+  font-family: var(--font-num-chip);
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+}
+
+.tx-flow-cell__sub {
+  font-family: var(--font-num-chip);
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.tx-flow-cell__foot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 1px;
+}
+
+/* Buy/Sell split bar */
+.tx-flow-split {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+}
+
+.tx-flow-split__buy,
+.tx-flow-split__sell {
+  font-family: var(--font-num-chip);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+  white-space: nowrap;
+}
+
+.tx-flow-split__buy { color: var(--up, #34E89E); }
+.tx-flow-split__sell { color: var(--down, #FF5169); }
+
+.tx-flow-split__sep {
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+}
+
+/* Heat indicator — pulses when buy pressure is dominant */
+.tx-flow-heat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  flex-shrink: 0;
+  transition: background var(--dur-base) var(--ease-out);
+}
+
+.tx-flow-heat.is-hot {
+  background: var(--up, #34E89E);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--up, #34E89E) 60%, transparent);
+  animation: tx-heat-breathe 2s ease-in-out infinite;
+}
+
+@keyframes tx-heat-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Mini SVG flow viz (e.g. 24-bar sparkline inside the bar).
+   Fixed height so the chart-vs-empty-placeholder swap (e.g. Whales has no
+   activity in the 5m window but a MicroBars chart in 1h) never changes the
+   cell height — the whole stretch-aligned bar would otherwise grow/shrink
+   when switching windows. Matches the height={22} passed to MicroBars/Sparkline. */
+.tx-flow-viz {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 22px;
+  margin-top: 2px;
+}
+
+.tx-flow-viz svg {
+  display: block;
+  overflow: visible;
+}
+
+/* Chart-area placeholder (no whale/velocity data in the window). Fills the
+   fixed 22px .tx-flow-viz so the cell height matches the chart state — keeps
+   the bar a constant height across 5m/1h/24h. */
+.tx-flow-empty {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: var(--text-4);
+  font-style: italic;
+}
+
+/* Accumulator top wallets */
+.tx-flow-accum-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+}
+
+.tx-flow-accum-addr {
+  font-family: var(--font-num-chip);
+  font-size: 11px;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.tx-flow-accum-net {
+  font-family: var(--font-num-chip);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Time-window selector chips */
+/* Window switcher — a crisp bordered segmented control (fast to click). */
+.tx-flow-windows {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--r-sm, 10px);
+  overflow: hidden;
+  background: var(--ob-surface-1, #08090A);
+}
+
+.tx-flow-window {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  padding: 0 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color var(--dur-micro) var(--ease-out),
+    background-color var(--dur-micro) var(--ease-out);
+}
+
+.tx-flow-window:last-child { border-bottom: none; }
+
+.tx-flow-window:hover {
+  color: var(--text-1);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tx-flow-window.active {
+  color: var(--accent, #C6FF3A);
+  background: var(--accent-wash, rgba(198, 255, 58, 0.08));
+}
+
+/* Info "i" affordance on each widget + its fixed (portal) explanation tooltip */
+.tx-flow-info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 1px;
+  color: var(--text-4, rgba(255, 255, 255, 0.28));
+  cursor: help;
+  outline: none;
+  transition: color 120ms var(--ease-out);
+}
+.tx-flow-info:hover,
+.tx-flow-info:focus-visible { color: var(--text-2, rgba(255, 255, 255, 0.62)); }
+.tx-flow-info svg { display: block; }
+
+.tx-flow-info-tip {
+  max-width: 250px;
+  padding: 10px 12px;
+  background: var(--ob-surface-3, #15171A);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--r-sm, 10px);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.6);
+  color: var(--text-2, rgba(245, 245, 247, 0.78));
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: normal;
+}
+
+body.theme-light .tx-flow-info-tip {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.1);
+  color: #334155;
+  box-shadow: 0 12px 34px rgba(15, 23, 42, 0.18);
+}
+
+/* Accumulating-wallets trigger + popover list ------------------------------- */
+.tx-flow-accum-trigger {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
+  transition: opacity 120ms var(--ease-out);
+}
+.tx-flow-accum-trigger:hover { opacity: 0.78; }
+.tx-flow-accum-chev {
+  color: var(--text-4, rgba(255, 255, 255, 0.28));
+  flex: 0 0 auto;
+  margin-left: 2px;
+}
+
+/* "View wallets" affordance - the pointer to open the full accumulators list. */
+.tx-flow-accum-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 4px 9px;
+  background: var(--glass-fill, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  border-radius: var(--r-sm, 8px);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  color: var(--text-2, rgba(255, 255, 255, 0.7));
+  cursor: pointer;
+  transition: color 120ms var(--ease-out), background-color 120ms var(--ease-out), border-color 120ms var(--ease-out);
+}
+.tx-flow-accum-view:hover {
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+  background: var(--glass-fill-hover, rgba(255, 255, 255, 0.06));
+  border-color: var(--glass-border-lit, rgba(255, 255, 255, 0.13));
+}
+.tx-flow-accum-view.is-open {
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+  background: var(--accent-wash, rgba(198, 255, 58, 0.08));
+  border-color: color-mix(in srgb, var(--accent, #C6FF3A) 30%, var(--glass-border, rgba(255, 255, 255, 0.08)));
+}
+.tx-flow-accum-view svg { color: var(--text-3, rgba(255, 255, 255, 0.4)); flex: 0 0 auto; }
+.tx-flow-accum-view:hover svg,
+.tx-flow-accum-view.is-open svg { color: var(--text-2, rgba(255, 255, 255, 0.62)); }
+.tx-flow-accum-view__chev {
+  margin-left: 1px;
+  transition: transform 160ms var(--ease-out);
+}
+.tx-flow-accum-view.is-open .tx-flow-accum-view__chev { transform: rotate(90deg); }
+body.theme-light .tx-flow-accum-view {
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.1);
+  color: rgba(15, 23, 42, 0.7);
+}
+
+.tx-accum-backdrop { position: fixed; inset: 0; z-index: 99999; }
+
+@keyframes tx-accum-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.tx-accum-pop {
+  width: 266px;
+  max-height: 340px;
+  display: flex;
+  flex-direction: column;
+  background: #0B0C0E;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--r-sm, 10px);
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.72),
+    0 2px 8px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  transform-origin: top left;
+  animation: tx-accum-in 160ms var(--ease-out);
+}
+.tx-accum-pop__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.06));
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3, rgba(255, 255, 255, 0.4));
+}
+.tx-accum-pop__count {
+  font-family: var(--font-num-chip);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-2, rgba(255, 255, 255, 0.72));
+  background: rgba(255, 255, 255, 0.06);
+  padding: 1px 8px;
+  border-radius: var(--r-pill, 999px);
+  letter-spacing: 0;
+}
+.tx-accum-pop__list {
+  overflow-y: auto;
+  padding: 5px;
+    }
+.tx-accum-pop__list::-webkit-scrollbar { width: 6px; }
+.tx-accum-pop__list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 999px; }
+.tx-accum-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 9px;
+  border-radius: var(--r-sm, 8px);
+  overflow: hidden;
+  transition: background-color 120ms var(--ease-out);
+}
+/* proportional net-buy bar (neutral), scaled to the top accumulator */
+.tx-accum-row::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.06), transparent var(--accum-bar, 0%));
+  pointer-events: none;
+}
+.tx-accum-row > * { position: relative; z-index: 1; }
+.tx-accum-row:hover { background-color: var(--glass-fill-hover, rgba(255, 255, 255, 0.05)); }
+.tx-accum-row__rank {
+  font-family: var(--font-num-chip);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-4, rgba(255, 255, 255, 0.3));
+  width: 14px;
+  text-align: center;
+  flex: 0 0 auto;
+}
+.tx-accum-row__addr {
+  font-family: var(--font-num-chip);
+  font-size: 12.5px;
+  color: var(--text-1, rgba(255, 255, 255, 0.92));
+  flex: 1 1 auto;
+}
+.tx-accum-row__net {
+  font-family: var(--font-num-chip);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-1, rgba(255, 255, 255, 0.92));
+  flex: 0 0 auto;
+}
+.tx-accum-row__acts {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+.tx-accum-row__act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--text-4, rgba(255, 255, 255, 0.3));
+  cursor: pointer;
+  transition: color 120ms var(--ease-out), background-color 120ms var(--ease-out), border-color 120ms var(--ease-out);
+}
+.tx-accum-row__act:hover {
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+  background: var(--glass-fill-hover, rgba(255, 255, 255, 0.06));
+}
+.tx-accum-row__filter.active {
+  color: var(--accent, #C6FF3A);
+  background: var(--accent-wash, rgba(198, 255, 58, 0.1));
+  border-color: color-mix(in srgb, var(--accent, #C6FF3A) 32%, transparent);
+}
+.tx-accum-empty {
+  padding: 18px 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-4, rgba(255, 255, 255, 0.3));
+}
+
+body.theme-light .tx-accum-pop {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 20px 48px rgba(15, 23, 42, 0.2);
+}
+body.theme-light .tx-accum-pop__head {
+  color: rgba(15, 23, 42, 0.5);
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+}
+body.theme-light .tx-accum-row__addr,
+body.theme-light .tx-accum-row:hover,
+
+/* ---------- Phase B — tab bar (segmented control with sliding underglow) ---------- */
+
+.data-tabs--i7 .tabs-nav {
+  position: relative;
+  height: 44px;
+  padding: 0 var(--sp-4);
+  align-items: center;
+  border-bottom: 1px solid var(--glass-border);
+  overflow: visible;
+}
+
+.data-tabs--i7 .tabs-scroll {
+  position: relative;
+  gap: 2px;
+  padding-bottom: 0;
+  align-items: center;
+  height: 100%;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+}
+
+.data-tabs--i7 .tabs-scroll::-webkit-scrollbar { display: none; }
+
+.data-tabs--i7 .tab-item--i7 {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  text-transform: none;
+  color: var(--text-2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color var(--dur-micro) var(--ease-out),
+    background-color var(--dur-micro) var(--ease-out),
+    border-color var(--dur-micro) var(--ease-out);
+}
+
+.data-tabs--i7 .tab-item--i7 .tab-item__icon {
+  flex-shrink: 0;
+  color: var(--text-3);
+  transition: color var(--dur-micro) var(--ease-out);
+}
+
+.data-tabs--i7 .tab-item--i7 .tab-item__label {
+  line-height: 1;
+}
+
+.data-tabs--i7 .tab-item--i7:hover {
+  color: var(--text-1);
+  background-color: var(--glass-fill);
+}
+
+.data-tabs--i7 .tab-item--i7:hover .tab-item__icon {
+  color: var(--text-2);
+}
+
+.data-tabs--i7 .tab-item--i7.active {
+  color: var(--text-1);
+  background-color: color-mix(in srgb, var(--accent-wash) 55%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 14%, transparent);
+  /* Instant snap on select (GMGN model) - hover keeps the 120ms ease above.
+     No font-weight bump: 500->600 changed the tab's width (layout shift that
+     also invalidated the underglow's cached measurements). The accent fill,
+     border and icon already carry the active emphasis. */
+  transition: none;
+}
+
+.data-tabs--i7 .tab-item--i7.active .tab-item__icon {
+  color: var(--accent);
+}
+
+.data-tabs--i7 .tab-item--i7:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+/* Locked tab — "Coming Soon" pattern. Dim, lock glyph, no accent fill on
+   active state (locked tabs can never be active so .active wouldn't fire,
+   but the lock styling overrides hover lift just in case). */
+.data-tabs--i7 .tab-item--i7.is-locked {
+  color: var(--text-3);
+  cursor: not-allowed;
+  opacity: 0.78;
+}
+
+.data-tabs--i7 .tab-item--i7.is-locked .tab-item__icon {
+  color: var(--text-4);
+}
+
+.data-tabs--i7 .tab-item--i7.is-locked .tab-item__lock {
+  margin-left: 2px;
+  color: var(--text-4);
+  flex-shrink: 0;
+  transition: color var(--dur-micro) var(--ease-out);
+}
+
+.data-tabs--i7 .tab-item--i7.is-locked:hover {
+  /* Subtle hint that the tab is interactive (tooltip will fire) but no
+     active-tab impersonation: no accent fill, no border highlight. */
+  color: var(--text-2);
+  background-color: var(--glass-fill);
+  opacity: 1;
+}
+
+.data-tabs--i7 .tab-item--i7.is-locked:hover .tab-item__icon,
+.data-tabs--i7 .tab-item--i7.is-locked:hover .tab-item__lock {
+  color: var(--text-3);
+}
+
+/* Sliding underglow indicator — single animating element */
+.data-tabs--i7 .tx-tab-underglow {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+  box-shadow:
+    0 0 12px color-mix(in srgb, var(--accent-glow) 100%, transparent),
+    0 0 4px var(--accent);
+  opacity: 0;
+  transform: translateX(0);
+  pointer-events: none;
+  /* 120ms slide (was 240ms) - the indicator must arrive with the click, not
+     trail it. Opacity is NOT transitioned: readiness flips instantly. */
+  transition:
+    transform var(--dur-micro) var(--ease-out),
+    width var(--dur-micro) var(--ease-out);
+  will-change: transform, width;
+}
+
+.data-tabs--i7 .tx-tab-underglow.is-ready {
+  opacity: 1;
+}
+
+/* ---------- Phase D — top-right icon cluster ---------- */
+
+.data-tabs--i7 .tabs-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding-left: var(--sp-3);
+}
+
+.data-tabs--i7 .tx-actions-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--glass-border);
+  margin-right: 2px;
+}
+
+.data-tabs--i7 .tx-icon-btn {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  border-radius: 50%;
+  color: var(--text-2);
+  cursor: pointer;
+  transition:
+    color var(--dur-micro) var(--ease-out),
+    background-color var(--dur-micro) var(--ease-out),
+    border-color var(--dur-micro) var(--ease-out),
+    transform var(--dur-micro) var(--ease-out),
+    box-shadow var(--dur-micro) var(--ease-out);
+}
+
+.data-tabs--i7 .tx-icon-btn:hover {
+  color: var(--text-1);
+  background-color: color-mix(in srgb, var(--accent-wash) 60%, var(--glass-fill));
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--glass-border));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.data-tabs--i7 .tx-icon-btn:active {
+  transform: translateY(0);
+}
+
+.data-tabs--i7 .tx-icon-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.data-tabs--i7 .tx-icon-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Mobile filter trigger — accent fill + count badge when filters are active */
+.data-tabs--i7 .tx-icon-btn.tx-filter-btn.has-active {
+  color: var(--text-1);
+  background-color: color-mix(in srgb, var(--accent) 18%, var(--glass-fill));
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--glass-border));
+}
+.tx-filter-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--accent, #f5f5f7);
+  color: var(--ob-surface-1, #0a0b0d);
+  font-family: var(--font-num-chip);
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 2px var(--ob-surface-1, #0a0b0d);
+}
+
+/* Refresh — spinning while loading, accent halo */
+.data-tabs--i7 .tx-icon-btn.refresh-btn.spinning svg {
+  animation: tx-refresh-spin 700ms linear infinite;
+}
+
+.data-tabs--i7 .tx-icon-btn.refresh-btn.spinning {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--glass-border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+@keyframes tx-refresh-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Overflow popover + cluster Filter button removed — density now lives
+   as a visible inline switch in the action cluster, and column-level
+   filtering lives in the per-column glyphs. */
+
+.data-tabs--i7 .tx-density-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+}
+
+/* Inline variant — lives in the action cluster next to Refresh.
+   Tighter than the legacy popover variant so it doesn't dominate the
+   nav row. */
+.data-tabs--i7 .tx-density-toggle--inline {
+  height: 32px;
+  padding: 2px;
+}
+
+.data-tabs--i7 .tx-density-option {
+  height: 26px;
+  padding: 0 10px;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--text-2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color var(--dur-micro) var(--ease-out),
+    background-color var(--dur-micro) var(--ease-out),
+    box-shadow var(--dur-micro) var(--ease-out);
+}
+
+.data-tabs--i7 .tx-density-option:hover {
+  color: var(--text-1);
+}
+
+.data-tabs--i7 .tx-density-option:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.data-tabs--i7 .tx-density-option.active {
+  color: var(--text-1);
+  background: color-mix(in srgb, var(--accent-wash) 75%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent);
+}
+
+/* ---------- Phase C — column header band ---------- */
+
+.data-tabs--i7 .data-table thead {
+  position: sticky;
+  top: 0;
+  /* High z-index so the per-column filter dropdowns anchored inside
+     thead always paint OVER the tbody rows below. The legacy base rule
+     set 10; bumping in i7 to outrank any tbody row stacking. */
+  z-index: 15;
+  /* Solid base — the i7 module's parent surface already provides the
+     glass aesthetic, so the thead band itself can sit on a near-opaque
+     tint without clashing. Solid base means the column-filter dropdown
+     drop zone never has row text bleeding through it visually. */
+  background: var(--ob-surface-2);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+/* Column filter dropdown — make it bullet-proof against any tbody
+   rendering quirk: fully opaque base, escape any parent overflow, and
+   a stacking context that beats every other element in the section. */
+.data-tabs--i7 .filter-dropdown-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+/* Column filter dropdowns — terminal-grade, matched to the Flow
+   Intelligence popover (.tx-accum-pop) + right-panel language. The SVG
+   triggers and JSX are unchanged; this only restyles the panels, inputs,
+   range pills and actions so the filters read like the rest of the
+   redesigned token page instead of the legacy generic menu. */
+@keyframes tx-filter-pop-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.data-tabs--i7 .filter-dropdown-menu {
+  background: #0B0C0E;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--r-sm, 10px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 18px 44px rgba(0, 0, 0, 0.72),
+    0 2px 8px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  animation: tx-filter-pop-in 150ms var(--ease-out);
+}
+
+/* Range + maker menus — a touch wider with comfortable breathing room */
+.data-tabs--i7 .amount-filter-menu {
+  min-width: 236px;
+  padding: 13px;
+}
+.data-tabs--i7 .filter-dropdown-menu.maker-filter-menu {
+  min-width: 256px;
+  padding: 13px;
+}
+
+/* Option (Type) rows */
+.data-tabs--i7 .filter-menu-item {
+  border-radius: var(--r-xs, 6px);
+  padding: 8px 10px;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-2, rgba(255, 255, 255, 0.62));
+}
+.data-tabs--i7 .filter-menu-item:hover {
+  background: var(--glass-fill-hover, rgba(255, 255, 255, 0.045));
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+}
+.data-tabs--i7 .filter-menu-item.active {
+  background: var(--accent-wash, rgba(198, 255, 58, 0.08));
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+}
+.data-tabs--i7 .filter-menu-item .check-icon { color: var(--accent, #C6FF3A); }
+
+/* Range inputs — taller, obsidian field, accent focus ring */
+.data-tabs--i7 .amount-filter-inputs { gap: 8px; margin-bottom: 12px; }
+.data-tabs--i7 .amount-input-group { gap: 6px; }
+.data-tabs--i7 .amount-input-group label,
+.data-tabs--i7 .maker-filter-input label,
+.data-tabs--i7 .maker-quick-list label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3, rgba(255, 255, 255, 0.4));
+}
+.data-tabs--i7 .amount-input-group input,
+.data-tabs--i7 .maker-filter-input input {
+  height: 34px;
+  padding: 0 10px;
+  background: var(--ob-surface-1, #08090A);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  border-radius: var(--r-xs, 6px);
+  font-family: var(--font-num-chip);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+  transition:
+    border-color var(--dur-micro) var(--ease-out),
+    box-shadow var(--dur-micro) var(--ease-out),
+    background-color var(--dur-micro) var(--ease-out);
+}
+.data-tabs--i7 .amount-input-group input::placeholder,
+.data-tabs--i7 .maker-filter-input input::placeholder {
+  color: var(--text-4, rgba(255, 255, 255, 0.28));
+}
+.data-tabs--i7 .amount-input-group input:hover,
+.data-tabs--i7 .maker-filter-input input:hover {
+  border-color: var(--glass-border-lit, rgba(255, 255, 255, 0.13));
+}
+.data-tabs--i7 .amount-input-group input:focus,
+.data-tabs--i7 .maker-filter-input input:focus {
+  outline: none;
+  background: var(--ob-surface-2, #0E0F11);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--glass-border));
+  box-shadow: 0 0 0 3px var(--accent-wash, rgba(198, 255, 58, 0.08));
+}
+
+/* MCap unit pills — segmented terminal control */
+.data-tabs--i7 .input-with-unit { gap: 6px; }
+.data-tabs--i7 .unit-pills {
+  gap: 2px;
+  padding: 2px;
+  background: var(--ob-surface-1, #08090A);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.07));
+  border-radius: var(--r-xs, 6px);
+}
+.data-tabs--i7 .unit-pill {
+  padding: 4px 0;
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-3, rgba(255, 255, 255, 0.4));
+}
+.data-tabs--i7 .unit-pill:hover {
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+  background: var(--glass-fill, rgba(255, 255, 255, 0.03));
+}
+.data-tabs--i7 .unit-pill.active {
+  color: var(--accent, #C6FF3A);
+  background: var(--accent-wash, rgba(198, 255, 58, 0.08));
+}
+
+/* Actions — APPLY is the accent primary, CLEAR a fixed-width ghost */
+.data-tabs--i7 .amount-filter-actions {
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border, rgba(255, 255, 255, 0.06));
+}
+.data-tabs--i7 .clear-filter-btn,
+.data-tabs--i7 .apply-filter-btn {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: var(--r-xs, 6px);
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition:
+    color var(--dur-micro) var(--ease-out),
+    background-color var(--dur-micro) var(--ease-out),
+    border-color var(--dur-micro) var(--ease-out);
+}
+.data-tabs--i7 .clear-filter-btn {
+  flex: 0 0 auto;
+  min-width: 76px;
+  background: transparent;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.07));
+  color: var(--text-3, rgba(255, 255, 255, 0.4));
+}
+.data-tabs--i7 .clear-filter-btn:hover {
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+  background: var(--glass-fill, rgba(255, 255, 255, 0.03));
+  border-color: var(--glass-border-lit, rgba(255, 255, 255, 0.13));
+}
+.data-tabs--i7 .apply-filter-btn {
+  flex: 1 1 auto;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--glass-border));
+  color: var(--accent, #C6FF3A);
+}
+.data-tabs--i7 .apply-filter-btn:hover {
+  background: color-mix(in srgb, var(--accent) 26%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--glass-border));
+  color: var(--accent-bright, var(--accent));
+}
+
+/* Maker — address input + windowed, ranked quick list (mirrors .tx-accum-row) */
+.data-tabs--i7 .maker-filter-input { margin-bottom: 12px; }
+.data-tabs--i7 .maker-quick-list {
+  gap: 0;
+  margin-bottom: 12px;
+  max-height: none;
+  overflow: visible;
+}
+
+/* Head row: "Top Makers" label + All / 1H / 24H window segmented control */
+.data-tabs--i7 .maker-quick-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.data-tabs--i7 .maker-quick-head label { margin-bottom: 0; }
+.data-tabs--i7 .maker-window-seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--ob-surface-1, #08090A);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.07));
+  border-radius: var(--r-xs, 6px);
+}
+.data-tabs--i7 .maker-window-seg__btn {
+  padding: 3px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3, rgba(255, 255, 255, 0.4));
+  cursor: pointer;
+  transition:
+    color var(--dur-micro) var(--ease-out),
+    background-color var(--dur-micro) var(--ease-out);
+}
+.data-tabs--i7 .maker-window-seg__btn:hover { color: var(--text-1, rgba(255, 255, 255, 0.95)); }
+.data-tabs--i7 .maker-window-seg__btn.active {
+  color: var(--accent, #C6FF3A);
+  background: var(--accent-wash, rgba(198, 255, 58, 0.08));
+}
+
+/* Scrolling rows region */
+.data-tabs--i7 .maker-quick-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 196px;
+  overflow-y: auto;
+  padding-right: 2px;
+    }
+.data-tabs--i7 .maker-quick-rows::-webkit-scrollbar { width: 6px; }
+.data-tabs--i7 .maker-quick-rows::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 999px; }
+
+.data-tabs--i7 .maker-quick-item {
+  justify-content: flex-start;
+  gap: 9px;
+  padding: 7px 9px;
+  border-radius: var(--r-xs, 6px);
+}
+.data-tabs--i7 .maker-quick-item:hover { background: var(--glass-fill-hover, rgba(255, 255, 255, 0.05)); }
+.data-tabs--i7 .maker-quick-item.active {
+  background: var(--accent-wash, rgba(198, 255, 58, 0.08));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 26%, transparent);
+}
+/* Count ranking */
+.data-tabs--i7 .maker-quick-rank {
+  flex: 0 0 auto;
+  width: 15px;
+  font-family: var(--font-num-chip);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-4, rgba(255, 255, 255, 0.3));
+  text-align: center;
+}
+/* Net buy/sell lean dot (this maker's direction within the window) */
+.data-tabs--i7 .maker-quick-lean {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--neutral, #8A8F98);
+}
+.data-tabs--i7 .maker-quick-lean--buy { background: var(--up, #34E89E); }
+.data-tabs--i7 .maker-quick-lean--sell { background: var(--down, #FF5169); }
+.data-tabs--i7 .maker-quick-lean--flat { background: var(--neutral, #8A8F98); }
+.data-tabs--i7 .maker-quick-address {
+  flex: 1 1 auto;
+  text-align: left;
+  font-family: var(--font-num-chip);
+  font-size: 12.5px;
+  color: var(--text-1, rgba(255, 255, 255, 0.92));
+}
+.data-tabs--i7 .maker-quick-count {
+  flex: 0 0 auto;
+  font-family: var(--font-num-chip);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3, rgba(255, 255, 255, 0.4));
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1px 7px;
+  border-radius: var(--r-pill, 999px);
+}
+.data-tabs--i7 .maker-quick-item.active .maker-quick-count {
+  color: var(--accent, #C6FF3A);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.data-tabs--i7 .maker-quick-empty {
+  padding: 16px 8px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  color: var(--text-4, rgba(255, 255, 255, 0.3));
+}
+
+/* Day mode — keep the panels legible on white */
+body.theme-light .data-tabs--i7 .filter-dropdown-menu {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 20px 48px rgba(15, 23, 42, 0.18);
+}
+body.theme-light .data-tabs--i7 .amount-input-group input,
+body.theme-light .data-tabs--i7 .maker-filter-input input {
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.1);
+  color: #0f172a;
+}
+body.theme-light .data-tabs--i7 .amount-input-group input:focus,
+body.theme-light .data-tabs--i7 .maker-filter-input input:focus {
+  background: #ffffff;
+  border-color: color-mix(in srgb, var(--accent) 45%, rgba(15, 23, 42, 0.1));
+}
+body.theme-light .data-tabs--i7 .unit-pills {
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+body.theme-light .data-tabs--i7 .clear-filter-btn {
+  border-color: rgba(15, 23, 42, 0.12);
+  color: rgba(15, 23, 42, 0.5);
+}
+body.theme-light .data-tabs--i7 .apply-filter-btn {
+  background: color-mix(in srgb, var(--accent) 22%, #ffffff);
+  border-color: color-mix(in srgb, var(--accent) 45%, rgba(15, 23, 42, 0.1));
+  color: #0f172a;
+}
+body.theme-light .data-tabs--i7 .maker-quick-address,
+body.theme-light .data-tabs--i7 .maker-quick-count {
+  color: rgba(15, 23, 42, 0.5);
+  background: rgba(15, 23, 42, 0.05);
+}
+body.theme-light .data-tabs--i7 .maker-window-seg {
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+body.theme-light .data-tabs--i7 .maker-window-seg__btn,
+body.theme-light .data-tabs--i7 .maker-quick-rank,
+body.theme-light .data-tabs--i7 .maker-quick-empty,
+
+.data-tabs--i7 .data-table thead::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--glass-border);
+  pointer-events: none;
+}
+
+.data-tabs--i7 .data-table thead th {
+  position: relative;
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  /* Restated at THIS tier on purpose: the base .data-table th (0,1,1) also sets
+     it, but this selector (0,3,2) is what wins for , and a sticky header
+     whose background is decided one tier below its colour left it a shade off
+     the panel behind it. Light gets a counterpart at the same tier below. */
+  background: var(--ob-surface-2, #0E0F11);
+  /* Vertical only. The HORIZONTAL padding must equal the td's at every
+     tier (12 / 8 / 6px from the container rules above) so a left-aligned
+     header label starts on exactly the x its values start on; a flat 10px
+     here put every label 4px right of its column at the 676px tier. */
+  padding-top: 3px;
+  padding-bottom: 3px;
+  transition:
+    color var(--dur-micro) var(--ease-out),
+    background-color var(--dur-micro) var(--ease-out);
+}
+
+.data-tabs--i7 .data-table thead th:hover {
+  color: var(--text-2);
+  background-color: color-mix(in srgb, var(--accent-wash) 25%, transparent);
+}
+
+/* Filter dropdown trigger — modern glass affordance.
+   The SVG inside is unchanged so all existing functionality is preserved. */
+.data-tabs--i7 .data-table thead th .filter-btn {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-4);
+  cursor: pointer;
+  transition:
+    color var(--dur-micro) var(--ease-out),
+    background-color var(--dur-micro) var(--ease-out),
+    border-color var(--dur-micro) var(--ease-out);
+}
+
+.data-tabs--i7 .data-table thead th:hover .filter-btn {
+  color: var(--text-2);
+  background: var(--glass-fill);
+  border-color: var(--glass-border);
+}
+
+.data-tabs--i7 .data-table thead th .filter-btn:hover {
+  color: var(--text-1);
+  background: color-mix(in srgb, var(--accent-wash) 50%, var(--glass-fill));
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--glass-border));
+}
+
+.data-tabs--i7 .data-table thead th .filter-btn.active {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent-wash) 80%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--glass-border));
+}
+
+/* Horizontal scroll edge mask on the table wrapper */
+.data-tabs--i7 .table-wrapper {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 8px, #000 calc(100% - 8px), transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0, #000 8px, #000 calc(100% - 8px), transparent 100%);
+}
+
+/* Light mode: the transactions vertical scrollbar was near-invisible on white
+   (global light thumb is only rgba(0,0,0,0.10) at 8px). Give the table
+   scroller a clearly visible slate thumb + a touch more width so the scroll
+   affordance is findable. The horizontal edge-fade mask also faded the right
+   ~8px - i.e. the scrollbar gutter - to transparent, so drop the right fade in
+   light mode (content ends before it; only the scrollbar was being dimmed). */
+body.theme-light .data-tabs--i7 .table-wrapper {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 8px, #000 100%);
+          mask-image: linear-gradient(90deg, transparent 0, #000 8px, #000 100%);
+}
+body.theme-light .table-wrapper::-webkit-scrollbar {
+  width: 11px;
+}
+body.theme-light .table-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.32);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+}
+body.theme-light .table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.48);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Light-mode hover repair — these hovers use --glass-fill / --glass-fill-hover
+   (white in light mode) or hardcoded warm-white text, so hovering the section
+   tabs / filter items / maker count gave no visible feedback (or vanished the
+   text) on white. Darken slightly on white; keep text dark. */
+body.theme-light .maker-tx-count:hover {
+  background: rgba(17, 17, 19, 0.05);
+  color: var(--text-1);
+}
+body.theme-light .data-tabs--i7 .tab-item--i7:hover,
+body.theme-light .data-tabs--i7 .tab-item--i7.is-locked:hover {
+  background: rgba(17, 17, 19, 0.05);
+  color: var(--text-1);
+}
+body.theme-light .data-tabs--i7 .filter-menu-item:hover,
+body.theme-light .data-tabs--i7 .unit-pill:hover,
+body.theme-light .data-tabs--i7 .clear-filter-btn:hover,
+body.theme-light .data-tabs--i7 .maker-quick-item:hover {
+  background: rgba(17, 17, 19, 0.06);
+  color: var(--text-1);
+}
+body.theme-light .tx-flow-window:hover {
+  background: rgba(17, 17, 19, 0.05);
+}
+body.theme-light .tx-flow-accum-view:hover {
+  background: rgba(17, 17, 19, 0.06);
+}
+
+/* ---------- Phase E — density variants ---------- */
+
+.data-tabs--i7[data-density='compact'] {
+  --tx-row-h: 38px;
+  --tx-cell-px: 9px;
+}
+
+.data-tabs--i7[data-density='compact'] .data-table tbody td {
+  height: 38px;
+  padding: 0 9px;
+  font-size: 12.5px;
+}
+
+.data-tabs--i7[data-density='compact'] .data-table tbody tr {
+  height: 38px;
+  contain-intrinsic-size: auto 38px;
+}
+
+.data-tabs--i7[data-density='compact'] .cell-size .usd-value { font-size: 12.5px; }
+.data-tabs--i7[data-density='compact'] .cell-price { font-size: 12.5px; }
+
+/* Compact = the fast-tape mode. The SIZE pill shrinks and the text column
+   drops its native sub and narrows to the value (width is the scarce axis
+   here, not height), and the maker cell folds its two lines back onto one -
+   i.e. the pre-redesign layout, one keystroke away. */
+.data-tabs--i7[data-density='compact'] .tx-size { gap: 6px; }
+.data-tabs--i7[data-density='compact'] .tx-size-text { min-width: 58px; }
+.data-tabs--i7[data-density='compact'] .tx-size-track { height: 18px; border-radius: 5px; }
+.data-tabs--i7[data-density='compact'] .tx-size-fill { border-radius: 5px; }
+.data-tabs--i7[data-density='compact'] .tx-size-native { display: none; }
+
+.data-tabs--i7[data-density='compact'] .cell-maker-inner {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto;
+  column-gap: 8px;
+}
+/* Compact folds both lines side by side, so the stats block goes back to its
+   natural width, right-packed against the identity line - and the fixed
+   slots collapse when empty: on one line there is no bar under the address
+   to align to, and the width they reserve is what the dense tape is short of. */
+.data-tabs--i7[data-density='compact'] .maker-line--stats {
+  grid-column: 1;
+  grid-row: 1;
+  width: auto;
+  justify-self: auto;
+  justify-content: flex-end;
+}
+.data-tabs--i7[data-density='compact'] .maker-src-slot:empty,
+.data-tabs--i7[data-density='compact'] .maker-type-slot:empty { display: none; }
+.data-tabs--i7[data-density='compact'] .maker-type-slot { min-width: 0; }
+.data-tabs--i7[data-density='compact'] .maker-line--id { grid-column: 2; grid-row: 1; }
+.data-tabs--i7[data-density='compact'] .cell-maker-inner > .maker-actions {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+/* Compact type column: replace text badge with a 7×7 color dot */
+.data-tabs--i7[data-density='compact'] .type-badge{font-size:0;letter-spacing:0}
+.data-tabs--i7[data-density='compact'] .cell-type .type-badge::before{content:'';display:inline-block;width:7px;height:7px;border-radius:1px}
+.data-tabs--i7[data-density='compact'] tr.buy .type-badge::before{background:var(--up,#34E89E)}
+.data-tabs--i7[data-density='compact'] tr.sell .type-badge::before{background:var(--down,#FF5169)}
+.data-tabs--i7[data-density='compact'] tr.swap .type-badge::before{background:rgba(245,245,247,.4)}
+
+/* ---------- Per-row maker visuals ---------- */
+
+/* Reputation pill variant - background uses currentColor so it inherits
+   the buy/sell color set on the parent .maker-type-badge */
+.maker-type-badge.maker-rep {
+  border-radius: var(--r-xs, 6px);
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  border: none;
+  padding: 1px 6px;
+  font-family: var(--font-num-chip);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  opacity: 1;
+}
+
+/* Position bar wrapper - FIXED width, deliberately. The obvious move is
+   `flex: 1` so it soaks up slack in a wide MAKER column, but the items to its
+   right (tx count, and a PnL chip only some rows have) are auto-width, so a
+   flexible bar comes out a different length on every row and the column reads
+   ragged. Fixed keeps the buy/sell ratio comparable DOWN the column, which is
+   the only reason the bar is there. 88px on the two-line layout - the
+   proportions were unreadable at 46. */
+.maker-position {
+  display: inline-flex;
+  align-items: center;
+  width: 88px;
+  flex: 0 0 88px;
+}
+
+/* Compact folds to one line, where 88px would crowd the address - back to 46. */
+.data-tabs--i7[data-density='compact'] .maker-position {
+  width: 46px;
+  flex: 0 0 46px;
+}
+
+.maker-position > * {
+  width: 100%;
+}
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .data-tabs--i7 .tx-tab-underglow {
+    transition: none;
+  }
+  .data-tabs--i7 .tx-icon-btn.refresh-btn.spinning svg {
+    animation: none;
+  }
+  .data-tabs--i7 .tx-icon-btn:hover {
+    transform: none;
+  }
+}
+
+.app[data-reduced-motion='true'] .data-tabs--i7 .tx-tab-underglow,
+.app[data-reduced-motion='true'] .data-tabs--i7 .tx-icon-btn.refresh-btn.spinning svg {
+  animation: none;
+  transition: none;
+}
+
+.app[data-reduced-motion='true'] .data-tabs--i7 .tx-icon-btn:hover {
+  transform: none;
+}
+
+/* ---------- Day mode counterparts (i7 chrome only) ---------- */
+
+body.theme-light .data-tabs--i7 .tabs-nav {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+body.theme-light .data-tabs--i7 .tab-item--i7 {
+  color: #475569;
+}
+
+body.theme-light .data-tabs--i7 .tab-item--i7.active {
+  color: #0f172a;
+  background-color: color-mix(in srgb, var(--accent-wash) 45%, rgba(0, 0, 0, 0.02));
+  border-color: color-mix(in srgb, var(--accent) 24%, transparent);
+}
+
+body.theme-light .data-tabs--i7 .tx-icon-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #475569;
+}
+
+body.theme-light .data-tabs--i7 .tx-icon-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #0f172a;
+}
+
+body.theme-light .data-tabs--i7 .tx-density-toggle {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .data-tabs--i7 .tx-density-option {
+  color: #475569;
+}
+
+body.theme-light .data-tabs--i7 .tx-density-option.active {
+  color: #0f172a;
+  background: color-mix(in srgb, var(--accent-wash) 60%, transparent);
+}
+
+body.theme-light .data-tabs--i7 .data-table thead {
+  background: rgba(0, 0, 0, 0.025);
+}
+
+body.theme-light .data-tabs--i7 .data-table thead th {
+  color: #64748b;
+  background: #ffffff;
+}
+
+/* Alpha Command Bar - day mode */
+body.theme-light .tx-flow-bar {
+  /* Pure white strip - no faint grey band above the white cards/rows. */
+  background: #ffffff;
+  border-bottom-color: rgba(0, 0, 0, 0.07);
+}
+
+/* Stat cards (PRESSURE / NET FLOW / WHALES / ...) - crisp white with a real
+   hairline edge. The dark-mode base uses an invisible white border + a dark
+   hover fill; both must be overridden or the cards read as a flat grey strip. */
+body.theme-light .tx-flow-cell {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+body.theme-light .tx-flow-cell:hover {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.16);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
+}
+
+body.theme-light .tx-flow-cell__label {
+  color: #94a3b8;
+}
+
+body.theme-light .tx-flow-cell__value {
+  color: #0f172a;
+}
+
+body.theme-light .tx-flow-cell__sub {
+  color: #94a3b8;
+}
+
+body.theme-light .tx-flow-split__sep {
+  background: rgba(0, 0, 0, 0.10);
+}
+
+body.theme-light .tx-flow-heat {
+  background: rgba(0, 0, 0, 0.10);
+}
+
+body.theme-light .tx-flow-window {
+  color: #64748b;
+}
+
+body.theme-light .tx-flow-window:hover {
+  color: #0f172a;
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.theme-light .tx-flow-window.active {
+  color: #0f172a;
+  background: color-mix(in srgb, var(--accent-wash) 50%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+body.theme-light .tx-flow-empty {
+  color: #94a3b8;
+}
+
+body.theme-light .tx-flow-accum-addr {
+  color: #475569;
+}
+
+/* i7 bento frame - day mode */
+body.theme-light .data-tabs--i7 {
+  /* Pure white — matches the left/right panels; the soft floating shadow +
+     hairline border give it separation without any grey fill. */
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.09);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.80),
+    0 8px 24px rgba(0, 0, 0, 0.10),
+    0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .data-tabs--i7:hover {
+  border-color: rgba(0, 0, 0, 0.16);
+}
+
+/* The accent bloom (::before) and the corner vignette (::after) are DARK-theme
+   depth cues: two `rgba(0,0,0,0.30)` corner radials + an accent wash. Over the
+   white day-mode frame they composite to a grey haze that deepens toward the
+   edges and the bottom — the trades table looked like it was fading out. Same
+   reasoning as the per-row volume tint above: no colour/black wash on white.
+   The 1px bottom accent hairline stays — that's a line, not a wash. */
+body.theme-light .data-tabs--i7::before {
+  display: none;
+}
+body.theme-light .data-tabs--i7::after {
+  background: linear-gradient(
+    0deg,
+    color-mix(in srgb, var(--accent) 10%, transparent) 0%,
+    transparent 1px,
+    transparent 100%
+  );
+}
+
+body.theme-light .data-tabs--i7 .data-table thead th:hover {
+  color: #0f172a;
+  background-color: color-mix(in srgb, var(--accent-wash) 25%, transparent);
+}
+
+/* Day-mode table body: PURE WHITE rows. The emerald/coral --up/--down are
+   DARK hues, so ANY full-row wash over white (even 6%) composites to a muddy
+   grey-green / grey-pink and reads as "grey rows". Drop the per-row volume
+   tint entirely on light - buy/sell stays unmistakable from the green/red
+   TYPE badge + value text + colored left spine (Axiom/GMGN light-table look).
+   Scoped to both day-mode class conventions. */
+body.theme-light .data-table tbody tr.buy,
+body.theme-light .data-table tbody tr.sell {
+  background-image: none;
+  background-color: #ffffff;
+}
+/* Neutral, colourless hover - a whisper of ink, never a colour wash. */
+body.theme-light .data-table tbody tr.buy:hover,
+body.theme-light .data-table tbody tr.sell:hover {
+  background-color: rgba(17, 17, 19, 0.035);
+}
+
+/* ============================================================
+   LIGHT MODE: ported from trading-platform sibling fork
+   ============================================================ */
+
+body.theme-light .expand-btn.expanded {
+  background: rgba(17, 17, 19, 0.06);
+  border-color: rgba(17, 17, 19, 0.12);
+  color: #111113;
+}
+
+body.theme-light .filter-btn {
+  color: rgba(17, 17, 19, 0.50);
+}
+
+body.theme-light .filter-btn:hover {
+  background: rgba(17, 17, 19, 0.05);
+  border-color: rgba(17, 17, 19, 0.10);
+  color: #111113;
+}
+
+body.theme-light .filter-btn.active {
+  background: rgba(17, 17, 19, 0.06);
+  border-color: rgba(17, 17, 19, 0.14);
+  color: #111113;
+}
+
+body.theme-light .date-age-toggle .toggle-option {
+  color: rgba(17, 17, 19, 0.55);
+}
+
+body.theme-light .date-age-toggle .toggle-option:hover {
+  color: #111113;
+}
+
+body.theme-light .date-age-toggle .toggle-option.active {
+  color: #111113;
+}
+
+body.theme-light .date-age-toggle .toggle-separator,
+body.theme-light .type-filter-toggle .toggle-separator {
+  color: rgba(17, 17, 19, 0.25);
+}
+
+/* Flow Intelligence open/close toggle — a compact pill (not the 32px circle)
+   so the Activity icon + rotating chevron read as one collapsible control.
+   Accent-tinted when the strip is open, mirroring the filter has-active state. */
+.data-tabs--i7 .tx-flow-toggle {
+  width: auto;
+  gap: 3px;
+  padding: 0 8px;
+  border-radius: 8px;
+}
+.data-tabs--i7 .tx-flow-toggle.is-open {
+  color: var(--text-1);
+  background-color: color-mix(in srgb, var(--accent) 16%, var(--glass-fill));
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--glass-border));
+}
+.data-tabs--i7 .tx-flow-toggle .tx-flow-toggle__chev {
+  width: 11px;
+  height: 11px;
+  transition: transform var(--dur-micro, 150ms) var(--ease-out, ease);
+}
+.data-tabs--i7 .tx-flow-toggle.is-open .tx-flow-toggle__chev {
+  transform: rotate(180deg);
+}
+
+/* ============================================================================
+   HOLDERS TAB  (rebuilt 2026-08-17)
+   Reuses `.data-table` so it inherits the tape's chrome - panel-matched sticky
+   header, 0.028 separators, hover wash - and the two tabs read as one system
+   instead of two tables that happen to live in the same panel.
+   ========================================================================= */
+
+/* Same recessed field as the tape: rows drop to page level, the sticky header
+   stays on the panel surface and reads as the lighter band. */
+.data-tabs--i7 .table-wrapper--holders {
+  background: var(--ob-page, #0A0B0D);
+}
+
+.hld-table { min-width: 860px; }
+
+.data-table col.hld-col-rank   { width: 5%; }
+.data-table col.hld-col-wallet { width: 21%; }
+.data-table col.hld-col-amount { width: 15%; }
+.data-table col.hld-col-share  { width: 15%; }
+.data-table col.hld-col-value  { width: 12%; }
+.data-table col.hld-col-pnl    { width: 13%; }
+.data-table col.hld-col-remain { width: 14%; }
+.data-table col.hld-col-act    { width: 5%; }
+
+/* Numerics right, identity left - same rule as the tape, so a number starts at
+   the same x in both tables. */
+.hld-table thead th:nth-child(1),
+.hld-table thead th:nth-child(2),
+.hld-table thead th:nth-child(4) { text-align: left; }
+.hld-table thead th:nth-child(3),
+.hld-table thead th:nth-child(5),
+.hld-table thead th:nth-child(6),
+.hld-table thead th:nth-child(7) { text-align: right; }
+.hld-table thead th:nth-child(1) .th-content,
+.hld-table thead th:nth-child(2) .th-content,
+.hld-table thead th:nth-child(4) .th-content { justify-content: flex-start; }
+.hld-table thead th:nth-child(3) .th-content,
+.hld-table thead th:nth-child(5) .th-content,
+.hld-table thead th:nth-child(6) .th-content,
+.hld-table thead th:nth-child(7) .th-content { justify-content: flex-end; }
+
+.hld-rank {
+  text-align: left;
+  color: var(--text-3, rgba(255, 255, 255, 0.4));
+  font-size: 12px;
+}
+
+/* ── Wallet ── */
+.hld-wallet { text-align: left; }
+.hld-wallet-inner { display: inline-flex; align-items: center; gap: 7px; min-width: 0; }
+.hld-addr, .hld-name {
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+  font-size: 12.5px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hld-name { font-weight: 600; }
+
+/* Type chip - neutral by default; only CEX/DEX/Whale earn a hue, because a
+   table where every row is coloured tells you nothing. */
+.hld-tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 5px;
+  border-radius: var(--r-xs, 4px);
+  background: var(--glass-fill, rgba(255, 255, 255, 0.04));
+  color: var(--text-3, rgba(255, 255, 255, 0.4));
+  flex-shrink: 0;
+}
+.hld-tag--whale { background: rgba(92, 230, 161, 0.12); color: var(--up-soft, #5CE6A1); }
+.hld-tag--cex   { background: rgba(167, 139, 250, 0.12); color: #A78BFA; }
+.hld-tag--dex   { background: rgba(103, 232, 249, 0.12); color: #67E8F9; }
+
+/* ── Amount ── */
+.hld-amount { text-align: right; }
+.hld-amount-val { color: var(--text-1, rgba(255, 255, 255, 0.95)); }
+.hld-amount-sym {
+  margin-left: 5px;
+  font-size: 10.5px;
+  color: var(--text-3, rgba(255, 255, 255, 0.4));
+}
+
+/* ── Share: the same inline bar the tape uses for SIZE ── */
+.hld-share { text-align: left; }
+.hld-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 20px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.022);
+  overflow: hidden;
+}
+.hld-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 5px;
+  background: linear-gradient(90deg, rgba(92, 230, 161, 0.26), rgba(92, 230, 161, 0.07));
+  transition: width 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hld-bar-text {
+  position: relative;
+  z-index: 1;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+}
+
+/* ── Value ── */
+.hld-value { text-align: right; color: var(--text-1, rgba(255, 255, 255, 0.95)); font-weight: 600; }
+
+/* ── PnL ── */
+.hld-pnl { text-align: right; }
+.hld-pnl-up, .hld-pnl-down { display: inline-flex; align-items: baseline; gap: 6px; }
+.hld-pnl-up   { color: var(--up-soft, #5CE6A1); }
+.hld-pnl-down { color: var(--down-soft, #FF6E8E); }
+.hld-pnl-usd { font-weight: 600; }
+.hld-pnl-pct { font-size: 10.5px; opacity: 0.75; }
+
+/* ── Remaining ── */
+.hld-remain { text-align: right; }
+.hld-remain-inner { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.hld-remain-top {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+  font-weight: 600;
+}
+.hld-remain-usd { font-size: 11px; font-weight: 500; color: var(--text-2, rgba(255, 255, 255, 0.62)); }
+.hld-remain-of { font-size: 10px; color: var(--text-3, rgba(255, 255, 255, 0.4)); }
+
+/* Unknown - an explicit dash, deliberately quiet. It means "we cannot know
+   from the loaded window", not "zero". */
+.hld-unknown { color: var(--text-4, rgba(255, 255, 255, 0.24)); cursor: help; }
+/* Confirmed "this wallet never bought" - a real answer, so it reads as a quiet
+   label rather than a dash, but stays dimmer than any live figure beside it. */
+.hld-nobuys {
+  color: var(--text-4, rgba(255, 255, 255, 0.24));
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  cursor: help;
+}
+
+/* ── Actions: revealed on row hover, like the tape's maker actions ── */
+.hld-act { text-align: right; }
+.hld-actions { display: inline-flex; align-items: center; gap: 2px; opacity: 0; transition: opacity 140ms var(--ease-out, ease); }
+.hld-row:hover .hld-actions,
+.hld-row:focus-within .hld-actions { opacity: 1; }
+.hld-row.is-filtered .hld-actions { opacity: 1; }
+.hld-row.is-filtered { background-color: rgba(255, 255, 255, 0.035); }
+
+/* ── Loading shimmer (never a spinner) ── */
+.hld-skel-row td { height: var(--tx-row-h, 50px); }
+.hld-skel {
+  display: block;
+  height: 10px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ── Day mode ── */
+body.theme-light .hld-addr,
+body.theme-light .hld-name,
+body.theme-light .hld-amount-val,
+body.theme-light .hld-value,
+body.theme-light .hld-bar-text,
+body.theme-light .hld-remain-top { color: #0f172a; }
+body.theme-light .hld-bar { background: rgba(15, 23, 42, 0.05); }
+body.theme-light .hld-bar-fill { background: linear-gradient(90deg, rgba(5, 150, 105, 0.24), rgba(5, 150, 105, 0.07)); }
+body.theme-light .hld-bar-text { text-shadow: none; }
+body.theme-light .hld-rank,
+body.theme-light .hld-amount-sym,
+body.theme-light .hld-remain-of { color: rgba(15, 23, 42, 0.52); }
+body.theme-light .hld-remain-usd { color: rgba(15, 23, 42, 0.66); }
+body.theme-light .hld-pnl-up   { color: #047857; }
+body.theme-light .hld-pnl-down { color: #b91c1c; }
+body.theme-light .hld-unknown  { color: rgba(15, 23, 42, 0.35); }
+body.theme-light .hld-nobuys   { color: rgba(15, 23, 42, 0.35); }
+body.theme-light .hld-tag { background: rgba(15, 23, 42, 0.05); color: rgba(15, 23, 42, 0.55); }
+body.theme-light .hld-row.is-filtered { background-color: rgba(15, 23, 42, 0.04); }

@@ -1,0 +1,240 @@
+/* ── Prediction Constellation ───────────────────────────────────────
+   CSS prefix: pd-gal-
+   A force graph: this prediction -> related tokens -> the KOLs carrying it.
+   Only color = token brand rings (data) + category hues on rel nodes (data-
+   viz). KOLs + all edges are warm-white/neutral. The center has a faint white
+   ring; the dashed KOL edges are the only motion.
+   ──────────────────────────────────────────────────────────────── */
+
+.pd-gal {
+  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-inner), var(--shadow-lg);
+  padding: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.pd-gal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.pd-gal__legend {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.pd-gal__leg {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.pd-gal__leg-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.pd-gal__leg-dot--market { background: var(--text-primary); }
+.pd-gal__leg-dot--token { background: var(--text-secondary); box-shadow: 0 0 0 1.5px rgba(255,255,255,0.18); }
+
+.pd-gal__leg-dash {
+  width: 16px;
+  height: 0;
+  border-top: 1px dashed rgba(255, 255, 255, 0.35);
+}
+
+/* ── Canvas ─────────────────────────────────────────────────────── */
+
+.pd-gal__canvas {
+  position: relative;
+  width: 100%;
+  height: 420px;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+}
+
+.pd-gal--mobile .pd-gal__canvas {
+  height: 340px;
+}
+
+.pd-gal__edges {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Nodes (shared) ─────────────────────────────────────────────── */
+
+.pd-gal-node {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity var(--duration-slow) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out),
+              border-color var(--duration-base) var(--ease-out);
+  will-change: transform;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+}
+
+button.pd-gal-node {
+  cursor: pointer;
+}
+
+.pd-gal-node--settled {
+  transition: opacity var(--duration-slow) var(--ease-out),
+              transform 0.5s var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out);
+}
+
+/* center */
+.pd-gal-node--center {
+  background: radial-gradient(circle at 50% 40%, rgba(255,255,255,0.10), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.06), inset 0 1px 0 rgba(255,255,255,0.10);
+  text-align: center;
+  gap: 2px;
+}
+.pd-gal-center__label {
+  font-size: 0.625rem;
+  line-height: 1.2;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 0 6px;
+  letter-spacing: -0.01em;
+}
+.pd-gal-center__pct {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* token */
+.pd-gal-node--token {
+  background: var(--bg-elevated, #18181b);
+  border: 1.5px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  overflow: hidden;
+}
+.pd-gal-token__img { width: 100%; height: 100%; object-fit: cover; }
+.pd-gal-token__sym {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.pd-gal-node--token:hover {
+  transform: scale(1.06);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+
+/* kol */
+.pd-gal-node--kol {
+  background: var(--bg-elevated, #18181b);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.pd-gal-kol__img { width: 100%; height: 100%; object-fit: cover; }
+.pd-gal-kol__sym {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.pd-gal-node--kol:hover {
+  transform: scale(1.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* related market */
+.pd-gal-node--rel {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid color-mix(in srgb, var(--rel-color, #6B7280) 28%, transparent);
+  text-align: center;
+  gap: 1px;
+  padding: 2px;
+}
+.pd-gal-rel__pct { font-size: 0.75rem; font-weight: 700; }
+.pd-gal-rel__label {
+  font-size: 0.5rem;
+  line-height: 1.1;
+  color: var(--text-tertiary);
+  padding: 0 2px;
+}
+.pd-gal-node--rel:hover {
+  transform: scale(1.06);
+  border-color: color-mix(in srgb, var(--rel-color, #6B7280) 50%, transparent);
+}
+
+/* ── Day Mode ───────────────────────────────────────────────────── */
+
+.app.app-day-mode .pd-gal {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+}
+.app.app-day-mode .pd-gal__leg { color: #64748b; }
+.app.app-day-mode .pd-gal__leg-dot--market { background: #0f172a; }
+.app.app-day-mode .pd-gal__leg-dot--token { background: #475569; box-shadow: 0 0 0 1.5px rgba(0,0,0,0.12); }
+.app.app-day-mode .pd-gal__leg-dash { border-top-color: rgba(0,0,0,0.3); }
+
+.app.app-day-mode .pd-gal-node--center {
+  background: radial-gradient(circle at 50% 40%, rgba(15,23,42,0.05), rgba(15,23,42,0.01));
+  border-color: rgba(0, 0, 0, 0.10);
+  box-shadow: 0 2px 14px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+.app.app-day-mode .pd-gal-center__label,
+.app.app-day-mode .pd-gal-center__pct { color: #0f172a; }
+
+.app.app-day-mode .pd-gal-node--token,
+.app.app-day-mode .pd-gal-node--kol {
+  background: #f1f5f9;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.app.app-day-mode .pd-gal-token__sym,
+.app.app-day-mode .pd-gal-kol__sym { color: #475569; }
+
+.app.app-day-mode .pd-gal-node--rel {
+  background: #f8fafc;
+}
+.app.app-day-mode .pd-gal-rel__label { color: #64748b; }
+
+/* ── Mobile ─────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .pd-gal {
+    padding: var(--sp-4);
+    margin: 0 var(--sp-4);
+  }
+  .pd-gal__legend { gap: var(--sp-3); }
+  .pd-gal__canvas { height: 320px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pd-gal-node { transition: opacity var(--duration-fast) var(--ease-out); }
+}

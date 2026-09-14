@@ -1,0 +1,466 @@
+/* DexStatsBoard - integrated with the trading terminal's Apple/Wall-Street aesthetic.
+   Uses platform tokens: var(--font-mono) numbers, --bull/--bear, --border-subtle,
+   transparent stats (no white tile cards), tight radii, no gradient glow. */
+
+.dsb-board {
+  display: flex; flex-direction: column;
+  gap: 14px;
+  padding: 0;
+}
+.dsb-board * { box-sizing: border-box; }
+
+/* Numbers use the platform's mono font (JetBrains Mono via --font-mono) */
+.dsb-board .mono {
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Socials chip row — kept hidden by inline style; styles preserved if it ever shows */
+.dsb-socials { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.dsb-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  flex: 1 1 0; min-width: 0;
+  height: 32px; padding: 0 12px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.8125rem; font-weight: 500;
+  text-decoration: none; cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  justify-content: center;
+}
+.dsb-chip:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+.dsb-chip.more { flex: 0 0 32px; padding: 0; }
+.dsb-chip.small { height: 26px; padding: 0 10px; font-size: 0.75rem; }
+.dsb-no-socials {
+  flex: 1; text-align: center;
+  font-size: 0.75rem; color: var(--text-muted);
+  padding: 8px 0;
+}
+.dsb-socials-more { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ── Tile rows: transparent rows divided by hairline borders, no card chrome ── */
+.dsb-row {
+  display: grid; gap: 0;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.dsb-row.two { grid-template-columns: 1fr 1fr; }
+.dsb-row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+.dsb-tile {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 10px 12px;
+  background: transparent;
+  border-right: 1px solid var(--border-subtle);
+  min-width: 0;
+}
+.dsb-row > .dsb-tile:last-child { border-right: none; }
+
+.dsb-tile-label {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+.dsb-tile-label.dotted {
+  text-decoration: underline dotted rgba(255,255,255,0.12);
+  text-underline-offset: 3px;
+}
+.dsb-tile-value {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem; font-weight: 500;
+  color: var(--text-primary);
+  display: inline-flex; align-items: baseline; gap: 5px;
+  letter-spacing: -0.01em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dsb-tile-unit {
+  font-family: var(--font-body);
+  font-size: 0.625rem;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.dsb-lock { flex-shrink: 0; }
+
+/* ── Timeframe selector: ghost buttons, divider hairlines ── */
+.dsb-tf-row {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  background: transparent;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.dsb-tf-tab {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px;
+  padding: 9px 6px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border-subtle);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+}
+.dsb-tf-tab:last-child { border-right: none; }
+.dsb-tf-tab:hover { color: var(--text-primary); }
+.dsb-tf-tab.active {
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--text-primary);
+}
+.dsb-tf-label {
+  font-size: 0.6875rem; font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+}
+.dsb-tf-tab.active .dsb-tf-label { color: var(--text-secondary); }
+.dsb-tf-pct {
+  /* Delta-chip typography — see `--font-num-chip` token. */
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+  font-size: 0.8125rem; font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.dsb-tf-pct.pos { color: var(--bull); }
+.dsb-tf-pct.neg { color: var(--bear); }
+.dsb-tf-pct.na { color: var(--text-muted); }
+
+/* ── Activity rows: transparent, hairline-divided ── */
+.dsb-activity {
+  display: flex; flex-direction: column;
+  background: transparent;
+}
+.dsb-act-row {
+  display: grid; grid-template-columns: 92px 1fr;
+  align-items: center; gap: 12px;
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.dsb-act-row:last-child { border-bottom: none; }
+.dsb-act-label-block { display: flex; flex-direction: column; gap: 3px; }
+.dsb-act-label {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+.dsb-act-num {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem; font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.dsb-act-bars { min-width: 0; }
+.dsb-act-pair { display: flex; flex-direction: column; gap: 4px; }
+.dsb-act-pair-head { display: flex; justify-content: space-between; }
+.dsb-act-side-label {
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.dsb-act-side-label.right { text-align: right; }
+.dsb-act-pair-vals { display: flex; justify-content: space-between; }
+.dsb-act-val {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem; font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.dsb-act-val.pos { color: var(--bull); }
+.dsb-act-val.neg { color: var(--bear); text-align: right; }
+
+.dsb-progress {
+  display: flex; height: 2px;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: var(--border-subtle);
+}
+.dsb-progress-fill {
+  height: 100%;
+  transition: width var(--duration-base) var(--ease-out);
+}
+.dsb-progress-fill.buy { background: var(--bull); }
+.dsb-progress-fill.sell { background: var(--bear); }
+
+/* ── Address pill + external link: terminal-style ghost chips ── */
+.dsb-addr-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 7px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.dsb-addr-pill:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.dsb-ext-link {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px 6px;
+  font-size: 0.625rem; font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  text-decoration: none;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.dsb-ext-link:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+/* ── Quick actions: ghost buttons matching the swap toggle aesthetic ── */
+.dsb-quick-actions {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+}
+.dsb-quick-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  height: 32px; padding: 0 12px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.75rem; font-weight: 500;
+  letter-spacing: 0.02em;
+  text-decoration: none; cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.dsb-quick-btn:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+/* ============================== Pool & Contracts cards ==============================
+   Restrained surfaces matching the right-panel section style. No gradient glow,
+   no AI-dashboard chrome. */
+.dsb-pool, .dsb-contracts {
+  position: relative;
+  padding: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.018) 0%, rgba(255, 255, 255, 0.004) 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.dsb-pool-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.dsb-pool-title-block { display: flex; flex-direction: column; gap: 2px; }
+.dsb-pool-eyebrow,
+.dsb-eyebrow {
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.dsb-pool-title {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+.dsb-pool-age {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: 9999px;
+  color: var(--text-tertiary);
+  font-size: 0.625rem; font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.dsb-pool-split {
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  align-items: center; gap: 10px;
+  padding: 6px 0 4px;
+}
+.dsb-pool-side {
+  display: flex; flex-direction: column; gap: 1px;
+  align-items: flex-start;
+}
+.dsb-pool-side.base { align-items: flex-end; }
+.dsb-pool-amount {
+  font-family: var(--font-display);
+  font-size: 1.25rem; font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.dsb-pool-symbol {
+  font-size: 0.5625rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.dsb-pool-usd {
+  font-family: var(--font-mono);
+  margin-top: 1px;
+  font-size: 0.6875rem; font-weight: 400;
+  color: var(--text-tertiary);
+}
+.dsb-pool-divider {
+  width: 1px; height: 28px;
+  background: var(--border-default);
+}
+
+.dsb-pool-bar {
+  position: relative;
+  margin-top: 12px;
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--border-subtle);
+  overflow: hidden;
+}
+.dsb-pool-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--bull, #10B981) 0%, rgba(16, 185, 129, 0.45) 100%);
+  border-radius: 9999px;
+  position: relative;
+}
+.dsb-pool-bar:hover .dsb-pool-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 30%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.35) 50%, transparent 100%);
+  animation: dsb-pool-shine 1.2s var(--ease-out, ease) 1;
+}
+@keyframes dsb-pool-shine {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(450%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dsb-pool-bar:hover .dsb-pool-bar-fill::after { animation: none; display: none; }
+}
+
+/* Contracts list */
+.dsb-contracts-head { margin-bottom: 8px; }
+.dsb-contracts-list {
+  list-style: none; padding: 0; margin: 0;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.dsb-contract-item {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px;
+  padding: 7px 8px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+.dsb-contract-item:hover {
+  border-color: var(--border-default);
+}
+.dsb-contract-meta {
+  display: inline-flex; align-items: center; gap: 8px; min-width: 0;
+}
+.dsb-contract-tag {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.5625rem; font-weight: 600; letter-spacing: 0.08em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border-default);
+}
+.dsb-contract-tag.pair,
+.dsb-contract-tag.token,
+.dsb-contract-tag.base,
+.dsb-contract-tag.deployer {
+  color: var(--text-secondary);
+  background: transparent;
+  border-color: var(--border-default);
+}
+.dsb-contract-name {
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+  font-weight: 400;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dsb-contract-actions {
+  display: inline-flex; align-items: center; gap: 4px;
+  flex-shrink: 0;
+}
+
+/* ============================== Day mode ============================== */
+body.theme-light .dsb-row,
+body.theme-light .dsb-tf-row,
+body.theme-light .dsb-act-row,
+body.theme-light .dsb-tile,
+body.theme-light .dsb-tf-tab {
+  border-color: rgba(0, 0, 0, 0.06);
+}
+body.theme-light .dsb-tile-label,
+body.theme-light .dsb-act-label,
+body.theme-light .dsb-act-side-label,
+body.theme-light .dsb-tf-label,
+body.theme-light .dsb-pool-eyebrow,
+body.theme-light .dsb-eyebrow,
+body.theme-light .dsb-pool-symbol { color: rgba(15, 23, 42, 0.55); }
+body.theme-light .dsb-tile-value,
+body.theme-light .dsb-act-num,
+body.theme-light .dsb-pool-title,
+body.theme-light .dsb-pool-amount { color: #0f172a; }
+body.theme-light .dsb-tile-unit,
+body.theme-light .dsb-pool-usd,
+body.theme-light .dsb-contract-name { color: rgba(15, 23, 42, 0.6); }
+body.theme-light .dsb-tf-tab.active { background: rgba(0, 0, 0, 0.03); color: #0f172a; }
+body.theme-light .dsb-tf-pct.pos { color: #059669; }
+body.theme-light .dsb-tf-pct.neg { color: #dc2626; }
+body.theme-light .dsb-act-val.pos { color: #059669; }
+body.theme-light .dsb-act-val.neg { color: #dc2626; }
+body.theme-light .dsb-progress,
+body.theme-light .dsb-pool-bar { background: rgba(0, 0, 0, 0.05); }
+body.theme-light .dsb-pool-divider { background: rgba(0, 0, 0, 0.1); }
+body.theme-light .dsb-pool,
+body.theme-light .dsb-contracts,
+body.theme-light .dsb-contract-item {
+  border-color: rgba(0, 0, 0, 0.06);
+}
+body.theme-light .dsb-contract-item:hover { border-color: rgba(0, 0, 0, 0.1); }
+body.theme-light .dsb-pool-age,
+body.theme-light .dsb-contract-tag,
+body.theme-light .dsb-addr-pill,
+body.theme-light .dsb-ext-link,
+body.theme-light .dsb-quick-btn,
+body.theme-light .dsb-chip {
+  background: transparent;
+  border-color: rgba(0, 0, 0, 0.08);
+  color: rgba(15, 23, 42, 0.7);
+}
+body.theme-light .dsb-quick-btn:hover,
+body.theme-light .dsb-chip:hover,
+body.theme-light .dsb-addr-pill:hover,
+body.theme-light .dsb-ext-link:hover {
+  border-color: rgba(0, 0, 0, 0.16); color: #0f172a;
+}

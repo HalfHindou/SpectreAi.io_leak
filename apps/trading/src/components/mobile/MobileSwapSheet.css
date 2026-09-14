@@ -1,0 +1,227 @@
+/* ============================================
+   MobileSwapSheet — bottom-sheet overlay.
+   Prefix: mss-
+
+   Mirrors MobileInfoSheet. All colours/fonts via
+   design tokens.
+   ============================================ */
+
+.mss-root {
+  position: fixed;
+  inset: 0;
+  /* Above the global Header, MobileChartToolbar and TV Advanced's
+     internal popovers. */
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+.mss-root > * { pointer-events: auto; }
+
+.mss-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  border: none;
+  cursor: pointer;
+  animation: mssBackdropIn 0.22s var(--ease-out) both;
+}
+@keyframes mssBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mss-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  /* `vh` on iOS is the LARGE viewport (browser chrome hidden), so a
+     bottom-anchored 88vh sheet is taller than what is on screen and its top -
+     grabber, header, close - slides up under the URL bar. `svh` is the height
+     with the chrome showing. `vh` stays as the fallback. Same fix as mfs-. */
+  max-height: 88vh;
+  max-height: 88svh;
+  background: var(--ob-surface-1);
+  border-top-left-radius: var(--r-lg);
+  border-top-right-radius: var(--r-lg);
+  border-top: 1px solid var(--glass-border-lit);
+  box-shadow: var(--shadow-3);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  animation: mssSheetIn var(--dur-base) var(--ease-out) both;
+  will-change: transform;
+}
+@keyframes mssSheetIn {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* `none`, not `pan-y`: pan-y let the browser read the dismiss drag as a page
+   pull and fire its own pull-to-refresh. JS touch events fire either way. */
+.mss-grabber-region {
+  flex: 0 0 auto;
+  padding: 10px 0 4px;
+  display: flex;
+  justify-content: center;
+  touch-action: none;
+}
+.mss-grabber {
+  width: 44px;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--glass-highlight);
+}
+
+.mss-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px 12px;
+  border-bottom: 1px solid var(--glass-border);
+}
+.mss-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-1);
+  margin: 0;
+  letter-spacing: -0.005em;
+}
+.mss-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  color: var(--text-1);
+  cursor: pointer;
+  transition: background-color var(--dur-base) var(--ease-out);
+}
+.mss-close-btn:hover {
+  background: var(--glass-fill-hover);
+}
+
+.mss-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  /* Don't chain the scroll to the page at either end - overscrolling at the
+     top is what triggers the browser's pull-to-refresh. */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 14px 24px;
+  min-height: 0;
+}
+
+.mss-body :where(.right-panel, .right-panel-content) {
+  position: static !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Trade-first sheet: the sheet is titled "Buy X / Sell X", so it shows
+   the trade module (toggle + swap form + stats), not the whole research
+   panel. VitalsBento / DexStatsBoard / deployer-security stay reachable
+   via the ⓘ Token Info sheet, which mounts the same RightPanel in full. */
+.mss-body .vitals-bento,
+.mss-body .dsb-board,
+.mss-body .deployer-security {
+  display: none !important;
+}
+
+.mss-body .token-banner-section {
+  display: none !important;
+}
+
+.mss-body .swap-action-btn.signin {
+  background: var(--text-1, #f5f5f7) !important;
+  border-color: transparent !important;
+  color: #09090b !important;
+  font-weight: 650 !important;
+}
+body.theme-light .mss-body .swap-action-btn.signin {
+  background: #0f172a !important;
+  color: #ffffff !important;
+}
+
+/* Bigger swap-form typography + controls on mobile — a touch larger than the
+   desktop base so the form reads well and taps comfortably in the sheet. */
+.mss-body .amount-input { font-size: 2rem !important; }
+.mss-body .card-label { font-size: 0.9375rem !important; }
+.mss-body .balance-amount { font-size: 0.875rem !important; }
+.mss-body .input-usd { font-size: 0.875rem !important; }
+.mss-body .token-selector .token-name { font-size: 1.0625rem !important; }
+.mss-body .quick-btn {
+  font-size: 0.9375rem !important;
+  padding: 8px 10px !important;
+}
+.mss-body .toggle-btn { font-size: 1.0625rem !important; }
+/* Slippage popover fields are 11-12px on desktop; under 16px iOS Safari zooms
+   the page on focus and the sheet gets cropped. Floor them on the phone. */
+.mss-body .swap-settings-pop .ssp-custom input,
+.mss-body .swap-settings-pop .ssp-amounts input { font-size: 16px !important; }
+.mss-body .swap-action-btn {
+  font-size: 1.0625rem !important;
+  padding: 15px 24px !important;
+}
+
+/* Token selector icon — see MobileInfoSheet for the rationale. */
+.mss-body .token-selector { gap: 8px !important; }
+.mss-body .token-selector .token-icon,
+.mss-body .token-selector .spectre-icon {
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px !important;
+  min-height: 22px !important;
+  max-width: 22px !important;
+  max-height: 22px !important;
+  flex: 0 0 22px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+}
+.mss-body .token-selector .token-icon img,
+.mss-body .token-selector .spectre-icon img,
+.mss-body .token-selector svg {
+  width: 22px !important;
+  height: 22px !important;
+  display: block !important;
+  object-fit: contain !important;
+}
+/* Force light text on token-selector labels — see MobileInfoSheet. */
+.mss-body .token-selector,
+.mss-body .token-selector * {
+  color: var(--text-1) !important;
+  -webkit-text-fill-color: var(--text-1) !important;
+}
+.mss-body .token-selector .selector-arrow {
+  color: var(--text-3) !important;
+  -webkit-text-fill-color: var(--text-3) !important;
+}
+
+/* Day mode */
+body.theme-light .mss-backdrop { background: rgba(0, 0, 0, 0.35); }
+body.theme-light .mss-sheet {
+  background: #ffffff;
+  border-top-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.18);
+}
+body.theme-light .mss-title { color: #0f172a; }
+body.theme-light .mss-header { border-bottom-color: rgba(0, 0, 0, 0.06); }
+body.theme-light .mss-close-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: rgba(15, 23, 42, 0.85);
+}
+body.theme-light .mss-close-btn:hover { background: rgba(0, 0, 0, 0.07); }
+body.theme-light .mss-grabber { background: rgba(0, 0, 0, 0.18); }

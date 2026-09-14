@@ -1,0 +1,570 @@
+/* MobileScreener — DexScreener-style board in Spectre language (prefix msc-). */
+
+.msc {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+/* ---- category tabs (sticky top of the tab scroll area) ----
+   Editorial text tabs on the void — active gets warm-white type + a short
+   2px underline that grows in. No capsules, no boxes. */
+.msc-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  gap: 22px;
+  padding: 4px 16px 0;
+  background: rgba(9, 9, 11, 0.92);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.msc-tabs::-webkit-scrollbar { display: none; }
+/* edge-fade affordance while more tabs hide past the right edge
+   (data-fade stamped by useDragScroll) */
+.msc-tabs[data-fade] {
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 32px), transparent 100%);
+  mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 32px), transparent 100%);
+}
+.msc-tabs { cursor: grab; }
+.msc-tabs:active { cursor: grabbing; }
+
+.msc-tab {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 2px;
+  border: none;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.42);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: color 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+.msc-tab.is-active { color: #f5f5f7; }
+.msc-tab::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  bottom: 7px;
+  height: 2px;
+  border-radius: 1px;
+  background: #f5f5f7;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.msc-tab.is-active::after { transform: scaleX(1); }
+.msc-tab-tf {
+  font-style: normal;
+  padding: 1px 5px;
+  border-radius: 5px;
+  border: 1px solid rgba(245, 245, 247, 0.18);
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: rgba(245, 245, 247, 0.6);
+}
+
+/* ---- terminal data strip — hairline band, not cards ---- */
+.msc-strip {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 2px;
+  padding: 9px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.msc-strip-item {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  flex-shrink: 0;
+}
+.msc-strip-item span {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  color: rgba(245, 245, 247, 0.35);
+}
+.msc-strip-item b {
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 13.5px;
+  font-weight: 650;
+  color: #f5f5f7;
+}
+.msc-strip-movers { display: flex; gap: 8px; }
+.msc-strip-movers i { font-style: normal; }
+.msc-strip-movers i.up { color: var(--up, #34E89E); }
+.msc-strip-movers i.down { color: var(--down, #FF5169); }
+.msc-strip-div {
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+}
+.msc-strip-bar {
+  flex: 1;
+  height: 3px;
+  min-width: 40px;
+  border-radius: 2px;
+  background: rgba(255, 81, 105, 0.3);
+  overflow: hidden;
+}
+.msc-strip-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--up, #34E89E);
+  transition: width 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ---- list ---- */
+.msc-list {
+  flex: 1;
+  padding-bottom: 10px;
+}
+
+.msc-srow-logo.is-broken {
+  background: rgba(255, 255, 255, 0.07);
+}
+body.theme-light .msc-srow-logo.is-broken { background: rgba(15, 23, 42, 0.07); }
+
+.msc-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 24px;
+  text-align: center;
+}
+.msc-empty p {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(245, 245, 247, 0.45);
+}
+.msc-empty button {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f5f5f7;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* skeleton rows */
+.msc-skel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+.msc-skel-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+}
+.msc-skel-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.msc-skel-line {
+  height: 10px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ---- social board rows (X-Dash mentions leaderboard) ---- */
+.msc-srow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 14px;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+  background: var(--ob-surface-1, #09090b);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.msc-srow:active { background: #101013; }
+.msc-srow.is-static { cursor: default; }
+.msc-srow-rank {
+  min-width: 16px;
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.3);
+  text-align: right;
+}
+.msc-srow-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+.msc-srow-logo--fb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(245, 245, 247, 0.6);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.msc-srow-id {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.msc-srow-id b {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f5f5f7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.msc-srow-id i {
+  font-style: normal;
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.msc-srow-right {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.msc-srow-mc {
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 650;
+  color: #f5f5f7;
+  white-space: nowrap;
+}
+.msc-srow-mc i {
+  font-style: normal;
+  margin-right: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: rgba(245, 245, 247, 0.35);
+}
+.msc-srow-social {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.35);
+  white-space: nowrap;
+}
+.msc-srow-social b {
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.75);
+}
+
+/* ---- floating command pill (sticky above the nav) ----
+   One glass capsule echoing the header bar: timeframe · chain · sort split
+   by hairlines, content scrolls beneath it. */
+.msc-dockbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  padding: 10px 12px 0;
+  background: var(--ob-surface-1, #09090b);
+}
+
+.msc-dock {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 6px;
+  border-radius: 999px;
+  background: rgba(14, 14, 17, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+}
+
+.msc-dock-tf {
+  display: flex;
+  flex: 1;
+  justify-content: space-around;
+}
+.msc-dock-tfbtn {
+  position: relative;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 4px;
+  border: none;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.4);
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 180ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.msc-dock-tfbtn.is-active { color: #f5f5f7; }
+/* same underline language as the top category tabs */
+.msc-dock-tfbtn::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+  background: #f5f5f7;
+  transform: translateX(-50%) scaleX(0);
+  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.msc-dock-tfbtn.is-active::after { transform: translateX(-50%) scaleX(1); }
+
+.msc-dock-div {
+  width: 1px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.msc-dock-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.65);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.msc-dock-btn:active { color: #f5f5f7; }
+.msc-dock-btn.is-set { color: #f5f5f7; }
+
+.msc-dock-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
+}
+/* "All" = stacked chain dots (ETH / SOL / BSC — the default trend set) */
+.msc-dock-dots {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.msc-dock-dots i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(14, 14, 17, 0.95);
+}
+.msc-dock-dots i + i { margin-left: -3px; }
+
+/* ---- bottom sheets ---- */
+.msc-sheet-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.msc-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  animation: mscFade 160ms ease both;
+  /* iOS only dispatches click on "clickable" elements - without this the
+     tap-outside-to-close backdrop is dead on real devices. */
+  cursor: pointer;
+}
+@keyframes mscFade { from { opacity: 0; } to { opacity: 1; } }
+
+.msc-sheet {
+  position: relative;
+  max-height: 70vh;
+  overflow-y: auto;
+  /* Don't chain the scroll to the page at either end - overscrolling at the
+     top is what triggers the browser's pull-to-refresh. */
+  overscroll-behavior: contain;
+  padding: 8px 12px calc(12px + env(safe-area-inset-bottom));
+  border-radius: 18px 18px 0 0;
+  background: rgba(17, 17, 19, 0.97);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: mscRise 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes mscRise {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+/* Drag-to-dismiss surface (grabber + title). `touch-action: none` so the
+   browser can't read the drag as a page pull and fire its own
+   pull-to-refresh. JS touch events fire either way. */
+.msc-sheet-grab {
+  touch-action: none;
+  cursor: grab;
+}
+.msc-sheet-grabber {
+  width: 36px;
+  height: 4px;
+  margin: 4px auto 10px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.msc-sheet-title {
+  padding: 0 6px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.4);
+}
+.msc-sheet-list { display: flex; flex-direction: column; }
+.msc-sheet-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.8);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.msc-sheet-row.is-active {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f5f5f7;
+  font-weight: 600;
+}
+.msc-sheet-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.msc-sheet-row-main em {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.35);
+}
+.msc-sheet-check { margin-left: auto; color: #f5f5f7; }
+
+/* ================= day mode ================= */
+body.theme-light .msc-tabs { background: rgba(255, 255, 255, 0.94); }
+body.theme-light .msc-tab { color: rgba(15, 23, 42, 0.45); }
+body.theme-light .msc-tab.is-active { color: #0f172a; }
+body.theme-light .msc-tab::after { background: #0f172a; }
+body.theme-light .msc-tab-tf {
+  border-color: rgba(15, 23, 42, 0.2);
+  color: rgba(15, 23, 42, 0.6);
+}
+body.theme-light .msc-strip {
+  border-top-color: rgba(15, 23, 42, 0.06);
+  border-bottom-color: rgba(15, 23, 42, 0.06);
+}
+body.theme-light .msc-strip-item span { color: rgba(15, 23, 42, 0.42); }
+body.theme-light .msc-strip-item b { color: #0f172a; }
+body.theme-light .msc-strip-movers i.up { color: #059669; }
+body.theme-light .msc-strip-movers i.down { color: #dc2626; }
+body.theme-light .msc-strip-div { background: rgba(15, 23, 42, 0.1); }
+body.theme-light .msc-strip-bar { background: rgba(220, 38, 38, 0.25); }
+body.theme-light .msc-strip-bar span { background: #059669; }
+body.theme-light .msc-skel { border-bottom-color: rgba(15, 23, 42, 0.05); }
+body.theme-light .msc-skel-logo,
+body.theme-light .msc-skel-line { background: rgba(15, 23, 42, 0.06); }
+body.theme-light .msc-empty p { color: rgba(15, 23, 42, 0.5); }
+body.theme-light .msc-empty button {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.1);
+  color: #0f172a;
+}
+body.theme-light .msc-dockbar { background: #f5f6f8; }
+body.theme-light .msc-dock {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+body.theme-light .msc-dock-tfbtn { color: rgba(15, 23, 42, 0.45); }
+body.theme-light .msc-dock-tfbtn.is-active { color: #0f172a; }
+body.theme-light .msc-dock-tfbtn::after { background: #0f172a; }
+body.theme-light .msc-dock-div { background: rgba(15, 23, 42, 0.1); }
+body.theme-light .msc-dock-btn { color: rgba(15, 23, 42, 0.6); }
+body.theme-light .msc-dock-btn:active,
+body.theme-light .msc-dock-btn.is-set { color: #0f172a; }
+body.theme-light .msc-dock-dots i { border-color: rgba(255, 255, 255, 0.95); }
+body.theme-light .msc-sheet-backdrop { background: rgba(15, 23, 42, 0.3); }
+body.theme-light .msc-sheet { background: rgba(255, 255, 255, 0.98); border-top-color: rgba(15, 23, 42, 0.08); }
+body.theme-light .msc-sheet-grabber { background: rgba(15, 23, 42, 0.15); }
+body.theme-light .msc-sheet-title { color: rgba(15, 23, 42, 0.45); }
+body.theme-light .msc-sheet-row { color: rgba(15, 23, 42, 0.75); }
+body.theme-light .msc-sheet-row.is-active { background: rgba(15, 23, 42, 0.05); color: #0f172a; }
+body.theme-light .msc-sheet-row-main em { color: rgba(15, 23, 42, 0.4); }
+body.theme-light .msc-sheet-check { color: #0f172a; }
+body.theme-light .msc-srow { background: #f5f6f8; border-bottom-color: rgba(15, 23, 42, 0.06); }
+body.theme-light .msc-srow:active { background: #eceef2; }
+body.theme-light .msc-srow-rank { color: rgba(15, 23, 42, 0.35); }
+body.theme-light .msc-srow-id b,
+body.theme-light .msc-srow-mc { color: #0f172a; }
+body.theme-light .msc-srow-id i { color: rgba(15, 23, 42, 0.5); }
+body.theme-light .msc-srow-mc i { color: rgba(15, 23, 42, 0.4); }
+body.theme-light .msc-srow-social { color: rgba(15, 23, 42, 0.4); }
+body.theme-light .msc-srow-social b { color: rgba(15, 23, 42, 0.75); }
+body.theme-light .msc-srow-logo--fb { background: rgba(15, 23, 42, 0.06); color: rgba(15, 23, 42, 0.6); }

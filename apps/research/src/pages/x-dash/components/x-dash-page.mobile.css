@@ -1,0 +1,3032 @@
+/* ============================================================
+   X DASH - mobile overrides (<= 768px)
+   Dense tables become horizontally scrollable; command bar wraps;
+   drawers go full-width; card grids collapse to single column.
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .xd-body {
+    padding: var(--sp-3);
+  }
+
+  /* command bar wraps fully */
+  .xd-cmdbar {
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+  }
+
+  .xd-cmdbar__brand {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .xd-cmdbar__ribbon {
+    font-size: 0.6875rem;
+  }
+
+  .xd-cmdbar__controls {
+    width: 100%;
+  }
+
+  .xd-cmdbar__spacer {
+    display: none;
+  }
+
+  .xd-cmdbar__meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .xd-cmdbar__search {
+    width: 100%;
+    min-width: 0;
+    order: -1;
+  }
+
+  /* view tabs stay sticky directly under the wrapped command bar */
+  .xd-viewtabs {
+    top: auto;
+    padding: 0 var(--sp-3);
+  }
+
+  /* tables scroll horizontally inside their wrap — contain the x-axis so
+     a drag that hits the scroller's edge never chains into a page wobble */
+  .xd-table-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  /* HARD page clamp: no descendant may ever widen the page into a
+     horizontal pan (device fonts / dynamic type push rows past 100vw in
+     ways dev viewports don't reproduce — hit Leaderboard, New, etc.).
+     `clip` forbids scrolling the axis WITHOUT creating a scroll container,
+     so inner x-scrollers (view tabs, tables) keep working. */
+  .xd-page {
+    max-width: 100vw;
+    overflow-x: clip;
+  }
+
+  /* Mobile sort bar: the Spotted MC / ROI pill wraps under the sort row
+     when tight instead of pushing the board past the viewport. */
+  .xd-msort {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .xd-msort .xd-spotted-toggle {
+    min-width: 0;
+    white-space: nowrap;
+  }
+
+  /* Card metric cells: a long value or tone chip must never paint across
+     the neighboring column (Volume's "Flow confirms" chip sat on top of
+     Spotted MC). Values clip with ellipsis; the volume cell wraps its
+     chip onto its own line inside the cell. */
+  .xd-mcard__metric-val {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  .xd-mcard__vol {
+    flex-wrap: wrap;
+    row-gap: 3px;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .xd-mcard__vol .xd-volflag {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* Give the volume cell room for its tone chip ("Flow confirms",
+     "Talk · thin flow") — span two grid columns when a chip rides along. */
+  .xd-mcard__metrics .xd-mcard__metric:has(.xd-volflag) {
+    grid-column: span 2;
+  }
+
+  .xd-table {
+    font-size: 0.75rem;
+    /* NO forced min-width here: the two wide tables (leaderboard recut,
+       creators) render card lists on phones, so the only .xd-table left at
+       this width is the 4-col categories drill — forcing it to 820px made
+       the whole subview a full-height horizontal scroller (any touch slid
+       the page left/right). Let it fit the viewport instead. */
+  }
+  /* keep the drill's token cell from forcing the table past the viewport */
+  .xd-table .xd-tokencell__top,
+  .xd-table .xd-tokencell__sub {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* leaderboard table carries restored raw metrics; keep it scrollable instead of crushing columns */
+  .xd-table--recut {
+    min-width: 1180px;
+  }
+  /* Staying Power stays scrollable, not crushed */
+  .xd-col-staying {
+    width: 124px;
+    min-width: 124px;
+  }
+
+  /* carrier cluster stays compact in the scrollable table */
+  .xd-col-carriers {
+    width: 112px;
+    min-width: 112px;
+  }
+
+  .xd-carriers {
+    padding: 3px 5px 3px 3px;
+    gap: 4px;
+  }
+
+  .xd-carriers__slot { margin-left: -7px; }
+  .xd-carriers__more { font-size: 0.625rem; }
+
+  /* avatar tooltip would overflow a narrow viewport - drop it on touch */
+  .xd-carriers__slot[data-xd-carrier-tip]::after {
+    display: none;
+  }
+
+  /* --- Carrier rows (non-fullscreen drawer) --------------------
+       Single-line mobile pattern, mobile-crypto-ux E3 style:
+         [avatar]  @handle               744.87
+                   Display name           1 · 8%
+       — handle stack on left flexes, metrics stack right with
+         engagement big, mentions+share small + muted underneath.
+       No more wrap-to-second-line, no full-width strength bar. */
+  .xd-carrierrow {
+    flex-wrap: nowrap;
+    gap: 10px;
+    padding: 10px 8px;
+    align-items: center;
+  }
+  .xd-carrierrow__avatar {
+    flex-shrink: 0;
+  }
+  .xd-carrierrow__id {
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 2px;
+  }
+  .xd-carrierrow__handle {
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .xd-carrierrow__name {
+    font-size: 11px;
+    color: rgba(245, 245, 247, 0.4);
+  }
+  /* metrics: stack engagement big over (mentions · share%) muted */
+  .xd-carrierrow__metrics {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0;
+    flex-shrink: 0;
+  }
+  /* hide the verbose lowercase 'mentions' / 'engagement' labels
+     under each number — replaced by inline `· share%` further down */
+  .xd-carrierrow__metric { gap: 0; }
+  .xd-carrierrow__metric-label { display: none; }
+  /* engagement value is the dominant number, mentions is muted */
+  .xd-carrierrow__metric:nth-of-type(1) .xd-carrierrow__metric-value {
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(245, 245, 247, 0.55);
+    order: 2;
+  }
+  .xd-carrierrow__metric:nth-of-type(2) .xd-carrierrow__metric-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: #f5f5f7;
+    font-variant-numeric: tabular-nums;
+    order: 1;
+  }
+  /* strength bar collapses to a tiny pct text inline with mentions */
+  .xd-carrierrow__strength {
+    width: auto;
+    order: 4;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .xd-carrierrow__strength-track {
+    display: none;
+  }
+  .xd-carrierrow__strength-pct {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(245, 245, 247, 0.55);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* featured majors stack */
+  .xd-majors {
+    grid-template-columns: 1fr;
+  }
+
+  /* card grids single column */
+  .xd-cardgrid {
+    grid-template-columns: 1fr;
+  }
+
+  /* rotation flow rows stack vertically */
+  .xd-flow-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-3);
+  }
+
+  .xd-flow-row__metrics {
+    justify-content: space-between;
+    gap: var(--sp-3);
+  }
+
+  .xd-flow-metric {
+    text-align: left;
+  }
+
+  .xd-flow-row__authors {
+    min-width: 0;
+  }
+
+  /* edits summary collapses */
+  .xd-edits-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .xd-edit-entry {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-2);
+  }
+
+  /* drawer full-width */
+  .xd-drawer {
+    width: 100%;
+    max-width: 100%;
+    top: 0;
+    /* iPhone notch / Dynamic Island: the drawer is a full-screen portal that
+       covers the status bar, so reserve the safe-area inset — otherwise the
+       hero header (token name) + the close (X) render UNDER the clock/island
+       and the X isn't tappable. env() is 0 on non-notched / desktop, so inert
+       there. Shared by the token + author drawers (both use .xd-drawer). */
+    padding-top: env(safe-area-inset-top, 0px);
+    box-sizing: border-box;
+  }
+
+  .xd-drawer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* pagination wraps */
+  .xd-pagination {
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+  }
+}
+
+@media (max-width: 480px) {
+  .xd-edits-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .xd-card__hero-value {
+    font-size: 1.125rem;
+  }
+}
+
+/* ============================================================
+   CHARTS - mobile sizing. Tighter padding, legends wrap.
+   ResponsiveContainer keeps the SVG fluid; charts that scale
+   height by row-count stay readable.
+   ============================================================ */
+@media (max-width: 768px) {
+  .xd-view-chart {
+    padding: var(--sp-2);
+    margin-bottom: var(--sp-3);
+  }
+
+  /* tooltip can get wide on small screens - cap it */
+  .xd-charttip {
+    min-width: 120px;
+    max-width: 180px;
+  }
+
+  /* legends stack tighter */
+  .xd-chart-legend,
+  .xd-qshares__legend {
+    gap: var(--sp-2);
+  }
+
+  /* flow diagram axis labels stay legible */
+  .xd-flowdiagram__axis {
+    font-size: 0.5rem;
+  }
+}
+
+/* ============================================================
+   ATTENTION TERMINAL - mobile overrides
+   Market-read collapses to 2x2, treemap shrinks, right rail
+   stacks under the list, Pulse stream goes single-column.
+   ============================================================ */
+@media (max-width: 768px) {
+  /* market-read strip: 4 -> 2x2 grid (legacy class kept for safety) */
+  .xd-marketread {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .xd-marketread__cell {
+    padding: var(--sp-2) var(--sp-3);
+  }
+  .xd-marketread__value {
+    font-size: 1.25rem;
+  }
+
+  /* pulse card: 4 -> 2x2 grid, smaller numbers, tighter padding */
+  .xd-pulse {
+    padding: 14px 16px;
+    gap: 10px;
+  }
+  /* KPI strip - collapse from 4 columns to 2 per row on mobile */
+  .xd-kpi {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "label hint"
+      "value viz";
+    gap: 6px 12px;
+    padding: 10px 0;
+  }
+  .xd-kpi__label { grid-area: label; }
+  .xd-kpi__hint  { grid-area: hint; }
+  .xd-kpi__value { grid-area: value; font-size: 19px; }
+  .xd-kpi__viz   { grid-area: viz; min-width: 100px; max-width: 140px; height: 24px; justify-self: end; }
+  /* dots can wrap to a tighter spread on narrow screens */
+  .xd-kpi__dot { width: 6px; height: 6px; }
+
+  /* majors grid auto-fits down to 1 col */
+  .xd-majors__row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .xd-majorcard {
+    padding: 12px 14px;
+  }
+  .xd-majorcard__num {
+    font-size: 20px;
+  }
+
+  /* legacy majorstrip kept tight */
+  .xd-majorstrip {
+    gap: var(--sp-2);
+  }
+
+  /* attention treemap: shorter on mobile, still crisp */
+  .xd-treemap {
+    height: 240px !important;
+  }
+  .xd-attention__head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  /* right rail drops below the list and stacks single-column */
+  .xd-leaderboard__main {
+    grid-template-columns: 1fr;
+    gap: var(--sp-3);
+  }
+  .xd-leaderboard__rail {
+    position: static;
+    flex-direction: column;
+  }
+
+  /* recut table: signal cell narrows, sparkline shrinks */
+  .xd-col-signal {
+    width: 132px;
+    min-width: 132px;
+  }
+  .xd-col-share {
+    width: 88px;
+    min-width: 88px;
+  }
+  .xd-sscore--compact .xd-sscore__num {
+    font-size: 0.875rem;
+    min-width: 18px;
+  }
+  .xd-sscore__bar {
+    width: 32px;
+  }
+  .xd-rankspark {
+    width: 44px;
+  }
+
+  /* token-drawer verdict: ring + body stay side by side, tighter pad */
+  .xd-verdict {
+    padding: var(--sp-3);
+    gap: var(--sp-3);
+  }
+}
+
+@media (max-width: 380px) {
+  /* very narrow: market-read single column so values don't clip */
+  .xd-marketread {
+    grid-template-columns: 1fr;
+  }
+  .xd-kpi__value { font-size: 17px; }
+  .xd-kpi__viz   { max-width: 110px; }
+  .xd-treemap {
+    height: 200px !important;
+  }
+}
+
+/* ============================================================
+   Mobile pass v2 — adds patterns from mobile-design-system.md
+   and mobile-crypto-ux.md that the original mobile.css missed:
+   blur budget cap (>12px banned), touch targets (44px min),
+   sticky stacking with the fixed shell header, fullscreen
+   drawer head safety, table density, tabular-nums on numbers,
+   chart legend wrap, action-bar safe area.
+   ============================================================ */
+@media (max-width: 768px) {
+  /* --- Blur budget — mobile GPUs choke on blur(>12px). Bring
+         every heavy-glass surface down to blur(8-10px) max. ---- */
+  .xd-cmdbar,
+  .xd-drawer,
+  .xd-attention__head,
+  .xd-pulse,
+  .xd-charttip {
+    backdrop-filter: blur(10px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(140%) !important;
+  }
+
+  /* --- Touch target floor — Apple HIG 44×44. The icon buttons
+         and drawer close are currently 28-38px which mis-fires
+         on touch. Bump to 44 with padding so the visual circle
+         can stay compact. ---------------------------------- */
+  .xd-btn--icon {
+    width: 44px;
+    height: 44px;
+  }
+  .xd-drawer__close {
+    width: 36px;
+    height: 36px;
+    /* Stretch hit area beyond visible bounds without growing the
+       visual circle — pseudo-element catches the tap. */
+    position: relative;
+  }
+  .xd-drawer__close::before {
+    content: "";
+    position: absolute;
+    inset: -6px;
+  }
+
+  /* --- Sticky stacking — the mobile shell renders a fixed 52px
+         header on top. The page cmdbar already sticks to top:0,
+         so on shelled mobile pages it sits underneath the shell.
+         Push it down. View tabs follow. ------------------- */
+  .xd-cmdbar {
+    top: var(--m-header-h, 52px);
+  }
+  .xd-viewtabs {
+    /* keep flush under wrapped command bar — height of cmdbar is
+       fluid so we use position: sticky without a top offset, letting
+       it parent itself to the page scroll context. */
+    position: sticky;
+    top: calc(var(--m-header-h, 52px) + 0px);
+    z-index: 28;
+    background: rgba(9, 9, 11, 0.92);
+    backdrop-filter: blur(10px) saturate(140%);
+    -webkit-backdrop-filter: blur(10px) saturate(140%);
+  }
+  .app.app-day-mode .xd-viewtabs {
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  /* --- Numbers — per mobile-design-system.md L1 / mobile-crypto-ux.md B1,
+         numbers on mobile use system sans with tabular-nums for that
+         native fintech feel. The `.xd-num` helper currently maps to
+         var(--font-mono); override on mobile so it reads native. ---- */
+  .xd-num,
+  .xd-page .xd-num {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+  }
+
+  /* --- Token chips in hero strip — must scroll horizontally without
+         clipping. Snap to chip starts so flicks land predictably. ---- */
+  .xd-hero-strip,
+  .xd-hero-strip__row {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+  }
+  .xd-hero-strip::-webkit-scrollbar,
+  .xd-hero-strip__row::-webkit-scrollbar {
+    display: none;
+  }
+  .xd-tickchip {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+
+  /* --- Fullscreen drawer head — the floating Back pill needs to clear
+         the safe-area inset (iPhone notch). Hero already has 56px top
+         padding from the dark CSS; lock its mobile value so it stays
+         readable on narrow viewports. ----------------------------- */
+  .xd-drawer__back--floating {
+    top: max(var(--sp-3), env(safe-area-inset-top, 12px));
+    left: var(--sp-3);
+  }
+  .xd-hero {
+    padding: 10px var(--sp-3) var(--sp-4) !important;
+  }
+  .xd-drawer.xd-drawer--fullscreen .xd-drawer__body {
+    /* Override desktop grid layout. The desktop 2-col grid collapses
+       to 1-col at <=1100px, but `align-self: stretch` on the rail plus
+       `overflow: visible` on main causes main's content to render OVER
+       the rail row (grid track is too short, main content overflows
+       past the row boundary). Use a plain column flex stack on mobile
+       so both children get their natural intrinsic height. */
+    display: flex !important;
+    flex-direction: column !important;
+    gap: var(--sp-4) !important;
+    overflow: visible !important;
+    height: auto !important;
+    flex: none !important;
+    padding-left: var(--sp-3);
+    padding-right: var(--sp-3);
+  }
+  .xd-drawer.xd-drawer--fullscreen .xd-drawer__main,
+  .xd-drawer.xd-drawer--fullscreen .xd-drawer__rail {
+    overflow: visible !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    align-self: stretch;
+  }
+  /* Heatmap inside the rail uses `flex: 1 1 auto` to fill rail's
+     leftover height, which is 0 once rail collapses to content size.
+     Give it an explicit mobile height so the visualization renders. */
+  .xd-drawer.xd-drawer--fullscreen .xd-drawer__rail .xd-cmap,
+  .xd-drawer.xd-drawer--fullscreen .xd-drawer__rail .xd-creators-heatmap {
+    min-height: 280px !important;
+    flex: 0 0 auto !important;
+  }
+  .xd-drawer.xd-drawer--fullscreen {
+    top: 0;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* --- Chart legend — wrap on overflow rather than push the chart. - */
+  .xd-chart-legend {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  /* --- View tab strip — gap fix so 3+ tabs fit on iPhone SE width. - */
+  .xd-toggle {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .xd-toggle::-webkit-scrollbar { display: none; }
+  .xd-toggle__btn {
+    flex-shrink: 0;
+    min-height: 36px;
+  }
+
+  /* --- Table cells — keep row tap target 44px even when the table
+         shrinks fonts to 0.75rem (already done). --------------- */
+  .xd-table tbody tr {
+    min-height: 44px;
+  }
+  .xd-table th,
+  .xd-table td {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  /* --- Carrierboard slot — fullscreen drawer's leaderboard list. -- */
+  .xd-carrierboard__slot {
+    padding: var(--sp-2) var(--sp-3);
+  }
+
+  /* --- Drawer-chart card padding (referenced from main CSS rule) -- */
+  .xd-drawer.xd-drawer--fullscreen .xd-drawer-chart {
+    padding: 10px 12px 8px;
+  }
+
+  /* --- Cmdbar filter row — at 390px all 3 groups (Timeframe, Sort,
+         Filter) don't fit; let them wrap to multiple lines instead of
+         horizontal scroll. overflow: visible is mandatory so dropdown
+         menus can render below the row without being clipped. */
+  .xd-cmdbar__row--filters {
+    flex-wrap: wrap;
+    overflow: visible;
+    gap: var(--sp-3);
+    padding-bottom: 6px;
+  }
+  .xd-cmdbar__group {
+    flex-shrink: 0;
+  }
+
+  /* --- View tabs — give each tab a real min-width so they don't
+         visually run into each other; keep scroll on overflow. - */
+  .xd-viewtabs {
+    padding: 0 var(--sp-2);
+    gap: 4px;
+  }
+  .xd-viewtab,
+  .xd-viewtabs > button {
+    flex-shrink: 0;
+    padding-left: 10px;
+    padding-right: 10px;
+    min-width: max-content;
+  }
+}
+
+/* Narrow phones: chip clusters that overlap (-7px) start to crowd. */
+@media (max-width: 380px) {
+  .xd-carriers__slot { margin-left: -5px; }
+  .xd-hero {
+    padding: 60px var(--sp-3) var(--sp-3) !important;
+  }
+  .xd-cmdbar__brand {
+    font-size: 0.875rem;
+  }
+}
+
+/* ============================================================
+   X DASH MOBILE — design-system pass
+   Implements mobile-design-system.md (L1–L5, L10) + mobile-crypto-ux.md:
+     * Anti-wobble + transparent surfaces (no glass chrome on mobile)
+     * L3 section labels: 11px / 600 / 1.5px letter / 35% opacity
+     * L4 ghost pill toggles: transparent inactive, soft fill + glow active
+     * L10 spacing: 4px gap, 8px horizontal section padding
+     * 44px min touch targets (Apple HIG)
+     * tabular-nums on all numbers
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* --- Page surface ---------------------------------------------- */
+  .xd-page {
+    background: var(--bg-base);
+  }
+  .xd-body {
+    padding: 0 8px 12px !important;
+    gap: 4px;
+  }
+
+  /* --- Command bar ------------------------ transparent, no glass */
+  .xd-cmdbar {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-bottom: none !important;
+    position: relative !important;
+    top: auto !important;
+    padding: 0 !important;
+    gap: 0;
+    z-index: auto;
+  }
+  .xd-cmdbar::after { display: none; }
+
+  /* Rows lose the 14px/24px desktop padding; everything sits in an
+     8px horizontal track. Identity stack is column at this width. */
+  .xd-cmdbar__row {
+    padding: 8px 8px 4px !important;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .xd-cmdbar__row--filters {
+    padding: 4px 8px 8px !important;
+    border-top: 0.5px solid rgba(255, 255, 255, 0.03);
+    background: transparent;
+    gap: 10px;
+  }
+
+  /* "X DASH" eyebrow — uniform L3 section label */
+  .xd-cmdbar__brand {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 0;
+  }
+  .xd-cmdbar__title {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    letter-spacing: 1.5px !important;
+    color: rgba(245, 245, 247, 0.35) !important;
+    background: none !important;
+    -webkit-text-fill-color: rgba(245, 245, 247, 0.35) !important;
+  }
+
+  /* Stats ribbon — drop boxed border + hairline dividers, render
+     as 3 inline stats. Numbers dominate (15px / 700) per crypto-ux B1. */
+  .xd-cmdbar__ribbon {
+    border-left: none;
+    padding-left: 0;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .xd-cmdbar__ribbon-sep { display: none; }
+  .xd-cmdbar__stat {
+    gap: 2px;
+  }
+  .xd-cmdbar__stat-label {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .xd-cmdbar__ribbon b {
+    font-size: 15px;
+    font-weight: 700;
+    color: rgba(245, 245, 247, 0.92);
+    letter-spacing: -0.015em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* "updated 1h ago" meta */
+  .xd-cmdbar__meta {
+    width: 100%;
+    border-left: none;
+    padding-left: 0;
+    margin-left: 0;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .xd-cmdbar__updated {
+    color: rgba(245, 245, 247, 0.35);
+    font-size: 10.5px;
+  }
+
+  /* --- Search ----------------- full-width pill, transparent surface */
+  .xd-cmdbar__search {
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    order: -1;
+  }
+  .xd-cmdbar__search-input {
+    height: 40px;
+    padding: 0 14px 0 38px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 0.5px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    font-size: 13px;
+  }
+  .xd-cmdbar__search-input:hover,
+  .xd-cmdbar__search-input:focus {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.10);
+    box-shadow: none;
+    outline: none;
+  }
+
+  /* --- Filter-row group labels (Timeframe / Sort by / Filter) ---- */
+  .xd-cmdbar__group {
+    flex-shrink: 0;
+    gap: 8px;
+  }
+  .xd-cmdbar__group-label {
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .xd-cmdbar__group-divider {
+    background: transparent;
+    width: 0;
+    height: 0;
+  }
+
+  /* --- Toggle pills (24H/7D, Mentions/Momentum/Conviction) ------
+     Ghost capsules — transparent inactive, soft fill + glow active.
+     L4 pattern, 44px min-width touch target.
+     Strip the segment-control wrapper chrome (bg + border + inner
+     padding) on mobile so individual pills float freely. */
+  .xd-toggle {
+    gap: 4px;
+    height: auto;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+  }
+  /* Same global-reset escape: `!important` on border + min-height to
+     override `border-style: none !important; min-height: var(--touch-min)`
+     from the shared mobile reset. */
+  .xd-toggle__btn {
+    background-color: transparent !important;
+    border: 1px solid transparent !important;
+    color: rgba(245, 245, 247, 0.4);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    height: 32px !important;
+    min-height: 32px !important;
+    min-width: 44px;
+    padding: 0 12px !important;
+    border-radius: 14px !important;
+    box-shadow: none !important;
+    transition: background 180ms var(--ease-out), color 180ms var(--ease-out), border-color 180ms var(--ease-out);
+  }
+  .xd-toggle__btn:hover {
+    color: rgba(245, 245, 247, 0.7);
+  }
+  .xd-toggle__btn--active {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #f5f5f7;
+    font-weight: 700;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: none !important;
+  }
+
+  /* --- View tabs (Leaderboard / Narratives / Categories / …) ---
+     Underline tabs with 44px touch height, no boxy borders. */
+  .xd-viewtabs {
+    padding: 4px 8px 0 !important;
+    gap: 4px;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.04);
+    overflow-x: auto;
+    overflow-y: hidden;
+    touch-action: pan-x pan-y; /* NOT pan-x alone: that permits ONLY horizontal
+     panning from a touch starting here, so a vertical drag on this strip scrolls
+     NOTHING. Measured 2026-08-04: a drag from the market-pulse ticker or the
+     Command Center tab row moved the page 0px — the founder's "i cant scroll at
+     times", since these full-bleed bands are exactly where a thumb lands. With
+     both axes allowed the browser still locks to one after the first movement, so
+     the strip keeps scrolling sideways. */
+    overscroll-behavior-y: none;
+    scrollbar-width: none;
+  }
+  .xd-viewtabs::-webkit-scrollbar { display: none; }
+  .xd-viewtab,
+  .xd-viewtabs > button {
+    flex-shrink: 0;
+    padding: 12px 10px !important;
+    min-height: 44px;
+    min-width: max-content;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(245, 245, 247, 0.4);
+    background: transparent;
+    border: none;
+  }
+  .xd-viewtab--active,
+  .xd-viewtabs > button.xd-viewtab--active {
+    color: #f5f5f7;
+    font-weight: 600;
+  }
+
+  /* --- Uniform section labels (ATTENTION MAP, LEADERBOARD, …) ----
+     L3 pattern. Targets every label-ish class on the page. */
+  .xd-section-label,
+  .xd-attention__eyebrow,
+  .xd-attention__legend-hint {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    letter-spacing: 1.5px !important;
+    text-transform: uppercase !important;
+    color: rgba(245, 245, 247, 0.35) !important;
+  }
+  .xd-attention__rule {
+    background: transparent;
+  }
+
+  /* --- Attention treemap section -------------- transparent shell */
+  .xd-attention {
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    border: none;
+  }
+  .xd-attention__head {
+    padding: 12px 8px 8px;
+    gap: 6px;
+  }
+  .xd-attention__legend {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .xd-attention__legend-item {
+    font-size: 10.5px;
+    color: rgba(245, 245, 247, 0.5);
+  }
+  .xd-attention__legend-swatch {
+    width: 8px;
+    height: 8px;
+  }
+
+  /* --- Leaderboard view toolbar (TABLE/MAP + count) -------------- */
+  .xd-view-toolbar {
+    padding: 12px 8px 8px;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .xd-view-count {
+    font-size: 11px;
+    color: rgba(245, 245, 247, 0.4);
+    margin-left: auto;
+  }
+  .xd-view-count .xd-num {
+    color: rgba(245, 245, 247, 0.85);
+    font-weight: 700;
+    margin-right: 4px;
+  }
+
+  /* --- "MOVERS" dropdown panel above the treemap -----------------
+         Mobile: transparent surface, vertically stacked. Head row sits
+         tight (dot + dropdown + hint), marquee body drops below at full
+         width so chips have room to breathe instead of squeezing into
+         a thin sliver on the right. */
+  .xd-streamcard {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    height: auto;
+    padding: 6px 4px 4px;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .xd-streamcard::before { display: none; }
+  .xd-streamcard__head {
+    height: auto;
+    gap: 8px;
+  }
+  .xd-streamcard__divider { display: none; }
+  .xd-streamcard__hint {
+    font-size: 10.5px;
+    color: rgba(245, 245, 247, 0.35);
+    letter-spacing: 0;
+  }
+  .xd-streamcard__body {
+    width: 100%;
+    height: 32px;
+    flex: none;
+  }
+
+  /* Ghost-pill the actual visible trigger (the wrapper has no chrome).
+     `.xd-dropdown__trigger` is the button; `.xd-select` is the native
+     <select>. Both get the same capsule treatment. */
+  /* The shared mobile button reset (mobile-2026.css) forces
+       `border-style: none !important; min-height: var(--touch-min) !important`
+     on every <button>, which strips our ghost-capsule border and inflates
+     the height. Re-assert with `!important` here to win. */
+  .xd-dropdown { background: transparent; border: none; }
+  .xd-dropdown__trigger,
+  .xd-select {
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 12px !important;
+    gap: 6px;
+    background-color: transparent !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 14px !important;
+    color: rgba(245, 245, 247, 0.9);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    box-shadow: none !important;
+  }
+  /* native <select> needs more right-padding for the chevron icon */
+  .xd-select {
+    padding: 0 28px 0 12px !important;
+  }
+  .xd-dropdown__trigger:hover {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+  }
+  .xd-dropdown--open .xd-dropdown__trigger {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+  }
+  .xd-dropdown__chev { color: rgba(245, 245, 247, 0.5); }
+
+  /* The filter dropdowns are inline-positioned (no portal), left-aligned by
+     default. The last one ("All Chains") sits at the right edge of the row, so
+     its left-aligned menu overflows off-screen on mobile (gets clipped). Open
+     it toward the LEFT (right:0) so it stays in the viewport. Cap width to the
+     viewport and height so the long chain list scrolls instead of running past
+     the bottom nav. */
+  .xd-cmdbar__group .xd-dropdown:last-child .xd-dropdown__menu {
+    left: auto;
+    right: 0;
+  }
+  .xd-dropdown__menu {
+    max-width: calc(100vw - 24px);
+    max-height: 60vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* --- Table — keep horizontal scroll but lighten cell weight ---- */
+  .xd-table thead th {
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    color: rgba(245, 245, 247, 0.35);
+    padding: 8px 6px;
+    text-transform: uppercase;
+  }
+  .xd-table td {
+    padding: 10px 6px;
+    font-size: 12.5px;
+  }
+}
+
+/* Narrow phones (≤380px): drop ribbon gap, smaller stats */
+@media (max-width: 380px) {
+  .xd-cmdbar__title { letter-spacing: 1.2px !important; }
+  .xd-cmdbar__ribbon { gap: 10px !important; }
+  .xd-cmdbar__ribbon b { font-size: 14px !important; }
+  .xd-toggle__btn { min-width: 40px; padding: 0 10px; }
+}
+
+/* ---- Day mode parity (mobile) ------------------------ */
+.app.app-day-mode .xd-cmdbar__title,
+.app.app-day-mode .xd-cmdbar__stat-label,
+.app.app-day-mode .xd-cmdbar__updated,
+.app.app-day-mode .xd-cmdbar__group-label,
+.app.app-day-mode .xd-section-label,
+.app.app-day-mode .xd-attention__eyebrow,
+.app.app-day-mode .xd-attention__legend-hint {
+  color: #94a3b8 !important;
+  -webkit-text-fill-color: #94a3b8 !important;
+  background: none !important;
+}
+@media (max-width: 768px) {
+  .app.app-day-mode .xd-cmdbar__ribbon b {
+    color: #0f172a;
+  }
+  .app.app-day-mode .xd-cmdbar__search-input {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+  .app.app-day-mode .xd-cmdbar__search-input:focus {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.12);
+  }
+  .app.app-day-mode .xd-toggle {
+    background: transparent;
+    border: none;
+  }
+  .app.app-day-mode .xd-toggle__btn {
+    color: rgba(15, 23, 42, 0.4);
+  }
+  .app.app-day-mode .xd-toggle__btn--active {
+    background: rgba(15, 23, 42, 0.06);
+    color: #0f172a;
+    border-color: rgba(15, 23, 42, 0.08);
+    box-shadow: 0 0 12px rgba(15, 23, 42, 0.04),
+                inset 0 0.5px 0 rgba(255, 255, 255, 0.5);
+  }
+  .app.app-day-mode .xd-viewtab--active {
+    color: #0f172a;
+  }
+  .app.app-day-mode .xd-view-count .xd-num {
+    color: #0f172a;
+  }
+  .app.app-day-mode .xd-streamcard__hint {
+    color: rgba(15, 23, 42, 0.5);
+  }
+  .app.app-day-mode .xd-dropdown__trigger,
+  .app.app-day-mode .xd-select {
+    background: transparent;
+    border-color: rgba(15, 23, 42, 0.12);
+    color: #0f172a;
+  }
+  .app.app-day-mode .xd-dropdown__trigger:hover {
+    background: rgba(15, 23, 42, 0.04);
+    border-color: rgba(15, 23, 42, 0.18);
+  }
+  .app.app-day-mode .xd-dropdown__chev { color: rgba(15, 23, 42, 0.5); }
+}
+
+/* ============================================================
+   STEP 2 — Right rail (RankMovers + NarrativeLeaders)
+   Used in: views/xd-leaderboard.jsx (.xd-leaderboard__rail)
+   Cards: .xd-rail-card, header: __head / __title / __action
+   Lists: .xd-rail-list, .xd-rail-empty
+   Rows: .xd-rail-mover (Rank Movers), .xd-rail-narr (Narratives)
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Rail stacks below the list — already in line 270 above. Tighten
+     gap and the rail itself becomes single-column. */
+  .xd-leaderboard__main {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .xd-leaderboard__rail {
+    position: static;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Rail card — drop the 20px blur (kills mobile GPU per L4 perf).
+     Transparent surface, hairline border, mobile radius. */
+  .xd-rail-card {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: var(--m-blur, blur(8px));
+    -webkit-backdrop-filter: var(--m-blur, blur(8px));
+    border: 0.5px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--m-card-radius, 10px);
+    box-shadow: none;
+    padding: 10px 10px 8px;
+  }
+
+  /* Card head — title uses L3 (11px / 600 / 1.5px / 35%) */
+  .xd-rail-card__head {
+    padding: 0 4px 8px;
+    margin-bottom: 4px;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.04);
+  }
+  .xd-rail-card__title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .xd-rail-card__action {
+    min-height: 32px;
+    min-width: 44px;
+    padding: 4px 8px;
+    color: rgba(245, 245, 247, 0.55);
+    font-size: 11.5px;
+  }
+
+  /* Rail rows — 44px touch target, lighter hover */
+  .xd-rail-mover,
+  .xd-rail-carrier {
+    padding: 10px 8px 10px 12px;
+    min-height: 44px;
+    border-radius: var(--m-card-radius, 10px);
+    gap: 10px;
+  }
+  .xd-rail-mover:hover,
+  .xd-rail-carrier:hover {
+    background: rgba(255, 255, 255, 0.025);
+  }
+  .xd-rail-mover__rank-pos {
+    font-size: 13.5px;
+    font-variant-numeric: tabular-nums;
+  }
+  .xd-rail-mover__sub {
+    font-size: 10.5px;
+    color: rgba(245, 245, 247, 0.4);
+  }
+
+  /* Narrative rows — same compact treatment */
+  .xd-rail-narr {
+    padding: 10px 8px;
+    min-height: 44px;
+    border-radius: var(--m-card-radius, 10px);
+    gap: 10px;
+  }
+  .xd-rail-narr__label {
+    font-size: 13px;
+    color: rgba(245, 245, 247, 0.92);
+  }
+  .xd-rail-narr__score {
+    font-size: 11.5px;
+    color: rgba(245, 245, 247, 0.55);
+    font-variant-numeric: tabular-nums;
+  }
+  .xd-rail-narr__score b {
+    color: #f5f5f7;
+    font-weight: 700;
+  }
+  .xd-rail-empty {
+    font-size: 11px;
+    color: rgba(245, 245, 247, 0.4);
+    padding: 14px 4px;
+  }
+
+  /* Day-mode rail */
+  .app.app-day-mode .xd-rail-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+  .app.app-day-mode .xd-rail-card__title,
+  .app.app-day-mode .xd-rail-mover__sub,
+  .app.app-day-mode .xd-rail-narr__score,
+  .app.app-day-mode .xd-rail-empty {
+    color: #94a3b8;
+  }
+  .app.app-day-mode .xd-rail-narr__label,
+  .app.app-day-mode .xd-rail-narr__score b {
+    color: #0f172a;
+  }
+  .app.app-day-mode .xd-rail-mover:hover,
+  .app.app-day-mode .xd-rail-carrier:hover,
+  .app.app-day-mode .xd-rail-narr:hover {
+    background: rgba(0, 0, 0, 0.025);
+  }
+}
+
+/* ============================================================
+   STEP 3 — Cards + Cardgrid (Narratives / Categories / New Tokens)
+   Used in: views/xd-narratives.jsx, xd-categories.jsx, xd-new-tokens.jsx
+   .xd-cardgrid → grid wrapper; .xd-card → tile; head/title/desc/
+   hero/hero-value/hero-label/stats/stat/stat-label/stat-value/
+   signal-row/tokens/tokens-label
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Grid collapses to single column already in mobile (line 114), but
+     reset the gap to 8px to match L10 (4px between sections, 8px H pad). */
+  .xd-cardgrid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  /* Card surface — was bg-surface + 1px border. On mobile: nearly
+     invisible glass tint (L2), 10px radius, no hover lift. */
+  .xd-card {
+    padding: 12px;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.022);
+    border: 0.5px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--m-card-radius, 10px);
+  }
+  .xd-card:hover {
+    background: rgba(255, 255, 255, 0.035);
+    border-color: rgba(255, 255, 255, 0.08);
+    transform: none;
+  }
+
+  /* Head: title + hero number side-by-side, baseline-aligned */
+  .xd-card__head {
+    gap: 8px;
+  }
+  .xd-card__title {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    color: rgba(245, 245, 247, 0.92);
+  }
+  .xd-card__desc {
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: rgba(245, 245, 247, 0.42);
+    margin-top: 2px;
+  }
+
+  /* Hero number — dominant, tabular */
+  .xd-card__hero-value {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #f5f5f7;
+    font-variant-numeric: tabular-nums;
+  }
+  .xd-card__hero-label {
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    color: rgba(245, 245, 247, 0.35);
+  }
+
+  /* Stats — 2-col grid kept but tighter */
+  .xd-card__stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 12px;
+  }
+  .xd-card__stat-label {
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .xd-card__stat-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(245, 245, 247, 0.88);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Signal row — stat bar inside; just align */
+  .xd-card__signal-row {
+    gap: 8px;
+  }
+
+  /* Tokens footer (chip avatars + label) */
+  .xd-card__tokens {
+    padding-top: 8px;
+    gap: 6px;
+    border-top: 0.5px solid rgba(255, 255, 255, 0.04);
+  }
+  .xd-card__tokens-label {
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    color: rgba(245, 245, 247, 0.35);
+  }
+
+  /* Day-mode parity for the whole card block */
+  .app.app-day-mode .xd-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+  .app.app-day-mode .xd-card:hover {
+    background: #f8f9fa;
+    border-color: rgba(0, 0, 0, 0.10);
+  }
+  .app.app-day-mode .xd-card__title,
+  .app.app-day-mode .xd-card__hero-value,
+  .app.app-day-mode .xd-card__stat-value {
+    color: #0f172a;
+  }
+  .app.app-day-mode .xd-card__desc,
+  .app.app-day-mode .xd-card__hero-label,
+  .app.app-day-mode .xd-card__stat-label,
+  .app.app-day-mode .xd-card__tokens-label {
+    color: #94a3b8;
+  }
+  .app.app-day-mode .xd-card__tokens {
+    border-top-color: rgba(0, 0, 0, 0.06);
+  }
+}
+
+/* ============================================================
+   STEP 4 — Token table cells (.xd-cell-* family)
+   Used in: views/xd-token-table.jsx + xd-creators.jsx
+   Cells: rank/rank__pos, primary, mentions, muted, signal, metric/
+   metric__value/metric__sub/metric__share, velocity, quality, fresh/
+   fresh__time, share/share__pct, sharedelta(--flat)
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Table itself stays horizontally scrollable (already set in original
+     mobile block). Only the visible cell typography changes here. */
+
+  /* Rank cell — bold tabular number */
+  .xd-cell-rank__pos {
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Primary cell (token / creator name) — system sans 13.5px / 600 */
+  .xd-cell-primary {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    color: rgba(245, 245, 247, 0.92);
+  }
+
+  /* Muted (secondary line — handle, segment, etc.) */
+  .xd-cell-muted {
+    font-size: 11px;
+    color: rgba(245, 245, 247, 0.42);
+  }
+
+  /* Mentions cell — primary number + sub-line below */
+  .xd-cell-mentions {
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: rgba(245, 245, 247, 0.92);
+    letter-spacing: -0.015em;
+  }
+
+  /* Metric column (right-aligned: value + share sub) */
+  .xd-cell-metric__value {
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.015em;
+  }
+  .xd-cell-metric__sub {
+    font-size: 10px;
+    color: rgba(245, 245, 247, 0.42);
+  }
+  .xd-cell-metric__share {
+    color: rgba(245, 245, 247, 0.55);
+  }
+
+  /* Signal cell — sscore compact lives here */
+  .xd-cell-signal {
+    gap: 6px;
+  }
+
+  /* Velocity / Quality / Fresh — single-col stacked */
+  .xd-cell-velocity,
+  .xd-cell-quality,
+  .xd-cell-fresh {
+    gap: 4px;
+  }
+  .xd-cell-fresh__time {
+    font-size: 10px;
+    color: rgba(245, 245, 247, 0.4);
+  }
+
+  /* Share cell (percent + delta) */
+  .xd-cell-share__pct {
+    font-size: 12.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .xd-sharedelta {
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .xd-sharedelta--flat {
+    color: rgba(245, 245, 247, 0.35);
+  }
+
+  /* Column min-widths — keep narrow on mobile so more cols fit */
+  .xd-col-num     { width: 36px;  min-width: 36px; }
+  .xd-col-signal  { width: 110px; min-width: 110px; }
+  .xd-col-share   { width: 76px;  min-width: 76px; }
+  .xd-col-velocity{ width: 80px;  min-width: 80px; }
+  .xd-col-quality { width: 78px;  min-width: 78px; }
+  .xd-col-fresh   { width: 92px;  min-width: 92px; }
+
+  /* Day-mode parity for cells */
+  .app.app-day-mode .xd-cell-primary,
+  .app.app-day-mode .xd-cell-mentions,
+  .app.app-day-mode .xd-cell-metric__value,
+  .app.app-day-mode .xd-cell-share__pct,
+  .app.app-day-mode .xd-cell-rank__pos {
+    color: #0f172a;
+  }
+  .app.app-day-mode .xd-cell-muted,
+  .app.app-day-mode .xd-cell-metric__sub,
+  .app.app-day-mode .xd-cell-metric__share,
+  .app.app-day-mode .xd-cell-fresh__time,
+  .app.app-day-mode .xd-sharedelta--flat {
+    color: #94a3b8;
+  }
+}
+
+/* ============================================================
+   STEP 5 — Tokencell + search results dropdown
+   Tokencell used in: cards, rail items, search result rows.
+   Search dropdown lives at top of page when typing in cmdbar.
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Tokencell — logo + symbol + name vertical stack */
+  .xd-tokencell {
+    gap: 8px;
+  }
+  .xd-tokencell__cashtag {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    color: rgba(245, 245, 247, 0.92);
+  }
+  .xd-tokencell__sub {
+    font-size: 11px;
+    color: rgba(245, 245, 247, 0.42);
+  }
+  .xd-tokencell__chain {
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .xd-tokencell--compact .xd-tokencell__cashtag {
+    font-size: 12.5px;
+  }
+
+  /* Search results dropdown — full width, mobile glass */
+  .xd-cmdbar__search-results {
+    border-radius: var(--m-card-radius, 10px);
+    background: rgba(14, 14, 16, 0.96);
+    backdrop-filter: var(--m-blur, blur(8px));
+    -webkit-backdrop-filter: var(--m-blur, blur(8px));
+    border: 0.5px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    padding: 4px;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  /* Group headers (TOKENS / CREATORS) — L3 style */
+  .xd-search-result__group {
+    padding: 10px 10px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .xd-search-result__group-count {
+    font-size: 10px;
+    padding: 2px 7px;
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.06);
+    color: rgba(245, 245, 247, 0.55);
+  }
+
+  /* Result row — 48px touch, transparent hover */
+  .xd-search-result {
+    padding: 10px 10px;
+    min-height: 48px;
+    border-radius: 8px;
+    gap: 10px;
+  }
+  .xd-search-result:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .xd-search-result__meta {
+    font-size: 11px;
+    color: rgba(245, 245, 247, 0.42);
+    font-variant-numeric: tabular-nums;
+  }
+  .xd-search-result__empty {
+    font-size: 12px;
+    color: rgba(245, 245, 247, 0.42);
+    padding: 14px;
+  }
+
+  /* Day-mode */
+  .app.app-day-mode .xd-tokencell__cashtag {
+    color: #0f172a;
+  }
+  .app.app-day-mode .xd-tokencell__sub,
+  .app.app-day-mode .xd-tokencell__chain {
+    color: #94a3b8;
+  }
+  .app.app-day-mode .xd-cmdbar__search-results {
+    background: rgba(255, 255, 255, 0.98);
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+  .app.app-day-mode .xd-search-result__group {
+    color: #94a3b8;
+  }
+  .app.app-day-mode .xd-search-result__meta {
+    color: #475569;
+  }
+  .app.app-day-mode .xd-search-result:hover {
+    background: rgba(0, 0, 0, 0.03);
+  }
+}
+
+/* ============================================================
+   STEP 6 — View charts (xd-view-chart + xd-charttip)
+   Used in: Narratives / Categories / Rotations view-level charts.
+   Per-chart tooltip used by all Recharts surfaces.
+   ============================================================ */
+@media (max-width: 768px) {
+  .xd-view-chart {
+    padding: 10px;
+    margin-bottom: 12px;
+    background: rgba(255, 255, 255, 0.018);
+    border: 0.5px solid rgba(255, 255, 255, 0.04);
+    border-radius: var(--m-card-radius, 10px);
+  }
+  .xd-view-chart__label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: rgba(245, 245, 247, 0.35);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  /* Tooltip — narrower on mobile, glass surface with blur */
+  .xd-charttip {
+    min-width: 130px;
+    max-width: 200px;
+    padding: 8px 10px;
+    background: rgba(14, 14, 16, 0.96);
+    backdrop-filter: var(--m-blur, blur(8px));
+    -webkit-backdrop-filter: var(--m-blur, blur(8px));
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  }
+  .xd-charttip__title {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: rgba(245, 245, 247, 0.92);
+    font-variant-numeric: tabular-nums;
+  }
+  .xd-charttip__label {
+    font-size: 10.5px;
+    color: rgba(245, 245, 247, 0.42);
+  }
+  .xd-charttip__value {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: rgba(245, 245, 247, 0.92);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Day-mode chart shell */
+  .app.app-day-mode .xd-view-chart {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+  .app.app-day-mode .xd-view-chart__label {
+    color: #94a3b8;
+  }
+  .app.app-day-mode .xd-charttip {
+    background: rgba(255, 255, 255, 0.97);
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+  .app.app-day-mode .xd-charttip__title,
+  .app.app-day-mode .xd-charttip__value {
+    color: #0f172a;
+  }
+  .app.app-day-mode .xd-charttip__label {
+    color: #94a3b8;
+  }
+}
+
+/* ============================================================
+   STEP 8 — Rotations flow (xd-flow-row + xd-flow-author/domain/metric)
+   Used in: views/xd-rotations.jsx — "who is moving FROM domain X TO Y"
+   Already stacks vertically on mobile (original CSS line 118).
+   Polish typography + spacing.
+   ============================================================ */
+@media (max-width: 768px) {
+  .xd-flow-list {
+    gap: 8px;
+  }
+
+  .xd-flow-row {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.018);
+    border: 0.5px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--m-card-radius, 10px);
+    gap: 10px;
+  }
+
+  /* Domain pair (FROM → TO) */
+  .xd-flow-row__domains {
+    gap: 8px;
+    align-items: center;
+  }
+  .xd-flow-domain__label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: rgba(245, 245, 247, 0.92);
+    letter-spacing: -0.005em;
+  }
+  .xd-flow-domain--from .xd-flow-domain__label {
+    color: rgba(245, 245, 247, 0.55);
+  }
+  .xd-flow-domain__role {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .xd-flow-arrow {
+    color: rgba(245, 245, 247, 0.35);
+    font-size: 14px;
+  }
+
+  /* Metrics row (count / engagement / etc.) */
+  .xd-flow-row__metrics {
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .xd-flow-metric__label {
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .xd-flow-metric__value {
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: rgba(245, 245, 247, 0.92);
+    letter-spacing: -0.015em;
+  }
+
+  /* Author chips */
+  .xd-flow-row__authors {
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .xd-flow-author {
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 0.5px solid rgba(255, 255, 255, 0.06);
+    border-radius: 999px;
+    font-size: 11px;
+  }
+  .xd-flow-author__name {
+    font-size: 11px;
+    color: rgba(245, 245, 247, 0.85);
+    font-weight: 500;
+  }
+  .xd-flow-author__eng {
+    font-size: 10px;
+    color: rgba(245, 245, 247, 0.45);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Day-mode */
+  .app.app-day-mode .xd-flow-row {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+  .app.app-day-mode .xd-flow-domain__label {
+    color: #0f172a;
+  }
+  .app.app-day-mode .xd-flow-domain--from .xd-flow-domain__label,
+  .app.app-day-mode .xd-flow-domain__role,
+  .app.app-day-mode .xd-flow-metric__label,
+  .app.app-day-mode .xd-flow-arrow {
+    color: #94a3b8;
+  }
+  .app.app-day-mode .xd-flow-metric__value {
+    color: #0f172a;
+  }
+  .app.app-day-mode .xd-flow-author {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+  .app.app-day-mode .xd-flow-author__name {
+    color: #334155;
+  }
+  .app.app-day-mode .xd-flow-author__eng {
+    color: #94a3b8;
+  }
+}
+
+/* ============================================================
+   STEP 9 — Edits feed (xd-edits-feed + xd-edit-entry/change) + Watch list
+   Used in: views/xd-edits.jsx — author edit history feed.
+   xd-edits-summary: 5-col stat grid → 2x2 on mobile (original line 139).
+   xd-watch-list/item: also lives here (creator watchlist).
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Edits summary stat grid */
+  .xd-edits-summary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  /* Edits feed list */
+  .xd-edits-feed {
+    gap: 6px;
+  }
+
+  /* Entry row — transparent surface, hairline border (already
+     handled flex-direction column in original mobile, line 142) */
+  .xd-edit-entry {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.018);
+    border: 0.5px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--m-card-radius, 10px);
+    gap: 10px;
+  }
+  .xd-edit-entry__identity {
+    gap: 10px;
+    width: 100%;
+  }
+
+  /* Change line: before → after */
+  .xd-edit-change {
+    font-size: 12px;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .xd-edit-change__field {
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(245, 245, 247, 0.55);
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .xd-edit-change__before {
+    color: rgba(245, 245, 247, 0.4);
+    font-variant-numeric: tabular-nums;
+  }
+  .xd-edit-change__after {
+    color: rgba(245, 245, 247, 0.92);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Watch list (creators being watched) */
+  .xd-watch-list {
+    gap: 4px;
+    margin-top: 12px;
+  }
+  .xd-watch-item {
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.018);
+    border: 0.5px solid rgba(255, 255, 255, 0.04);
+    border-radius: var(--m-card-radius, 10px);
+    min-height: 44px;
+    font-size: 12.5px;
+    color: rgba(245, 245, 247, 0.85);
+  }
+
+  /* Day-mode */
+  .app.app-day-mode .xd-edit-entry,
+  .app.app-day-mode .xd-watch-item {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+  .app.app-day-mode .xd-edit-change__field {
+    background: rgba(0, 0, 0, 0.04);
+    color: #475569;
+  }
+  .app.app-day-mode .xd-edit-change__before {
+    color: #94a3b8;
+  }
+  .app.app-day-mode .xd-edit-change__after {
+    color: #0f172a;
+  }
+  .app.app-day-mode .xd-watch-item {
+    color: #334155;
+  }
+}
+
+/* ============================================================
+   STEP 10 — Token drawer mobile (xd-tokensummary + verdict +
+   stat grid + quality panel + intel card + carrier board +
+   mentions feed)
+   On mobile drawer is full-width (already set in original line 149).
+   Tighten internal padding + L3 labels + transparent panels.
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Drawer head — close + expand buttons stay 44px touch */
+  .xd-drawer__head {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+  .xd-drawer__close {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 10px;
+  }
+  .xd-drawer__title {
+    font-size: 15px;
+  }
+  .xd-drawer__subtitle {
+    font-size: 11px;
+    color: rgba(245, 245, 247, 0.45);
+  }
+
+  /* TokenSummary — header section (sparkline already hidden in
+     side-drawer polish earlier). Tighten padding + chips */
+  .xd-tokensummary {
+    padding: 10px 12px 12px;
+    gap: 8px;
+  }
+  .xd-tokensummary__price-value {
+    font-size: 22px;
+    font-variant-numeric: tabular-nums;
+  }
+  .xd-tokensummary__change {
+    font-size: 12px;
+    padding: 2px 7px;
+  }
+  .xd-tokensummary__metalabel {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .xd-tokensummary__metavalue {
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .xd-tokensummary__chips {
+    gap: 4px;
+  }
+  .xd-tokensummary__contract {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+  .xd-tokensummary__chain {
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+  }
+
+  /* Drawer body — tight padding */
+  .xd-drawer__body {
+    padding: 8px;
+  }
+  .xd-drawer__main {
+    gap: 12px;
+  }
+
+  /* Section labels in drawer panels */
+  .xd-drawer-section__label {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: rgba(245, 245, 247, 0.35);
+    text-transform: uppercase;
+  }
+
+  /* Verdict — compact, brand-tinted border kept from desktop polish */
+  .xd-drawer:not(.xd-drawer--fullscreen) .xd-verdict {
+    padding: 12px;
+    gap: 12px;
+    border-radius: var(--m-card-radius, 10px);
+  }
+  .xd-drawer:not(.xd-drawer--fullscreen) .xd-verdict__headline {
+    font-size: 13px;
+  }
+  .xd-drawer:not(.xd-drawer--fullscreen) .xd-verdict__caption {
+    font-size: 11.5px;
+    color: rgba(245, 245, 247, 0.5);
+  }
+  .xd-drawer:not(.xd-drawer--fullscreen) .xd-sscore--full .xd-sscore__num {
+    font-size: 22px;
+  }
+  .xd-drawer:not(.xd-drawer--fullscreen) .xd-sscore__ring {
+    width: 48px;
+    height: 48px;
+  }
+
+  /* Signal breakdown grid — 2 cols, tight StatTiles already set
+     in side-drawer polish earlier (xd-drawer:not(--fullscreen)) */
+  .xd-drawer-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  /* Quality panel — infographic stack already applied for non-fullscreen.
+     Tighten padding for mobile. */
+  .xd-drawer:not(.xd-drawer--fullscreen) .xd-quality-panel {
+    padding: 4px 0 0;
+    gap: 10px;
+  }
+  .xd-drawer:not(.xd-drawer--fullscreen) .xd-quality-panel__label {
+    font-size: 11px;
+    min-width: 110px;
+  }
+  .xd-drawer:not(.xd-drawer--fullscreen) .xd-quality-panel__value {
+    font-size: 12px;
+  }
+
+  /* Intel card — compact */
+  .xd-drawer:not(.xd-drawer--fullscreen) .xd-intel-card {
+    padding: 12px;
+    gap: 10px;
+  }
+  .xd-drawer:not(.xd-drawer--fullscreen) .xd-intel-card__body {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .xd-drawer:not(.xd-drawer--fullscreen) .xd-intel-card__eyebrow {
+    font-size: 10.5px;
+    letter-spacing: 1.5px;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .xd-drawer:not(.xd-drawer--fullscreen) .xd-intel-card__hint {
+    font-size: 10.5px;
+    color: rgba(245, 245, 247, 0.4);
+  }
+
+  /* Carrier board — compact (already tight in earlier polish) */
+  .xd-drawer:not(.xd-drawer--fullscreen) .xd-carrierboard {
+    padding: 12px;
+    gap: 8px;
+  }
+  .xd-drawer:not(.xd-drawer--fullscreen) .xd-carrierboard__count {
+    font-size: 11.5px;
+  }
+
+  /* --- Fullscreen carrier table on mobile -----------------------
+       Desktop layout has 5 columns summing to ~502px which forces
+       the identity column to collapse to 0 width on a 390px screen
+       — names/handles vanish. Re-cut to 3 columns that fit:
+       avatar+rank | identity (handle/name) | metrics (right). */
+  .xd-drawer.xd-drawer--fullscreen .xd-carrierboard {
+    padding: 12px 8px;
+  }
+  .xd-drawer.xd-drawer--fullscreen .xd-carrierboard__cols,
+  .xd-drawer.xd-drawer--fullscreen .xd-carrierboard__list .xd-carrierrow {
+    grid-template-columns: 64px minmax(0, 1fr) 96px !important;
+    gap: 8px !important;
+  }
+  /* hide engagement + share-of-attention columns on mobile — they
+     fit only with horizontal scroll which feels wrong inside a
+     fullscreen drawer. `.xd-carrierrow__metrics` is `display: contents`
+     so we target its second `__metric` child directly to hit
+     engagement; strength is the bar. */
+  .xd-drawer.xd-drawer--fullscreen .xd-carrierboard__col--engagement,
+  .xd-drawer.xd-drawer--fullscreen .xd-carrierboard__col--share,
+  .xd-drawer.xd-drawer--fullscreen .xd-carrierrow .xd-carrierrow__metric:nth-of-type(2),
+  .xd-drawer.xd-drawer--fullscreen .xd-carrierrow .xd-carrierrow__strength {
+    display: none !important;
+  }
+  /* keep mentions metric block compact in its grid slot */
+  .xd-drawer.xd-drawer--fullscreen .xd-carrierboard__list .xd-carrierrow .xd-carrierrow__metric {
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    text-align: right !important;
+  }
+  /* shrink the avatar+rank cell so identity gets more room */
+  .xd-drawer.xd-drawer--fullscreen .xd-carrierboard__list .xd-carrierrow > .xd-carrierrow__avatar {
+    grid-template-columns: 20px 32px !important;
+    gap: 8px !important;
+  }
+  .xd-drawer.xd-drawer--fullscreen .xd-carrierboard__col {
+    font-size: 8.5px !important;
+    letter-spacing: 0.12em !important;
+  }
+
+  /* Chart card inside drawer (.xd-drawer-chart) */
+  .xd-drawer:not(.xd-drawer--fullscreen) .xd-drawer-chart {
+    padding: 10px 12px;
+  }
+  .xd-drawer:not(.xd-drawer--fullscreen) .xd-drawer-chart__label {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: rgba(245, 245, 247, 0.35);
+  }
+}
+
+/* ============================================================
+   STEP 11 — Author drawer mobile (xd-author-hero + identity +
+   tokens row + trajectory chart)
+   Already polished for `.xd-author-hero--narrow` (side drawer).
+   Mobile cascade: narrow modifier IS active on mobile too (the
+   drawer goes full-width via line 149 — the modifier comes from
+   `${fullscreen ? '' : ' xd-author-hero--narrow'}`). So earlier
+   narrow polish applies. Here we just tighten the bg banner,
+   close buttons, tokens row, and ensure 44px touch.
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Hero banner — drop the heavy blur to keep mobile GPU happy */
+  .xd-author-hero__banner {
+    filter: blur(12px) saturate(1.3) brightness(0.7);
+  }
+
+  /* Close + expand buttons — 36px touch */
+  .xd-author-hero__close,
+  .xd-author-hero__expand {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+  }
+  .xd-author-hero__back {
+    min-height: 36px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  /* Tokens row (carrier tokens this author mentioned) */
+  .xd-author-hero__tokens {
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .xd-author-hero__tokens-eyebrow {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .xd-author-hero__tokens-row {
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .xd-author-hero__token {
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 0.5px solid rgba(255, 255, 255, 0.06);
+    border-radius: 999px;
+    font-size: 11px;
+    min-height: 28px;
+  }
+  .xd-author-hero__token-tag {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Day-mode */
+  .app.app-day-mode .xd-author-hero__tokens-eyebrow {
+    color: #94a3b8;
+  }
+  .app.app-day-mode .xd-author-hero__token {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+}
+
+/* ============================================================
+   THE PROVENANCE TAPE — responsive. Scoped to .xd-tr-*.
+   ============================================================ */
+
+/* On mobile the proof view sits inside .xd-body's own 8px padding — cancel the
+   desktop full-width breakout (negative margin) so there is no horizontal
+   overflow on a narrow screen. */
+@media (max-width: 768px) {
+  .xd-track-record {
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Tablet 768–1024: trio stays 3-col but smaller; HoF card 3 wraps;
+   tape collapses Peak+Stay onto a second line under Now. */
+@media (max-width: 1024px) {
+  .xd-tr-headline { font-size: clamp(1.5rem, 4vw, 2rem); }
+  .xd-tr-trio-card__value { font-size: 1.5rem; }
+  .xd-tr-hof__grid { grid-template-columns: repeat(2, 1fr); }
+  .xd-tr-ribbon { gap: 8px 0; }
+}
+
+/* Two-line dense tape rows below 880px: line 1 = rank/token/now/roi;
+   peak/spotted/stay fold under. We do this by switching the grid to a
+   two-row template so columns wrap predictably. */
+@media (max-width: 880px) and (min-width: 681px) {
+  .xd-tr-tape__head { display: none; }
+  .xd-tr-row {
+    grid-template-columns: 32px minmax(130px, 1.2fr) auto 96px 20px;
+    grid-auto-rows: auto;
+  }
+  /* CALLERS cluster is a desktop density feature — hidden on the dense tablet row */
+  .xd-tr-row__callers-cell { display: none; }
+  /* flow + meta wrappers re-form into inline cells */
+  .xd-tr-row__flow,
+  .xd-tr-row__meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+  }
+  .xd-tr-row__flow { grid-column: 3; justify-self: start; }
+  .xd-tr-row__entry,
+  .xd-tr-row__now { text-align: left; }
+  .xd-tr-row__roi { grid-column: 4; }
+  .xd-tr-row__meta {
+    grid-row: 2;
+    grid-column: 2 / 6;
+    justify-self: start;
+    gap: 12px;
+    font-size: 0.72rem;
+  }
+  /* peak cell goes inline (roi · ATH) so the meta row stays one line —
+     reset the bigger desktop sizes for the dense two-line tablet row */
+  .xd-tr-row__peak {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 5px;
+    text-align: left;
+  }
+  .xd-tr-row__peak-roi { font-size: 0.78rem; }
+  .xd-tr-row__peak-sep { font-size: 0.7rem; }
+  .xd-tr-row__peak-mcap { font-size: 0.72rem; }
+  .xd-tr-row__entry,
+  .xd-tr-row__now { font-size: 0.82rem; }
+}
+
+/* Tape → stacked mini-card below 680px. */
+@media (max-width: 680px) {
+  .xd-tr-tape__head { display: none; }
+  .xd-tr-tape__body { gap: 8px; }
+  .xd-tr-row-wrap { contain-intrinsic-size: auto 92px; }
+  .xd-tr-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "token rank"
+      "flow  roi"
+      "meta  meta";
+    gap: 6px 10px;
+    padding: 12px 14px 12px 16px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.02);
+  }
+  /* CALLERS cluster is a desktop density feature — hidden on the stacked mobile card */
+  .xd-tr-row__callers-cell { display: none; }
+  .xd-tr-row__token { grid-area: token; }
+  .xd-tr-row__rank { grid-area: rank; align-self: start; }
+  /* flow line: entry → now as one inline cell */
+  .xd-tr-row__flow {
+    grid-area: flow;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    justify-self: start;
+    font-size: 0.82rem;
+  }
+  .xd-tr-row__entry,
+  .xd-tr-row__now { text-align: left; }
+  .xd-tr-row__roi { grid-area: roi; justify-self: end; font-size: 1.05rem; }
+  .xd-tr-row__meta {
+    grid-area: meta;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 0.72rem;
+  }
+  /* peak cell inline (roi · ATH) on the stacked mini-card meta line —
+     reset the bigger desktop sizes so it sits on the dense meta row */
+  .xd-tr-row__peak {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 5px;
+    text-align: left;
+  }
+  .xd-tr-row__peak-roi { font-size: 0.78rem; }
+  .xd-tr-row__peak-sep { font-size: 0.7rem; }
+  .xd-tr-row__peak-mcap { font-size: 0.72rem; }
+  .xd-tr-row__chev { display: none; }
+}
+
+/* Mobile ≤520px. */
+@media (max-width: 520px) {
+  .xd-tr-masthead { margin-bottom: 32px; }
+  .xd-tr-headline { font-size: clamp(1.4rem, 6vw, 1.9rem); }
+  .xd-tr-trio {
+    grid-template-columns: 1fr 1fr;
+  }
+  .xd-tr-trio-card--stakes { grid-column: 1 / -1; }
+  .xd-tr-trio-card__value { font-size: 1.5rem; }
+
+  .xd-tr-ribbon {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .xd-tr-ribbon__item { padding-right: 0; }
+  .xd-tr-ribbon__sep { display: none; }
+
+  /* PnL line: drop to a column so winners/losers/net + avg stack cleanly */
+  .xd-tr-pnl { flex-direction: column; gap: 6px; margin-top: 14px; }
+  .xd-tr-pnl__line { gap: 6px 10px; }
+
+  .xd-tr-dist__axis .xd-tr-dist__tick:nth-child(even) { display: none; }
+  .xd-tr-dist__tiers {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+  .xd-tr-dist__tier { flex: 0 0 auto; scroll-snap-align: start; }
+
+  .xd-tr-hof__grid { grid-template-columns: 1fr; }
+
+  .xd-tr-tape-toolbar__sorts,
+  .xd-tr-tape-toolbar__statuses {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+  .xd-tr-tape-toolbar__count { order: 3; }
+
+  .xd-tr-row__roi { gap: 0; }
+
+  /* keep the bigger desktop symbol/name from going clownish on the stacked card */
+  .xd-tr-row__cashtag { font-size: 0.92rem; }
+  .xd-tr-row__name { font-size: 0.78rem; }
+
+  .xd-tr-footnote { flex-direction: column; align-items: flex-start; }
+  .xd-tr-footnote__facts { text-align: left; }
+}
+
+
+/* ============================================================
+   NARRATIVE CONSTELLATION — mobile (xd-cn-*)
+   Canvas stays interactive (tap = hover/open, tap-empty = clear
+   focus). Shrink chrome, shorter stage, compact legend so the
+   map breathes on a phone.
+   ============================================================ */
+@media (max-width: 768px) {
+  .xd-cn { gap: var(--sp-4); }
+  .xd-cn__head { align-items: flex-start; gap: var(--sp-3); }
+  .xd-cn__meta { align-items: flex-start; flex-direction: row; gap: var(--sp-3); }
+  .xd-cn__title { font-size: 1.4rem; }
+  .xd-cn__lead { font-size: 0.875rem; }
+  .xd-cn__stage { height: clamp(440px, 66vh, 620px); }
+  /* canvas owns pinch-zoom + drag-pan; tap = hover/open */
+  .xd-cn__canvas { cursor: default; }
+  /* tooltip can pin near the tapped node but cap width for narrow screens */
+  .xd-cn__tip { width: 188px; }
+  /* lighter glass blur on mobile GPUs */
+  .xd-cn__zoom { top: var(--sp-3); right: var(--sp-3); gap: 5px; }
+  .xd-cn__zoom-btn {
+    width: 38px; height: 38px; /* 44px-ish touch target via padding-free min size */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .xd-cn__legend {
+    left: var(--sp-2);
+    bottom: var(--sp-2);
+    padding: var(--sp-2);
+    gap: 4px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .xd-cn__legend-row { gap: var(--sp-2); }
+  .xd-cn__legend-glow { width: 72px; }
+
+  /* SECTOR NAV RAIL — collapse behind a toggle chip so the canvas breathes.
+     The rail opens as a left-docked sheet over the map; close returns to map. */
+  .xd-cn__navtoggle { display: inline-flex; }
+  .xd-cn__nav {
+    top: 0;
+    left: 0;
+    width: 76%;
+    max-width: 300px;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+    padding: var(--sp-4) var(--sp-3) var(--sp-3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transform: translateX(-104%);
+    transition: transform var(--duration-base) var(--ease-out);
+    pointer-events: none;
+  }
+  .xd-cn__nav--open {
+    transform: translateX(0);
+    pointer-events: auto;
+    box-shadow: 0 0 0 100vmax rgba(0,0,0,0.4), var(--shadow-lg); /* scrim */
+  }
+  .xd-cn__nav-close { display: inline-flex; } /* close affordance only on mobile */
+  .xd-cn__nav-title { font-size: 0.6875rem; }
+  /* taller rows = comfortable touch targets */
+  .xd-cn__nav-row { padding: 10px 8px; }
+  .xd-cn__nav-name { font-size: 0.875rem; }
+  .xd-cn__nav-list { gap: 2px; }
+}
+
+@media (max-width: 480px) {
+  .xd-cn__nav { width: 84%; }
+}
+
+@media (max-width: 480px) {
+  .xd-cn__stage { height: 72vh; min-height: 420px; }
+  .xd-cn__legend-label { font-size: 0.625rem; }
+  /* drop the sector-swatch row on the smallest screens to keep the map clear;
+     the glow scale (the authenticity encoding) stays. */
+  .xd-cn__legend-row:first-child { display: none; }
+}
+
+/* ============================================================
+   MOBILE LEADERBOARD CARDS (xd-token-table.jsx)
+   The desktop table is 13 columns / 1180px wide — on a phone the user could
+   only see Rank + Token and had to swipe right for Market Cap / Price /
+   Authors. On compact viewports (portrait phone + landscape phone) the table
+   is replaced by this vertical card list with every value inline — no swipe.
+
+   These rules are NOT wrapped in a width media query on purpose: the `.xd-mcards`
+   element only exists in the DOM when the JS `compact` flag is true (portrait
+   OR landscape phone), so the styling must apply at any width the cards render
+   at — including the >768px width of a phone held sideways.
+   ============================================================ */
+.xd-mcards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 4px 0 8px;
+}
+
+.xd-mcard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  width: 100%;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.022);
+  border: 0.5px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--m-card-radius, 10px);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--duration-fast, 150ms) var(--ease-out),
+              border-color var(--duration-fast, 150ms) var(--ease-out);
+}
+.xd-mcard:active {
+  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(255, 255, 255, 0.09);
+}
+.xd-mcard:focus-visible {
+  outline: 2px solid var(--accent, #f5f5f7);
+  outline-offset: 2px;
+}
+
+/* --- Top row: rank + token identity ............... mentions --- */
+.xd-mcard__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.xd-mcard__rankwrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 24px;
+  flex-shrink: 0;
+}
+.xd-mcard__rank {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.92);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.xd-mcard__id {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* Logo a touch larger than the table's 24px — CMC/Binance list density.
+   Inline width/height on <Avatar> needs !important to override. */
+.xd-mcard__id .xd-avatar {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+}
+.xd-mcard__id .xd-tokencell__cashtag {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: rgba(245, 245, 247, 0.95);
+}
+.xd-mcard__id .xd-tokencell__sub {
+  font-size: 11.5px;
+  color: rgba(245, 245, 247, 0.45);
+}
+.xd-mcard__id .xd-tokencell__chain {
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  color: rgba(245, 245, 247, 0.35);
+}
+
+/* mentions — the primary right-aligned number (matches desktop MENTIONS col) */
+.xd-mcard__mentions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  flex-shrink: 0;
+  text-align: right;
+}
+.xd-mcard__mentions-val {
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.95);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+.xd-mcard__mentions-sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+}
+.xd-mcard__mentions-share {
+  color: rgba(245, 245, 247, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Metric strip: Market Cap / Price / Authors(or Staying) / Signal --- */
+.xd-mcard__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.05);
+}
+.xd-mcard__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.xd-mcard__metric-label {
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.35);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.xd-mcard__metric-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.92);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+}
+/* Signal cell: keep the verdict number (tier-colored) but drop the bar so the
+   cell stays a tight number that fits the 4-up grid. */
+.xd-mcard__metric--signal .xd-sscore {
+  gap: 0;
+}
+.xd-mcard__metric--signal .xd-sscore__bar { display: none; }
+.xd-mcard__metric--signal .xd-sscore__num {
+  font-size: 13px;
+  font-weight: 700;
+}
+/* Staying Power cell (30d / all windows): number + trend arrow, no bar. */
+.xd-mcard__metric-val--staying .xd-staying__bar { display: none; }
+.xd-mcard__metric-val--staying .xd-staying { gap: 4px; }
+.xd-mcard__metric-val--staying .xd-staying__num { font-size: 13px; font-weight: 700; }
+
+/* --- Footer: momentum chip + age + carrier avatars --- */
+.xd-mcard__foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.xd-mcard__foot .xd-carriers {
+  margin-left: auto;
+}
+.xd-mcard__age {
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.45);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Day mode parity --- */
+.app.app-day-mode .xd-mcard {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.06);
+}
+.app.app-day-mode .xd-mcard:active {
+  background: #f8f9fa;
+  border-color: rgba(0, 0, 0, 0.10);
+}
+.app.app-day-mode .xd-mcard__rank,
+.app.app-day-mode .xd-mcard__id .xd-tokencell__cashtag,
+.app.app-day-mode .xd-mcard__mentions-val,
+.app.app-day-mode .xd-mcard__metric-val {
+  color: #0f172a;
+}
+.app.app-day-mode .xd-mcard__id .xd-tokencell__sub,
+.app.app-day-mode .xd-mcard__id .xd-tokencell__chain,
+.app.app-day-mode .xd-mcard__mentions-share,
+.app.app-day-mode .xd-mcard__metric-label,
+.app.app-day-mode .xd-mcard__age {
+  color: #94a3b8;
+}
+.app.app-day-mode .xd-mcard__metrics {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+/* ============================================================
+   LANDSCAPE PHONE — un-stick the command bar so it stops eating the
+   short viewport. A phone in landscape is >768px wide, so the portrait
+   mobile rules above (max-width:768) DON'T apply and the DESKTOP layout
+   renders: a sticky .xd-cmdbar (position:sticky;top:0) pins to the top of
+   a ~390px-tall viewport, the 560px treemap dwarfs it, and "you can't see
+   the rest." min-width:769 keeps this off portrait phones; max-width:1024
+   keeps it off short desktop windows. The card list (above) handles the
+   table at this width via the JS compact flag.
+   ============================================================ */
+@media (orientation: landscape) and (max-height: 600px) and (min-width: 769px) and (max-width: 1024px) {
+  /* command bar scrolls away with the content instead of pinning */
+  .xd-cmdbar {
+    position: static;
+  }
+  .xd-cmdbar__row { padding: 8px 16px; }
+  .xd-cmdbar__row--filters { padding: 6px 16px 8px; }
+
+  /* attention treemap: cap the 560px height so the list is reachable */
+  .xd-treemap { height: 220px !important; }
+
+  /* list + rail: single column, rail flows as a row of cards below */
+  .xd-leaderboard { gap: 12px; }
+  .xd-leaderboard__main {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .xd-leaderboard__rail {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .xd-leaderboard__rail > * {
+    flex: 1 1 280px;
+  }
+
+  /* two cards per row uses the extra landscape width without stretching */
+  .xd-mcards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ============================================================
+   NEWER X DASH VIEWS — mobile polish (<= 640px unless noted)
+   Views whose only responsive coverage was sparse @media blocks
+   inside x-dash-page.css. This block adds phone-width handling for:
+     Degen (xdg-) · Narratives (xdn-) · Cockpit (.xd-cockpit) ·
+     Runner/Signals (.xd-runner-card) · Research/Hype Forensics (xr-) ·
+     Institutions/GTM (xgtm-) · Leaderboard map (.xd-lmap)
+   Dark theme only. Grid-collapse / padding rules already handled by the
+   base CSS @640 blocks (xdg-grid, xdn-grid, xd-runners__grid, *-card
+   padding, *-head__title size) are NOT repeated here to avoid conflicts.
+   ============================================================ */
+@media (max-width: 640px) {
+
+  /* ---- DEGEN (xdg-) --------------------------------------------
+     Head controls (view toggle · sort chips · Micro-only) overflowed
+     the row; wrap them and let the sort chips scroll horizontally so
+     nothing clips. 40px touch targets on every chip/button. */
+  .xdg-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .xdg-head__controls {
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+  .xdg-sorts {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+  .xdg-sorts::-webkit-scrollbar { display: none; }
+  .xdg-sort,
+  .xdg-toggle {
+    flex-shrink: 0;
+    min-height: 40px;
+  }
+  /* card internal 6-across stats -> 2 columns so numbers stop crushing */
+  .xdg-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 12px;
+  }
+  .xdg-card__foot .xdg-ca,
+  .xdg-card__foot .xdg-open {
+    min-height: 40px;
+  }
+  /* list view -> horizontal scroll container so the wide table survives */
+  .xdg-listwrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .xdg-list {
+    min-width: 620px;
+  }
+
+  /* ---- NARRATIVES (xdn-) ---------------------------------------
+     Hero card drops its side-by-side grid (base only sets it >=900px, so
+     it's already stacked here) — tighten the ring + inner stat grid so a
+     phone doesn't render an oversized 88px ring next to squeezed stats. */
+  .xdn-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .xdn-card__top {
+    gap: 10px;
+  }
+  .xdn-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 12px;
+  }
+  /* the featured hero ring is 88px — trim it on a narrow card */
+  .xdn-card--hero .xdn-ring {
+    width: 72px !important;
+    height: 72px !important;
+  }
+  .xdn-leaders__row {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  /* drill-in header wraps (back pill + title + count) instead of clipping */
+  .xdn-drill__head {
+    flex-wrap: wrap;
+    gap: 8px 10px;
+  }
+
+  /* ---- COCKPIT (.xd-cockpit) -----------------------------------
+     Base collapses the 5 focal cards to 2-col at <=760px; keep that here,
+     just tighten the card padding + metric value so two fit cleanly and
+     the eyebrow row stays on one line. */
+  .xd-cockpit-card {
+    padding: 12px 14px;
+  }
+  .xd-cockpit-card__value {
+    font-size: 1.25rem;
+  }
+  .xd-cockpit-card__kicker {
+    font-size: 10px;
+  }
+
+  /* ---- RUNNER / SIGNALS (.xd-runner-card) ----------------------
+     Grid already single-column (base .xd-runners__grid @640). Card top
+     row (rank + token + score) stays inline; reason chips wrap; the
+     3-across stat strip spreads full width. Banner + toolbar tighten. */
+  .xd-runner-card {
+    padding: 12px 14px;
+  }
+  .xd-runner-card__reasons {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .xd-runner-card__stats {
+    flex-wrap: wrap;
+    gap: 6px 14px;
+  }
+  .xd-view-banner {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .xd-runners__more .xd-btn {
+    min-height: 40px;
+  }
+
+  /* ---- RESEARCH · HYPE FORENSICS (xr-) -------------------------
+     Search form (input + Analyze button) stacks; verdict goes column so
+     the score ring sits above the split bar; signals collapse to 1 col;
+     meta row wraps. */
+  .xr-search {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .xr-search__input,
+  .xr-search__go {
+    width: 100%;
+    min-height: 44px;
+  }
+  .xr-chips {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .xr-chip {
+    min-height: 40px;
+  }
+  /* stack the ring above the split/meta (gap already handled by xd-research.css @640) */
+  .xr-verdict {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .xr-verdict__body {
+    width: 100%;
+  }
+  .xr-verdict__line {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+  }
+  .xr-meta {
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    justify-content: center;
+  }
+  /* .xr-signals single-column already handled by xd-research.css @640 */
+  .xr-teardown__head {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .xr-teardown__run {
+    min-height: 40px;
+  }
+
+  /* ---- INSTITUTIONS · GTM (xgtm-) ------------------------------
+     Hero title row (h2 + tag + Brand/Creator toggle) wraps; the controls
+     form (search + goal segment + build button) stacks full-width; every
+     multi-column section grid collapses to a single column; the map
+     view gets a horizontal scroll safety net. */
+  .xgtm-hero__title {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .xgtm-modetoggle {
+    width: 100%;
+  }
+  .xgtm-modetoggle__opt {
+    flex: 1 1 0;
+    min-height: 40px;
+  }
+  .xgtm-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .xgtm-search {
+    width: 100%;
+  }
+  .xgtm-controls__input {
+    width: 100%;
+    min-height: 44px;
+  }
+  .xgtm-seg {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .xgtm-seg__opt {
+    flex: 1 1 40%;
+    min-height: 40px;
+  }
+  .xgtm-controls__go {
+    width: 100%;
+    min-height: 44px;
+  }
+  .xgtm-chips {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .xgtm-chip {
+    min-height: 40px;
+  }
+  .xgtm-summary__top {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .xgtm-viewtoggle {
+    margin-left: auto;
+  }
+  .xgtm-viewtoggle__opt {
+    min-height: 40px;
+  }
+  /* multi-column section grids -> single column */
+  .xgtm-eco-grid,
+  .xgtm-angle-grid {
+    grid-template-columns: 1fr;
+  }
+  .xgtm-proj__scores,
+  .xgtm-kol__scores {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .xgtm-llm__head {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .xgtm-llm__run {
+    min-height: 40px;
+  }
+
+  /* ---- LEADERBOARD MAP (.xd-lmap) ------------------------------
+     540px scatter is too tall for a phone. Drop it to ~420px (CSS beats
+     the SVG height attr; preserveAspectRatio="xMidYMid meet" letterboxes
+     the 540-tall viewBox down cleanly). Shrink the corner quadrant chips,
+     hide the top-center legend (it collides with the plot at this width),
+     and keep the count badge compact. */
+  .xd-lmap,
+  .xd-lmap__svg {
+    height: 420px;
+  }
+  .xd-lmap__zone {
+    font-size: 8px;
+    padding: 2px 7px;
+    gap: 4px;
+  }
+  .xd-lmap__legend {
+    display: none;
+  }
+  .xd-lmap__count {
+    font-size: 9px;
+    padding: 3px 8px;
+    right: 8px;
+    bottom: 8px;
+  }
+}
+
+/* Very narrow phones (<=460px): the 2-col cockpit + degen/narrative stat
+   grids get too tight — collapse to a single column. */
+@media (max-width: 460px) {
+  .xd-cockpit__grid {
+    grid-template-columns: 1fr;
+  }
+  .xdg-stats,
+  .xdn-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  .xd-lmap,
+  .xd-lmap__svg {
+    height: 380px;
+  }
+}
+
+/* ============================================================
+   CREATORS — compact card list (xd-kolcard)
+   Rendered only when XDCreators is in compact mode (portrait phone
+   <=768px OR a landscape phone up to 1024px wide), so these rules are
+   deliberately NOT inside a media query — the landscape-phone case is
+   wider than 768px and would otherwise go unstyled. Replaces the
+   10-column table that turned the whole subview into a full-height
+   horizontal scroller (the "slides left and right" wobble).
+   Shape per mobile-crypto-ux E3: identity left, followers dominant
+   right, mentions/engagement muted underneath.
+   ============================================================ */
+.xd-kollist {
+  display: flex;
+  flex-direction: column;
+}
+.xd-kolcard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 8px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 0;
+  text-align: left;
+  cursor: pointer;
+}
+.xd-kolcard:active {
+  background: rgba(255, 255, 255, 0.03);
+}
+.xd-kolcard__rank {
+  flex: 0 0 22px;
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.35);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.xd-kolcard__id {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.xd-kolcard__handle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.92);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.xd-kolcard__name {
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.xd-kolcard__meta {
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+.xd-kolcard__hit {
+  color: var(--bull, #10B981);
+}
+.xd-kolcard__metrics {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.xd-kolcard__followers {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.92);
+  font-variant-numeric: tabular-nums;
+}
+.xd-kolcard__followers-label {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.35);
+}
+
+/* day mode */
+.app.app-day-mode .xd-kolcard {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+.app.app-day-mode .xd-kolcard:active {
+  background: rgba(0, 0, 0, 0.04);
+}
+.app.app-day-mode .xd-kolcard__rank {
+  color: rgba(15, 23, 42, 0.4);
+}
+.app.app-day-mode .xd-kolcard__handle {
+  color: #0f172a;
+}
+.app.app-day-mode .xd-kolcard__name,
+.app.app-day-mode .xd-kolcard__meta {
+  color: rgba(15, 23, 42, 0.55);
+}
+.app.app-day-mode .xd-kolcard__followers {
+  color: #0f172a;
+}
+.app.app-day-mode .xd-kolcard__followers-label {
+  color: rgba(15, 23, 42, 0.45);
+}

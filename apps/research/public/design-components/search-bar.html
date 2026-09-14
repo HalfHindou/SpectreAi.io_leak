@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=600">
+  <title>Spectre — Search Bar Widget</title>
+  <style>
+    :root {
+      --bg-void: #09090b; --bg-surface: #111113; --bg-elevated: #18181b;
+      --glass-bg: rgba(9,9,11,0.88); --glass-border: rgba(255,255,255,0.04);
+      --text-primary: #f5f5f7; --text-secondary: rgba(245,245,247,0.6);
+      --text-muted: rgba(245,245,247,0.35);
+      --bull: #10B981; --bear: #EF4444; --cyan: #06B6D4;
+      --border-subtle: rgba(255,255,255,0.03); --border-default: rgba(255,255,255,0.04);
+      --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0a0f; font-family: var(--font-body); color: var(--text-primary); -webkit-font-smoothing: antialiased; }
+    .widget { width: 560px; padding: 24px; }
+
+    .search-container {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      backdrop-filter: blur(24px) saturate(180%);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12), 0 20px 60px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.04);
+      overflow: hidden;
+    }
+
+    .search-input-row {
+      display: flex;
+      align-items: center;
+      padding: 16px 20px;
+      gap: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .search-icon {
+      width: 20px; height: 20px;
+      color: var(--text-muted);
+    }
+    .search-icon svg { width: 100%; height: 100%; }
+    .search-text {
+      flex: 1;
+      font-size: 15px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+    .search-kbd {
+      font-size: 11px; font-weight: 500;
+      color: var(--text-muted);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-family: var(--font-mono);
+    }
+
+    .search-results {
+      padding: 8px;
+    }
+    .search-section-label {
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--text-muted);
+      padding: 8px 12px 6px;
+    }
+    .search-result-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .search-result-item:hover,
+    .search-result-item.active {
+      background: rgba(255,255,255,0.03);
+    }
+    .result-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800; color: #fff;
+    }
+    .result-info { flex: 1; }
+    .result-name {
+      font-size: 14px; font-weight: 600;
+      color: var(--text-primary);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .result-symbol {
+      font-size: 11px; font-weight: 500;
+      color: var(--text-muted);
+    }
+    .result-meta {
+      font-size: 12px; color: var(--text-tertiary);
+      margin-top: 1px;
+    }
+    .result-price {
+      text-align: right;
+    }
+    .result-price-val {
+      font-size: 14px; font-weight: 600;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+    }
+    .result-change {
+      font-size: 12px; font-weight: 500;
+      font-family: var(--font-mono);
+      margin-top: 1px;
+    }
+    .result-change.bull { color: var(--bull); }
+    .result-change.bear { color: var(--bear); }
+
+    .search-footer {
+      padding: 10px 20px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .search-footer-hint {
+      font-size: 11px; color: var(--text-muted);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .footer-kbd {
+      font-size: 10px; font-weight: 500;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+<div class="widget">
+  <div class="search-container">
+    <div class="search-input-row">
+      <div class="search-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </div>
+      <div class="search-text">Search tokens, news, research...</div>
+      <div class="search-kbd">⌘K</div>
+    </div>
+
+    <div class="search-results">
+      <div class="search-section-label">Trending</div>
+
+      <div class="search-result-item active">
+        <div class="result-avatar" style="background: linear-gradient(135deg, #F7931A, #F7931A88);">BT</div>
+        <div class="result-info">
+          <div class="result-name">Bitcoin <span class="result-symbol">BTC</span></div>
+          <div class="result-meta">#1 · Layer 1</div>
+        </div>
+        <div class="result-price">
+          <div class="result-price-val">$97,842</div>
+          <div class="result-change bull">+2.54%</div>
+        </div>
+      </div>
+
+      <div class="search-result-item">
+        <div class="result-avatar" style="background: linear-gradient(135deg, #627EEA, #627EEA88);">ET</div>
+        <div class="result-info">
+          <div class="result-name">Ethereum <span class="result-symbol">ETH</span></div>
+          <div class="result-meta">#2 · Smart Contracts</div>
+        </div>
+        <div class="result-price">
+          <div class="result-price-val">$3,421</div>
+          <div class="result-change bull">+3.21%</div>
+        </div>
+      </div>
+
+      <div class="search-result-item">
+        <div class="result-avatar" style="background: linear-gradient(135deg, #00FFA3, #00FFA388);">SO</div>
+        <div class="result-info">
+          <div class="result-name">Solana <span class="result-symbol">SOL</span></div>
+          <div class="result-meta">#5 · Layer 1</div>
+        </div>
+        <div class="result-price">
+          <div class="result-price-val">$196.40</div>
+          <div class="result-change bear">-1.82%</div>
+        </div>
+      </div>
+
+      <div class="search-result-item">
+        <div class="result-avatar" style="background: linear-gradient(135deg, #00AAE4, #00AAE488);">XR</div>
+        <div class="result-info">
+          <div class="result-name">XRP <span class="result-symbol">XRP</span></div>
+          <div class="result-meta">#4 · Payments</div>
+        </div>
+        <div class="result-price">
+          <div class="result-price-val">$2.45</div>
+          <div class="result-change bull">+5.41%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="search-footer">
+      <div class="search-footer-hint">
+        <span class="footer-kbd">↑↓</span> Navigate
+        <span class="footer-kbd">↵</span> Select
+        <span class="footer-kbd">esc</span> Close
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

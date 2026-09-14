@@ -1,0 +1,1008 @@
+/**
+ * Spectre AI - Main Layout
+ * Figma Reference: Frame 2085654846
+ * Professional institutional layout
+ */
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  /* `clip`, not `hidden`: overflow-x hidden forces overflow-y to compute to
+     auto, turning .app into a scroll CONTAINER even though it never scrolls
+     (auto height). That container latched the first wheel gesture into its
+     few px of stray overflow AND became the scrollport for every sticky
+     descendant - position:sticky (discovery-table toolbar) could never stick
+     against the window. clip clips the x axis without creating a scrollport.
+     The embedded/token variants below still opt into real element scrolling. */
+  overflow-x: clip;
+  overflow-y: visible;
+  position: relative;
+}
+
+/* Lock background scroll when search is open */
+html:has(body.search-open),
+body.search-open {
+  overflow: hidden !important;
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body.search-open .app {
+  overflow: hidden !important;
+}
+
+/* Clean Apple-style dim when search is open */
+body.search-open .app > *:not(.header):not(.copy-toast) {
+  opacity: 0.4;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+/* Keep global toast fully readable over search overlay */
+body.search-open .copy-toast {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+body.search-open .main-layout,
+body.search-open .token-ticker {
+  opacity: 0.4 !important;
+  pointer-events: none !important;
+}
+
+/* Suspense fallback for lazy-loaded token page */
+.token-page-loading {
+  min-height: 100vh;
+  background: var(--bg-base, #09090b);
+}
+
+/* Token page - VC-backed platform background */
+.app.token-page {
+  background: var(--bg-base);
+  position: relative;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+/* Lock scroll while chart resize handle is being dragged */
+.app.resize-dragging,
+body:has(.app.resize-dragging) {
+  overflow: hidden !important;
+}
+
+/* Light mode: soften token-page backdrop treatments */
+body.theme-light .app.token-page::before {
+  opacity: 0.6;
+  animation: none;
+}
+
+body.theme-light .app.token-page::after {
+  opacity: 0.22;
+}
+
+body.theme-light.token-page::before {
+  /* remove dark vignette for light mode */
+  background:
+    radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.06) 100%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+  mix-blend-mode: normal;
+  opacity: 0.8;
+}
+
+/* Nebula gradients removed - ElegantShapes handles ambient background */
+
+/* Token page - Minimal ambient glow (two subtle orbs, no animation).
+   Hidden until App.jsx sets --token-bg-* vars from the actual logo color so
+   page never enumerates intermediate hues. */
+.app.token-page::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(ellipse 50% 40% at 10% 20%, var(--token-bg-primary, rgba(255, 255, 255, 0.02)) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 90% 80%, var(--token-bg-secondary, rgba(255, 255, 255, 0.015)) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+  /* Was 0.6, which against the source alphas (--token-bg-primary is 0.08)
+     put the effective tint at ~4.8% - and it never reached the screen at all
+     because .aurora-field painted over it (see the #root z-index note in
+     index.css). With that fixed, 0.85 lands the tint around 7% effective:
+     the page carries a faint cast of the token's own brand. Felt, not seen -
+     deliberately short of anything that would read as coloured chrome. */
+  opacity: 0.85;
+  transition: opacity 0.32s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+html[data-token-color-ready="false"] .app.token-page::before {
+  opacity: 0;
+}
+
+/* Grid and diagonal lines removed for terminal feel */
+.app.token-page::after {
+  display: none;
+}
+
+/* Vignette, noise, floating orbs removed for terminal feel */
+body.token-page::before,
+body.token-page::after {
+  display: none;
+}
+
+/* Animations removed - static ambient only */
+@keyframes tokenGradientFlow {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes tokenGridFlow {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(60px, 60px);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate(120px, 120px);
+    opacity: 0.6;
+  }
+}
+
+@keyframes tokenOrbFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  25% {
+    transform: translate(2%, -1.5%) scale(1.05);
+    opacity: 0.95;
+  }
+  50% {
+    transform: translate(-1%, 1%) scale(0.98);
+    opacity: 0.9;
+  }
+  75% {
+    transform: translate(1.5%, 0.5%) scale(1.02);
+    opacity: 0.95;
+  }
+}
+
+/* =========================================
+   Main 3-Column Layout
+   ========================================= */
+.main-layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 380px 1fr 380px;
+  gap: var(--sp-3);
+  row-gap: var(--sp-3);
+  /* Padding split into individual properties (was `padding: var(--sp-4)`
+     + `padding-top: calc(...)`) to make sure no build tool or browser
+     edge-case lets the shorthand stomp on padding-top. The header is
+     position:fixed (68px) and the ticker is position:absolute at
+     top:68px (44px), so content has to start at AT LEAST 112px to
+     clear them — 116px keeps a slim 4px breath with no dead gap. */
+  padding-top: 116px;
+  padding-right: var(--sp-4);
+  padding-bottom: var(--sp-4);
+  padding-left: var(--sp-4);
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  /* 200ms (was 400ms): collapse must feel like a snap, not a glide - every
+     frame of this transition reflows the whole 3-column grid. Token-based
+     easing also brings it under the in-app reduced-motion toggle. */
+  transition: grid-template-columns 200ms var(--ease-out);
+}
+
+/* Collapsed panel layouts (LEGACY - the token view now runs .layout-managed
+   below; these stay for any non-managed .main-layout usage / skeletons). */
+.main-layout.left-collapsed {
+  grid-template-columns: 0px 1fr 380px;
+}
+
+.main-layout.right-collapsed {
+  grid-template-columns: 380px 1fr 0px;
+}
+
+.main-layout.left-collapsed.right-collapsed {
+  grid-template-columns: 0px 1fr 0px;
+}
+
+/* ============================================================
+   ZONE-STACKS LAYOUT ENGINE (token view)
+   ----
+   The compiler (lib/tokenLayout.js) drives everything INLINE: concrete
+   grid-template-columns/rows on the container + per-section gridColumn/
+   gridRow. (Track widths were originally fed through CSS vars consumed by
+   a min(var()) template here, but Chromium did not reliably recompute the
+   tracks on runtime var changes - preset switches froze. Inline templates
+   always apply; this rule is only the pre-hydration fallback, and its
+   2-class specificity shields the inline-era layout from the 1-class
+   media-query templates below.) Collapse/preset changes still animate via
+   the base grid-template-columns transition.
+   ============================================================ */
+.main-layout.layout-managed {
+  grid-template-columns: 380px minmax(0, 1fr) 380px;
+}
+
+/* Base for every movable section. Transplanted from the old .content-main:
+   min-width:0 (chart/tables must be allowed to shrink), z-index:1 (below
+   right-panel dropdowns), flex column so each section's component stretches
+   exactly as it did inside the old flex parents.
+   HARD RULE: never add transform / filter / backdrop-filter / will-change
+   here - they create containing blocks that re-root DataTabs' fixed-position
+   tooltips and would break the layered glass. */
+.layout-section {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* The trade rail keeps its dropdown layer wherever it is placed. */
+.layout-section.panel-right {
+  z-index: 20;
+}
+
+/* Zero-width grid children that own the rail collapse handles. The existing
+   .panel-toggle-left/-right absolute offsets (right:-8px / left:-8px) resolve
+   against these hosts and land the buttons exactly where they always sat -
+   straddling the rail's inner edge. */
+.rail-toggle-host {
+  position: relative;
+  width: 0;
+  min-width: 0;
+  overflow: visible;
+  z-index: 100;
+  pointer-events: none;
+}
+.rail-toggle-host .panel-toggle {
+  pointer-events: auto;
+}
+.rail-toggle-host--left {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  justify-self: end;
+}
+.rail-toggle-host--right {
+  grid-column: 3;
+  grid-row: 1 / -1;
+  justify-self: start;
+}
+
+/* Rail-collapse fade for whichever section occupies a collapsed rail
+   (generalizes the .panel-left/.panel-right specific rules above). */
+.layout-section.rail-collapsed .panel-content {
+  opacity: 0;
+  pointer-events: none;
+}
+
+
+/* Left Panel - flows with page scroll (GMGN-style) */
+.panel-left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  /* No transition here: the grid animates the column width; `all 0.4s` made
+     every theme/accent change ripple this panel's gradient for 400ms. */
+  overflow: visible;
+  position: relative;
+  /* The column's OWN ladder surface. The raw page void gets no aurora
+     bleed in this corner, so without a surface the whole column read as
+     flat black under every skin/tone (Gleb repro, 2026-07-03). The
+     s2->s1 vertical matches the centre/right cards' elevation and
+     re-tones with the theme; stock obsidian stays near-identical. */
+  background: linear-gradient(180deg,
+    var(--ob-surface-2, #0E0F11) 0%,
+    var(--ob-surface-1, #08090A) 44%,
+    var(--ob-surface-1, #08090A) 100%);
+  border-radius: var(--r-md, 16px);
+}
+
+/* Day mode: the obsidian tokens are NOT redefined under theme-light, so
+   the ladder gradient above would paint a dark slab on the light page.
+   Restore the pre-surface transparency (day mode owns its own colors). */
+body.theme-light .panel-left {
+  background: transparent;
+}
+
+.panel-left .panel-content {
+  display: flex;
+  flex-direction: column;
+  opacity: 1;
+  transition: opacity 150ms var(--ease-out);
+}
+
+.panel-left.collapsed .panel-content {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Center Content */
+.content-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+  position: relative;
+  z-index: 1; /* keep below right-panel dropdowns */
+}
+
+/* Right Panel - flows with page scroll (GMGN-style) */
+.panel-right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  /* No transition: grid animates the width (see .panel-left note). */
+  overflow: visible;
+  z-index: 20;
+  position: relative;
+}
+
+.panel-right .panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  opacity: 1;
+  transition: opacity 150ms var(--ease-out);
+  overflow: visible;
+}
+
+.panel-right.collapsed .panel-content {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* =========================================
+   Panel Toggle Buttons - minimal terminal handle
+   ========================================= */
+.panel-toggle {
+  position: absolute;
+  top: 120px;
+  width: 14px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  z-index: 100;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.panel-toggle::before,
+.panel-toggle::after {
+  display: none;
+}
+
+body.right-panel-dropdown-open .panel-right .panel-toggle-right {
+  z-index: 60;
+  pointer-events: none;
+}
+
+.panel-toggle:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.65);
+}
+
+.panel-toggle:active {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.panel-toggle:focus-visible {
+  outline: 2px solid rgba(245, 245, 247, 0.2);
+  outline-offset: 2px;
+}
+
+.panel-toggle svg {
+  width: 10px;
+  height: 10px;
+  opacity: 1;
+}
+
+.panel-toggle:hover svg {
+  opacity: 1;
+}
+
+/* Light mode: the panel collapse tab is entirely warm-white (bg, border, and
+   chevron) - fully invisible on white. Give it a hairline light control look
+   with a dark chevron + a clear darkening hover. */
+body.theme-light .panel-toggle {
+  background: rgba(17, 17, 19, 0.04);
+  border-color: rgba(0, 0, 0, 0.10);
+  color: rgba(15, 23, 42, 0.55);
+}
+body.theme-light .panel-toggle:hover {
+  background: rgba(17, 17, 19, 0.09);
+  border-color: rgba(0, 0, 0, 0.16);
+  color: rgba(15, 23, 42, 0.85);
+}
+body.theme-light .panel-toggle:active {
+  background: rgba(17, 17, 19, 0.13);
+}
+body.theme-light .panel-toggle:focus-visible {
+  outline-color: rgba(15, 23, 42, 0.25);
+}
+
+.panel-toggle-left {
+  right: -8px;
+  border-radius: 0 6px 6px 0;
+  border-left: none;
+}
+
+.panel-toggle-right {
+  left: -8px;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  border-right: none;
+}
+
+@keyframes panelToggleSheen {
+  from { background-position: -40% -40%; }
+  to { background-position: 120% 120%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-toggle,
+  .panel-toggle svg {
+    transition: none !important;
+  }
+
+  .panel-toggle:hover {
+    animation: none !important;
+  }
+}
+
+/* When collapsed, center toggle in the collapsed column */
+.panel-left.collapsed .panel-toggle-left {
+  right: 50%;
+  transform: translateX(50%);
+}
+
+.panel-right.collapsed .panel-toggle-right {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* =========================================
+   Responsive Layout System
+   Optimized for all devices
+   ========================================= */
+
+/* Large Desktop (1600px+) - Full 3-column layout */
+@media (max-width: 1600px) {
+  .main-layout {
+    grid-template-columns: 340px 1fr 340px;
+    gap: var(--sp-3);
+  }
+  
+  .main-layout.left-collapsed {
+    grid-template-columns: 0px 1fr 340px;
+  }
+  
+  .main-layout.right-collapsed {
+    grid-template-columns: 340px 1fr 0px;
+  }
+  
+  .main-layout.left-collapsed.right-collapsed {
+    grid-template-columns: 0px 1fr 0px;
+  }
+}
+
+/* Desktop (1400px) - Narrower panels.
+   IMPORTANT: do not use the `padding` shorthand here — the base rule
+   sets padding-top: 140px (header + ticker + breathing room), and any
+   shorthand at this media query would stomp on it and pull the banner
+   up under the ticker. Set sides individually instead. */
+@media (max-width: 1400px) {
+  .main-layout {
+    grid-template-columns: 300px 1fr 300px;
+    padding-top: 116px;
+    padding-right: var(--sp-3);
+    padding-bottom: var(--sp-3);
+    padding-left: var(--sp-3);
+  }
+  
+  .main-layout.left-collapsed {
+    grid-template-columns: 0px 1fr 300px;
+  }
+  
+  .main-layout.right-collapsed {
+    grid-template-columns: 300px 1fr 0px;
+  }
+  
+  .main-layout.left-collapsed.right-collapsed {
+    grid-template-columns: 0px 1fr 0px;
+  }
+}
+
+/* Small Desktop / Large Tablet (1200px) - 2-column, hide left panel */
+@media (max-width: 1200px) {
+  .main-layout {
+    grid-template-columns: 1fr 320px;
+    padding-top: 116px;
+  }
+
+  .main-layout.right-collapsed {
+    grid-template-columns: 1fr 48px;
+  }
+
+  .panel-left {
+    display: none;
+  }
+
+  .panel-right {
+    /* No fixed height - flows with page */
+  }
+}
+
+/* Tablet (1024px) - Narrower right panel */
+@media (max-width: 1024px) {
+  .main-layout {
+    grid-template-columns: 1fr 280px;
+    gap: var(--sp-3);
+    /* Same individual-padding pattern as the base rule so the shorthand
+       can't quietly stomp on padding-top. */
+    padding-top: 116px;
+    padding-right: var(--sp-3);
+    padding-bottom: var(--sp-3);
+    padding-left: var(--sp-3);
+  }
+
+  .main-layout.right-collapsed {
+    grid-template-columns: 1fr 44px;
+  }
+  
+  .panel-toggle {
+    width: 16px;
+    height: 60px;
+  }
+  
+  .panel-toggle svg {
+    width: 10px;
+    height: 10px;
+  }
+}
+
+/* Small Tablet (900px) - Single column */
+@media (max-width: 900px) {
+  .main-layout {
+    grid-template-columns: 1fr;
+    gap: var(--sp-4);
+    padding: var(--sp-3);
+    padding-top: calc(var(--header-height) + 48px + var(--sp-3));
+    padding-bottom: calc(var(--sp-8) + var(--safe-area-inset-bottom, 0px));
+  }
+  
+  .panel-right {
+    position: relative;
+    top: 0;
+    height: auto;
+    max-height: none;
+  }
+  
+  .panel-right .panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+  }
+  
+  .panel-toggle {
+    display: none;
+  }
+  
+  .content-main {
+    gap: var(--sp-3);
+  }
+}
+
+/* Large Mobile (768px) */
+@media (max-width: 768px) {
+  .main-layout {
+    padding: var(--sp-2);
+    padding-top: calc(64px + 44px + var(--sp-2));
+    gap: var(--sp-3);
+  }
+  
+  .app::before,
+  .app::after {
+    display: none; /* Hide ambient orbs on mobile for performance */
+  }
+}
+
+/* Mobile (640px) */
+@media (max-width: 640px) {
+  .main-layout {
+    padding: var(--sp-2);
+    padding-top: calc(60px + 40px + var(--sp-2));
+    gap: var(--sp-2);
+  }
+  
+  .content-main {
+    gap: var(--sp-2);
+  }
+}
+
+/* Small Mobile (480px) */
+@media (max-width: 480px) {
+  .main-layout {
+    padding: var(--sp-2);
+    padding-left: max(var(--sp-2), var(--safe-area-inset-left, 0px));
+    padding-right: max(var(--sp-2), var(--safe-area-inset-right, 0px));
+    padding-top: calc(56px + 36px + var(--sp-2));
+  }
+}
+
+/* Landscape mode on mobile/tablet */
+@media (orientation: landscape) and (max-height: 600px) {
+  .main-layout {
+    padding-top: calc(56px + 40px + var(--sp-2));
+  }
+  
+  .panel-right {
+    position: relative;
+    height: auto;
+  }
+}
+
+/* High DPI / Retina displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .app::before,
+  .app::after {
+    opacity: 0.7; /* Reduce glow intensity for battery savings */
+  }
+}
+
+/* ============================================================
+   Global Copy / Coming Soon toast — low-profile glass pill.
+   Sits against pure-black page chrome so the surface stays
+   near-black with a hairline border and the accent rail signals
+   per-token theming. Tight padding + pill radius so it reads
+   as a status whisper rather than a popup card.
+   ============================================================ */
+.copy-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 16px 9px 12px;
+  font-family: var(--font-body);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0) 38%),
+    rgba(8, 8, 10, 0.86);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  color: rgba(245, 245, 247, 0.94);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 14px 36px rgba(0, 0, 0, 0.52),
+    0 4px 10px rgba(0, 0, 0, 0.3);
+  animation: toastIn 220ms var(--ease-out);
+  transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out);
+  /* Must appear above search modal overlay (z-index: 99999) */
+  z-index: 1000005;
+}
+
+/* Whisper accent rail along the top edge — token-tinted */
+.copy-toast::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 22px;
+  right: 22px;
+  height: 1px;
+  border-radius: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    color-mix(in oklab, var(--accent) 55%, transparent) 50%,
+    transparent 100%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Icon sits in a small accent-tinted disc — modern status-chip feel */
+.copy-toast .toast-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--accent) 14%, transparent);
+  border: 1px solid color-mix(in oklab, var(--accent) 22%, transparent);
+  flex-shrink: 0;
+}
+
+.copy-toast svg {
+  width: 12px;
+  height: 12px;
+  color: color-mix(in oklab, var(--accent) 80%, var(--text-1));
+  filter: none;
+}
+
+.copy-toast.is-exiting {
+  opacity: 0;
+  transform: translateX(-50%) translateY(6px) scale(0.985);
+}
+
+@media (max-width: 768px) {
+  .copy-toast {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 84px);
+  }
+  body.token-page .copy-toast {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + var(--mtp-dock-h, 109px) + 16px);
+  }
+}
+
+/* Coming Soon variant — same chassis, slightly softer copy weight */
+.copy-toast.coming-soon {
+  color: rgba(245, 245, 247, 0.92);
+  font-weight: 500;
+}
+
+/* Destructive variant — accent rail + icon shift to --down channel */
+.copy-toast--destructive::before {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    color-mix(in oklab, var(--down, #ef4444) 60%, transparent) 50%,
+    transparent 100%);
+}
+
+.copy-toast--destructive .toast-icon {
+  background: color-mix(in oklab, var(--down, #ef4444) 14%, transparent);
+  border-color: color-mix(in oklab, var(--down, #ef4444) 24%, transparent);
+}
+
+.copy-toast--destructive svg {
+  color: color-mix(in oklab, var(--down, #ef4444) 78%, var(--text-1));
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .copy-toast {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Coming Soon hover tooltip - now using fixed position like TradingChart */
+.coming-soon-tooltip {
+  position: relative;
+}
+
+/* Fixed Position Coming Soon Tooltip */
+.coming-soon-tooltip-fixed {
+  position: fixed;
+  padding: 8px 12px;
+  background: rgba(18, 18, 22, 1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: rgba(245, 245, 247, 0.9);
+  font-family: var(--font-display);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 99999;
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  animation: tooltipFadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.coming-soon-tooltip-fixed::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(18, 18, 22, 1);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* Left-panel variant: tooltip to the LEFT of button */
+.coming-soon-tooltip-fixed-left {
+  transform: translate(calc(-100% - 12px), -50%);
+}
+
+.coming-soon-tooltip-fixed-left::after {
+  top: 50%;
+  left: 100%;
+  transform: translateY(-50%);
+  border-top-color: transparent;
+  border-right-color: rgba(18, 18, 22, 1);
+  border-left-color: transparent;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-100% - 8px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, calc(-100% - 12px));
+  }
+}
+
+@keyframes tooltipFadeInLeft {
+  from {
+    opacity: 0;
+    transform: translate(calc(-100% - 8px), -50%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(calc(-100% - 12px), -50%);
+  }
+}
+
+.coming-soon-tooltip-fixed-left {
+  animation: tooltipFadeInLeft 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =========================================
+   Embedded Mode (iframe inside Research App)
+   No Header, no AuthGate chrome.
+   ========================================= */
+.app.app-embedded {
+  height: 100vh;
+  overflow-y: auto;
+}
+
+body.embedded {
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* No header → ticker sits at top, layout starts below ticker */
+.app-embedded .main-layout {
+  padding-top: calc(var(--ticker-height) + var(--sp-4)); /* Ticker only, no header */
+}
+
+.app-embedded .panel-left,
+.app-embedded .panel-right {
+  height: calc(100vh - var(--ticker-height) - var(--sp-6)); /* Ticker + spacing */
+}
+
+
+/* Pause all CSS animations when tab is hidden - saves GPU cycles */
+.tab-hidden *,
+.tab-hidden *::before,
+.tab-hidden *::after {
+  animation-play-state: paused !important;
+}
+
+.app-embedded .token-ticker {
+  top: 0; /* No header offset */
+}
+
+/* =========================================
+   Token Page Skeleton (Suspense fallback)
+   Mirrors the 3-column layout so lazy chunk
+   load doesn't flash blank white.
+   ========================================= */
+
+.tps-ticker {
+  height: var(--ticker-height, 36px);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  position: fixed;
+  top: var(--header-height, 60px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+}
+
+.tps-panel-header {
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  margin-bottom: var(--sp-3);
+}
+
+.tps-watchlist-row {
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  margin-bottom: var(--sp-2);
+}
+
+.tps-banner {
+  height: 60px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+}
+
+.tps-chart {
+  height: 400px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+}
+
+.tps-tabs-header {
+  display: flex;
+  gap: var(--sp-2);
+  padding-top: var(--sp-2);
+}
+
+.tps-tab {
+  height: 32px;
+  width: 80px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+}
+
+.tps-swap-block {
+  height: 100px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  margin-bottom: var(--sp-3);
+}
+
+.tps-swap-block--sm {
+  height: 60px;
+}
+
+.tps-swap-btn {
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  margin-bottom: var(--sp-3);
+}
+
+.tps-details-block {
+  height: 140px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+}
+/* ── Persistent token view host (2026-08-04) ─────────────────────────────
+   The token view stays MOUNTED when the user leaves it (and premounts on
+   welcome idle) so the TradingView widget survives navigation - re-entry
+   is a class flip, not a ~700ms widget rebuild. Live = display:contents,
+   so the wrapper is layout-invisible and the children sit exactly where
+   the old direct render put them. Parked = visibility-hidden fixed box:
+   no paint, no hit-testing, keeps real (viewport-sized) geometry so the
+   chart's ResizeObservers never see 0x0, and - critically - NO
+   display:none and NO re-parenting anywhere near the TV iframe (moving
+   it in the DOM reloads it; the 2026-07-09 wrong-chart bug class). */
+.token-view-host { display: contents; }
+.token-view-host--parked {
+  display: block;
+  position: fixed;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
+}

@@ -1,0 +1,435 @@
+/* ═══════════════════════════════════════════
+   FLOATING CHART WINDOW — Draggable & Resizable
+   Apple Cinematic glass surface
+   ═══════════════════════════════════════════ */
+
+.floating-chart-window {
+  position: fixed;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  background: rgba(12, 12, 14, 0.94);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.55),
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  animation: fcwIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes fcwIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Title bar ── */
+
+.fcw-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  padding: 0 12px 0 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: grab;
+  flex-shrink: 0;
+  user-select: none;
+  gap: 10px;
+}
+
+.fcw-titlebar:active {
+  cursor: grabbing;
+}
+
+.fcw-token-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.fcw-logo {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.fcw-symbol {
+  font-weight: 700;
+  font-size: 13px;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+  flex-shrink: 0;
+}
+
+.fcw-name {
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fcw-price {
+  font-family: var(--font-mono, var(--font-mono));
+  font-size: 12px;
+  font-weight: 600;
+  color: #f5f5f7;
+  flex-shrink: 0;
+}
+
+.fcw-change {
+  font-family: var(--font-mono, var(--font-mono));
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.fcw-change.positive {
+  color: var(--bull, #10B981);
+  background: var(--bull-muted, rgba(16, 185, 129, 0.08));
+}
+
+.fcw-change.negative {
+  color: var(--bear, #EF4444);
+  background: var(--bear-muted, rgba(239, 68, 68, 0.08));
+}
+
+/* ── Actions ── */
+
+.fcw-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.fcw-btn {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 245, 247, 0.55);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.fcw-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #f5f5f7;
+}
+
+.fcw-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.3);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fcw-close:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+}
+
+/* ── Compare mode: token pills ── */
+
+.fcw-compare-pills {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex: 1;
+}
+
+.fcw-compare-pills::-webkit-scrollbar { display: none; }
+
+.fcw-compare-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px 2px 3px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+  transition: border-color 0.15s ease;
+}
+
+.fcw-compare-pill:hover {
+  border-color: var(--pill-color, rgba(255, 255, 255, 0.12));
+}
+
+.fcw-compare-pill-logo {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.fcw-compare-pill-sym {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.8);
+  letter-spacing: -0.01em;
+}
+
+.fcw-compare-pill-x {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: none;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.25);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.12s ease;
+}
+
+.fcw-compare-pill-x:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #EF4444;
+}
+
+.fcw-compare-hint {
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.25);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Compare toggle button ── */
+
+.fcw-compare-toggle.active {
+  background: rgba(6, 182, 212, 0.12);
+  border-color: rgba(6, 182, 212, 0.25);
+  color: #06B6D4;
+}
+
+.fcw-compare-toggle.active:hover {
+  background: rgba(6, 182, 212, 0.18);
+}
+
+/* ── Advanced compare button ── */
+
+.fcw-advanced-btn {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.2);
+  color: #a78bfa;
+}
+.fcw-advanced-btn:hover {
+  background: rgba(139, 92, 246, 0.18);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+/* ── Chart body ── */
+
+.fcw-body {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Hide TradingChart's toolbar — TradingView has its own */
+.fcw-body .chart-controls {
+  display: none;
+}
+
+.fcw-body .trading-chart {
+  height: 100% !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.fcw-body .chart-content-area {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Resize handles — wide zones to beat iframe event capture ── */
+
+.fcw-resize {
+  position: absolute;
+  z-index: 2;
+}
+
+/* Edge handles — 12px grab zones */
+.fcw-resize--n  { top: -4px;    left: 18px;   right: 18px;  height: 12px; cursor: n-resize; }
+.fcw-resize--s  { bottom: -4px; left: 18px;   right: 18px;  height: 12px; cursor: s-resize; }
+.fcw-resize--e  { right: -4px;  top: 18px;    bottom: 18px; width: 12px;  cursor: e-resize; }
+.fcw-resize--w  { left: -4px;   top: 18px;    bottom: 18px; width: 12px;  cursor: w-resize; }
+
+/* Corner handles — 20x20px */
+.fcw-resize--ne { top: -4px;    right: -4px;  width: 20px; height: 20px; cursor: ne-resize; }
+.fcw-resize--nw { top: -4px;    left: -4px;   width: 20px; height: 20px; cursor: nw-resize; }
+.fcw-resize--se { bottom: -4px; right: -4px;  width: 20px; height: 20px; cursor: se-resize; }
+.fcw-resize--sw { bottom: -4px; left: -4px;   width: 20px; height: 20px; cursor: sw-resize; }
+
+/* Iframe event blocker — covers body during drag/resize */
+.fcw-body--blocked {
+  pointer-events: none;
+}
+
+/* ── Day mode ── */
+
+.floating-chart-window.day-mode {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.12),
+    0 8px 24px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.floating-chart-window.day-mode .fcw-titlebar {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.floating-chart-window.day-mode .fcw-symbol {
+  color: #0f172a;
+}
+
+.floating-chart-window.day-mode .fcw-name {
+  color: #94a3b8;
+}
+
+.floating-chart-window.day-mode .fcw-price {
+  color: #0f172a;
+}
+
+.floating-chart-window.day-mode .fcw-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #64748b;
+}
+
+.floating-chart-window.day-mode .fcw-btn:hover {
+  background: rgba(0, 0, 0, 0.07);
+  color: #0f172a;
+}
+
+.floating-chart-window.day-mode .fcw-close {
+  color: #94a3b8;
+}
+
+.floating-chart-window.day-mode .fcw-close:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #EF4444;
+}
+
+.floating-chart-window.day-mode .fcw-compare-pill {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.floating-chart-window.day-mode .fcw-compare-pill:hover {
+  border-color: var(--pill-color, rgba(0, 0, 0, 0.15));
+}
+
+.floating-chart-window.day-mode .fcw-compare-pill-sym {
+  color: #334155;
+}
+
+.floating-chart-window.day-mode .fcw-compare-pill-x {
+  color: #94a3b8;
+}
+
+.floating-chart-window.day-mode .fcw-compare-hint {
+  color: #94a3b8;
+}
+
+.floating-chart-window.day-mode .fcw-compare-toggle.active {
+  background: rgba(6, 182, 212, 0.08);
+  border-color: rgba(6, 182, 212, 0.2);
+  color: #0891b2;
+}
+
+/* ── Pin toggle button ── */
+
+.fcw-pin-toggle.active {
+  background: rgba(245, 245, 247, 0.1);
+  border-color: rgba(245, 245, 247, 0.15);
+  color: #f5f5f7;
+}
+
+.fcw-pin-toggle.active:hover {
+  background: rgba(245, 245, 247, 0.14);
+}
+
+.floating-chart-window.day-mode .fcw-pin-toggle.active {
+  background: rgba(15, 23, 42, 0.08);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+}
+
+/* ── Pinned mode — inline, full width, no portal ── */
+
+.floating-chart-window.pinned {
+  position: relative;
+  z-index: auto;
+  width: 100%;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  animation: none;
+  max-width: 1800px;
+  margin: 0 auto;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.floating-chart-window.pinned .fcw-titlebar {
+  cursor: default;
+}
+
+.floating-chart-window.pinned .fcw-titlebar:active {
+  cursor: default;
+}
+
+.floating-chart-window.pinned.day-mode {
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* ── Mobile: full-screen fallback ── */
+@media (max-width: 640px) {
+  .floating-chart-window {
+    left: 0 !important;
+    top: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    border-radius: 0;
+  }
+  .fcw-resize { display: none; }
+  .fcw-titlebar { cursor: default; }
+  .fcw-name { display: none; }
+}

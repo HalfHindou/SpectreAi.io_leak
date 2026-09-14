@@ -1,0 +1,331 @@
+/* OthersTabPanel — the alt long tail (OTHERS2) inside the Command Center.
+   Dark glass, warm-white, regime-coloured breadth gauge. Day mode at the end. */
+
+.otp { width: 100%; }
+
+.otp-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+/* ── shared card shell ── */
+.otp-chart-card,
+.otp-read-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* ── chart card ── */
+.otp-chart-card { padding: 14px 14px 12px; display: flex; flex-direction: column; }
+
+.otp-chart-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap; margin-bottom: 4px;
+}
+.otp-idx-tabs, .otp-range-tabs { display: inline-flex; gap: 4px; }
+
+.otp-idx, .otp-range {
+  appearance: none; border: 1px solid transparent; cursor: pointer;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 245, 247, 0.55);
+  border-radius: 8px; padding: 6px 12px;
+  font-size: 12.5px; font-weight: 600; letter-spacing: 0.01em;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.otp-range { padding: 6px 10px; font-size: 12px; }
+.otp-idx:hover, .otp-range:hover { color: rgba(245, 245, 247, 0.85); }
+.otp-idx--active {
+  background: rgba(245, 245, 247, 0.1);
+  color: #f5f5f7; border-color: rgba(255, 255, 255, 0.12);
+}
+.otp-range--active { background: rgba(245, 245, 247, 0.1); color: #f5f5f7; }
+
+.otp-chart-sub {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.4); margin: 2px 2px 10px;
+}
+
+.otp-chart-frame {
+  position: relative; flex: none; height: 440px; min-height: 440px;
+  border-radius: 12px; overflow: hidden;
+  background: #09090b; border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.otp-iframe { width: 100%; height: 100%; min-height: 380px; display: block; border: 0; }
+
+/* Chart-shaped loading state — keeps the exact plot geometry (gridlines + a
+   ghost line) so nothing shifts when the real series lands. No spinner, no
+   stack of shimmer bars. */
+.otp-chart-skel {
+  position: absolute; inset: 0; z-index: 2; overflow: hidden;
+  background: #09090b; pointer-events: none;
+}
+.otp-chart-skel-grid {
+  position: absolute; inset: 14px 64px 26px 12px;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.otp-chart-skel-grid i { display: block; height: 1px; background: rgba(255, 255, 255, 0.045); }
+.otp-chart-skel-line {
+  position: absolute; inset: 14px 64px 26px 12px; width: auto; height: auto;
+  overflow: visible;
+}
+.otp-chart-skel-line path {
+  fill: none; stroke: rgba(245, 245, 247, 0.13); stroke-width: 1.4;
+  vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round;
+  animation: otpSkelBreathe 2.6s ease-in-out infinite;
+}
+.otp-chart-skel-sweep {
+  position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 35%, rgba(255, 255, 255, 0.055) 50%, transparent 65%);
+  background-size: 250% 100%;
+  animation: otpSkelSweep 1.9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+.otp-chart-skel-lbl {
+  position: absolute; left: 14px; bottom: 10px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.28);
+}
+@keyframes otpSkelSweep { 0% { background-position: 160% 0; } 100% { background-position: -60% 0; } }
+@keyframes otpSkelBreathe { 0%, 100% { opacity: 0.75; } 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) {
+  .otp-chart-skel-sweep, .otp-chart-skel-line path { animation: none; }
+}
+
+/* OWN = our OTHERS2 (ex-top 100) line tab — accent it as the real one */
+.otp-idx--own.otp-idx--active { background: rgba(89, 217, 138, 0.16); color: #6ee7a0; border-color: rgba(89, 217, 138, 0.3); }
+.otp-idx--own { color: rgba(110, 231, 160, 0.7); }
+
+/* our OWN OTHERS2 native chart (ex-top 100) — gridlines + area + line + value/date
+   axes, drawn on canvas (renders identically across browsers) */
+.otp-o2chart { position: absolute; inset: 0; }
+.otp-o2canvas { display: block; width: 100%; height: 100%; }
+.otp-o2line-building { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 0 40px; }
+.otp-o2line-building b { font-size: 40px; font-weight: 800; letter-spacing: -0.02em; color: #f5f5f7; }
+.otp-o2line-building span { font-size: 13px; color: rgba(245, 245, 247, 0.5); line-height: 1.5; max-width: 460px; }
+
+/* Alt Rotation gauge track — dead (red) → warming (amber) → rotating (green) */
+.otp-gauge--rot { background: linear-gradient(90deg, #ff5a4d 0 25%, #ff8a3d 25% 45%, #e0b93a 45% 62%, #7dd35b 62% 100%); }
+
+/* ── read card ── */
+.otp-read-card { padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 16px; }
+
+.otp-o2-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.otp-eyebrow {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.45); margin-bottom: 6px;
+}
+.otp-o2-value { font-size: 28px; font-weight: 800; color: #f5f5f7; letter-spacing: -0.02em; line-height: 1; }
+.otp-o2-share { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.otp-o2-share-num { font-size: 18px; font-weight: 700; color: #f5f5f7; }
+.otp-o2-share-lbl { font-size: 11px; color: rgba(245, 245, 247, 0.4); }
+
+/* breadth gauge — knob on a regime-zoned track (BTC season → alt season) */
+.otp-gauge-block { display: flex; flex-direction: column; gap: 0; }
+.otp-gauge-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+.otp-gauge-title { font-size: 13px; font-weight: 600; color: rgba(245, 245, 247, 0.7); }
+.otp-gauge-title i { font-style: normal; font-weight: 600; font-size: 11px; margin-left: 5px; color: rgba(245, 245, 247, 0.4); }
+.otp-gauge-num { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
+.otp-gauge-num b { font-size: 13px; font-weight: 600; opacity: 0.55; }
+
+/* Alt Season Index track — 0-25 Bitcoin season, 25-75 rotation, 75-100 alt season */
+.otp-gauge {
+  position: relative; height: 10px; border-radius: 999px;
+  background: linear-gradient(90deg, #ff8a3d 0 25%, #e0a63a 25% 50%, #7dd35b 50% 75%, #32bb73 75% 100%);
+  box-shadow: inset 0 0 0 3px rgba(6, 8, 14, 0.45);
+}
+.otp-gauge i {
+  position: absolute; top: 50%; width: 22px; height: 22px;
+  border: 3px solid #fff; border-radius: 50%; background: #11141b;
+  transform: translate(-50%, -50%); box-shadow: 0 3px 12px rgba(0, 0, 0, 0.5);
+  transition: left 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.otp-gauge-labels {
+  display: flex; justify-content: space-between; margin-top: 11px;
+  font-size: 11px; color: rgba(245, 245, 247, 0.45);
+}
+.otp-gauge-labels span:first-child { color: rgba(245, 245, 247, 0.5); }
+.otp-gauge-labels span:last-child { color: #43d18c; }
+.otp-regime { margin-top: 10px; font-size: 12.5px; font-weight: 700; }
+.otp-regime-sub { font-weight: 500; color: rgba(245, 245, 247, 0.4); }
+
+/* 24h breadth (short-term tape) — a labeled side-stat, NOT the season call */
+.otp-substat-head {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.55); margin: -2px 2px 2px;
+}
+.otp-substat-head span { font-weight: 500; letter-spacing: 0.01em; text-transform: none; color: rgba(245, 245, 247, 0.35); }
+.otp-stat-den { font-size: 11px; font-weight: 600; opacity: 0.5; }
+
+/* breadth stats row */
+.otp-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.otp-stat {
+  display: flex; flex-direction: column; gap: 3px; padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+}
+.otp-stat-num { font-size: 17px; font-weight: 700; color: #f5f5f7; }
+.otp-stat-lbl { font-size: 10.5px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; color: rgba(245, 245, 247, 0.4); }
+
+/* TOTAL / TOTAL2 / TOTAL3 */
+.otp-totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.otp-total {
+  display: flex; flex-direction: column; gap: 3px; padding: 9px 11px;
+  border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.otp-total span { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; color: rgba(245, 245, 247, 0.4); }
+.otp-total b { font-size: 14px; font-weight: 700; color: #f5f5f7; }
+
+.otp-read-text {
+  margin: 2px 0 0; font-size: 13px; line-height: 1.55;
+  color: rgba(245, 245, 247, 0.62);
+}
+
+/* ── Long-tail runners (the real OTHERS2 constituents: ranks 101-4000 + Robinhood) ── */
+.otp-runners { margin-top: 14px; }
+.otp-runners-head { display: flex; align-items: baseline; gap: 10px; margin: 0 2px 12px; flex-wrap: wrap; }
+.otp-runners-title { font-size: 15px; font-weight: 700; color: #f5f5f7; letter-spacing: -0.01em; }
+.otp-runners-sub { font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em; color: rgba(245, 245, 247, 0.4); }
+.otp-runners-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.otp-run {
+  display: flex; align-items: center; gap: 9px; padding: 9px 11px; border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05); min-width: 0;
+}
+.otp-run-logo {
+  position: relative; flex: none; width: 30px; height: 30px; border-radius: 50%; overflow: hidden;
+  background: #0e121b; display: inline-grid; place-items: center; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09);
+}
+.otp-run-logo em { font-style: normal; font-size: 12.5px; font-weight: 750; color: #e8eaf0; }
+.otp-run-logo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.otp-run-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.otp-run-meta b { font-size: 13px; font-weight: 700; color: #f0f2f7; display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.otp-run-meta span { font-size: 11px; color: rgba(245, 245, 247, 0.45); font-weight: 600; }
+.otp-run-rh { font-style: normal; font-size: 8px; font-weight: 800; letter-spacing: 0.04em; color: #9af114; background: rgba(154, 241, 20, 0.12); border: 1px solid rgba(154, 241, 20, 0.25); border-radius: 4px; padding: 0 3px; }
+.otp-run-chg { flex: none; font-size: 11.5px; font-weight: 750; padding: 3px 6px; border-radius: 7px; }
+.otp-run-chg.up { color: #42d889; background: rgba(14, 83, 50, 0.4); }
+.otp-run-chg.down { color: #ff5b66; background: rgba(93, 25, 32, 0.4); }
+
+@media (max-width: 1200px) { .otp-runners-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 900px) {
+  .otp-grid { grid-template-columns: 1fr; }
+  .otp-chart-frame, .otp-iframe { min-height: 320px; }
+  .otp-runners-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 560px) { .otp-runners-grid { grid-template-columns: repeat(2, 1fr); } }
+
+/* day mode */
+.app.app-day-mode .otp-runners-title { color: #0f172a; }
+.app.app-day-mode .otp-runners-sub { color: #64748b; }
+.app.app-day-mode .otp-run { background: #f8fafc; border-color: rgba(15, 23, 42, 0.06); }
+.app.app-day-mode .otp-run-meta b { color: #0f172a; }
+.app.app-day-mode .otp-run-meta span { color: #64748b; }
+.app.app-day-mode .otp-run-logo { background: #e2e8f0; }
+.app.app-day-mode .otp-run-logo em { color: #0f172a; }
+
+/* ── Day mode ── */
+.app.app-day-mode .otp-chart-card,
+.app.app-day-mode .otp-read-card {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 16px rgba(15, 23, 42, 0.05);
+}
+.app.app-day-mode .otp-o2-value,
+.app.app-day-mode .otp-o2-share-num,
+.app.app-day-mode .otp-stat-num,
+.app.app-day-mode .otp-total b,
+.app.app-day-mode .otp-idx--active,
+.app.app-day-mode .otp-range--active { color: #0f172a; }
+.app.app-day-mode .otp-idx,
+.app.app-day-mode .otp-range { background: rgba(15, 23, 42, 0.05); color: #475569; }
+.app.app-day-mode .otp-idx--active,
+.app.app-day-mode .otp-range--active { background: rgba(15, 23, 42, 0.1); }
+.app.app-day-mode .otp-eyebrow,
+.app.app-day-mode .otp-o2-share-lbl,
+.app.app-day-mode .otp-chart-sub,
+.app.app-day-mode .otp-stat-lbl,
+.app.app-day-mode .otp-total span { color: #64748b; }
+.app.app-day-mode .otp-gauge-title { color: #334155; }
+.app.app-day-mode .otp-gauge-title i,
+.app.app-day-mode .otp-regime-sub,
+.app.app-day-mode .otp-substat-head span { color: #94a3b8; }
+.app.app-day-mode .otp-substat-head { color: #475569; }
+.app.app-day-mode .otp-read-text { color: #475569; }
+.app.app-day-mode .otp-stat { background: #f8fafc; border-color: rgba(15, 23, 42, 0.06); }
+.app.app-day-mode .otp-total { border-color: rgba(15, 23, 42, 0.08); }
+.app.app-day-mode .otp-iframe { background: #ffffff; }
+/* the chart frame stays dark in day mode (see below), so the skeleton does too */
+/* the native OTHERS2 chart stays dark in day mode (data-viz convention — light
+   axis text + gridlines read cleanly; a white bg would wash out the gridlines) */
+.app.app-day-mode .otp-chart-frame { background: #0b0d13; }
+.app.app-day-mode .otp-o2line-building span { color: rgba(245, 245, 247, 0.55); }
+.app.app-day-mode .otp-o2line-building b { color: #f5f5f7; }
+
+/* microcap depth chip + Microcaps-page CTA (Others tab summary) */
+.otp-depth { margin: 12px 0 4px; }
+.otp-depth-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.otp-depth-pct { font-size: 15px; font-weight: 800; color: #ff8a3d; letter-spacing: -0.01em; }
+.otp-depth-pct i { font-style: normal; font-size: 11px; font-weight: 600; color: rgba(245,245,247,0.4); margin-left: 6px; }
+.otp-depth-zone { font-size: 11px; font-weight: 700; text-transform: capitalize; padding: 3px 9px; border-radius: 999px; background: rgba(255,138,61,0.12); color: #ff8a3d; }
+.otp-depth-zone--capitulation { background: rgba(255,112,67,0.14); color: #ff7043; }
+.otp-depth-zone--basing { background: rgba(255,159,67,0.12); color: #ff9f43; }
+.otp-depth-zone--mid-cycle { background: rgba(224,185,58,0.12); color: #e0b93a; }
+.otp-depth-zone--elevated { background: rgba(57,217,138,0.12); color: #39d98a; }
+.otp-depth-track { position: relative; height: 7px; border-radius: 999px;
+  background: linear-gradient(90deg, #ff7043 0%, #ff9f43 30%, #e0b93a 58%, #39d98a 100%); opacity: 0.82; }
+.otp-depth-mark { position: absolute; top: 50%; width: 14px; height: 14px; border-radius: 50%; background: #0c0f18; border: 3px solid #fff; transform: translate(-50%, -50%); box-shadow: 0 2px 7px rgba(0,0,0,0.55); }
+.otp-micro-cta { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 14px; padding: 12px 16px; border-radius: 12px; cursor: pointer;
+  font-size: 13.5px; font-weight: 700; letter-spacing: -0.01em; color: #f5f5f7;
+  border: 1px solid rgba(255,255,255,0.1); background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  transition: all 0.22s cubic-bezier(0.16,1,0.3,1); }
+.otp-micro-cta:hover { border-color: rgba(255,255,255,0.2); background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04)); transform: translateY(-1px); }
+.otp-micro-cta span { font-size: 15px; transition: transform 0.22s; }
+.otp-micro-cta:hover span { transform: translateX(3px); }
+.app.app-day-mode .otp-micro-cta { color: #0f172a; border-color: rgba(15,23,42,0.12); background: #f1f5f9; }
+
+/* Cycle depth panel — fills the left column below the OTHERS2 chart */
+.otp-cycle-depth { margin-top: 14px; padding: 14px 15px 13px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.025); }
+.otp-cd-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.otp-cd-title { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(245,245,247,0.62); }
+.otp-cd-zone { font-size: 11px; font-weight: 700; text-transform: capitalize; padding: 3px 10px; border-radius: 999px; }
+.otp-cd-zone--capitulation { background: rgba(255,112,67,0.14); color: #ff7043; }
+.otp-cd-zone--basing { background: rgba(255,159,67,0.13); color: #ff9f43; }
+.otp-cd-zone--mid-cycle { background: rgba(224,185,58,0.13); color: #e0b93a; }
+.otp-cd-zone--elevated { background: rgba(57,217,138,0.13); color: #39d98a; }
+.otp-cd-track { position: relative; height: 8px; border-radius: 999px; margin-bottom: 9px;
+  background: linear-gradient(90deg, #ff7043 0%, #ff9f43 30%, #e0b93a 58%, #5bd08a 80%, #39d98a 100%); }
+.otp-cd-mark { position: absolute; top: 50%; width: 15px; height: 15px; border-radius: 50%; background: #0c0f18; border: 3px solid #fff; transform: translate(-50%,-50%); box-shadow: 0 2px 8px rgba(0,0,0,0.55); }
+.otp-cd-scale { display: flex; align-items: flex-start; justify-content: space-between; font-size: 11px; font-weight: 600; color: rgba(245,245,247,0.66); margin-bottom: 12px; }
+.otp-cd-scale i { display: block; font-style: normal; font-size: 9.5px; color: rgba(245,245,247,0.48); margin-top: 1px; }
+.otp-cd-mid { color: #ff8a3d; font-weight: 800; font-size: 12.5px; align-self: center; }
+.otp-cd-r { text-align: right; }
+.otp-cd-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.otp-cd-stat { display: flex; flex-direction: column; gap: 3px; padding: 9px 11px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.04); }
+.otp-cd-stat span { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(245,245,247,0.5); }
+.otp-cd-stat b { font-size: 15px; font-weight: 700; color: #f5f5f7; }
+.app.app-day-mode .otp-cycle-depth { background: #f8fafc; border-color: rgba(15,23,42,0.06); }
+.app.app-day-mode .otp-cd-title, .app.app-day-mode .otp-cd-scale, .app.app-day-mode .otp-cd-stat span { color: #475569; }
+.app.app-day-mode .otp-cd-stat { background: #ffffff; border-color: rgba(15,23,42,0.06); }
+.app.app-day-mode .otp-cd-stat b { color: #0f172a; }
+
+/* Day mode — the gauge's low-end label and the Robinhood chip were left on the
+   dark palette. The chip's lime (#9af114) is a dark-background colour: on white
+   it measured 0.81 vs 0.98, effectively unreadable. Deepened to an olive that
+   keeps the "RH green" association at a legible contrast. */
+.app.app-day-mode .otp-gauge-labels span:first-child { color: #64748b; }
+.app.app-day-mode .otp-run-rh {
+  color: #3f6212;
+  background: rgba(101, 163, 13, 0.12);
+  border-color: rgba(101, 163, 13, 0.32);
+}
+
+/* Mobile — both tab strips were shrink-to-fit and hugged the left (282px and
+   221px inside a 362px row, measured 08-03). */
+@media (max-width: 768px) {
+  .otp-idx-tabs, .otp-range-tabs { display: flex; width: 100%; }
+  .otp-idx, .otp-range { flex: 1 1 0; font-size: 11.5px; padding: 4px 6px; }
+  /* see the app-store-ready touch-floor note in liq-heatmap-panel.css */
+  .otp-idx-tabs .otp-idx, .otp-range-tabs .otp-range { min-height: 32px !important; height: 32px; }
+}

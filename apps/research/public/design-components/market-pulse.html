@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=360">
+  <title>Spectre — Market Pulse Widget</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-void: #09090b;
+      --bg-surface: #111113;
+      --bg-elevated: #18181b;
+      --glass-bg: rgba(9,9,11,0.88);
+      --glass-border: rgba(255,255,255,0.04);
+      --text-primary: #f5f5f7;
+      --text-secondary: rgba(245,245,247,0.6);
+      --text-muted: rgba(245,245,247,0.35);
+      --bull: #10B981;
+      --bear: #EF4444;
+      --cyan: #06B6D4;
+      --amber: #F59E0B;
+      --violet: #A78BFA;
+      --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+      --border-subtle: rgba(255,255,255,0.03);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0f;
+      font-family: var(--font-body);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .widget-wrapper {
+      width: 260px;
+      padding: 16px;
+    }
+
+    /* ── Glass Card ─────────────────────────────── */
+    .market-pulse {
+      width: 100%;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      box-shadow:
+        0 4px 24px rgba(0,0,0,0.14),
+        0 16px 56px rgba(0,0,0,0.22),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Top highlight edge */
+    .market-pulse::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+      pointer-events: none;
+    }
+
+    /* ── Section Shared ─────────────────────────── */
+    .section {
+      padding: 14px 16px;
+    }
+    .section + .section {
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .section-header {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    /* ── Asset Rows (Crypto & Equities) ─────────── */
+    .asset-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+    }
+    .asset-row + .asset-row {
+      margin-top: 4px;
+    }
+
+    .asset-avatar {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      font-weight: 700;
+      color: var(--bg-void);
+      flex-shrink: 0;
+    }
+    .asset-avatar.btc { background: var(--amber); }
+    .asset-avatar.eth { background: var(--violet); }
+    .asset-avatar.sol { background: var(--cyan); }
+    .asset-avatar.spx { background: rgba(245,245,247,0.15); color: var(--text-secondary); }
+    .asset-avatar.ndx { background: rgba(245,245,247,0.15); color: var(--text-secondary); }
+
+    .asset-symbol {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+      width: 36px;
+      flex-shrink: 0;
+    }
+
+    .asset-price {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+      flex: 1;
+      text-align: right;
+    }
+
+    .asset-change {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      text-align: right;
+      width: 54px;
+      flex-shrink: 0;
+    }
+    .asset-change.up { color: var(--bull); }
+    .asset-change.down { color: var(--bear); }
+
+    /* ── Sentiment Section ──────────────────────── */
+    .sentiment-body {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .sentiment-value {
+      font-family: var(--font-mono);
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--bull);
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .sentiment-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .sentiment-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--bull);
+    }
+
+    .sentiment-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 3px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 72%;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--bull), rgba(16,185,129,0.6));
+      transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* ── Equities Symbol Override ───────────────── */
+    .asset-symbol.eq {
+      width: 50px;
+      font-size: 11px;
+    }
+
+    /* ── Agent Status Section ───────────────────── */
+    .agent-status-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--bull);
+      box-shadow: 0 0 6px rgba(16,185,129,0.4);
+      flex-shrink: 0;
+    }
+
+    .status-text {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--bull);
+    }
+
+    .agent-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding-left: 12px;
+    }
+
+    .agent-meta-row {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .agent-meta-row span {
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+
+<div class="widget-wrapper">
+  <div class="market-pulse">
+
+    <!-- ── Crypto Section ──────────────────────── -->
+    <div class="section">
+      <div class="section-header">Crypto</div>
+
+      <div class="asset-row">
+        <div class="asset-avatar btc">B</div>
+        <div class="asset-symbol">BTC</div>
+        <div class="asset-price">$97,842</div>
+        <div class="asset-change up">+2.54%</div>
+      </div>
+
+      <div class="asset-row">
+        <div class="asset-avatar eth">E</div>
+        <div class="asset-symbol">ETH</div>
+        <div class="asset-price">$3,421</div>
+        <div class="asset-change up">+3.21%</div>
+      </div>
+
+      <div class="asset-row">
+        <div class="asset-avatar sol">S</div>
+        <div class="asset-symbol">SOL</div>
+        <div class="asset-price">$196.40</div>
+        <div class="asset-change down">-1.82%</div>
+      </div>
+    </div>
+
+    <!-- ── Sentiment Section ───────────────────── -->
+    <div class="section">
+      <div class="section-header">Sentiment</div>
+
+      <div class="sentiment-body">
+        <div class="sentiment-value">72</div>
+        <div class="sentiment-meta">
+          <div class="sentiment-label">Greed</div>
+          <div class="sentiment-sub">Fear &amp; Greed Index</div>
+        </div>
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-fill"></div>
+      </div>
+    </div>
+
+    <!-- ── Equities Section ────────────────────── -->
+    <div class="section">
+      <div class="section-header">Equities</div>
+
+      <div class="asset-row">
+        <div class="asset-avatar spx">S</div>
+        <div class="asset-symbol eq">S&amp;P</div>
+        <div class="asset-price">5,842</div>
+        <div class="asset-change up">+0.45%</div>
+      </div>
+
+      <div class="asset-row">
+        <div class="asset-avatar ndx">N</div>
+        <div class="asset-symbol eq">NDX</div>
+        <div class="asset-price">18,421</div>
+        <div class="asset-change up">+0.72%</div>
+      </div>
+    </div>
+
+    <!-- ── Agent Status Section ────────────────── -->
+    <div class="section">
+      <div class="section-header">Agent Status</div>
+
+      <div class="agent-status-row">
+        <div class="status-dot"></div>
+        <div class="status-text">Active</div>
+      </div>
+
+      <div class="agent-meta">
+        <div class="agent-meta-row">Last run: <span>2 min ago</span></div>
+        <div class="agent-meta-row">Articles today: <span>47</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

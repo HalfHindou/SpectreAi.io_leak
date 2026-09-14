@@ -1,0 +1,289 @@
+/* Token Social Scan drawer — research-side overlay on the dark trading embed.
+   Scoped absolutely INSIDE .trading-embed-container (which is position:fixed,
+   overflow:hidden), so the closed panel parks off the right edge and is clipped.
+   Stays dark in all modes — it overlays the dark-only Trading Lite terminal. */
+
+.trading-embed-container { /* ensure children anchor here */ }
+
+/* ── Edge tab ─────────────────────────────────────────────────────────── */
+.tsoc-tab {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: none;
+  border-radius: 12px 0 0 12px;
+  background: linear-gradient(135deg, rgba(26, 26, 29, 0.92), rgba(17, 17, 19, 0.92));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: -4px 0 18px rgba(0, 0, 0, 0.35);
+  transition: color 0.25s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s ease;
+}
+.tsoc-tab:hover { color: var(--text-primary, #f5f5f7); }
+.tsoc-tab-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+/* Slow gleam invites opening while the panel is closed. */
+.tsoc-tab:not(.tsoc-tab--open)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 35%, rgba(255, 255, 255, 0.18) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: tsocGleam 5.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes tsocGleam {
+  0%, 60% { transform: translateX(-120%); }
+  80%, 100% { transform: translateX(120%); }
+}
+/* When open, slide the tab with the panel so it rides the panel's left edge. */
+.tsoc-tab--open {
+  transform: translateY(-50%) translateX(calc(-1 * min(380px, 86vw)));
+  color: var(--text-primary, #f5f5f7);
+  background: linear-gradient(135deg, rgba(38, 38, 42, 0.95), rgba(24, 24, 27, 0.95));
+}
+
+/* ── Panel ────────────────────────────────────────────────────────────── */
+.tsoc-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(380px, 86vw);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, rgba(14, 14, 16, 0.97), rgba(9, 9, 11, 0.98));
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border-left: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: -16px 0 48px rgba(0, 0, 0, 0.5);
+  transform: translateX(100%);
+  /* Same guard as .sd-panel: parked past the right edge it was still a live
+     blur(22px) layer, revealable by any horizontal overscroll. Visibility
+     flips after the slide-out so the exit animation is unaffected. */
+  visibility: hidden;
+  transition: transform 0.36s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0s linear 0.36s;
+  pointer-events: none;
+}
+.tsoc-panel--open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform 0.36s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0s linear 0s;
+  pointer-events: auto;
+}
+
+.tsoc-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.tsoc-panel-title { display: flex; flex-direction: column; gap: 2px; }
+.tsoc-panel-kicker {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+}
+.tsoc-panel-sym {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary, #f5f5f7);
+}
+.tsoc-close {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.tsoc-close:hover { color: var(--text-primary, #f5f5f7); background: rgba(255, 255, 255, 0.07); }
+
+.tsoc-blurb {
+  margin: 0;
+  padding: 10px 16px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+}
+.tsoc-handle-link {
+  color: var(--cyan, #06b6d4);
+  text-decoration: none;
+  font-weight: 600;
+}
+.tsoc-handle-link:hover { text-decoration: underline; }
+
+.tsoc-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 12px 24px;
+}
+
+/* ── Group ────────────────────────────────────────────────────────────── */
+.tsoc-group { margin-top: 12px; }
+.tsoc-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 4px 8px;
+}
+.tsoc-group-name {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.62));
+}
+.tsoc-group-count {
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 18px;
+  text-align: center;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+}
+.tsoc-caveat {
+  margin: 0 4px 10px;
+  padding: 7px 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--amber, #f59e0b);
+  background: rgba(245, 158, 11, 0.07);
+  border: 1px solid rgba(245, 158, 11, 0.16);
+  border-radius: 8px;
+}
+
+/* ── Tweet card ───────────────────────────────────────────────────────── */
+.tsoc-tweet {
+  display: block;
+  text-decoration: none;
+  padding: 11px 12px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.022);
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+.tsoc-tweet:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  transform: translateY(-1px);
+}
+.tsoc-tweet-head { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.tsoc-avatar {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+}
+.tsoc-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tsoc-avatar-fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+}
+.tsoc-id { display: flex; flex-direction: column; min-width: 0; }
+.tsoc-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #f5f5f7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tsoc-verified { color: var(--cyan, #06b6d4); flex: none; }
+.tsoc-handle {
+  font-size: 11px;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+}
+.tsoc-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.78));
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.tsoc-entity { color: var(--text-primary, #f5f5f7); font-weight: 500; }
+.tsoc-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-muted, rgba(245, 245, 247, 0.4));
+}
+
+/* ── States ───────────────────────────────────────────────────────────── */
+.tsoc-msg {
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+}
+.tsoc-msg--err { color: var(--bear, #ef4444); border-color: rgba(239, 68, 68, 0.2); }
+.tsoc-empty {
+  margin-top: 18px;
+  padding: 16px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+}
+.tsoc-skeletons { display: flex; flex-direction: column; gap: 8px; }
+.tsoc-skel {
+  height: 76px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ── Mobile ───────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .tsoc-panel { width: 100%; }
+  .tsoc-tab--open { transform: translateY(-50%) translateX(-100vw); }
+}

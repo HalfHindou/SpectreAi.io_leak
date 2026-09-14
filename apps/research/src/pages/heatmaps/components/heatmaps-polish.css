@@ -1,0 +1,171 @@
+/* Heatmaps presentation layer: retain tile colors, geometry and market data. */
+@font-face { font-family:'Spectre Home DM'; src:url('/fonts/dm-regular.woff2') format('woff2'); font-weight:400 600; font-style:normal; font-display:swap; }
+@font-face { font-family:'Spectre Home DM'; src:url('/fonts/dm-bold.woff2') format('woff2'); font-weight:700 900; font-style:normal; font-display:swap; }
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) {
+  --hm-ink:#f5f5f7;
+  --hm-muted:#b8bdcb;
+  --hm-edge:rgba(225,232,255,.17);
+  --hm-tray:linear-gradient(150deg,rgba(255,255,255,.115),rgba(255,255,255,.018) 48%,rgba(255,255,255,.045)),rgba(12,14,20,.24);
+  --hm-selected:linear-gradient(155deg,rgba(255,255,255,.24),rgba(255,255,255,.075) 55%,rgba(255,255,255,.13));
+  --hm-shadow:inset 0 1px 0 rgba(255,255,255,.19),inset 0 -1px 0 rgba(255,255,255,.025),0 6px 18px rgba(0,0,0,.13);
+  --hm-raised:inset 0 1px 0 rgba(255,255,255,.32),inset 0 0 0 1px rgba(225,232,255,.16),0 3px 9px rgba(0,0,0,.2);
+  font-family:'Spectre Home DM',-apple-system,BlinkMacSystemFont,sans-serif;
+}
+:is(.app .heatmaps-page.day-mode, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container.day-mode) {
+  --hm-ink:#283143;
+  --hm-muted:#606d82;
+  --hm-edge:rgba(255,255,255,.92);
+  --hm-tray:linear-gradient(145deg,rgba(255,255,255,.86),rgba(255,255,255,.26) 48%,rgba(255,255,255,.64)),rgba(232,238,248,.16);
+  --hm-selected:linear-gradient(155deg,#fff,rgba(255,255,255,.67) 56%,rgba(241,246,255,.91));
+  --hm-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(198,209,227,.28),0 5px 18px rgba(53,72,112,.075);
+  --hm-raised:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(255,255,255,.98),0 2px 4px rgba(60,80,120,.09),0 5px 13px rgba(60,80,120,.075);
+}
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) :is(.heatmaps-pill,.heatmaps-view-btn,.heatmap-fullscreen-btn,.heatmaps-page-btn,.heatmaps-clear-filters,.heatmaps-category-item,.share-x-btn,.treemap-zoom-btn,.mhm-pill,.mhm-view-btn,.mhm-page-btn,.heatmaps-search-clear,.mhm-search-clear) {
+  font-family:inherit;
+  font-size:12px;
+  color:var(--hm-muted);
+  background:var(--hm-tray);
+  border:1px solid var(--hm-edge);
+  border-radius:10px;
+  box-shadow:var(--hm-shadow);
+  min-height:34px;
+  flex-shrink:0;
+  text-shadow:none;
+  -webkit-backdrop-filter:blur(14px) saturate(115%);
+  backdrop-filter:blur(14px) saturate(115%);
+}
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) :is(.heatmaps-pill,.heatmaps-view-btn,.heatmaps-page-btn,.heatmaps-category-item,.mhm-pill,.mhm-view-btn).active {
+  color:var(--hm-ink);
+  background:var(--hm-selected);
+  box-shadow:var(--hm-raised);
+}
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) :is(.heatmaps-view-toggle,.mhm-views) {
+  background:var(--hm-tray);
+  border:1px solid var(--hm-edge);
+  border-radius:13px;
+  padding:3px;
+  gap:3px;
+  box-shadow:var(--hm-shadow);
+}
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) :is(.heatmaps-view-btn,.mhm-view-btn):not(.active) { background:transparent; border-color:transparent; box-shadow:none; }
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) :is(button,input):focus-visible { outline:2px solid var(--hm-muted); outline-offset:2px; }
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) button:hover:not(:disabled) { color:var(--hm-ink); }
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) button:disabled { opacity:.45; cursor:default; }
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) button:disabled.active { opacity:.85; }
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) button svg { flex-shrink:0; }
+.app .heatmaps-page :is(.heatmaps-toolbar,.heatmaps-hero,.mhm-hero,.mhm-controls,.heatmaps-movers) {
+  background:var(--hm-tray);
+  border-color:var(--hm-edge);
+  box-shadow:var(--hm-shadow);
+  -webkit-backdrop-filter:blur(20px);
+  backdrop-filter:blur(20px);
+}
+.app .heatmaps-page :is(.heatmaps-search-input,.mhm-search-input) {
+  background:var(--hm-tray);
+  border-color:var(--hm-edge);
+  color:var(--hm-ink);
+  font-family:inherit;
+  font-size:13px;
+  min-height:38px;
+  box-shadow:var(--hm-shadow);
+}
+.app .heatmaps-page :is(.heatmaps-search-input,.mhm-search-input)::placeholder { color:var(--hm-muted); opacity:1; }
+.app .heatmaps-page :is(.heatmaps-title,.heatmaps-fullscreen-title,.mhm-section-label) { font-family:inherit; color:var(--hm-ink); letter-spacing:-.025em; }
+.app .heatmaps-page :is(.heatmaps-subtitle,.heatmaps-pill-label,.heatmaps-result-count,.heatmaps-mover-label,.mhm-subtitle,.mhm-page-info) { font-family:inherit; color:var(--hm-muted); text-transform:none; letter-spacing:.01em; }
+.app .heatmaps-page .heatmaps-category-list { background:#171a22; border:1px solid var(--hm-edge); box-shadow:0 12px 36px rgba(0,0,0,.28); }
+.app .heatmaps-page.day-mode .heatmaps-category-list { background:#f7f9fc; }
+.app .heatmaps-page .heatmaps-category-item { box-shadow:none; background:transparent; border-color:transparent; }
+.heatmaps-fullscreen-overlay { background:#08090d; }
+.heatmaps-fullscreen-overlay:has(.day-mode) { background:#f5f7fa; }
+.heatmaps-fullscreen-overlay .heatmaps-fullscreen-toolbar { flex-wrap:wrap; gap:12px; }
+.heatmaps-fullscreen-overlay .heatmaps-fullscreen-controls { flex-wrap:wrap; min-width:0; max-width:100%; gap:6px; }
+.heatmaps-fullscreen-overlay .heatmaps-fullscreen-title { font-family:'Spectre Home DM',sans-serif; color:var(--hm-ink); text-transform:none; letter-spacing:0; }
+@media (max-width:768px) {
+  .app .heatmaps-page .mhm-title-row { height:auto; flex-wrap:wrap; row-gap:8px; }
+  .app .heatmaps-page .mhm-views { margin-left:0; flex-basis:100%; width:max-content; justify-content:flex-start; }
+  :is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) :is(.mhm-view-btn,.mhm-pill,.mhm-page-btn,.heatmaps-pill,.heatmaps-view-btn,.heatmap-fullscreen-btn,.heatmaps-search-clear,.mhm-search-clear,.treemap-zoom-btn) { min-height:44px; min-width:44px; touch-action:manipulation; }
+  .app .heatmaps-page :is(.heatmaps-search-input,.mhm-search-input) { min-height:44px; font-size:16px; padding-right:48px; }
+  .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container { padding:calc(12px + env(safe-area-inset-top)) 10px calc(12px + env(safe-area-inset-bottom)); }
+  .heatmaps-fullscreen-overlay .heatmaps-fullscreen-controls { max-height:35dvh; overflow-y:auto; padding:3px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  :is(.app .heatmaps-page,.heatmaps-fullscreen-overlay) :is(button,.heatmaps-fullscreen-container) { transition:none; animation:none; }
+}
+/* A fullscreen grid scrolls when 100/200 tiles need more room than the screen. */
+.heatmaps-fullscreen-overlay .heatmaps-fullscreen-container .heatmap-grid {
+  flex: 1 0 auto;
+  grid-auto-rows: minmax(108px, auto);
+}
+.heatmaps-fullscreen-overlay .heatmaps-fullscreen-container .heatmap-tile {
+  min-height: 108px;
+}
+
+/* Every grid tile uses the same price-then-change reading order. */
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) .heatmap-tile { min-width:0; }
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) .heatmap-tile-bottom { flex-direction:column; align-items:flex-start; gap:5px; }
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) .heatmap-tile-price { max-width:100%; overflow-wrap:anywhere; }
+.app .heatmaps-page .heatmap-grid { grid-auto-rows:minmax(100px,auto); }
+@media(max-width:768px) {
+  .app .heatmaps-page :is(.mhm-pill,.mhm-view-btn,.mhm-page-btn) { border-radius:10px !important; }
+  .app .heatmaps-page .heatmap-tile-symbol { font-size:12px !important; }
+  .app .heatmaps-page :is(.heatmap-tile-price,.heatmap-tile-change) { font-size:11px !important; }
+  .app .heatmaps-page .heatmap-tile-change { padding-inline:5px; }
+}
+
+/* Shared material and type for the Bars, Dual and Money Flow subviews. */
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) :is(.heatmap-chart-view,.hdc-column,.mfx) {
+  min-width:0;
+  border:1px solid var(--hm-edge);
+  border-radius:16px;
+  background:var(--hm-tray);
+  box-shadow:var(--hm-shadow);
+  -webkit-backdrop-filter:blur(18px) saturate(115%);
+  backdrop-filter:blur(18px) saturate(115%);
+}
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) :is(.heatmap-chart-header span,.heatmap-chart-rank,.heatmap-chart-name,.heatmap-chart-price,.mfx-rail-hint,.mfx-scope,.mfx-legend) {
+  color:var(--hm-muted);
+}
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) :is(.heatmap-chart-symbol,.hdc-row-symbol,.mfx-rail-sym) { color:var(--hm-ink); }
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) :is(.heatmap-chart-symbol,.heatmap-chart-name,.heatmap-chart-change,.heatmap-chart-price,.hdc-row-symbol,.hdc-row-change,.hdc-col-badge,.mfx-amount,.mfx-split,.mfx-rail-sym,.mfx-rail-open) {
+  font-family:inherit;
+  font-variant-numeric:tabular-nums;
+}
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) .heatmap-chart-header { min-height:36px; }
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) .heatmap-chart-header span { font-size:11px; letter-spacing:.01em; text-transform:none; }
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) .hdc-view { gap:10px; grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) .hdc-divider { display:none; }
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) .hdc-col-header { padding:12px; }
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) .hdc-col-badge { border-radius:9px; padding:5px 10px; box-shadow:inset 0 1px 0 rgba(255,255,255,.14); }
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) .mfx { padding:16px; }
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) .mfx-rail { background:var(--hm-tray); border-color:var(--hm-edge); box-shadow:var(--hm-shadow); }
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) .mfx-rail-open {
+  min-height:36px;
+  border-radius:10px;
+  background:var(--hm-selected);
+  border:1px solid var(--hm-edge);
+  box-shadow:var(--hm-raised);
+  color:var(--hm-ink);
+}
+:is(.app .heatmaps-page, .heatmaps-fullscreen-overlay .heatmaps-fullscreen-container) .mfx-rail-open:focus-visible { outline:2px solid var(--hm-muted); outline-offset:3px; }
+@media(max-width:768px) {
+  .app .heatmaps-page .heatmap-chart-row { min-height:44px; }
+  .app .heatmaps-page .hdc-view { gap:8px; }
+  .app .heatmaps-page .hdc-col-header { padding:10px 8px; }
+  .app .heatmaps-page .hdc-col-badge { font-size:11px; padding:4px 7px; }
+  /* Keep gainers and losers comparable, with a full-width bar below each label. */
+  .app .heatmaps-page .hdc-column .hdc-row {
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-rows:auto 10px;
+    gap:6px 4px;
+    height:auto;
+    min-height:58px;
+    padding:8px;
+  }
+  .app .heatmaps-page .hdc-row-token { grid-column:1; grid-row:1; min-width:0; gap:5px; justify-content:flex-start; }
+  .app .heatmaps-page .hdc-row-logo { flex-shrink:0; }
+  .app .heatmaps-page .hdc-row-change { grid-column:2; grid-row:1; font-size:11px; text-align:right; }
+  .app .heatmaps-page .hdc-row-bar-area { grid-column:1 / -1; grid-row:2; padding:0; }
+  .app .heatmaps-page .hdc-row-bar-track { height:8px; width:100%; }
+  .app .heatmaps-page .mfx { padding:12px; }
+  .app .heatmaps-page .mfx .mfx-rail-open { min-height:44px; }
+}

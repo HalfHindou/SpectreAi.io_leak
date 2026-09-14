@@ -1,0 +1,516 @@
+/**
+ * App Store Ready - Global Mobile Optimizations
+ * iOS & Android compatibility layer
+ * 
+ * Import this in main.jsx or App.jsx:
+ * import './styles/app-store-ready.css'
+ */
+
+/* ============================================================
+   GLOBAL MOBILE FOUNDATION
+   ============================================================ */
+
+/* Disable iOS tap highlight */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+/* Allow text selection where needed */
+input,
+textarea,
+[contenteditable="true"] {
+  -webkit-touch-callout: default;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Smooth scrolling with momentum */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent body scroll bounce (iOS) */
+html, body {
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+}
+
+/* Safe area CSS custom properties */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  
+  /* Touch target minimums */
+  --touch-min: 38px;
+  --touch-min-android: 48px;
+  
+  /* Mobile spacing */
+  --mobile-padding: 16px;
+  --mobile-gap: 12px;
+  --mobile-radius: 12px;
+  --mobile-radius-lg: 16px;
+}
+
+/* ============================================================
+   TYPOGRAPHY - Prevent iOS Zoom on Inputs
+   ============================================================ */
+
+@media (max-width: 768px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important; /* Prevents iOS zoom */
+  }
+  
+  input::placeholder,
+  textarea::placeholder {
+    font-size: 16px;
+  }
+}
+
+/* ============================================================
+   TOUCH TARGETS - Minimum 44px (iOS HIG)
+   ============================================================ */
+
+@media (max-width: 768px) {
+  /* Ensure all interactive elements meet touch target requirements
+     Exclude portal-rendered dropdowns (mobile-header-portal) which manage their own sizing */
+  /* min-HEIGHT only. A blanket min-WIDTH replaces the flexbox `min-width: auto`
+     floor, which is the only thing stopping a pill strip from crushing its
+     buttons below their own text — measured on /alt-rotation: seven index pills
+     squeezed to 38-47px against 48-70px of label, glyphs overlapping into soup.
+     Text buttons get their tap width from padding; only icon-only buttons need
+     an explicit width floor, and they keep it in the rule below. */
+  /* 🪤🪤 The exempt list below CANNOT override this rule from outside it, and
+     for a long time it did not: `button:not(.a *):not(.b *)` is specificity
+     (0,2,1) — :not() takes the specificity of its argument — so a plain
+     `.some-pill { min-height: 0 }` at (0,1,0) silently loses no matter which
+     stylesheet it sits in or how late it loads. Measured 2026-08-12: the LITE
+     topbar switch was still a 38px thumb inside a 32px track (thumb bursting
+     the track, exactly as reported) with a `min-height: 0` waiver already
+     written for it. The only reliable way to exempt something from a rule of
+     this shape is to exclude it HERE, so it never matches in the first place. */
+  button:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *):not(.lite-tf-btn, .lite-look-btn, .lite-chip, .arn-rail__btn, .wst-toggle, .compare-chip-x, .lite-cmp-x, .mc-media-action-btn, .mc-media-save-btn, .mcx-hero-dot, .mcx-thumb-add, .mcx-tag-save, .mcp-ep-queue, .mc-shorts-save),
+  a:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  [role="button"]:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  [role="link"]:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  [tabindex]:not([tabindex="-1"]):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *) {
+    min-height: var(--touch-min);
+  }
+
+  /* Icon-only buttons need explicit sizing */
+  .icon-btn,
+  .btn-icon,
+  [class*="icon-btn"],
+  [class*="-icon-btn"] {
+    min-width: var(--touch-min);
+    min-height: var(--touch-min);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Segmented pills whose height is a DESIGN decision (26-28px per the mobile
+     design system). Inflating them to 38px is what read as "undesigned chunky
+     boxes" (founder, 08-04). Their hit area comes from the row spacing around
+     them - F3: enlarge the hit area with padding, never the visual size.
+     🪤 These have the SAME latent specificity problem the LITE pills hit: at
+     (0,1,0) this block loses to the (0,2,1) rule above, so it has never
+     actually applied. Left untouched rather than silently resizing four
+     components nobody has reported - the LITE pills are excluded in the rule
+     above instead, which is the shape that works. */
+  .rzm-filter-pill,
+  .rzm-subtab,
+  .rzm-mkt-sortpill,
+  .rzm-mkt-filterbtn,
+  .ar-ix,
+  .ar-tf button {
+    min-height: 0;
+  }
+}
+
+/* ============================================================
+   SCROLL CONTAINERS - Native Feel
+   ============================================================ */
+
+/* Horizontal scroll containers */
+[class*="scroll-x"],
+[class*="horizontal-scroll"],
+[style*="overflow-x: auto"],
+[style*="overflow-x:auto"] {
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+[class*="scroll-x"]::-webkit-scrollbar,
+[class*="horizontal-scroll"]::-webkit-scrollbar {
+  display: none;
+}
+
+/* Vertical scroll containers */
+[class*="scroll-y"],
+[class*="vertical-scroll"] {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* ============================================================
+   ANIMATIONS - 60fps Performance
+   ============================================================ */
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* GPU acceleration for smooth animations */
+.animate,
+[class*="animate-"],
+[class*="transition-"] {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* ============================================================
+   SAFE AREAS - iOS Notch & Home Indicator
+   ============================================================ */
+
+
+/* ============================================================
+   MOBILE UTILITIES
+   ============================================================ */
+
+@media (max-width: 768px) {
+  /* Hide on mobile */
+  .hide-mobile,
+  .desktop-only,
+  [class*="hide-mobile"],
+  [class*="desktop-only"] {
+    display: none !important;
+  }
+  
+  /* Show only on mobile */
+  .mobile-only {
+    display: block !important;
+  }
+  
+  /* Full width on mobile */
+  .mobile-full-width {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* Stack on mobile */
+  .mobile-stack {
+    flex-direction: column !important;
+  }
+  
+  /* Center on mobile */
+  .mobile-center {
+    text-align: center !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+}
+
+/* Desktop utilities */
+@media (min-width: 769px) {
+  .mobile-only {
+    display: none !important;
+  }
+}
+
+/* ============================================================
+   ACTIVE STATES - Tactile Feedback
+   ============================================================ */
+
+@media (max-width: 768px) {
+  /* Subtle press feedback for buttons - exclude bottom nav and header portal (own states) */
+  button:active:not(:disabled):not(.mobile-bottom-nav-item):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  [role="button"]:active:not(.mobile-bottom-nav-item):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  .btn:active:not(:disabled),
+  [class*="btn"]:active:not(:disabled):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *) {
+    transform: scale(0.97);
+    opacity: 0.9;
+  }
+
+  /* Card press feedback - exclude bottom nav and header portal items */
+  .card:active,
+  [class*="card"]:active:not([class*="bottom-nav"]):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  [class*="-row"]:active:not([class*="bottom-nav"]):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  [class*="-item"]:active:not([class*="bottom-nav"]):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *) {
+    transform: scale(0.99);
+  }
+}
+
+/* ============================================================
+   FORM ELEMENTS - Mobile Optimized
+   ============================================================ */
+
+/* 🪤 `.ui-bare-input` — the opt-out for an input that is NOT the field.
+   Search rows across the app draw their own chrome (a rounded row with an icon
+   and a transparent input inside). The blanket rules below then gave the inner
+   input a SECOND box: 38px min-height inside a 34px row, 12/14px padding, a
+   12px radius and — in day mode — a `rgba(0,0,0,0.03) !important` fill, which
+   is the gray slab that appeared over the Mission Control search bar
+   (founder 08-17). The exclusion has to live IN each selector: a rule written
+   as `input:not(.wrapper *)` elsewhere carries more specificity than the
+   opting-out component can beat, so an exempt list bolted on afterwards
+   silently never applies. Carry the class on the input itself. */
+@media (max-width: 768px) {
+  /* Larger touch targets for form elements - exclude header portal */
+  input[type="text"]:not(.ui-bare-input):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  input[type="email"]:not(.ui-bare-input):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  input[type="password"]:not(.ui-bare-input):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  input[type="search"]:not(.ui-bare-input):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  input[type="number"]:not(.ui-bare-input):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  input[type="tel"]:not(.ui-bare-input):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  input[type="url"]:not(.ui-bare-input):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  textarea:not(.ui-bare-input):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  select:not(.ui-bare-input):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *) {
+    min-height: var(--touch-min);
+    padding: 12px 14px;
+    border-radius: var(--mobile-radius);
+    outline: none;
+  }
+
+  /* Checkbox and radio - larger touch targets */
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Labels - exclude header portal */
+  label:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *) {
+    min-height: var(--touch-min);
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+  }
+}
+
+/* ============================================================
+   Z-INDEX HIERARCHY - Defined in index.css (:root block)
+   Do NOT redefine --z-header, --z-nav, --z-overlay, --z-modal here.
+   index.css is the single source of truth for z-index tokens.
+   ============================================================ */
+
+/* ============================================================
+   BORDERLESS DESIGN SYSTEM - More Space on Mobile
+   Removes borders, uses shadows and spacing for separation
+   ============================================================ */
+
+@media (max-width: 768px) {
+  /* Reset borders on common elements - exclude header portal (manages own borders) */
+  .card:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  .panel:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  .widget:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  .box:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  [class*="-card"]:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  [class*="-panel"]:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  [class*="-widget"]:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  [class*="-box"]:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  [class*="-container"]:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *) {
+    border: none !important;
+  }
+
+  /* Use subtle shadows instead of borders - exclude header portal */
+  .card:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  [class*="-card"]:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *) {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Remove table borders */
+  table,
+  th,
+  td,
+  tr {
+    border: none !important;
+  }
+
+  /* Use background alternation instead of borders for rows — exclude mobile token list */
+  /* tr:nth-child(even),
+  [class*="-row"]:nth-child(even):not(.mtl-row):not(.swipeable-row):not(.ai-agent-mobile-row):not(.ai-model-mobile-row) {
+    background: rgba(255, 255, 255, 0.02);
+  } */
+
+  /* Remove list item borders - exclude bottom nav and header portal items */
+  li:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  [class*="-item"]:not([class*="bottom-nav"]):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *) {
+    border-bottom: none !important;
+  }
+
+  /* Use gap instead of borders for separation */
+  .list,
+  ul,
+  [class*="-list"] {
+    gap: 8px;
+  }
+
+  /* Remove input borders, use background - exclude header portal */
+  input:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  textarea:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  select:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *) {
+    border: none !important;
+    box-shadow: none;
+  }
+
+  input:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *):focus,
+  textarea:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *):focus,
+  select:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *):focus {
+    outline: none !important;
+  }
+
+  /* Dividers - hidden for clean look */
+  hr,
+  .divider,
+  [class*="divider"] {
+    border: none !important;
+    height: 0;
+    background: transparent;
+    margin: 12px 0;
+  }
+
+  /* Button borders removed - exclude bottom nav and header portal (own border system)
+     …and `.ui-glass`, the opt-out for a control whose whole look IS its hairline
+     + inner gleam. `border: none !important` here silently flattened every glass
+     button on mobile — the control kept its translucent fill and lost the edge
+     that made it read as glass, which is what "buttons not premium" looks like
+     from the outside. The exclusion has to live IN this selector: a component
+     rule cannot beat `!important` from here. */
+  button:not(.ui-glass):not(.mobile-bottom-nav-item):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  .btn:not(.ui-glass):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *),
+  [class*="btn-"]:not(.ui-glass):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *) {
+    border: none !important;
+    box-shadow: none;
+  }
+
+  button:not(.ui-glass):not(.mobile-bottom-nav-item):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *):hover,
+  .btn:not(.ui-glass):not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *):hover {
+    box-shadow: none;
+  }
+}
+
+/* Day mode borderless */
+@media (max-width: 768px) {
+  .app.app-day-mode .card,
+  .app.app-day-mode [class*="-card"],
+  .app.welcome-day-mode .card,
+  .app.welcome-day-mode [class*="-card"] {
+    box-shadow: none;
+  }
+
+  .app.app-day-mode tr:nth-child(even),
+  .app.app-day-mode [class*="-row"]:nth-child(even):not(.mtl-row):not(.swipeable-row):not(.ai-agent-mobile-row):not(.ai-model-mobile-row),
+  .app.welcome-day-mode tr:nth-child(even),
+  .app.welcome-day-mode [class*="-row"]:nth-child(even):not(.mtl-row):not(.swipeable-row):not(.ai-agent-mobile-row):not(.ai-model-mobile-row) {
+    background: transparent;
+  }
+
+  .app.app-day-mode input:not(.ui-bare-input),
+  .app.app-day-mode textarea:not(.ui-bare-input),
+  .app.app-day-mode select:not(.ui-bare-input),
+  .app.welcome-day-mode input:not(.ui-bare-input),
+  .app.welcome-day-mode textarea:not(.ui-bare-input),
+  .app.welcome-day-mode select:not(.ui-bare-input) {
+    background: rgba(0, 0, 0, 0.03) !important;
+    box-shadow: none;
+  }
+
+  .app.app-day-mode input:not(.ui-bare-input):focus,
+  .app.app-day-mode textarea:not(.ui-bare-input):focus,
+  .app.app-day-mode select:not(.ui-bare-input):focus,
+  .app.welcome-day-mode input:not(.ui-bare-input):focus,
+  .app.welcome-day-mode textarea:not(.ui-bare-input):focus,
+  .app.welcome-day-mode select:not(.ui-bare-input):focus {
+    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.18) !important;
+  }
+
+  .app.app-day-mode hr,
+  .app.app-day-mode .divider,
+  .app.welcome-day-mode hr,
+  .app.welcome-day-mode .divider {
+    background: transparent;
+  }
+
+  .app.app-day-mode button,
+  .app.app-day-mode .btn,
+  .app.welcome-day-mode button,
+  .app.welcome-day-mode .btn {
+    box-shadow: none;
+  }
+}
+
+/* ============================================================
+   GLASS MORPHISM UTILITIES
+   ============================================================ */
+
+.glass,
+.glass-card,
+[class*="glass-"]:not([class*="glass-select"]):not([class*="glass-border"]):not([class*="glass-pill"]) {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.glass-dark {
+  background: rgba(28, 28, 32, 0.75);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06) inset,
+    0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Day mode glass */
+.app.app-day-mode .glass,
+.app.app-day-mode .glass-card,
+.app.welcome-day-mode .glass,
+.app.welcome-day-mode .glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.05) inset,
+    0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+/* ============================================================
+   PRINT STYLES - Hide UI Elements
+   ============================================================ */
+
+@media print {
+  .header,
+  .bottom-nav,
+  .sidebar,
+  .modal,
+  .overlay,
+  button,
+  [class*="nav"],
+  [class*="menu"] {
+    display: none !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}

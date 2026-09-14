@@ -1,0 +1,377 @@
+/* MobileGreeting — Apple-cinematic "Good morning, X" hero for mobile home.
+   52px avatar with soft ring + glow, big confident name, whisper-thin
+   eyebrow, hairline separator below so the section reads as deliberate
+   structure (not floating chrome). Transparent void background. */
+
+.mg {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 16px 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Hairline separator below — fades in/out at the edges so it doesn't
+   read as a hard divider. */
+.mg::after {
+  content: '';
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.05) 75%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* ── Avatar (left) ────────────────────────────────────────────────── */
+.mg-avatar {
+  position: relative;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.015) 100%
+  );
+  padding: 0;
+  cursor: pointer;
+  overflow: visible;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 4px 14px rgba(0, 0, 0, 0.28);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.mg-avatar:active {
+  transform: scale(0.96);
+}
+
+/* Inner clip — the image is rounded inside the visible-overflow parent
+   so the camera / clear badges can hang off the edge cleanly. */
+.mg-avatar-inner {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mg-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Subtle inner ring when an image is present — feels intentional, not
+   just a cropped photo. */
+.mg-avatar.has-image .mg-avatar-inner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+.mg-avatar-initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: -0.02em;
+}
+
+/* Camera badge — bottom right when NO image (call to action) */
+.mg-avatar-camera {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1c1c20 0%, #131316 100%);
+  border: 1.5px solid #09090b; /* matches page bg so it punches through */
+  color: rgba(245, 245, 247, 0.92);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+/* Keep the camera badge visible even with an image — it doubles as a
+   "tap to change" affordance. Slightly subtler when an image is present
+   so it reads as a cue rather than an empty-state CTA. */
+.mg-avatar.has-image .mg-avatar-camera {
+  opacity: 0.85;
+}
+
+/* Remove link — a whisper-thin 10px uppercase text button in the row
+   corner. Replaces the on-avatar X badge which the global 44x44 tap-target
+   rule was forced to balloon (see app-store-ready.css). As a regular
+   <button> this gets the 44x44 hit area automatically; the VISUAL is just
+   text, so it doesn't compete with the avatar. */
+.mg-remove {
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0 6px;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.32);
+  cursor: pointer;
+  flex-shrink: 0;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.2s ease;
+}
+.mg-remove:active {
+  color: rgba(239, 68, 68, 0.9);
+}
+
+.mg-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Text stack (right) ───────────────────────────────────────────── */
+.mg-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  gap: 5px;
+}
+
+.mg-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.4);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  line-height: 1;
+}
+
+.mg-name {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.028em;
+  color: rgba(245, 245, 247, 0.95);
+  line-height: 1.1;
+  /* Lock the height so the row doesn't shift when switching to the
+     input on edit (the input gets a matching explicit height below). */
+  height: 38px;
+  min-height: 38px;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+.mg-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 58vw;
+}
+.mg-name-pencil {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(245, 245, 247, 0.3);
+  transform: translateY(1px);
+}
+
+/* Empty state — small dashed CTA pill, doesn't impersonate a real name */
+.mg-name.is-empty {
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: rgba(245, 245, 247, 0.55);
+  padding: 5px 11px;
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.015);
+  gap: 5px;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+.mg-name.is-empty:active {
+  border-color: rgba(255, 255, 255, 0.28);
+  color: rgba(245, 245, 247, 0.85);
+  background: rgba(255, 255, 255, 0.04);
+}
+.mg-name.is-empty .mg-name-pencil {
+  color: rgba(245, 245, 247, 0.5);
+  transform: none;
+}
+
+/* Inline edit input — matches the name display button exactly so editing
+   feels in-place, not a different control.
+
+   The `.mg`-prefixed selector beats the generic form rules in
+   app-store-ready.css (`input[type="text"]:not(...)`) for padding /
+   border-radius / min-height. font-size needs `!important` because that
+   global uses `!important` (it forces 16px to suppress iOS auto-zoom on
+   inputs — misfires here since our text is already 24px). */
+.mg .mg-name-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none !important;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.22) !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 24px !important;
+  font-weight: 700;
+  letter-spacing: -0.028em;
+  line-height: 1.1;
+  color: #f5f5f7;
+  caret-color: #f5f5f7;
+  outline: none;
+  width: 100%;
+  max-width: 60vw;
+  /* Match the .mg-name display button exactly so the row doesn't shift */
+  height: 38px !important;
+  min-height: 38px !important;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  transition: border-color 0.2s ease;
+}
+.mg .mg-name-input::placeholder {
+  color: rgba(245, 245, 247, 0.3);
+}
+.mg .mg-name-input:focus {
+  border-bottom-color: rgba(255, 255, 255, 0.65);
+}
+
+/* ── Day mode ─────────────────────────────────────────────────────── */
+.app.app-day-mode .mg::after,
+.mg.mg--day::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.06) 25%,
+    rgba(0, 0, 0, 0.06) 75%,
+    transparent 100%
+  );
+}
+.app.app-day-mode .mg-avatar,
+.mg.mg--day .mg-avatar {
+  background: linear-gradient(135deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.01) 100%);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.app.app-day-mode .mg-avatar.has-image .mg-avatar-inner::after,
+.mg.mg--day .mg-avatar.has-image .mg-avatar-inner::after {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+.app.app-day-mode .mg-avatar-initial,
+.mg.mg--day .mg-avatar-initial {
+  color: rgba(17, 17, 19, 0.7);
+}
+.app.app-day-mode .mg-avatar-camera,
+.mg.mg--day .mg-avatar-camera {
+  background: linear-gradient(135deg, #ffffff 0%, #f4f4f6 100%);
+  border-color: #ffffff;
+  color: rgba(17, 17, 19, 0.85);
+}
+.app.app-day-mode .mg-remove,
+.mg.mg--day .mg-remove {
+  color: rgba(17, 17, 19, 0.4);
+}
+.app.app-day-mode .mg-eyebrow,
+.mg.mg--day .mg-eyebrow {
+  color: rgba(17, 17, 19, 0.5);
+}
+.app.app-day-mode .mg-name,
+.mg.mg--day .mg-name {
+  color: rgba(17, 17, 19, 0.95);
+}
+.app.app-day-mode .mg-name-pencil,
+.mg.mg--day .mg-name-pencil {
+  color: rgba(17, 17, 19, 0.35);
+}
+.app.app-day-mode .mg-name.is-empty,
+.mg.mg--day .mg-name.is-empty {
+  color: rgba(17, 17, 19, 0.55);
+  border-color: rgba(0, 0, 0, 0.18);
+  background: rgba(0, 0, 0, 0.015);
+}
+.app.app-day-mode .mg-name.is-empty .mg-name-pencil,
+.mg.mg--day .mg-name.is-empty .mg-name-pencil {
+  color: rgba(17, 17, 19, 0.5);
+}
+.app.app-day-mode .mg-name-input,
+.mg.mg--day .mg-name-input {
+  color: #111113;
+  caret-color: #111113;
+  border-bottom-color: rgba(0, 0, 0, 0.22);
+}
+.app.app-day-mode .mg-name-input::placeholder,
+.mg.mg--day .mg-name-input::placeholder {
+  color: rgba(17, 17, 19, 0.35);
+}
+.app.app-day-mode .mg-name-input:focus,
+.mg.mg--day .mg-name-input:focus {
+  border-bottom-color: rgba(0, 0, 0, 0.6);
+}
+
+/* Narrow phones (iPhone SE) */
+@media (max-width: 380px) {
+  .mg { gap: 12px; padding: 14px 14px 18px; }
+  .mg-avatar { width: 48px; height: 48px; }
+  .mg-name { font-size: 22px; }
+  .mg .mg-name-input { font-size: 22px !important; }
+  .mg-name-text { max-width: 52vw; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-avatar,
+  .mg-avatar-camera,
+  .mg-name.is-empty,
+  .mg-name-input { transition: none; }
+}

@@ -1,0 +1,392 @@
+/* ============================================
+   MobileChartToolbar
+   Prefix: mct-
+
+   Compact mobile bar that mirrors the desktop
+   .chart-controls visual:
+     - Dark pill buttons with subtle borders
+     - Mono labels (Geist Mono)
+     - Lock glyph bottom-right on locked buttons
+     - Active state = solid white pill / dark text
+     - Divider lines between groups
+
+   Layout:
+     [TV] | [Types ▾] [Price | MCap🔒] [Tools ▾] | [TF ▾] [⛶]
+   ============================================ */
+
+.mct {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--glass-border);
+  background: var(--ob-surface-1);
+  z-index: 1100;
+}
+
+/* Price/MCap toggle — GMGN text style, active word lit. */
+.mct-axis {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 32px;
+  min-height: 32px;
+  min-width: 0;
+  padding: 0 6px;
+  background: transparent;
+  border: none;
+  border-radius: var(--r-xs);
+  color: var(--text-3);
+  font-family: var(--font-num-chip);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mct-axis .is-on {
+  color: var(--text-1);
+  font-weight: 700;
+}
+.mct-axis-sep { opacity: 0.5; }
+body.theme-light .mct-axis { color: #94a3b8; }
+body.theme-light .mct-axis .is-on { color: #0f172a; }
+
+/* Dividers between groups — same hairline used desktop-side. */
+.mct-divider {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 18px;
+  background: var(--glass-border);
+  margin: 0 2px;
+}
+
+/* `--push` variant — pushes itself and every sibling after it to the
+   right edge of the toolbar. Used to anchor the Timeframe dropdown
+   and Fullscreen button to the far right. */
+.mct-divider--push {
+  margin-left: auto;
+}
+
+/* Generic button — applies to every pill (icon, label, dropdown,
+   active TV mark, fullscreen, etc.). */
+.mct-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /* Explicit min-* beats the global touch 44px button floor (index.css)
+     which otherwise inflates the compact toolbar on real phones. */
+  height: 32px;
+  min-height: 32px;
+  min-width: 0;
+  padding: 0 9px;
+  border-radius: var(--r-xs);
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition:
+    background-color var(--dur-micro) var(--ease-out),
+    border-color var(--dur-micro) var(--ease-out),
+    color var(--dur-micro) var(--ease-out),
+    transform var(--dur-micro) var(--ease-out);
+}
+.mct-btn::after,
+.mct-axis::after {
+  content: '';
+  position: absolute;
+  inset: -6px -2px;
+}
+.mct-axis { position: relative; }
+.mct-btn:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-lit);
+}
+.mct-btn:active { transform: scale(0.97); }
+.mct-btn.is-open {
+  background: var(--glass-highlight);
+  border-color: var(--glass-border-lit);
+}
+
+/* TV brand button — dark fill, slightly accented. */
+.mct-btn--tv {
+  padding: 0 8px;
+  background: var(--ob-surface-3);
+  border-color: var(--glass-border-lit);
+  color: var(--text-1);
+}
+.mct-btn--tv:hover {
+  background: var(--ob-surface-4);
+}
+
+/* Group trigger (Types/Tools/TF) — has chevron + label + lock. */
+.mct-btn--group .mct-btn-label,
+.mct-btn--tf .mct-btn-label {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.mct-btn-label--mono {
+  font-family: var(--font-mono) !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+/* Icon-only button (fullscreen) */
+.mct-btn--icon {
+  width: 32px;
+  padding: 0;
+  justify-content: center;
+}
+
+/* Tools — icon + chevron only, no label. */
+.mct-btn--tools {
+  padding: 0 8px 0 8px;
+  gap: 4px;
+}
+
+/* Y-axis mode pair (Price / MCap) — share the standard .mct-btn
+   footprint so they sit at the exact same height as Types/Tools/TF/
+   Fullscreen. Fixed pixel width for a visually equal pair. */
+.mct-btn--mode {
+  width: 64px;
+  padding: 0;
+  justify-content: center;
+  cursor: default;
+  user-select: none;
+}
+.mct-btn--mode-active {
+  background: var(--text-1);
+  border-color: var(--text-1);
+  color: var(--ob-void);
+}
+.mct-btn--mode-active:hover {
+  background: var(--text-1);
+  border-color: var(--text-1);
+}
+.mct-btn--mode-locked {
+  pointer-events: none;
+  color: var(--text-3);
+  background: var(--glass-fill);
+}
+
+/* Lock glyph corner — matches the desktop .type-lock / .tool-lock
+   bottom-right placement. */
+.mct-btn-lock {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  color: var(--text-3);
+  opacity: 0.85;
+}
+.mct-btn-lock--inline {
+  position: static;
+  margin-left: 4px;
+}
+
+.mct-btn-caret {
+  color: var(--text-3);
+  flex-shrink: 0;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.mct-btn.is-open .mct-btn-caret { transform: rotate(180deg); }
+
+/* Price | MCap segmented toggle — same density as desktop.
+   Two equal-width cells with explicit pixel widths so the Active
+   styling doesn't change layout. No flex stretch — the buttons keep a
+   fixed footprint regardless of state. */
+.mct-toggle {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 2px;
+  border-radius: var(--r-xs);
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  box-sizing: border-box;
+  flex: 0 0 auto;
+}
+.mct-toggle-btn {
+  position: relative;
+  width: 64px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0;
+  border-radius: 4px;
+  background: transparent;
+  border: none;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  cursor: pointer;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  vertical-align: middle;
+  line-height: 1;
+  transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out);
+}
+.mct-toggle-btn:hover:not(.is-static) { color: var(--text-1); }
+.mct-toggle-btn.is-active {
+  background: var(--text-1);
+  color: var(--ob-void);
+}
+/* Static / locked MCap cell — no hover, no click, never active. */
+.mct-toggle-btn.is-static {
+  cursor: default;
+  pointer-events: none;
+  user-select: none;
+  background: transparent !important;
+  color: var(--text-3) !important;
+}
+.mct-toggle-btn.is-locked .mct-btn-lock--inline {
+  color: currentColor;
+  opacity: 0.7;
+}
+
+/* ── Dropdown popovers ───────────────────── */
+.mct-dropdown {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 160px;
+  padding: 5px;
+  background: var(--ob-surface-3);
+  border: 1px solid var(--glass-border-lit);
+  border-radius: var(--r-sm);
+  box-shadow:
+    var(--shadow-3),
+    inset 0 1px 0 var(--glass-highlight);
+  z-index: 10000;
+  animation: mctPopIn 0.16s var(--ease-out) both;
+}
+.mct-dropdown--tf {
+  min-width: 132px;
+}
+@keyframes mctPopIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.mct-dropdown-row {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-xs);
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  min-height: 36px;
+  transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out);
+}
+.mct-dropdown-row:hover {
+  background: var(--glass-fill-hover);
+}
+/* Active row = whisper-quiet ghost fill, not a solid white slab. A filled
+   white block reads as a foreign light card inside the dark popover. */
+.mct-dropdown-row.is-active {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-1);
+}
+.mct-dropdown-row.is-locked {
+  color: var(--text-2);
+}
+
+.mct-dropdown-row-icon { color: var(--text-2); flex-shrink: 0; }
+.mct-dropdown-row.is-active .mct-dropdown-row-icon { color: var(--text-1); }
+.mct-dropdown-row.is-locked .mct-dropdown-row-icon { color: var(--text-3); }
+
+.mct-dropdown-row-label {
+  flex: 1 1 auto;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.mct-dropdown-row-label--mono {
+  font-variant-numeric: tabular-nums;
+}
+
+.mct-dropdown-row-lock {
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+
+/* iPhone SE — keep groups visible even at 360 wide. */
+@media (max-width: 380px) {
+  .mct { gap: 3px; padding: 8px; }
+  .mct-btn { padding: 0 7px; gap: 4px; }
+  .mct-btn--group .mct-btn-label { font-size: 11.5px; }
+  .mct-divider { margin: 0 1px; }
+}
+
+/* ── Day mode ────────────────────────────── */
+body.theme-light .mct {
+  background: #ffffff;
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+body.theme-light .mct-divider { background: rgba(0, 0, 0, 0.08); }
+body.theme-light .mct-btn {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: rgba(15, 23, 42, 0.85);
+}
+body.theme-light .mct-btn:hover {
+  background: rgba(0, 0, 0, 0.07);
+  border-color: rgba(0, 0, 0, 0.14);
+}
+body.theme-light .mct-btn--tv {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.14);
+}
+body.theme-light .mct-btn-lock,
+body.theme-light .mct-btn-caret { color: rgba(15, 23, 42, 0.55); }
+body.theme-light .mct-toggle {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+body.theme-light .mct-toggle-btn { color: rgba(15, 23, 42, 0.55); }
+body.theme-light .mct-toggle-btn:hover { color: #0f172a; }
+body.theme-light .mct-toggle-btn.is-active {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+/* Trading day mode is `body.theme-light` (the .app.app-day-mode rules above
+   are inherited from the research app and never match here). Same ghost-fill
+   active treatment, inverted for a light surface. */
+body.theme-light .mct-dropdown {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+}
+body.theme-light .mct-dropdown-row { color: #0f172a; }
+body.theme-light .mct-dropdown-row:hover { background: rgba(0, 0, 0, 0.04); }
+body.theme-light .mct-dropdown-row.is-active {
+  background: rgba(15, 23, 42, 0.06);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+}
+body.theme-light .mct-dropdown-row.is-active .mct-dropdown-row-icon { color: #0f172a; }
+body.theme-light .mct-dropdown-row.is-locked { color: rgba(15, 23, 42, 0.55); }
+body.theme-light .mct-dropdown-row-icon { color: rgba(15, 23, 42, 0.55); }
+body.theme-light .mct-dropdown-row-lock { color: rgba(15, 23, 42, 0.5); }

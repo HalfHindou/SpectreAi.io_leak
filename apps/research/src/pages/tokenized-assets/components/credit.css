@@ -1,0 +1,461 @@
+/* ═══════════════════════════════════════════════════════════
+   Credit tab — scoped styles (prefix: cr-)
+   Owns: the in-tab Risk Radar glass viz + two-up panel framing
+   + vintage glass tweaks. Consumes the page glass tokens
+   (--ta-glass-*, --ta-pad-*, --ta-gap-*); never hardcodes blur,
+   gradient stops or shadow tiers.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Risk Radar shell — canonical glass card ──────────────── */
+.cr-radar {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ta-gap-tight);
+  padding: var(--ta-pad-card-lg);
+  background: var(--ta-glass-bg);
+  backdrop-filter: blur(var(--ta-glass-blur));
+  -webkit-backdrop-filter: blur(var(--ta-glass-blur));
+  border: 1px solid var(--ta-glass-border);
+  border-radius: var(--ta-glass-radius);
+  box-shadow: var(--ta-glass-shadow);
+  overflow: hidden;
+  min-height: 320px;
+  transition: border-color var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out),
+              transform var(--duration-base) var(--ease-out);
+}
+.cr-radar:hover {
+  border-color: var(--ta-glass-border-hover);
+  box-shadow: var(--ta-glass-shadow-hover);
+  transform: translateY(-1px);
+}
+
+/* Head row — title + composite score badge */
+.cr-radar__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.cr-radar__titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cr-radar__title {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+.cr-radar__sub {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+.cr-radar__score {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--ta-glass-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  white-space: nowrap;
+}
+.cr-radar__score-val {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.cr-radar__score-tier {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.cr-radar__score--strong { border-color: rgba(16, 185, 129, 0.28); }
+.cr-radar__score--strong .cr-radar__score-tier { color: var(--bull-bright, #34D399); }
+.cr-radar__score--mid { border-color: rgba(245, 158, 11, 0.26); }
+.cr-radar__score--mid .cr-radar__score-tier { color: var(--amber, #F59E0B); }
+.cr-radar__score--fragile { border-color: rgba(248, 113, 113, 0.26); }
+.cr-radar__score--fragile .cr-radar__score-tier { color: var(--bear-bright, #F87171); }
+
+/* Body */
+.cr-radar__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  flex: 1;
+  min-height: 0;
+}
+
+/* Plot — SVG + center overlay */
+.cr-radar__plot {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 248px;
+}
+.cr-radar__svg {
+  width: 100%;
+  max-width: 320px;
+  max-height: 320px;
+  aspect-ratio: 1 / 1;
+  overflow: visible;
+}
+
+.cr-radar__grid {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 0.2;
+}
+.cr-radar__grid--outer { stroke: rgba(255, 255, 255, 0.09); stroke-width: 0.28; }
+
+.cr-radar__axis line {
+  stroke: rgba(255, 255, 255, 0.07);
+  stroke-width: 0.2;
+}
+.cr-radar__axislabel {
+  font-family: var(--font-mono);
+  font-size: 2.9px;
+  font-weight: 600;
+  fill: var(--text-tertiary);
+  letter-spacing: 0.04em;
+}
+
+/* Portfolio aggregate — quiet reference shape behind everything */
+.cr-radar__agg {
+  stroke-linejoin: round;
+  transition: fill 0.3s var(--ease-out), stroke 0.3s var(--ease-out);
+}
+/* Default state — clean filled portfolio shape (no lender selected). */
+.cr-radar__agg.is-primary {
+  fill: rgba(94, 234, 212, 0.08);
+  stroke: rgba(94, 234, 212, 0.55);
+  stroke-width: 0.5;
+}
+/* When a lender is active — fade the portfolio to a faint dashed reference. */
+.cr-radar__agg.is-reference {
+  fill: none;
+  stroke: rgba(245, 245, 247, 0.2);
+  stroke-width: 0.35;
+  stroke-dasharray: 1.2 1.2;
+}
+
+/* Active lender polygon (only one drawn at a time) */
+.cr-radar__node { transition: opacity var(--duration-base) var(--ease-out); }
+.cr-radar__node.is-focus { animation: cr-poly-pop 0.4s var(--ease-out) both; }
+@keyframes cr-poly-pop { from { opacity: 0; } to { opacity: 1; } }
+.cr-radar__poly {
+  stroke: currentColor;
+  stroke-width: 0.7;
+  stroke-linejoin: round;
+}
+.cr-radar__vertex {
+  fill: currentColor;
+  filter: drop-shadow(0 0 1.6px currentColor);
+}
+
+/* Center readout overlay */
+.cr-radar__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  pointer-events: none;
+  text-align: center;
+}
+.cr-radar__center-label {
+  font-family: var(--font-display);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-tertiary);
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cr-radar__center-score {
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.cr-radar__center-cap {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Focused-protocol axis readout (meters) */
+/* Fixed-height shell so hover toggling readout<->hint never moves the chips
+   below (prevents the hover flicker loop). */
+.cr-radar__inspect {
+  /* Tall enough for the 5-metric readout (~141px measured) so toggling
+     hint<->readout on hover never changes height and shifts the chips below
+     -- that shift was the hover flicker loop. */
+  min-height: 144px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.cr-radar__readout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2) var(--sp-3);
+  width: 100%;
+}
+.cr-radar__metric {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 2px 6px;
+}
+.cr-radar__metric-label {
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+.cr-radar__metric-val {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  text-align: right;
+}
+.cr-radar__meter {
+  grid-column: 1 / -1;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+.cr-radar__meter-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width var(--duration-slow) var(--ease-out);
+}
+
+.cr-radar__hint {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+/* Legend / focus chips */
+.cr-radar__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  justify-content: center;
+}
+.cr-radar__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: var(--radius-full);
+  background: var(--ta-glass-bg-quiet);
+  border: 1px solid var(--ta-glass-border);
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all var(--duration-base) var(--ease-out);
+}
+.cr-radar__chip:hover {
+  border-color: var(--ta-glass-border-hover);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+.cr-radar__chip.is-active {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border-color: var(--ta-glass-border-hover);
+  color: var(--text-primary);
+}
+.cr-radar__chip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cr-chip);
+  box-shadow: 0 0 6px var(--cr-chip);
+  flex: none;
+}
+.cr-radar__chip-score {
+  font-size: 0.625rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary);
+}
+.cr-radar__chip.is-active .cr-radar__chip-score { color: var(--text-secondary); }
+
+.cr-radar__note {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+/* Premium shimmer skeleton (background-position slide — no spinner) */
+.cr-radar__skel {
+  flex: 1;
+  min-height: 248px;
+  border-radius: var(--ta-glass-radius-sm);
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0.02) 30%,
+    rgba(255, 255, 255, 0.07) 50%,
+    rgba(255, 255, 255, 0.02) 70%
+  );
+  background-size: 200% 100%;
+  animation: cr-skel-slide 2s linear infinite;
+}
+@keyframes cr-skel-slide {
+  0% { background-position: 180% 0; }
+  100% { background-position: -80% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cr-radar__skel { animation: none; }
+  .cr-radar__node, .cr-radar__poly, .cr-radar__meter-fill,
+  .cr-radar__chip, .cr-radar:hover { transition: none; }
+}
+
+/* ── Two-up panel framing (Top Lenders + Chain Breakdown) ──── */
+.cr-two-up .cr-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ta-gap-tight);
+}
+/* Let the shared bars list breathe inside the glass shell */
+.cr-panel .rwa-hbars { flex: 1; }
+
+/* ── Vintage heatmap — keep canonical card radius to match framing ── */
+.cr-vintage { border-radius: var(--ta-glass-radius); }
+
+/* ═══════════════════════════════════════════════════════════
+   Day mode
+   ═══════════════════════════════════════════════════════════ */
+.app.app-day-mode .cr-radar {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+.app.app-day-mode .cr-radar:hover {
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), 0 10px 24px rgba(0, 0, 0, 0.06);
+}
+.app.app-day-mode .cr-radar__title { color: #0F172A; }
+.app.app-day-mode .cr-radar__sub { color: #475569; }
+
+.app.app-day-mode .cr-radar__score {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.015) 100%);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.app.app-day-mode .cr-radar__score-val { color: #0F172A; }
+.app.app-day-mode .cr-radar__score--strong .cr-radar__score-tier { color: #047857; }
+.app.app-day-mode .cr-radar__score--mid .cr-radar__score-tier { color: #B45309; }
+.app.app-day-mode .cr-radar__score--fragile .cr-radar__score-tier { color: #B91C1C; }
+
+.app.app-day-mode .cr-radar__grid { stroke: rgba(0, 0, 0, 0.07); }
+.app.app-day-mode .cr-radar__grid--outer { stroke: rgba(0, 0, 0, 0.13); }
+.app.app-day-mode .cr-radar__axis line { stroke: rgba(0, 0, 0, 0.10); }
+.app.app-day-mode .cr-radar__axislabel { fill: #475569; }
+.app.app-day-mode .cr-radar__agg.is-primary {
+  fill: rgba(13, 148, 136, 0.10);
+  stroke: rgba(13, 148, 136, 0.6);
+}
+.app.app-day-mode .cr-radar__agg.is-reference {
+  fill: none;
+  stroke: rgba(15, 23, 42, 0.28);
+}
+
+.app.app-day-mode .cr-radar__center-label { color: #475569; }
+.app.app-day-mode .cr-radar__center-score { color: #0F172A; }
+.app.app-day-mode .cr-radar__center-cap { color: #94A3B8; }
+
+.app.app-day-mode .cr-radar__metric-label { color: #475569; }
+.app.app-day-mode .cr-radar__metric-val { color: #0F172A; }
+.app.app-day-mode .cr-radar__meter { background: rgba(0, 0, 0, 0.06); }
+.app.app-day-mode .cr-radar__hint,
+.app.app-day-mode .cr-radar__note { color: #94A3B8; }
+
+.app.app-day-mode .cr-radar__chip {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #475569;
+}
+.app.app-day-mode .cr-radar__chip:hover {
+  border-color: rgba(0, 0, 0, 0.16);
+  color: #0F172A;
+}
+.app.app-day-mode .cr-radar__chip.is-active {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.07) 0%, rgba(0, 0, 0, 0.03) 100%);
+  border-color: rgba(0, 0, 0, 0.16);
+  color: #0F172A;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.app.app-day-mode .cr-radar__chip-score { color: #94A3B8; }
+.app.app-day-mode .cr-radar__chip.is-active .cr-radar__chip-score { color: #475569; }
+
+.app.app-day-mode .cr-radar__skel {
+  background: linear-gradient(
+    100deg,
+    rgba(0, 0, 0, 0.03) 30%,
+    rgba(0, 0, 0, 0.06) 50%,
+    rgba(0, 0, 0, 0.03) 70%
+  );
+  background-size: 200% 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Mobile
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 899px) {
+  .cr-radar { min-height: 0; padding: var(--ta-pad-card); }
+  .cr-radar__plot { min-height: 210px; }
+  .cr-radar__svg { max-width: 256px; max-height: 256px; }
+  .cr-radar__center-score { font-size: 1.625rem; }
+}
+@media (max-width: 480px) {
+  .cr-radar__readout { grid-template-columns: 1fr; }
+  .cr-radar__head { flex-wrap: wrap; }
+}
+
+/* Radar draw-in: the plot blooms from centre on mount (Overview-grade). */
+.cr-radar__svg {
+  transform-origin: center;
+  animation: cr-radar-in 700ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+@keyframes cr-radar-in {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.cr-radar__agg, .cr-radar__poly { transition: opacity var(--duration-base) var(--ease-out); }
+@media (prefers-reduced-motion: reduce) { .cr-radar__svg { animation: none; } }

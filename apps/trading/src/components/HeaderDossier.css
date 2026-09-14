@@ -1,0 +1,607 @@
+/**
+ * HeaderDossier.css — editorial AI narrative for the TokenBanner with
+ * an engraved-glow text effect on the lead.
+ *
+ * The lead sentence renders with:
+ *   - a top-to-bottom luminance gradient (white-top → grey-bottom) via
+ *     `background-clip: text`, giving a soft sculpted feel;
+ *   - layered `drop-shadow` filters that put a dark contact shadow
+ *     directly under each glyph and an --accent-colored bloom on the
+ *     lower-right, mimicking light raking across the letters.
+ *
+ * Body text (.hd-rest) stays flat / legible.
+ */
+
+.hd {
+  position: relative;
+  /* Grow into the empty right space beside the action pills (was content-sized
+     and capped, so it only filled the left half of the row). */
+  flex: 1;
+  min-width: 0;
+  padding: 3px var(--sp-4) 0;
+  margin-top: 2px;
+  border-top: 1px solid var(--glass-border);
+  isolation: isolate;
+}
+
+/* Soft accent-wash bloom behind the text. */
+.hd-bloom {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse 60% 80% at 18% 50%,
+    var(--accent-wash) 0%,
+    transparent 70%);
+  filter: blur(20px);
+  opacity: 0.7;
+}
+
+/* One-shot scan sweep on first reveal. */
+.hd-scanline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 22px;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--accent) 22%, transparent) 0%,
+    color-mix(in srgb, var(--accent) 6%, transparent) 60%,
+    transparent 100%);
+  opacity: 0;
+  transform: translateY(0);
+  animation: hd-scan var(--dur-enter, 480ms) var(--ease-out) 60ms 1 forwards;
+}
+
+@keyframes hd-scan {
+  0%   { opacity: 0;    transform: translateY(0); }
+  10%  { opacity: 0.95; }
+  90%  { opacity: 0.95; }
+  100% { opacity: 0;    transform: translateY(360px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hd-scanline { animation: none; opacity: 0; }
+}
+.app[data-reduced-motion="true"] .hd-scanline { animation: none; opacity: 0; }
+
+/* --- Eyebrow (compact) ---------------------------------------------- */
+
+.hd-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.hd-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-bright);
+  filter: drop-shadow(0 0 6px var(--accent-glow));
+}
+
+.hd-eyebrow {
+  font-family: var(--font-body);
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-bright);
+  opacity: 0.85;
+}
+
+/* --- Teaser row (collapsed) ------------------------------------------ */
+/* One slim line: [glyph AI DOSSIER] lead-text… [Read ⌄]. The dossier is
+   an intelligence strip until the user asks for the full analysis. */
+.hd--teaser { padding: 2px 0; }
+.hd-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.hd-head--inline {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+}
+.hd-lead--row {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.85rem;
+}
+.hd-lead--row .hd-lead-inner {
+  white-space: nowrap;
+}
+.hd-expander--row {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* --- Teaser typography ------------------------------------------------
+   The banner row is a one-line SUMMARY, not a reading surface, so it drops the
+   dossier's editorial treatment: no spotlight sweep, no accent marks, no
+   semibold. On a single nowrap line the 11s sweep parks its --accent-bright
+   peak on whatever word happens to sit at the 50% stop, so one arbitrary word
+   rendered cyan on TRENCHER and "natural lan" rendered purple on PAAL - it
+   reads as a rendering bug, not a highlight. It was also a background-position
+   animation (paint every frame) on text, the exact class the token page spent
+   a pass removing. And 600-weight body copy at 15px was competing with the
+   token symbol above it instead of receding.
+   The EXPANDED panel keeps the full treatment - that one is the reading
+   surface, where a sweep across a wrapped paragraph behaves as designed. */
+/* --text-2 (body tier), not --text-3: the fix here was weight and colour-noise,
+   not contrast. Dropping readable copy to the label tier is the opposite
+   over-correction and makes the summary unreadable in a dense banner. */
+.hd--teaser .hd-lead {
+  font-weight: 400;
+  color: var(--text-2);
+}
+
+/* Kill the background-clip gradient: currentColor lets the .hd-lead colour
+   above actually apply (the inner span is what paints the text). */
+.hd--teaser .hd-lead-inner {
+  background: none;
+  -webkit-background-clip: initial;
+          background-clip: initial;
+  -webkit-text-fill-color: currentColor;
+          color: currentColor;
+  animation: none;
+  filter: none;
+}
+
+/* Highlighted token name: one step up in the text ramp, not a glowing accent. */
+.hd--teaser .hd-lead .hd-mark {
+  -webkit-text-fill-color: var(--text-2);
+  color: var(--text-2);
+  font-weight: 500;
+  text-shadow: none;
+}
+
+.hd--teaser .hd-eyebrow {
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--text-4);
+  opacity: 1;
+}
+
+.hd--teaser .hd-glyph {
+  color: var(--text-4);
+  filter: none;
+}
+
+.hd--teaser .hd-expander {
+  font-weight: 500;
+  color: var(--text-3);
+}
+
+.hd--teaser .hd-expander:hover {
+  color: var(--text-1);
+}
+
+/* --- Text body ------------------------------------------------------- */
+
+.hd-text {
+  /* No width cap - fill the full row width so the lead packs into fewer lines
+     (the 2-line clamp on .hd-lead still bounds the height). */
+  max-width: none;
+}
+
+.hd-lead {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  letter-spacing: -0.005em;
+  /* No CSS line-clamp: the collapsed lead is JS-truncated (HeaderDossier.jsx
+     LEAD_MAX) so the inline "Read full analysis" link tucks in right after the
+     "…" instead of dropping to its own line. */
+  white-space: pre-wrap;
+}
+
+/* Inner span carries the spotlight-sweep gradient. A horizontal gradient
+   strip wider than the text translates across via background-position
+   animation, so letters dim → bright → dim as the spotlight passes.
+   An --accent-coloured halo rides the bright peak so each token's brand
+   colour rakes through the text in motion. Reduced-motion strips the
+   animation and locks the text to --text-1 for full legibility. */
+.hd-lead-inner {
+  /* The sweet spot between the original 7s scanline and the 16s drift —
+     visible motion without pulling the eye off the chart. */
+  background: linear-gradient(
+    90deg,
+    rgba(245, 245, 247, 0.32) 0%,
+    rgba(245, 245, 247, 0.52) 26%,
+    rgba(255, 255, 255, 0.96) 45%,
+    var(--accent-bright)      50%,
+    rgba(255, 255, 255, 0.96) 55%,
+    rgba(245, 245, 247, 0.52) 74%,
+    rgba(245, 245, 247, 0.32) 100%
+  );
+  background-size: 260% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+          color: transparent;
+  /* 11s linear — slow enough to feel like drifting light, quick enough
+     that the user notices the brand-coloured peak rake by without
+     having to wait. */
+  animation: hd-spotlight 11s linear infinite;
+  /* Restrained halo — present but not a beacon. */
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.4))
+          drop-shadow(0 0 11px color-mix(in srgb, var(--accent) 14%, transparent));
+}
+
+@keyframes hd-spotlight {
+  0%   { background-position: 210% 0; }
+  100% { background-position: -110% 0; }
+}
+
+/* Pause the sweep when the tab is hidden (App.jsx visibility handler
+   already toggles .tab-hidden on <html>). Saves GPU when the user is
+   in another tab. */
+html.tab-hidden .hd-lead-inner {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hd-lead-inner {
+    animation: none;
+    background: none;
+    filter: none;
+    -webkit-text-fill-color: var(--text-1);
+            color: var(--text-1);
+  }
+}
+.app[data-reduced-motion="true"] .hd-lead-inner {
+  animation: none;
+  background: none;
+  filter: none;
+  -webkit-text-fill-color: var(--text-1);
+          color: var(--text-1);
+}
+
+/* Mark highlights inside the lead — accent override of the gradient.
+   Uses `--accent-bright` directly: the accentNormalize pipeline already
+   lifts lightness into the L=0.62-0.82 readable band in OKLCH and
+   guarantees ≥3.5 APCA Lc against `#000`, so the bright variant is
+   already screen-friendly on dark. The previous `color-mix(...62%, white 38%)`
+   recipe was tuned for SPECTRE's near-white default — for chromatic
+   tokens (LINK blue, SPX yellow, SOL violet) it desaturated the hue
+   into a near-white pastel, making the highlight read as "still white". */
+.hd-lead .hd-mark {
+  -webkit-text-fill-color: var(--accent-bright);
+  color: var(--accent-bright);
+  background: transparent;
+  font-weight: 600;
+  padding: 0;
+  text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.hd-lead--streaming {
+  /* Reserve 2 lines while typing so the layout below doesn't reflow. */
+  min-height: calc(0.9375rem * 1.45 * 2);
+}
+
+/* Expanded: full narrative as stacked paragraphs, each keeping the engraved
+   gradient "cover" effect (.hd-lead-inner). Paragraph rhythm + slightly looser
+   leading for comfortable reading of the whole block. */
+.hd-para { line-height: 1.5; }
+.hd-para + .hd-para { margin-top: 9px; }
+
+.hd-rest {
+  margin: 4px 0 0;
+  font-family: var(--font-body);
+  font-size: var(--t-body);
+  line-height: 1.5;
+  color: var(--text-2);
+  white-space: pre-wrap;
+}
+
+.hd-rest .hd-mark {
+  background: transparent;
+  color: var(--accent-bright);
+  font-weight: 600;
+  padding: 0;
+  text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 26%, transparent);
+}
+
+/* --- Streaming caret ------------------------------------------------- */
+
+.hd-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent-glow);
+  animation: hd-caret-blink 0.85s steps(2, end) infinite;
+  /* Reset the gradient fill so the caret renders as a solid bar. */
+  -webkit-text-fill-color: var(--accent);
+  color: var(--accent);
+}
+
+@keyframes hd-caret-blink {
+  0%, 50%  { opacity: 1; }
+  51%, 100% { opacity: 0.15; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hd-caret { animation: none; opacity: 1; }
+}
+.app[data-reduced-motion="true"] .hd-caret { animation: none; opacity: 1; }
+
+/* --- Expander -------------------------------------------------------- */
+
+.hd-expander {
+  margin-top: 2px;
+  background: transparent;
+  border: 0;
+  padding: 2px 0;
+  font-family: var(--font-body);
+  font-size: var(--t-caption);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--accent-bright);
+  cursor: pointer;
+  transition: color var(--dur-micro) var(--ease-out);
+}
+
+.hd-expander:hover {
+  color: var(--accent);
+}
+
+.hd-expander:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+
+/* Inline variant — flows right after the truncated lead's "…" on the same line
+   so it costs no extra vertical space. No box (plain accent link). */
+.hd-expander--inline {
+  display: inline;
+  margin: 0 0 0 6px;
+  padding: 0;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
+/* --- Responsive ------------------------------------------------------ */
+
+@media (max-width: 900px) {
+  .hd-lead { font-size: 0.875rem; }
+  .hd-text { max-width: 100%; }
+}
+
+/* --- White mode ------------------------------------------------------ */
+/* This file had NO light rules. The eyebrow used var(--accent-bright) — which
+   on a token page is the token BRAND accent (near-white for SPECTRE) — and the
+   lead is an animated WHITE-gradient spotlight (background-clip:text) that is
+   invisible on white. Light mode drops the spotlight to solid dark text (same
+   as the reduced-motion path) and gives the eyebrow a neutral dark. */
+body.theme-light .hd-eyebrow {
+  color: var(--text-3);
+  opacity: 1;
+}
+body.theme-light .hd-lead-inner {
+  background: none;
+  -webkit-background-clip: initial;
+          background-clip: initial;
+  -webkit-text-fill-color: var(--text-1);
+          color: var(--text-1);
+  animation: none;
+  filter: none;
+}
+
+/* The two rules above are MORE specific than the .hd--teaser block, so without
+   these the banner row would jump back to full-strength --text-1 in light mode
+   and lose the hierarchy the teaser was just given. The --text-* ramp is
+   redefined under body.theme-light, so currentColor is all that is needed. */
+body.theme-light .hd--teaser .hd-lead-inner {
+  -webkit-text-fill-color: currentColor;
+          color: currentColor;
+}
+body.theme-light .hd--teaser .hd-eyebrow {
+  color: var(--text-4);
+}
+body.theme-light .hd--teaser .hd-expander {
+  color: var(--text-3);
+  -webkit-text-fill-color: var(--text-3);
+}
+/* The inline "Read full analysis ⌄" expander was pure white → invisible. */
+body.theme-light .hd-expander {
+  color: var(--text-1);
+  -webkit-text-fill-color: var(--text-1);
+}
+body.theme-light .hd-expander:hover {
+  color: #000;
+  -webkit-text-fill-color: #000;
+}
+/* The highlighted keyword ("Spectre", the token name) uses --accent-bright.
+   For near-white brand accents (SPECTRE = warm silver #D4D4D8) that is
+   invisible on white. Mix the accent toward dark ink so the keyword stays
+   readable on white for EVERY token while keeping a hint of its brand hue. */
+body.theme-light .hd-lead .hd-mark,
+body.theme-light .hd-rest .hd-mark {
+  color: color-mix(in srgb, var(--accent) 55%, #0f172a 45%);
+  -webkit-text-fill-color: color-mix(in srgb, var(--accent) 55%, #0f172a 45%);
+  text-shadow: none;
+}
+
+/* --- Day mode -------------------------------------------------------- */
+
+body.theme-light .hd {
+  border-top-color: rgba(15, 23, 42, 0.08);
+}
+
+body.theme-light .hd-rest { color: #475569; }
+
+/* ====================================================================
+   TONAL PASS (2026-09-11) - the dossier is a RECESSED WELL, the same
+   grammar as the header's search field: one step below the panel it sits
+   in (#0C0D10 on #101114), 9px radius, no border, no bloom, no sweep, no
+   accent glow. Collapsed it is a 30px strip beside the action rail -
+   [glyph AI Dossier] one ellipsized line [Read more key] - the key living
+   inside the well the way the kbd keys live inside the search field.
+   Expanded it grows into a reading card: label line, paragraphs, Show
+   less key. Appended so it wins on cascade order; light counterparts at
+   the end of the block.
+   ==================================================================== */
+
+.hd {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  padding: 7px 12px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: #0C0D10;
+}
+.hd--teaser {
+  display: flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 4px 0 10px;
+}
+.hd-bloom { display: none; }
+.hd-scanline { display: none; }
+
+.hd-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+.hd-head--inline { flex: 0 0 auto; margin: 0; }
+.hd-head--bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 18px;
+  margin: 0 0 4px;
+}
+.hd-actions { flex: 0 0 auto; }
+
+.hd-glyph { color: rgba(245, 245, 247, 0.45); filter: none; }
+.hd-eyebrow {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  text-transform: none;
+  color: rgba(245, 245, 247, 0.55);
+  opacity: 1;
+}
+
+/* Prose: one calm column. 13px body, 1.55 leading, weight 400 throughout;
+   the lead is one tone brighter, entity marks one tone brighter still and
+   500 - hierarchy by tone, never by size or bold. */
+.hd-text {
+  max-width: 78ch;
+  padding: 0;
+}
+.hd-lead {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+}
+.hd-lead-inner {
+  background: none;
+  -webkit-background-clip: initial;
+          background-clip: initial;
+  -webkit-text-fill-color: currentColor;
+          color: rgba(245, 245, 247, 0.86);
+  animation: none;
+  filter: none;
+}
+.hd-lead--row { font-size: 13px; }
+.hd--teaser .hd-lead { font-weight: 400; }
+.hd--teaser .hd-lead-inner { color: rgba(245, 245, 247, 0.72); }
+.hd-lead--streaming { min-height: 0; }
+
+.hd-rest {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+  color: rgba(245, 245, 247, 0.62);
+}
+.hd-para + .hd-para { margin-top: 8px; }
+
+.hd-lead .hd-mark,
+.hd-rest .hd-mark {
+  color: rgba(245, 245, 247, 0.95);
+  -webkit-text-fill-color: rgba(245, 245, 247, 0.95);
+  font-weight: 500;
+  text-shadow: none;
+}
+.hd--teaser .hd-lead .hd-mark {
+  color: rgba(245, 245, 247, 0.85);
+  -webkit-text-fill-color: rgba(245, 245, 247, 0.85);
+}
+.hd-caret { box-shadow: none; }
+
+/* Expander: a 22px key one tone above the well (#1A1B1F), the tone the
+   inner keys use everywhere else; hover steps up again. */
+.hd-expander,
+.hd-expander--inline {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 4px;
+  height: 22px;
+  margin: 0;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: #1A1B1F;
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: rgba(245, 245, 247, 0.82);
+  -webkit-text-fill-color: rgba(245, 245, 247, 0.82);
+  vertical-align: middle;
+  transition: background 120ms ease, color 120ms ease;
+}
+.hd-expander--row { margin-left: auto; }
+.hd-text .hd-expander { margin-top: 10px; }
+.hd-expander:hover,
+.hd--teaser .hd-expander:hover {
+  background: #25262B;
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+}
+.hd--teaser .hd-expander { color: rgba(245, 245, 247, 0.82); -webkit-text-fill-color: rgba(245, 245, 247, 0.82); }
+
+body.theme-light .hd { background: #f3f3f6; border: 0; }
+body.theme-light .hd-glyph { color: rgba(15, 23, 42, 0.45); }
+body.theme-light .hd-eyebrow,
+body.theme-light .hd--teaser .hd-eyebrow { color: rgba(15, 23, 42, 0.55); }
+body.theme-light .hd-lead-inner { color: #0f172a; -webkit-text-fill-color: #0f172a; }
+body.theme-light .hd--teaser .hd-lead-inner { color: rgba(15, 23, 42, 0.72); -webkit-text-fill-color: rgba(15, 23, 42, 0.72); }
+body.theme-light .hd-rest { color: rgba(15, 23, 42, 0.65); }
+body.theme-light .hd-lead .hd-mark,
+body.theme-light .hd-rest .hd-mark,
+body.theme-light .hd--teaser .hd-lead .hd-mark { color: #0f172a; -webkit-text-fill-color: #0f172a; }
+body.theme-light .hd-expander,
+body.theme-light .hd-expander--inline,
+body.theme-light .hd--teaser .hd-expander {
+  background: #ffffff;
+  color: rgba(15, 23, 42, 0.8);
+  -webkit-text-fill-color: rgba(15, 23, 42, 0.8);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+}
+body.theme-light .hd-expander:hover,
+body.theme-light .hd--teaser .hd-expander:hover { background: #ffffff; color: #0f172a; -webkit-text-fill-color: #0f172a; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2); }

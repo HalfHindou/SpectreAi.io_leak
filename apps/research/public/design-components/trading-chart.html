@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=700">
+  <title>Spectre — Trading Chart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-void: #09090b; --bg-surface: #111113; --bg-elevated: #18181b;
+      --glass-bg: rgba(9,9,11,0.88); --glass-border: rgba(255,255,255,0.04);
+      --text-primary: #f5f5f7; --text-secondary: rgba(245,245,247,0.6);
+      --text-tertiary: rgba(245,245,247,0.5); --text-muted: rgba(245,245,247,0.35);
+      --bull: #10B981; --bear: #EF4444; --cyan: #06B6D4; --violet: #A78BFA;
+      --border-subtle: rgba(255,255,255,0.03); --border-default: rgba(255,255,255,0.04);
+      --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0f;
+      font-family: var(--font-body);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .widget {
+      width: 700px;
+      padding: 0;
+    }
+
+    /* ---- Glass Card ---- */
+    .chart-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      overflow: hidden;
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.02),
+        0 8px 40px rgba(0,0,0,0.5),
+        0 2px 12px rgba(0,0,0,0.3),
+        inset 0 1px 0 rgba(255,255,255,0.03);
+    }
+
+    /* ---- Top Toolbar ---- */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .token-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-right: auto;
+    }
+
+    .token-logo {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #F7931A 0%, #E8850C 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: #fff;
+      box-shadow: 0 2px 8px rgba(247,147,26,0.25);
+      flex-shrink: 0;
+    }
+    .token-logo svg {
+      width: 16px; height: 16px;
+    }
+
+    .token-pair {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+    }
+
+    .token-price {
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      color: var(--bull);
+      letter-spacing: -0.02em;
+    }
+
+    /* ---- Toggle Buttons ---- */
+    .chart-type-toggles {
+      display: flex;
+      gap: 2px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 8px;
+      padding: 2px;
+    }
+
+    .chart-type-btn {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: var(--font-body);
+      letter-spacing: 0.01em;
+    }
+    .chart-type-btn:hover {
+      color: var(--text-secondary);
+    }
+    .chart-type-btn.active {
+      background: rgba(255,255,255,0.08);
+      color: var(--text-primary);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+
+    /* ---- Timeframe Pills ---- */
+    .timeframe-pills {
+      display: flex;
+      gap: 2px;
+    }
+
+    .tf-pill {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 5px 9px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: var(--font-mono);
+      letter-spacing: 0.02em;
+    }
+    .tf-pill:hover {
+      color: var(--text-secondary);
+    }
+    .tf-pill.active {
+      background: rgba(6,182,212,0.12);
+      color: var(--cyan);
+      box-shadow: 0 0 8px rgba(6,182,212,0.08);
+    }
+
+    /* ---- Chart Area ---- */
+    .chart-area {
+      position: relative;
+      padding: 12px 0 0 0;
+      height: 340px;
+    }
+
+    .chart-svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Grid lines */
+    .grid-line {
+      stroke: rgba(255,255,255,0.04);
+      stroke-dasharray: 3 4;
+      stroke-width: 0.5;
+    }
+
+    /* Candle styles */
+    .candle-body-bull { fill: var(--bull); }
+    .candle-body-bear { fill: var(--bear); }
+    .candle-wick-bull { stroke: var(--bull); stroke-width: 1; }
+    .candle-wick-bear { stroke: var(--bear); stroke-width: 1; }
+
+    /* Volume bars */
+    .vol-bull { fill: rgba(16,185,129,0.15); }
+    .vol-bear { fill: rgba(239,68,68,0.15); }
+
+    /* Price axis labels */
+    .price-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      fill: var(--text-muted);
+      text-anchor: end;
+    }
+
+    /* Time axis labels */
+    .time-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      fill: var(--text-muted);
+      text-anchor: middle;
+    }
+
+    /* Current price line */
+    .current-price-line {
+      stroke: var(--bull);
+      stroke-width: 0.8;
+      stroke-dasharray: 4 3;
+      opacity: 0.6;
+    }
+    .current-price-tag {
+      fill: var(--bull);
+    }
+    .current-price-text {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      fill: #fff;
+      font-weight: 600;
+    }
+
+    /* ---- Bottom Info Bar ---- */
+    .ohlc-bar {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 10px 20px 14px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .ohlc-item {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.01em;
+    }
+    .ohlc-label {
+      color: var(--text-muted);
+      opacity: 0.7;
+      margin-right: 4px;
+    }
+    .ohlc-value {
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <div class="widget">
+    <div class="chart-card">
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="token-info">
+          <div class="token-logo">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M17.1 9.3c.2-1.6-1-2.5-2.6-3l.5-2.2-1.3-.3-.5 2.1c-.4-.1-.7-.2-1.1-.3l.5-2.1-1.3-.3-.5 2.2c-.3-.1-.6-.1-.9-.2l-1.8-.4-.4 1.4s1 .2 1 .2c.5.1.6.5.6.8l-.6 2.6c0 0 .1 0 .1 0l-.1 0-.9 3.5c-.1.2-.2.4-.6.3 0 0-1-.2-1-.2l-.7 1.5 1.7.4c.3.1.6.1.9.2l-.5 2.2 1.3.3.5-2.2c.4.1.7.2 1.1.3l-.5 2.2 1.3.3.5-2.2c2.2.4 3.8.2 4.5-1.7.5-1.6 0-2.5-1.2-3.1.8-.2 1.5-.7 1.6-1.9z" fill="white"/>
+            </svg>
+          </div>
+          <span class="token-pair">BTC/USD</span>
+          <span class="token-price">$97,842</span>
+        </div>
+
+        <div class="chart-type-toggles">
+          <button class="chart-type-btn active">Candles</button>
+          <button class="chart-type-btn">Line</button>
+        </div>
+
+        <div class="timeframe-pills">
+          <button class="tf-pill">1M</button>
+          <button class="tf-pill">5M</button>
+          <button class="tf-pill">15M</button>
+          <button class="tf-pill">1H</button>
+          <button class="tf-pill active">4H</button>
+          <button class="tf-pill">1D</button>
+          <button class="tf-pill">1W</button>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-area">
+        <svg class="chart-svg" viewBox="0 0 700 340" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="volumeFade" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="white" stop-opacity="0.8"/>
+              <stop offset="100%" stop-color="white" stop-opacity="0.2"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Grid lines -->
+          <line class="grid-line" x1="55" y1="35"  x2="640" y2="35"/>
+          <line class="grid-line" x1="55" y1="85"  x2="640" y2="85"/>
+          <line class="grid-line" x1="55" y1="135" x2="640" y2="135"/>
+          <line class="grid-line" x1="55" y1="185" x2="640" y2="185"/>
+          <line class="grid-line" x1="55" y1="235" x2="640" y2="235"/>
+
+          <!-- Price labels (right Y-axis) -->
+          <text class="price-label" x="695" y="39">$98,400</text>
+          <text class="price-label" x="695" y="89">$98,000</text>
+          <text class="price-label" x="695" y="139">$97,600</text>
+          <text class="price-label" x="695" y="189">$97,200</text>
+          <text class="price-label" x="695" y="239">$96,800</text>
+
+          <!-- Volume bars (bottom, semi-transparent) -->
+          <!-- Each volume bar sits at the bottom of the chart -->
+          <rect class="vol-bull" x="65"  y="268" width="18" height="32" rx="1"/>
+          <rect class="vol-bear" x="94"  y="275" width="18" height="25" rx="1"/>
+          <rect class="vol-bull" x="123" y="260" width="18" height="40" rx="1"/>
+          <rect class="vol-bear" x="152" y="272" width="18" height="28" rx="1"/>
+          <rect class="vol-bear" x="181" y="265" width="18" height="35" rx="1"/>
+          <rect class="vol-bull" x="210" y="258" width="18" height="42" rx="1"/>
+          <rect class="vol-bull" x="239" y="270" width="18" height="30" rx="1"/>
+          <rect class="vol-bear" x="268" y="278" width="18" height="22" rx="1"/>
+          <rect class="vol-bull" x="297" y="262" width="18" height="38" rx="1"/>
+          <rect class="vol-bull" x="326" y="255" width="18" height="45" rx="1"/>
+          <rect class="vol-bear" x="355" y="270" width="18" height="30" rx="1"/>
+          <rect class="vol-bear" x="384" y="260" width="18" height="40" rx="1"/>
+          <rect class="vol-bear" x="413" y="252" width="18" height="48" rx="1"/>
+          <rect class="vol-bull" x="442" y="265" width="18" height="35" rx="1"/>
+          <rect class="vol-bull" x="471" y="258" width="18" height="42" rx="1"/>
+          <rect class="vol-bull" x="500" y="250" width="18" height="50" rx="1"/>
+          <rect class="vol-bear" x="529" y="268" width="18" height="32" rx="1"/>
+          <rect class="vol-bull" x="558" y="260" width="18" height="40" rx="1"/>
+          <rect class="vol-bull" x="587" y="255" width="18" height="45" rx="1"/>
+          <rect class="vol-bull" x="616" y="248" width="18" height="52" rx="1"/>
+
+          <!--
+            Candle data (realistic BTC ~$96,800-$98,200 range):
+            Price range mapped: $98,400 (y=35) to $96,600 (y=245)
+            Scale: 1 pixel = ~$8.57 per px  ($1800 / 210px)
+            y = 35 + (98400 - price) / 8.57
+
+            Candle 1: O:96920 H:97180 L:96810 C:97100 (BULL)
+            Candle 2: O:97100 H:97200 L:96880 C:96950 (BEAR)
+            Candle 3: O:96950 H:97350 L:96850 C:97280 (BULL)
+            Candle 4: O:97280 H:97380 L:97020 C:97060 (BEAR)
+            Candle 5: O:97060 H:97120 L:96780 C:96820 (BEAR)
+            Candle 6: O:96820 H:97250 L:96750 C:97180 (BULL)
+            Candle 7: O:97180 H:97400 L:97100 C:97320 (BULL)
+            Candle 8: O:97320 H:97380 L:97050 C:97090 (BEAR)
+            Candle 9: O:97090 H:97520 L:97000 C:97460 (BULL)
+            Candle 10: O:97460 H:97750 L:97380 C:97680 (BULL)
+            Candle 11: O:97680 H:97780 L:97420 C:97480 (BEAR)
+            Candle 12: O:97480 H:97550 L:97200 C:97240 (BEAR)
+            Candle 13: O:97240 H:97300 L:96890 C:96940 (BEAR)
+            Candle 14: O:96940 H:97280 L:96860 C:97220 (BULL)
+            Candle 15: O:97220 H:97580 L:97140 C:97500 (BULL)
+            Candle 16: O:97500 H:97920 L:97420 C:97860 (BULL)
+            Candle 17: O:97860 H:97980 L:97560 C:97600 (BEAR)
+            Candle 18: O:97600 H:97880 L:97480 C:97810 (BULL)
+            Candle 19: O:97810 H:98150 L:97720 C:98060 (BULL)
+            Candle 20: O:97120 H:98150 L:96890 C:97842 (BULL - current)
+          -->
+
+          <!-- Candle 1: BULL O:96920 H:97180 L:96810 C:97100 -->
+          <line class="candle-wick-bull" x1="74" y1="142" x2="74" y2="185"/>
+          <rect class="candle-body-bull" x="67" y="152" width="14" height="21" rx="1.5"/>
+
+          <!-- Candle 2: BEAR O:97100 H:97200 L:96880 C:96950 -->
+          <line class="candle-wick-bear" x1="103" y1="140" x2="103" y2="177"/>
+          <rect class="candle-body-bear" x="96" y="152" width="14" height="17" rx="1.5"/>
+
+          <!-- Candle 3: BULL O:96950 H:97350 L:96850 C:97280 -->
+          <line class="candle-wick-bull" x1="132" y1="123" x2="132" y2="181"/>
+          <rect class="candle-body-bull" x="125" y="130" width="14" height="39" rx="1.5"/>
+
+          <!-- Candle 4: BEAR O:97280 H:97380 L:97020 C:97060 -->
+          <line class="candle-wick-bear" x1="161" y1="119" x2="161" y2="161"/>
+          <rect class="candle-body-bear" x="154" y="130" width="14" height="26" rx="1.5"/>
+
+          <!-- Candle 5: BEAR O:97060 H:97120 L:96780 C:96820 -->
+          <line class="candle-wick-bear" x1="190" y1="149" x2="190" y2="189"/>
+          <rect class="candle-body-bear" x="183" y="156" width="14" height="28" rx="1.5"/>
+
+          <!-- Candle 6: BULL O:96820 H:97250 L:96750 C:97180 -->
+          <line class="candle-wick-bull" x1="219" y1="134" x2="219" y2="192"/>
+          <rect class="candle-body-bull" x="212" y="142" width="14" height="42" rx="1.5"/>
+
+          <!-- Candle 7: BULL O:97180 H:97400 L:97100 C:97320 -->
+          <line class="candle-wick-bull" x1="248" y1="117" x2="248" y2="152"/>
+          <rect class="candle-body-bull" x="241" y="126" width="14" height="16" rx="1.5"/>
+
+          <!-- Candle 8: BEAR O:97320 H:97380 L:97050 C:97090 -->
+          <line class="candle-wick-bear" x1="277" y1="119" x2="277" y2="158"/>
+          <rect class="candle-body-bear" x="270" y="126" width="14" height="27" rx="1.5"/>
+
+          <!-- Candle 9: BULL O:97090 H:97520 L:97000 C:97460 -->
+          <line class="candle-wick-bull" x1="306" y1="103" x2="306" y2="163"/>
+          <rect class="candle-body-bull" x="299" y="110" width="14" height="43" rx="1.5"/>
+
+          <!-- Candle 10: BULL O:97460 H:97750 L:97380 C:97680 -->
+          <line class="candle-wick-bull" x1="335" y1="76"  x2="335" y2="119"/>
+          <rect class="candle-body-bull" x="328" y="84"  width="14" height="26" rx="1.5"/>
+
+          <!-- Candle 11: BEAR O:97680 H:97780 L:97420 C:97480 -->
+          <line class="candle-wick-bear" x1="364" y1="72"  x2="364" y2="114"/>
+          <rect class="candle-body-bear" x="357" y="84"  width="14" height="23" rx="1.5"/>
+
+          <!-- Candle 12: BEAR O:97480 H:97550 L:97200 C:97240 -->
+          <line class="candle-wick-bear" x1="393" y1="99"  x2="393" y2="140"/>
+          <rect class="candle-body-bear" x="386" y="107" width="14" height="28" rx="1.5"/>
+
+          <!-- Candle 13: BEAR O:97240 H:97300 L:96890 C:96940 -->
+          <line class="candle-wick-bear" x1="422" y1="128" x2="422" y2="176"/>
+          <rect class="candle-body-bear" x="415" y="135" width="14" height="35" rx="1.5"/>
+
+          <!-- Candle 14: BULL O:96940 H:97280 L:96860 C:97220 -->
+          <line class="candle-wick-bull" x1="451" y1="131" x2="451" y2="180"/>
+          <rect class="candle-body-bull" x="444" y="138" width="14" height="32" rx="1.5"/>
+
+          <!-- Candle 15: BULL O:97220 H:97580 L:97140 C:97500 -->
+          <line class="candle-wick-bull" x1="480" y1="96"  x2="480" y2="147"/>
+          <rect class="candle-body-bull" x="473" y="104" width="14" height="33" rx="1.5"/>
+
+          <!-- Candle 16: BULL O:97500 H:97920 L:97420 C:97860 -->
+          <line class="candle-wick-bull" x1="509" y1="56"  x2="509" y2="114"/>
+          <rect class="candle-body-bull" x="502" y="63"  width="14" height="42" rx="1.5"/>
+
+          <!-- Candle 17: BEAR O:97860 H:97980 L:97560 C:97600 -->
+          <line class="candle-wick-bear" x1="538" y1="49"  x2="538" y2="98"/>
+          <rect class="candle-body-bear" x="531" y="63"  width="14" height="30" rx="1.5"/>
+
+          <!-- Candle 18: BULL O:97600 H:97880 L:97480 C:97810 -->
+          <line class="candle-wick-bull" x1="567" y1="61"  x2="567" y2="107"/>
+          <rect class="candle-body-bull" x="560" y="69"  width="14" height="24" rx="1.5"/>
+
+          <!-- Candle 19: BULL O:97810 H:98150 L:97720 C:98060 -->
+          <line class="candle-wick-bull" x1="596" y1="29"  x2="596" y2="79"/>
+          <rect class="candle-body-bull" x="589" y="40"  width="14" height="29" rx="1.5"/>
+
+          <!-- Candle 20: BULL O:97120 H:98150 L:96890 C:97842 (current) -->
+          <line class="candle-wick-bull" x1="625" y1="29"  x2="625" y2="176"/>
+          <rect class="candle-body-bull" x="618" y="65"  width="14" height="84" rx="1.5"/>
+
+          <!-- Current price dotted line at $97,842 => y = 35 + (98400-97842)/8.57 ≈ 35+65 = 100... recalc -->
+          <!-- Precise: y = 35 + (98400-97842) * 210/1800 = 35 + 558*0.1167 = 35+65.1 = ~100 -->
+          <!-- But candle 20 body top is at 65, that means $97,842 should be around y=65 -->
+          <!-- Let me use the candle positions as ground truth. Candle 20 close at 97842, body top = 65 -->
+          <line class="current-price-line" x1="55" y1="65" x2="640" y2="65"/>
+          <rect class="current-price-tag" x="645" y="57" width="54" height="17" rx="4"/>
+          <text class="current-price-text" x="672" y="69" text-anchor="middle">97,842</text>
+
+          <!-- Time labels -->
+          <text class="time-label" x="74"  y="310">00:00</text>
+          <text class="time-label" x="161" y="310">04:00</text>
+          <text class="time-label" x="248" y="310">08:00</text>
+          <text class="time-label" x="335" y="310">12:00</text>
+          <text class="time-label" x="422" y="310">16:00</text>
+          <text class="time-label" x="509" y="310">20:00</text>
+          <text class="time-label" x="596" y="310">00:00</text>
+
+        </svg>
+      </div>
+
+      <!-- OHLC Bottom Bar -->
+      <div class="ohlc-bar">
+        <span class="ohlc-item"><span class="ohlc-label">O:</span><span class="ohlc-value">$97,120</span></span>
+        <span class="ohlc-item"><span class="ohlc-label">H:</span><span class="ohlc-value">$98,150</span></span>
+        <span class="ohlc-item"><span class="ohlc-label">C:</span><span class="ohlc-value">$97,842</span></span>
+        <span class="ohlc-item"><span class="ohlc-label">L:</span><span class="ohlc-value">$96,890</span></span>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

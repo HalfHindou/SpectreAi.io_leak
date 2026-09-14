@@ -1,0 +1,496 @@
+/* ============================================================
+   GlassSelect – Apple-style Adaptive Dropdown
+   Desktop: inline dropdown below trigger
+   Mobile: bottom-sheet style panel
+   ============================================================ */
+
+.glass-select {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+}
+
+/* ──── Trigger Button ──── */
+.glass-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  min-height: 32px;
+  padding: 5px 10px 5px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: 0.01em;
+  color: rgba(245, 245, 247, 0.82);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-full, 9999px);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-select-trigger:focus,
+.glass-select-trigger:focus-visible {
+  outline: none;
+}
+
+.glass-select-trigger:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(245, 245, 247, 0.95);
+}
+
+.glass-select-trigger:active {
+  transform: scale(0.97);
+}
+
+.glass-select.open .glass-select-trigger {
+  border-color: rgba(245, 245, 247, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.95);
+}
+
+.glass-select-value {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  text-align: left;
+  outline: none !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.glass-select-chevron {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  opacity: 0.35;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+}
+
+.glass-select.open .glass-select-chevron {
+  transform: rotate(180deg);
+  opacity: 0.6;
+}
+
+/* ──── Backdrop ──── */
+.glass-select-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(0, 0, 0, 0.5);
+  -webkit-tap-highlight-color: transparent;
+  animation: glassSelectFadeIn 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes glassSelectFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ──── Bottom Sheet Header (mobile) ──── */
+.glass-select-sheet-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 44px tall: the close button lives INSIDE this strip. At the old 24px the
+     28px button hung below the header, over the first row's checkmark. */
+  min-height: 44px;
+  padding: 8px 16px 0;
+  background: inherit;
+  border-radius: 24px 24px 0 0;
+}
+
+.glass-select-sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.glass-select-sheet-close {
+  /* 38x38: app-store-ready floors every <button> at min-height 38px on
+     mobile, so a 30px circle rendered as a 30x38 oval. Size to the floor. */
+  position: absolute;
+  right: 10px;
+  top: 3px;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(245, 245, 247, 0.5);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-select-sheet-close:active {
+  background: rgba(255, 255, 255, 0.12);
+  transform: scale(0.9);
+}
+
+/* ──── Dropdown Panel — mobile bottom-sheet (edge-to-edge iOS style) ──── */
+.glass-select-dropdown {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  max-height: 75vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 0 calc(env(safe-area-inset-bottom, 0px) + 8px);
+  background: rgba(22, 22, 24, 0.96);
+  border: none;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.06);
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px) saturate(1.5);
+  -webkit-backdrop-filter: blur(12px) saturate(1.5);
+  animation: glassSelectSlideUp 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+}
+
+/* ──── Desktop dropdown ──── */
+.glass-select-dropdown--desktop {
+  left: auto;
+  right: auto;
+  bottom: auto;
+  border-radius: 10px;
+  max-height: 260px;
+  padding: 3px;
+  background: rgba(28, 28, 30, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    0 0 0 0.5px rgba(255, 255, 255, 0.06) inset;
+  animation: glassSelectFadeDown 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Desktop options: compact, rounded, no separators */
+.glass-select-dropdown--desktop .glass-select-option {
+  padding: 7px 10px;
+  min-height: 0;
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-family: inherit;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.glass-select-dropdown--desktop .glass-select-option + .glass-select-option::before {
+  display: none;
+}
+
+.glass-select-dropdown--desktop .glass-select-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.glass-select-dropdown--desktop .glass-select-option:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.glass-select-dropdown--desktop .glass-select-option.active {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.glass-select-dropdown--desktop .glass-select-check {
+  width: 14px;
+  height: 14px;
+  color: rgba(245, 245, 247, 0.5);
+}
+
+@keyframes glassSelectSlideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+@keyframes glassSelectFadeDown {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ──── Option Items (mobile: flat iOS rows; desktop gets modifier overrides) ──── */
+.glass-select-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 15px 20px;
+  min-height: 52px;
+  font-size: 15px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  color: rgba(245, 245, 247, 0.82);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: -0.01em;
+}
+
+.glass-select-option:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Hairline separator between adjacent rows (iOS grouped list) */
+.glass-select-option + .glass-select-option::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20px;
+  right: 20px;
+  height: 0.5px;
+  background: rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+}
+
+.glass-select-option:active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.glass-select-option.active {
+  color: #f5f5f7;
+  font-weight: 500;
+  background: transparent;
+}
+
+.glass-select-option-label {
+  flex: 1;
+  text-align: left;
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent;
+}
+
+.glass-select-check {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  color: #f5f5f7;
+}
+
+/* ──── Day Mode ──── */
+.app-day-mode .glass-select-trigger,
+.welcome-day-mode .glass-select-trigger {
+  color: #374151;
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.app-day-mode .glass-select-trigger:hover,
+.welcome-day-mode .glass-select-trigger:hover {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #1e293b;
+}
+
+.app-day-mode .glass-select.open .glass-select-trigger,
+.welcome-day-mode .glass-select.open .glass-select-trigger {
+  border-color: rgba(0, 0, 0, 0.14);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.app-day-mode .glass-select-chevron,
+.welcome-day-mode .glass-select-chevron {
+  color: #94a3b8;
+}
+
+.app-day-mode .glass-select-backdrop,
+.welcome-day-mode .glass-select-backdrop {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* Portal-rendered dropdown lives outside .app, so reach it via body:has().
+   Both .app-day-mode descendants AND body:has(.app.app-day-mode) selectors
+   are kept so triggers inside the app and the portal sheet both flip. */
+.app-day-mode .glass-select-dropdown,
+.welcome-day-mode .glass-select-dropdown,
+body:has(.app.app-day-mode) .glass-select-dropdown,
+body:has(.app.welcome-day-mode) .glass-select-dropdown {
+  background: rgba(252, 252, 253, 0.96);
+  border-top-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 -12px 48px rgba(15, 23, 42, 0.12);
+}
+
+.app-day-mode .glass-select-option,
+.welcome-day-mode .glass-select-option,
+body:has(.app.app-day-mode) .glass-select-option,
+body:has(.app.welcome-day-mode) .glass-select-option {
+  color: #1e293b;
+}
+
+.app-day-mode .glass-select-option + .glass-select-option::before,
+.welcome-day-mode .glass-select-option + .glass-select-option::before,
+body:has(.app.app-day-mode) .glass-select-option + .glass-select-option::before,
+body:has(.app.welcome-day-mode) .glass-select-option + .glass-select-option::before {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.app-day-mode .glass-select-option:active,
+.welcome-day-mode .glass-select-option:active,
+body:has(.app.app-day-mode) .glass-select-option:active,
+body:has(.app.welcome-day-mode) .glass-select-option:active {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.app-day-mode .glass-select-option.active,
+.welcome-day-mode .glass-select-option.active,
+body:has(.app.app-day-mode) .glass-select-option.active,
+body:has(.app.welcome-day-mode) .glass-select-option.active {
+  color: #0f172a;
+  background: transparent;
+}
+
+.app-day-mode .glass-select-check,
+.welcome-day-mode .glass-select-check,
+body:has(.app.app-day-mode) .glass-select-check,
+body:has(.app.welcome-day-mode) .glass-select-check {
+  color: #0f172a;
+}
+
+.app-day-mode .glass-select-sheet-handle,
+.welcome-day-mode .glass-select-sheet-handle,
+body:has(.app.app-day-mode) .glass-select-sheet-handle,
+body:has(.app.welcome-day-mode) .glass-select-sheet-handle {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.app-day-mode .glass-select-sheet-close,
+.welcome-day-mode .glass-select-sheet-close,
+body:has(.app.app-day-mode) .glass-select-sheet-close,
+body:has(.app.welcome-day-mode) .glass-select-sheet-close {
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(15, 23, 42, 0.5);
+}
+
+/* Day-mode backdrop dim for the bottom sheet */
+body:has(.app.app-day-mode) .glass-select-backdrop,
+body:has(.app.welcome-day-mode) .glass-select-backdrop {
+  background: rgba(15, 23, 42, 0.35);
+}
+
+/* ──── Mobile refinements (trigger pill only; sheet styles are mobile-first above) ──── */
+@media (max-width: 768px) {
+  .glass-select-trigger {
+    min-height: 36px;
+    padding: 7px 14px;
+    font-size: 0.8rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.06);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .glass-select.open .glass-select-trigger {
+    border-color: rgba(245, 245, 247, 0.14);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .app-day-mode .glass-select-trigger,
+  .welcome-day-mode .glass-select-trigger {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+}
+
+/* ──── Option icon (e.g. chain logo) ──── */
+.glass-select-option-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  margin-right: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.glass-select-option-icon--placeholder {
+  background: transparent;
+}
+
+/* Tighter sheet rows when icons present */
+.glass-select-dropdown .glass-select-option {
+  padding: 12px 20px;
+  min-height: 48px;
+  gap: 0;
+}
+
+.glass-select-trigger-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+
+.app.app-day-mode .glass-select-option-icon {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* Inline-SVG option marks (chains with no logo URL, e.g. Robinhood Chain).
+   Shares the icon slot's box so labels stay on one alignment grid. */
+.glass-select-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+  background: none;
+}
+.glass-select-glyph svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Visible focus and touch geometry also apply to tablet-sized layouts. */
+.glass-select-trigger:focus-visible,
+.glass-select-option:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -3px;
+}
+@media (any-pointer: coarse) {
+  .glass-select-trigger,
+  .glass-select-option { min-height: 44px; }
+}
+
+.glass-select-sheet-close:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+@media (max-width: 768px), (any-pointer: coarse) {
+  .glass-select-sheet-header { min-height: 60px; box-sizing: border-box; }
+  .glass-select-sheet-close { width: 44px; height: 44px; top: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-select-backdrop, .glass-select-dropdown { animation: none; }
+  .glass-select-trigger, .glass-select-chevron, .glass-select-sheet-close,
+  .glass-select-option { transition: none; }
+  .glass-select-trigger:active, .glass-select-sheet-close:active { transform: none; }
+}

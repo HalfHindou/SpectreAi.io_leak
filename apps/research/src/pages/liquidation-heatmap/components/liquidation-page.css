@@ -1,0 +1,3736 @@
+/* ═══════════════════════════════════════════════════════════════
+   Liquidation Heatmap Page — Apple Cinematic Design System
+   Premium glassmorphism, monospace data, semantic color coding.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Import shared liquidation heatmap canvas & interaction styles */
+@import '../../home/components/tab-panels.css';
+
+/* ─── Fullscreen styles needed by LiquidationTabPanel ─── */
+.welcome-heatmap-fullscreen-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: background 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease;
+}
+.welcome-heatmap-fullscreen-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.welcome-heatmap-container.welcome-heatmap-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #09090b;
+  display: flex;
+  flex-direction: column;
+}
+.welcome-heatmap-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: -1;
+}
+.welcome-heatmap-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(9, 9, 11, 0.95);
+}
+.welcome-heatmap-toolbar-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+}
+
+/* Day mode — fullscreen surfaces are portal-attached, so reach via .app.app-day-mode */
+.app.app-day-mode .welcome-heatmap-container.welcome-heatmap-fullscreen {
+  background: #f8f9fa;
+}
+.app.app-day-mode .welcome-heatmap-fullscreen-overlay {
+  background: rgba(15, 23, 42, 0.45);
+}
+.app.app-day-mode .welcome-heatmap-toolbar {
+  background: rgba(255, 255, 255, 0.94);
+  border-bottom-color: rgba(15, 23, 42, 0.06);
+}
+.app.app-day-mode .welcome-heatmap-toolbar-title {
+  color: rgba(15, 23, 42, 0.65);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Page Layout
+   ═══════════════════════════════════════════════════════════════ */
+
+.liqp {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 24px;
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  animation: liqpFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes liqpFadeIn {
+  from { opacity: 0; transform: translateY(16px); filter: blur(4px); }
+  to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+/* Override tab panel scroll wrapper for standalone page */
+.liqp .liq-tab-scroll-wrap {
+  flex: none;
+  min-height: auto;
+  overflow: visible;
+  padding-bottom: 0;
+}
+
+/* Taller heatmap on standalone page */
+.liqp .liq-heatmap-canvas-wrap {
+  height: 520px;
+  max-height: calc(100dvh - 320px);
+  min-height: 250px;
+}
+
+/* ─── Page Header ─── */
+.liqp-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.liqp-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.liqp-title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+  font-size: clamp(1.375rem, 2.5vw, 1.75rem);
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.03em;
+  margin: 0;
+  line-height: 1.15;
+}
+
+.liqp-subtitle {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.40);
+  letter-spacing: normal;
+  margin: 0;
+  min-height: 1.25em;
+}
+
+/* ─── Token Selector ─── */
+.liqp-token-selector {
+  display: flex;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 3px;
+  flex-shrink: 0;
+}
+
+.liqp-token-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 8px 18px 6px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+
+.liqp-token-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.liqp-token-btn.active {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5f5f7;
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.liqp-token-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--token-accent, #f5f5f7);
+  opacity: 0.6;
+}
+
+.liqp-token-symbol {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.liqp-token-name {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 9px;
+  font-weight: 400;
+  opacity: 0.5;
+  letter-spacing: 0.2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Derivatives Metrics Grid
+   ═══════════════════════════════════════════════════════════════ */
+
+.liqp-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  animation: liqpFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+.liqp-metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px 10px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: border-color 0.2s ease,
+              transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.liqp-metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 245, 247, 0.08), transparent);
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+.liqp-metric-card:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.15),
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.liqp-metric-card.loading .liqp-metric-value {
+  opacity: 0.3;
+  animation: liqpPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes liqpPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+/* Risk Level pulse glow when High */
+.liqp-metric-card--risk-high {
+  animation: liqpRiskGlow 2.5s ease-in-out infinite;
+}
+
+@keyframes liqpRiskGlow {
+  0%, 100% {
+    border-color: rgba(255, 69, 58, 0.08);
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 0 0 0 rgba(255, 69, 58, 0);
+  }
+  50% {
+    border-color: rgba(255, 69, 58, 0.18);
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 0 20px rgba(255, 69, 58, 0.08);
+  }
+}
+
+/* Metric value + sparkline row */
+.liqp-metric-value-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ─── L/S Ratio Split Bar ─── */
+.liqp-ls-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 2px;
+}
+
+.liqp-ls-bar {
+  display: flex;
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  gap: 1px;
+}
+
+.liqp-ls-bar-long {
+  height: 100%;
+  border-radius: 2px 0 0 2px;
+  background: linear-gradient(90deg, rgba(255, 69, 58, 0.6), rgba(255, 69, 58, 0.4));
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liqp-ls-bar-short {
+  height: 100%;
+  border-radius: 0 2px 2px 0;
+  background: linear-gradient(90deg, rgba(48, 209, 88, 0.4), rgba(48, 209, 88, 0.6));
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liqp-ls-bar-labels {
+  display: flex;
+  justify-content: space-between;
+}
+
+.liqp-ls-label {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.liqp-ls-label.long {
+  color: rgba(255, 69, 58, 0.7);
+}
+
+.liqp-ls-label.short {
+  color: rgba(48, 209, 88, 0.7);
+}
+
+.liqp-metric-label {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.liqp-metric-value {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  transition: color 0.3s ease;
+}
+
+.liqp-metric-sublabel {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 0.625rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.30);
+  letter-spacing: normal;
+}
+
+/* ─── Heatmap Section ─── */
+.liqp-heatmap-section {
+  animation: liqpFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+
+/* ══ Override shared heatmap for dedicated page — premium treatment ══ */
+
+/* Card container */
+.liqp .liq-heatmap-container {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 18px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+
+.liqp .liq-heatmap-container::before {
+  background: linear-gradient(90deg, transparent, rgba(245, 245, 247, 0.10), transparent);
+}
+
+/* ── Toolbar — full redesign for dedicated page ── */
+.liqp .liq-heatmap-toolbar {
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 12px;
+}
+
+.liqp .liq-heatmap-toolbar-title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+
+/* Chart mode tabs — bigger on dedicated page */
+.liqp .liq-chart-mode-tab {
+  padding: 7px 16px;
+  font-size: 0.8125rem;
+}
+
+.liqp .liq-chart-mode-tab svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Timeframe buttons — proper segmented control */
+.liqp .liq-heatmap-tf-btns {
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 3px;
+}
+
+.liqp .liq-heatmap-tf-btn {
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.01em;
+}
+
+.liqp .liq-heatmap-tf-btn:hover {
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.liqp .liq-heatmap-tf-btn.active {
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.10);
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Sensitivity buttons — proper mode toggle */
+.liqp .liq-sensitivity-btns {
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 3px;
+}
+
+.liqp .liq-sens-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.01em;
+}
+
+.liqp .liq-sens-btn:hover {
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.liqp .liq-sens-btn.active {
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.10);
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Legend label */
+.liqp .liq-heatmap-legend-label {
+  font-size: 0.625rem;
+  color: rgba(255, 255, 255, 0.30);
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+/* Fullscreen button — bigger */
+.liqp .welcome-heatmap-fullscreen-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.liqp .welcome-heatmap-fullscreen-btn:hover {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.10);
+}
+
+/* Canvas — cinematic black, no purple tint */
+.liqp .liq-heatmap-canvas-wrap {
+  background: linear-gradient(180deg, #09090b 0%, #0a0a0e 50%, #09090b 100%);
+  border-radius: 0 0 17px 17px;
+}
+
+/* Zoom controls — bigger on dedicated page */
+.liqp .liq-zoom-ctrl-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(12, 12, 14, 0.80);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Minimap — more visible */
+.liqp .liq-minimap {
+  height: 6px;
+  border-radius: 3px;
+}
+
+/* AI Analysis — tighter visual coupling */
+.liqp .liq-ai-analysis-card {
+  margin-top: -1px;
+  border-radius: 0 0 18px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Liquidation Map Chart (Coinglass-style)
+   ═══════════════════════════════════════════════════════════════ */
+
+.liqp-map-section {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+  animation: liqpFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+
+/* ─── Map Toolbar ─── */
+.liqp-map-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.liqp-map-filters {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.liqp-filter-btn {
+  padding: 6px 18px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.35);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+  letter-spacing: 0.01em;
+}
+
+.liqp-filter-btn:hover {
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.liqp-filter-btn.active {
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.10);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.liqp-filter-btn.active.long {
+  color: #FF453A;
+  background: rgba(255, 69, 58, 0.12);
+}
+
+.liqp-filter-btn.active.short {
+  color: #4ECDC4;
+  background: rgba(78, 205, 196, 0.12);
+}
+
+/* ─── Map Legend ─── */
+.liqp-map-legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.liqp-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 0.625rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: normal;
+  white-space: nowrap;
+}
+
+.liqp-legend-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.liqp-legend-line {
+  width: 14px;
+  height: 2.5px;
+  border-radius: 1.5px;
+  flex-shrink: 0;
+}
+
+.liqp-legend-divider {
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+/* ─── Map Canvas ─── */
+.liqp-map-canvas-wrap {
+  position: relative;
+  height: 480px;
+  width: 100%;
+}
+
+.liqp-map-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+/* ─── Map Crosshair ─── */
+.liqp-map-crosshair {
+  position: absolute;
+  width: 1px;
+  background: rgba(245, 245, 247, 0.15);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ─── Map Tooltip ─── */
+.liqp-map-tooltip {
+  position: absolute;
+  z-index: 10;
+  background: rgba(12, 12, 14, 0.88);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 12px 14px;
+  min-width: 160px;
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  pointer-events: none;
+  animation: liqpTooltipIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes liqpTooltipIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.liqp-map-tt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.liqp-map-tt-price {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: -0.3px;
+}
+
+.liqp-map-tt-side {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.liqp-map-tt-side.long {
+  color: #FF453A;
+  background: rgba(255, 69, 58, 0.15);
+}
+
+.liqp-map-tt-side.short {
+  color: #4ECDC4;
+  background: rgba(78, 205, 196, 0.15);
+}
+
+.liqp-map-tt-dist {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.30);
+  margin-bottom: 10px;
+  letter-spacing: normal;
+}
+
+.liqp-map-tt-tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.liqp-map-tt-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.liqp-map-tt-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 1.5px;
+  flex-shrink: 0;
+}
+
+.liqp-map-tt-label {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 0.625rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.45);
+  flex: 1;
+}
+
+.liqp-map-tt-val {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+  letter-spacing: -0.02em;
+}
+
+.liqp-map-tt-total {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: -0.2px;
+}
+
+.liqp-map-tt-cumulative {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.liqp-map-tt-cum-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.liqp-map-tt-cum-row span:nth-child(2) {
+  flex: 1;
+}
+
+.liqp-map-tt-cum-row span:nth-child(3) {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Bottom Grid: Leverage Distribution + Key Levels
+   ═══════════════════════════════════════════════════════════════ */
+
+.liqp-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  animation: liqpFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
+}
+
+.liqp-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.liqp-section-title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.liqp-section-subtitle {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.30);
+  letter-spacing: normal;
+}
+
+/* ─── Leverage Distribution ─── */
+.liqp-leverage-dist {
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+}
+
+.liqp-dist-chart-area {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  grid-template-rows: 1fr 20px;
+  gap: 0;
+  flex: 1;
+  min-height: 180px;
+}
+
+/* Y-axis */
+.liqp-dist-yaxis {
+  grid-row: 1;
+  grid-column: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-right: 6px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.liqp-dist-yaxis span {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.30);
+  letter-spacing: -0.02em;
+}
+
+/* Bar chart */
+.liqp-dist-chart {
+  grid-row: 1;
+  grid-column: 2;
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5px;
+  position: relative;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.liqp-dist-bar-wrap {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  position: relative;
+  cursor: crosshair;
+}
+
+.liqp-dist-bar-wrap.current {
+  opacity: 0.35;
+}
+
+.liqp-dist-bar-wrap.hovered .liqp-dist-bar {
+  filter: brightness(1.2);
+}
+
+.liqp-dist-bar {
+  width: 100%;
+  border-radius: 2px 2px 0 0;
+  transition: height 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.15s ease;
+  min-height: 2px;
+}
+
+.liqp-dist-bar.long {
+  background: linear-gradient(180deg, rgba(255, 69, 58, 0.75) 0%, rgba(255, 69, 58, 0.35) 100%);
+}
+
+.liqp-dist-bar.short {
+  background: linear-gradient(180deg, rgba(48, 209, 88, 0.75) 0%, rgba(48, 209, 88, 0.35) 100%);
+}
+
+/* Bar tooltip — follows cursor */
+.liqp-dist-bar-tooltip {
+  position: absolute;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  min-width: 150px;
+  background: rgba(12, 12, 14, 0.92);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.5),
+    0 4px 10px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.liqp-dist-tt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.liqp-dist-tt-side {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.liqp-dist-tt-side.long { color: #FF453A; }
+.liqp-dist-tt-side.short { color: #30D158; }
+
+.liqp-dist-tt-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.liqp-dist-tt-side.long .liqp-dist-tt-dot { background: #FF453A; }
+.liqp-dist-tt-side.short .liqp-dist-tt-dot { background: #30D158; }
+
+.liqp-dist-tt-dist {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.liqp-dist-tt-price {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.03em;
+}
+
+.liqp-dist-tt-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.liqp-dist-tt-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.liqp-dist-tt-label {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 0.5625rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  min-width: 40px;
+}
+
+.liqp-dist-tt-bar-wrap {
+  flex: 1;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+  min-width: 40px;
+}
+
+.liqp-dist-tt-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.15s ease;
+}
+
+.liqp-dist-tt-bar-fill.long { background: #FF453A; }
+.liqp-dist-tt-bar-fill.short { background: #30D158; }
+
+.liqp-dist-tt-val {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.70);
+  min-width: 24px;
+  text-align: right;
+}
+
+.liqp-dist-tt-amount {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.70);
+  margin-left: auto;
+}
+
+/* Current price marker */
+.liqp-dist-current-line {
+  position: absolute;
+  bottom: 0;
+  top: 0;
+  width: 1px;
+  border-left: 1px dashed rgba(247, 147, 26, 0.5);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* X-axis price labels */
+.liqp-dist-xaxis {
+  grid-row: 2;
+  grid-column: 2;
+  position: relative;
+  overflow: hidden;
+}
+
+.liqp-dist-xaxis span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.30);
+  letter-spacing: -0.02em;
+  top: 4px;
+  white-space: nowrap;
+}
+
+/* Legend */
+.liqp-dist-legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 14px;
+  flex-shrink: 0;
+}
+
+.liqp-dist-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 0.625rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: normal;
+}
+
+.liqp-dist-legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.liqp-dist-legend-item.long .liqp-dist-legend-dot {
+  background: #FF453A;
+}
+.liqp-dist-legend-item.short .liqp-dist-legend-dot {
+  background: #30D158;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Key Liquidation Levels Table
+   ═══════════════════════════════════════════════════════════════ */
+
+.liqp-levels-section {
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.liqp-levels-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.liqp-levels-thead {
+  display: grid;
+  grid-template-columns: 1.2fr 1.4fr 0.9fr 0.8fr 0.9fr;
+  gap: 8px;
+  padding: 0 12px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.liqp-levels-thead span {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.30);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.liqp-levels-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1.4fr 0.9fr 0.8fr 0.9fr;
+  gap: 8px;
+  padding: 9px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.025);
+  align-items: center;
+  transition: background 0.2s ease;
+}
+
+.liqp-levels-row:last-child {
+  border-bottom: none;
+}
+
+.liqp-levels-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* cluster rows read via a subtle row-wide amber wash — NO colored left-edge
+   accent bar (reads as AI-slop). The tint carries the signal, alignment stays
+   flush with the rest of the ledger. */
+.liqp-levels-row.cluster {
+  background: rgba(255, 159, 10, 0.05);
+}
+
+.liqp-level-price {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: -0.02em;
+}
+
+.liqp-level-density {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.liqp-density-bar-bg {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.liqp-density-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.5), rgba(147, 51, 234, 0.6));
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liqp-density-value {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+  min-width: 28px;
+  text-align: right;
+}
+
+.liqp-level-amount {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(48, 209, 88, 0.8);
+  letter-spacing: -0.2px;
+}
+
+.liqp-level-side {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-align: center;
+  width: fit-content;
+}
+
+.liqp-level-side.long {
+  color: rgba(255, 69, 58, 0.85);
+  background: rgba(255, 69, 58, 0.1);
+}
+
+.liqp-level-side.short {
+  color: rgba(48, 209, 88, 0.85);
+  background: rgba(48, 209, 88, 0.1);
+}
+
+.liqp-level-distance {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: -0.2px;
+}
+
+.liqp-level-distance.above {
+  color: rgba(48, 209, 88, 0.7);
+}
+
+.liqp-level-distance.below {
+  color: rgba(255, 69, 58, 0.7);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Nearby Levels Glow (< 3% from current price)
+   ═══════════════════════════════════════════════════════════════ */
+
+.liqp-levels-row--nearby {
+  background: rgba(245, 158, 11, 0.03);
+  border: 1px solid rgba(245, 158, 11, 0.08);
+  border-radius: 8px;
+  margin: 2px -4px;
+  padding: 9px 16px;
+}
+
+.liqp-levels-row--nearby:hover {
+  background: rgba(245, 158, 11, 0.06);
+  border-color: rgba(245, 158, 11, 0.14);
+}
+
+/* ─── Color-coded density bar fills ─── */
+.liqp-density-bar-fill--long {
+  background: linear-gradient(90deg, rgba(255, 69, 58, 0.4), rgba(255, 69, 58, 0.65));
+}
+
+.liqp-density-bar-fill--short {
+  background: linear-gradient(90deg, rgba(48, 209, 88, 0.4), rgba(48, 209, 88, 0.65));
+}
+
+/* ─── Hover Detail Row (leverage distribution) ─── */
+.liqp-level-hover-detail {
+  grid-column: 1 / -1;
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 8px;
+  margin-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.liqp-levels-row:hover .liqp-level-hover-detail {
+  display: flex;
+}
+
+.liqp-level-hover-label {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.30);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.liqp-level-hover-bars {
+  display: flex;
+  gap: 10px;
+}
+
+.liqp-level-hover-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+}
+
+.liqp-level-hover-bar-label {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  min-width: 20px;
+}
+
+.liqp-level-hover-bar-track {
+  flex: 1;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.liqp-level-hover-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liqp-level-hover-bar-fill.long {
+  background: rgba(255, 69, 58, 0.55);
+}
+
+.liqp-level-hover-bar-fill.short {
+  background: rgba(48, 209, 88, 0.55);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AI Liquidation Analysis Section
+   ═══════════════════════════════════════════════════════════════ */
+
+.liqp-ai-section {
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  animation: liqpFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+}
+
+.liqp-ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.liqp-ai-timeframes {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+}
+
+.liqp-ai-tf-btn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.35);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+  letter-spacing: 0.02em;
+}
+
+.liqp-ai-tf-btn:hover {
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.liqp-ai-tf-btn.active {
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.10);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.liqp-ai-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(48, 209, 88, 0.10);
+  border: 1px solid rgba(48, 209, 88, 0.22);
+  color: rgba(48, 209, 88, 0.95);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.liqp-ai-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #30d158;
+  box-shadow: 0 0 8px rgba(48, 209, 88, 0.7);
+  animation: liqp-ai-live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes liqp-ai-live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.liqp.day-mode .liqp-ai-live {
+  background: rgba(27, 158, 75, 0.10);
+  border-color: rgba(27, 158, 75, 0.25);
+  color: #1b9e4b;
+}
+
+.liqp.day-mode .liqp-ai-live-dot {
+  background: #1b9e4b;
+  box-shadow: 0 0 8px rgba(27, 158, 75, 0.5);
+}
+
+.liqp-ai-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.liqp-ai-text {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+  letter-spacing: normal;
+}
+
+.liqp-ai-key-levels {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.liqp-ai-level {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.liqp-ai-level-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.liqp-ai-level--support .liqp-ai-level-dot {
+  background: #FF453A;
+  box-shadow: 0 0 6px rgba(255, 69, 58, 0.4);
+}
+
+.liqp-ai-level--resistance .liqp-ai-level-dot {
+  background: #30D158;
+  box-shadow: 0 0 6px rgba(48, 209, 88, 0.4);
+}
+
+.liqp-ai-level-label {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+  min-width: 100px;
+}
+
+.liqp-ai-level-price {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.03em;
+}
+
+.liqp-ai-level-amount {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  margin-left: auto;
+}
+
+/* AI Analysis shimmer */
+.liqp-ai-shimmer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.liqp-ai-shimmer-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.04) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.liqp-ai-shimmer-line--w80 { width: 80%; }
+.liqp-ai-shimmer-line--w60 { width: 60%; }
+.liqp-ai-shimmer-line--w90 { width: 90%; }
+
+/* ═══════════════════════════════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1280px) {
+  .liqp {
+    padding: 20px 16px;
+    gap: 16px;
+  }
+
+  .liqp-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .liqp {
+    padding: 16px 12px;
+    gap: 14px;
+  }
+
+  .liqp-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .liqp-token-selector {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .liqp-token-selector::-webkit-scrollbar {
+    display: none;
+  }
+
+  .liqp-token-btn {
+    flex-shrink: 0;
+  }
+
+  .liqp-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .liqp-view-tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+
+  .liqp-view-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .liqp-hm-title {
+    font-size: 0.75rem;
+  }
+
+  .liqp-hm-dropdown-btn {
+    padding: 4px 10px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .liqp {
+    padding: 12px 8px;
+    gap: 12px;
+  }
+
+  .liqp-title {
+    font-size: 1.375rem;
+  }
+
+  .liqp-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .liqp-ai-section {
+    padding: 14px;
+  }
+
+  .liqp-ai-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .liqp-ai-level {
+    flex-wrap: wrap;
+    gap: 4px 8px;
+  }
+
+  .liqp-ai-level-amount {
+    margin-left: 14px;
+    font-size: 0.625rem;
+  }
+
+  .liqp-map-canvas-wrap {
+    height: 340px;
+  }
+
+  .liqp-token-selector {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .liqp-token-btn {
+    flex: 1;
+  }
+
+  .liqp-map-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .liqp-map-legend {
+    gap: 10px;
+  }
+
+  .liqp-levels-thead,
+  .liqp-levels-row {
+    grid-template-columns: 1fr 1.2fr 0.8fr 0.7fr 0.8fr;
+    gap: 4px;
+    padding: 8px;
+  }
+
+  .liqp-levels-thead span {
+    font-size: 9px;
+  }
+
+  .liqp-level-price {
+    font-size: 11px;
+  }
+
+  .liqp-real-heatmap {
+    border-radius: var(--radius-md, 12px);
+  }
+
+  .liqp-hm-header {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .liqp-hm-title {
+    font-size: 0.75rem;
+  }
+
+  .liqp-hm-dropdown-btn {
+    padding: 4px 10px;
+    font-size: 0.75rem;
+  }
+
+  .liqp-hm-dropdown-panel {
+    width: 160px;
+  }
+
+  .liqp-metric-card {
+    padding: 12px 14px 10px;
+  }
+
+  .liqp-metric-value {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .liqp-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .liqp-metric-value {
+    font-size: 18px;
+  }
+
+  .liqp-map-canvas-wrap {
+    height: 280px;
+  }
+
+  .liqp-dist-chart-area {
+    min-height: 100px;
+  }
+
+  .liqp-levels-thead span:nth-child(4),
+  .liqp-levels-row span:nth-child(4) {
+    display: none;
+  }
+
+  .liqp-levels-thead,
+  .liqp-levels-row {
+    grid-template-columns: 1fr 1.2fr 0.8fr 0.9fr;
+  }
+}
+
+/* ─── View Tab Bar ─── */
+.liqp-view-tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 12px;
+  align-self: flex-start;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Day Mode Overrides
+   ═══════════════════════════════════════════════════════════════ */
+
+.liqp.day-mode .liqp-title {
+  color: #1d1d1f;
+}
+
+.liqp.day-mode .liqp-subtitle {
+  color: rgba(29, 29, 31, 0.45);
+}
+
+/* ─── Day mode: heatmap container ─── */
+.liqp.day-mode .liq-heatmap-container {
+  background: rgba(255, 255, 255, 0.80);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.04),
+    0 2px 8px rgba(0, 0, 0, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.liqp.day-mode .liq-heatmap-container::before {
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.03), transparent);
+}
+
+.liqp.day-mode .liq-heatmap-toolbar {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.liqp.day-mode .liq-heatmap-toolbar-title {
+  color: #1d1d1f;
+}
+
+.liqp.day-mode .liq-heatmap-tf-btns {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.liqp.day-mode .liq-heatmap-tf-btn {
+  color: rgba(29, 29, 31, 0.40);
+}
+
+.liqp.day-mode .liq-heatmap-tf-btn:hover {
+  color: rgba(29, 29, 31, 0.65);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.liqp.day-mode .liq-heatmap-tf-btn.active {
+  color: #1d1d1f;
+  background: rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.liqp.day-mode .liq-sensitivity-btns {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.liqp.day-mode .liq-sens-btn {
+  color: rgba(29, 29, 31, 0.40);
+}
+
+.liqp.day-mode .liq-sens-btn:hover {
+  color: rgba(29, 29, 31, 0.65);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.liqp.day-mode .liq-sens-btn.active {
+  color: #1d1d1f;
+  background: rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.liqp.day-mode .liq-heatmap-legend-label {
+  color: rgba(29, 29, 31, 0.30);
+}
+
+.liqp.day-mode .welcome-heatmap-fullscreen-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: rgba(29, 29, 31, 0.45);
+}
+
+.liqp.day-mode .welcome-heatmap-fullscreen-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: rgba(29, 29, 31, 0.75);
+}
+
+.liqp.day-mode .liq-heatmap-canvas-wrap {
+  background: linear-gradient(180deg, #f8f8fa 0%, #f5f5f7 50%, #f8f8fa 100%);
+}
+
+.liqp.day-mode .liqp-token-selector {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.liqp.day-mode .liqp-token-btn {
+  color: rgba(29, 29, 31, 0.45);
+}
+
+.liqp.day-mode .liqp-token-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(29, 29, 31, 0.7);
+}
+
+.liqp.day-mode .liqp-token-btn.active {
+  background: rgba(0, 0, 0, 0.06);
+  color: #1d1d1f;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.liqp.day-mode .liqp-metric-card {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.02) 0%, rgba(0, 0, 0, 0.01) 100%);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.liqp.day-mode .liqp-metric-card::before {
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.04), transparent);
+}
+
+.liqp.day-mode .liqp-metric-label {
+  color: rgba(29, 29, 31, 0.45);
+}
+
+.liqp.day-mode .liqp-metric-sublabel {
+  color: rgba(29, 29, 31, 0.35);
+}
+
+.liqp.day-mode .liqp-leverage-dist,
+.liqp.day-mode .liqp-levels-section {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.02) 0%, rgba(0, 0, 0, 0.01) 100%);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.liqp.day-mode .liqp-section-title {
+  color: rgba(29, 29, 31, 0.75);
+}
+
+.liqp.day-mode .liqp-section-subtitle {
+  color: rgba(29, 29, 31, 0.35);
+}
+
+.liqp.day-mode .liqp-section-header {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.liqp.day-mode .liqp-levels-thead {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+.liqp.day-mode .liqp-levels-thead span {
+  color: rgba(29, 29, 31, 0.4);
+}
+
+.liqp.day-mode .liqp-levels-row {
+  border-bottom-color: rgba(0, 0, 0, 0.04);
+}
+
+.liqp.day-mode .liqp-levels-row:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.liqp.day-mode .liqp-level-price {
+  color: rgba(29, 29, 31, 0.85);
+}
+
+.liqp.day-mode .liqp-density-bar-bg {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.liqp.day-mode .liqp-density-value {
+  color: rgba(29, 29, 31, 0.5);
+}
+
+.liqp.day-mode .liqp-dist-legend-item {
+  color: rgba(29, 29, 31, 0.45);
+}
+
+.liqp.day-mode .liqp-dist-yaxis span {
+  color: rgba(29, 29, 31, 0.35);
+}
+
+.liqp.day-mode .liqp-dist-xaxis span {
+  color: rgba(29, 29, 31, 0.35);
+}
+
+.liqp.day-mode .liqp-dist-chart {
+  border-left-color: rgba(0, 0, 0, 0.08);
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+.liqp.day-mode .liqp-dist-current-line {
+  border-left-color: rgba(247, 147, 26, 0.6);
+}
+
+.liqp.day-mode .liqp-dist-bar.long {
+  background: linear-gradient(180deg, rgba(255, 69, 58, 0.85) 0%, rgba(255, 69, 58, 0.45) 100%);
+}
+
+.liqp.day-mode .liqp-dist-bar.short {
+  background: linear-gradient(180deg, rgba(48, 209, 88, 0.85) 0%, rgba(48, 209, 88, 0.45) 100%);
+}
+
+.liqp.day-mode .liqp-dist-bar-tooltip {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.10),
+    0 4px 10px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.60);
+}
+
+.liqp.day-mode .liqp-dist-tt-side.long { color: #D42020; }
+.liqp.day-mode .liqp-dist-tt-side.short { color: #1B9E4B; }
+.liqp.day-mode .liqp-dist-tt-side.long .liqp-dist-tt-dot { background: #D42020; }
+.liqp.day-mode .liqp-dist-tt-side.short .liqp-dist-tt-dot { background: #1B9E4B; }
+
+.liqp.day-mode .liqp-dist-tt-dist {
+  color: rgba(29, 29, 31, 0.40);
+}
+
+.liqp.day-mode .liqp-dist-tt-price {
+  color: #1d1d1f;
+}
+
+.liqp.day-mode .liqp-dist-tt-metrics {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+.liqp.day-mode .liqp-dist-tt-label {
+  color: rgba(29, 29, 31, 0.40);
+}
+
+.liqp.day-mode .liqp-dist-tt-bar-wrap {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.liqp.day-mode .liqp-dist-tt-bar-fill.long { background: #D42020; }
+.liqp.day-mode .liqp-dist-tt-bar-fill.short { background: #1B9E4B; }
+
+.liqp.day-mode .liqp-dist-tt-val {
+  color: rgba(29, 29, 31, 0.70);
+}
+
+.liqp.day-mode .liqp-dist-tt-amount {
+  color: rgba(29, 29, 31, 0.70);
+}
+
+/* ─── Day mode: map, filters ─── */
+.liqp.day-mode .liqp-map-section {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.02) 0%, rgba(0, 0, 0, 0.01) 100%);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.liqp.day-mode .liqp-map-toolbar {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.liqp.day-mode .liqp-map-filters {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.liqp.day-mode .liqp-filter-btn {
+  color: rgba(29, 29, 31, 0.4);
+}
+
+.liqp.day-mode .liqp-filter-btn:hover {
+  color: rgba(29, 29, 31, 0.6);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.liqp.day-mode .liqp-filter-btn.active {
+  color: #1d1d1f;
+  background: rgba(0, 0, 0, 0.07);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.liqp.day-mode .liqp-legend-item {
+  color: rgba(29, 29, 31, 0.5);
+}
+
+.liqp.day-mode .liqp-legend-divider {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.liqp.day-mode .liqp-map-crosshair {
+  background: rgba(29, 29, 31, 0.12);
+}
+
+.liqp.day-mode .liqp-map-tooltip {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.10),
+    0 4px 12px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.60);
+}
+
+.liqp.day-mode .liqp-map-tt-price {
+  color: #1d1d1f;
+}
+
+.liqp.day-mode .liqp-map-tt-dist {
+  color: rgba(29, 29, 31, 0.4);
+}
+
+.liqp.day-mode .liqp-map-tt-label {
+  color: rgba(29, 29, 31, 0.5);
+}
+
+.liqp.day-mode .liqp-map-tt-val {
+  color: rgba(29, 29, 31, 0.75);
+}
+
+.liqp.day-mode .liqp-map-tt-total {
+  color: #1d1d1f;
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+.liqp.day-mode .liqp-map-tt-cumulative {
+  border-top-color: rgba(0, 0, 0, 0.04);
+}
+
+.liqp.day-mode .liqp-map-tt-cum-row {
+  color: rgba(29, 29, 31, 0.45);
+}
+
+.liqp.day-mode .liqp-map-tt-cum-row span:nth-child(3) {
+  color: rgba(29, 29, 31, 0.65);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REAL HEATMAP VIEW
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════
+   Real Heatmap Component — Glass Card Treatment
+   ═══════════════════════════════════════════════════════════════ */
+
+.liqp-real-heatmap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  /* Anchors the phone control sheet + its scrim to the card. */
+  position: relative;
+  border-radius: var(--radius-lg, 16px);
+  overflow: visible;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.04));
+  box-shadow:
+    var(--shadow-inner, inset 0 1px 0 rgba(255, 255, 255, 0.04)),
+    var(--shadow-md, 0 4px 16px rgba(0, 0, 0, 0.3));
+  transition: border-color var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+              box-shadow var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+/* Fullscreen mode - works for both browser Fullscreen API AND a CSS-only
+   fallback (iOS Safari / PWAs that can't use requestFullscreen). Force
+   position:fixed + inset:0 so we always cover the viewport even when the
+   browser doesn't apply the UA :fullscreen height:100% override reliably. */
+.liqp-real-heatmap--fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  background: var(--bg-void, #09090b);
+  display: flex !important;
+  flex-direction: column !important;
+  z-index: 2000;
+}
+
+.liqp-real-heatmap--fullscreen .liqp-hm-header {
+  border-radius: 0;
+  flex: 0 0 auto;
+}
+
+.liqp-real-heatmap--fullscreen .liqp-real-heatmap-canvas-wrap {
+  border-radius: 0;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+}
+
+.liqp-real-heatmap:hover {
+  border-color: var(--glass-border-light, rgba(255, 255, 255, 0.06));
+  box-shadow:
+    var(--shadow-inner, inset 0 1px 0 rgba(255, 255, 255, 0.04)),
+    var(--shadow-lg, 0 4px 24px rgba(0, 0, 0, 0.12), 0 20px 60px rgba(0, 0, 0, 0.18));
+}
+
+/* ═══ Header Bar — glass surface ═══ */
+.liqp-hm-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* Wrap instead of spilling. Measured before this: at a 820px container the
+     header overflowed by 117px and at 520px by 417px — the zoom/share/fullscreen
+     buttons rendered OUTSIDE the card and were unreachable. A second row costs
+     canvas height, which is fine now that the canvas flexes. */
+  flex-wrap: wrap;
+  row-gap: 6px;
+  padding: 10px 16px;
+  border-radius: var(--radius-lg, 16px) var(--radius-lg, 16px) 0 0;
+  background: var(--glass-bg, rgba(9, 9, 11, 0.88));
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.03));
+  position: relative;
+  z-index: 10;
+}
+
+.liqp-hm-title {
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.liqp-hm-spacer {
+  flex: 1;
+}
+
+/* Zoom controls */
+.liqp-hm-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm, 8px);
+  padding: 2px;
+}
+
+.liqp-hm-zoom-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.liqp-hm-zoom-btn:hover {
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.liqp-hm-zoom-btn:active {
+  transform: scale(0.92);
+}
+
+.liqp-hm-zoom-reset {
+  color: rgba(245, 158, 11, 0.6);
+}
+
+.liqp-hm-zoom-reset:hover {
+  color: rgba(245, 158, 11, 0.85);
+}
+
+/* Shimmer loading dot - not a spinner (design system rule) */
+.liqp-hm-loading {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(245, 245, 247, 0.3);
+  animation: liqp-breathe 1.5s ease-in-out infinite;
+}
+
+@keyframes liqp-breathe {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.3); }
+}
+
+.liqp-hm-fullscreen-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  cursor: pointer;
+  border-radius: var(--radius-sm, 8px);
+  transition: all var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.liqp-hm-fullscreen-btn:hover {
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ═══ Dropdown Buttons — pill controls ═══ */
+.liqp-hm-dropdown-wrap {
+  position: relative;
+}
+
+.liqp-hm-dropdown-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm, 8px);
+  color: var(--text-primary, #f5f5f7);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  cursor: pointer;
+  transition: all var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  white-space: nowrap;
+}
+
+.liqp-hm-dropdown-btn:hover,
+.liqp-hm-dropdown-btn.open {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 12px rgba(245, 245, 247, 0.04);
+}
+
+.liqp-hm-dropdown-btn svg {
+  opacity: 0.4;
+  transition: transform var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.liqp-hm-dropdown-btn.open svg {
+  transform: rotate(180deg);
+}
+
+/* ═══ Dropdown Panel — glass overlay ═══ */
+.liqp-hm-dropdown-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 180px;
+  max-height: 300px;
+  background: rgba(9, 9, 11, 0.92);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md, 12px);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: liqpDropIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes liqpDropIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.liqp-hm-dropdown-panel--narrow {
+  width: 80px;
+}
+
+.liqp-hm-dropdown-search {
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--text-primary, #f5f5f7);
+  font-size: 0.8125rem;
+  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif);
+  outline: none;
+}
+
+.liqp-hm-dropdown-search:focus {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.liqp-hm-dropdown-search::placeholder {
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+}
+
+.liqp-hm-dropdown-list {
+  overflow-y: auto;
+  max-height: 240px;
+  padding: 4px 0;
+}
+
+.liqp-hm-dropdown-list::-webkit-scrollbar { width: 4px; height: 4px; }
+.liqp-hm-dropdown-list::-webkit-scrollbar-track { background: transparent; }
+.liqp-hm-dropdown-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: var(--radius-full, 9999px); }
+.liqp-hm-dropdown-list::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.14); }
+
+.liqp-hm-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 7px 14px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  font-size: 0.8125rem;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 100ms ease;
+  text-align: left;
+  border-radius: 0;
+}
+
+.liqp-hm-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary, #f5f5f7);
+}
+
+.liqp-hm-dropdown-item.active {
+  color: var(--text-primary, #f5f5f7);
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.liqp-hm-dropdown-empty {
+  display: block;
+  padding: 16px 12px;
+  text-align: center;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  font-size: 0.75rem;
+}
+
+/* ═══ Canvas Area — void background, flush edges ═══ */
+.liqp-real-heatmap-canvas-wrap {
+  position: relative;
+  width: 100%;
+  height: 520px;
+  max-height: calc(100dvh - 320px);
+  min-height: 250px;
+  background: var(--bg-void, #09090b);
+  overflow: hidden;
+  /* Wheel/pinch inside the chart must never rubber-band the page. */
+  overscroll-behavior: contain;
+  border-radius: 0 0 var(--radius-lg, 16px) var(--radius-lg, 16px);
+}
+
+.liqp-real-heatmap-shimmer {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.04) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ═══ Refetch overlay — timeframe/symbol switch with old chart on screen ═══ */
+.liqp-real-heatmap-canvas-wrap canvas {
+  transition: opacity var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.liqp-real-heatmap-canvas-wrap.is-refetching canvas {
+  opacity: 0.45;
+}
+
+.liqp-hm-refetch {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  /* 150ms delay: sub-150ms cache hits resolve before the overlay ever shows */
+  animation: liqp-refetch-in 200ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) 150ms forwards;
+}
+
+@keyframes liqp-refetch-in {
+  to { opacity: 1; }
+}
+
+.liqp-hm-refetch-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  overflow: hidden;
+}
+
+.liqp-hm-refetch-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -40%;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(245, 245, 247, 0.45), transparent);
+  animation: liqp-refetch-sweep 1.1s ease-in-out infinite;
+}
+
+@keyframes liqp-refetch-sweep {
+  to { left: 100%; }
+}
+
+.liqp-hm-refetch-pill {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(16, 16, 20, 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full, 9999px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.liqp-hm-refetch-track {
+  position: relative;
+  width: 34px;
+  height: 3px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.liqp-hm-refetch-track::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.6) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+}
+
+.liqp-hm-refetch-text {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(245, 245, 247, 0.75);
+  white-space: nowrap;
+}
+
+.liqp-real-heatmap--day .liqp-hm-refetch-pill {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+}
+
+.liqp-real-heatmap--day .liqp-hm-refetch-text {
+  color: #475569;
+}
+
+.liqp-real-heatmap--day .liqp-hm-refetch-track {
+  background: rgba(15, 23, 42, 0.08);
+}
+
+.liqp-real-heatmap--day .liqp-hm-refetch-track::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(15, 23, 42, 0.35) 50%, transparent 100%);
+  background-size: 200% 100%;
+}
+
+.liqp-real-heatmap--day .liqp-hm-refetch-bar::after {
+  background: linear-gradient(90deg, transparent, rgba(15, 23, 42, 0.4), transparent);
+}
+
+/* ═══ Sub-bar: magnet chips + Δ / leverage / replay controls ═══ */
+.liqp-hm-subbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.liqp-hm-subbar-spacer {
+  flex: 1;
+  min-width: 8px;
+}
+
+.liqp-hm-magnets {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Clear-all for pinned levels — only rendered while pins exist. */
+.liqp-hm-pins-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: var(--radius-full, 9999px);
+  cursor: pointer;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--amber, #f59e0b);
+  white-space: nowrap;
+  flex: 0 0 auto;
+  transition: all var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.liqp-hm-pins-clear:hover {
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.liqp-hm-magnets-label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  margin-right: 2px;
+}
+
+.liqp-hm-magnet {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-full, 9999px);
+  cursor: pointer;
+  font-size: 0.6875rem;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  transition: all var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.liqp-hm-magnet:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px);
+}
+
+.liqp-hm-magnet.active {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.liqp-hm-magnet-arrow {
+  font-size: 0.5625rem;
+}
+
+.liqp-hm-magnet.up .liqp-hm-magnet-arrow { color: var(--bull, #10B981); }
+.liqp-hm-magnet.down .liqp-hm-magnet-arrow { color: var(--bear, #EF4444); }
+
+.liqp-hm-magnet-price {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-primary, #f5f5f7);
+}
+
+.liqp-hm-magnet-usd {
+  font-family: var(--font-mono);
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+}
+
+.liqp-hm-magnet-dist {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+}
+
+.liqp-hm-delta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm, 8px);
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.liqp-hm-delta-btn:hover {
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.liqp-hm-delta-btn.active {
+  color: var(--text-primary, #f5f5f7);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.liqp-hm-lev-btn.filtered {
+  color: var(--text-primary, #f5f5f7);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.liqp-hm-replay-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-full, 9999px);
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  font-size: 0.6875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.liqp-hm-replay-toggle:hover:not(:disabled) {
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.liqp-hm-replay-toggle.active {
+  color: rgba(245, 158, 11, 0.9);
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.liqp-hm-replay-toggle:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* Header icon buttons: share + open-in-RZ */
+.liqp-hm-share-btn,
+.liqp-hm-rz-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  cursor: pointer;
+  border-radius: var(--radius-sm, 8px);
+  transition: all var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.liqp-hm-share-btn:hover,
+.liqp-hm-rz-btn:hover {
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.liqp-hm-share-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ═══ Replay control bar — video-style overlay at the pane's bottom ═══ */
+.liqp-hm-replay-bar {
+  position: absolute;
+  left: 50%;
+  bottom: 46px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  background: rgba(16, 16, 20, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full, 9999px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  z-index: 5;
+  max-width: calc(100% - 24px);
+}
+
+.liqp-hm-replay-tag {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(245, 158, 11, 0.9);
+}
+
+.liqp-hm-replay-play,
+.liqp-hm-replay-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  cursor: pointer;
+  border-radius: var(--radius-sm, 8px);
+  transition: color var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.liqp-hm-replay-play:hover,
+.liqp-hm-replay-close:hover {
+  color: var(--text-primary, #f5f5f7);
+}
+
+.liqp-hm-replay-scrub {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 220px;
+  max-width: 40vw;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.liqp-hm-replay-scrub::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #f5f5f7;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.liqp-hm-replay-scrub::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #f5f5f7;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.liqp-hm-replay-time {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  white-space: nowrap;
+}
+
+/* Day mode for the new controls */
+.liqp-real-heatmap--day .liqp-hm-subbar {
+  border-top-color: rgba(15, 23, 42, 0.06);
+  background: rgba(15, 23, 42, 0.015);
+}
+
+.liqp-real-heatmap--day .liqp-hm-magnet {
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.08);
+  color: #475569;
+}
+
+.liqp-real-heatmap--day .liqp-hm-magnet:hover {
+  border-color: rgba(15, 23, 42, 0.16);
+  background: rgba(15, 23, 42, 0.05);
+}
+
+.liqp-real-heatmap--day .liqp-hm-magnet.active {
+  border-color: rgba(217, 119, 6, 0.45);
+  background: rgba(217, 119, 6, 0.07);
+}
+
+.liqp-real-heatmap--day .liqp-hm-magnet-price { color: #0f172a; }
+.liqp-real-heatmap--day .liqp-hm-magnet-usd { color: #475569; }
+
+.liqp-real-heatmap--day .liqp-hm-pins-clear {
+  background: rgba(217, 119, 6, 0.07);
+  border-color: rgba(217, 119, 6, 0.4);
+  color: #b45309;
+}
+
+.liqp-real-heatmap--day .liqp-hm-pins-clear:hover {
+  background: rgba(217, 119, 6, 0.14);
+  border-color: rgba(217, 119, 6, 0.55);
+}
+.liqp-real-heatmap--day .liqp-hm-magnet-dist,
+.liqp-real-heatmap--day .liqp-hm-magnets-label { color: #64748b; }
+
+.liqp-real-heatmap--day .liqp-hm-delta-btn,
+.liqp-real-heatmap--day .liqp-hm-replay-toggle {
+  border-color: rgba(15, 23, 42, 0.1);
+  color: #64748b;
+}
+
+.liqp-real-heatmap--day .liqp-hm-delta-btn:hover,
+.liqp-real-heatmap--day .liqp-hm-replay-toggle:hover:not(:disabled) {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.liqp-real-heatmap--day .liqp-hm-delta-btn.active {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.08);
+  border-color: rgba(15, 23, 42, 0.16);
+}
+
+.liqp-real-heatmap--day .liqp-hm-replay-toggle.active {
+  color: #b45309;
+  border-color: rgba(217, 119, 6, 0.4);
+  background: rgba(217, 119, 6, 0.06);
+}
+
+.liqp-real-heatmap--day .liqp-hm-lev-btn.filtered {
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.2);
+}
+
+.liqp-real-heatmap--day .liqp-hm-share-btn,
+.liqp-real-heatmap--day .liqp-hm-rz-btn {
+  color: #64748b;
+}
+
+.liqp-real-heatmap--day .liqp-hm-share-btn:hover,
+.liqp-real-heatmap--day .liqp-hm-rz-btn:hover {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.05);
+}
+
+.liqp-real-heatmap--day .liqp-hm-replay-bar {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.15);
+}
+
+.liqp-real-heatmap--day .liqp-hm-replay-tag { color: #b45309; }
+
+.liqp-real-heatmap--day .liqp-hm-replay-play,
+.liqp-real-heatmap--day .liqp-hm-replay-close,
+.liqp-real-heatmap--day .liqp-hm-replay-time { color: #475569; }
+
+.liqp-real-heatmap--day .liqp-hm-replay-play:hover,
+.liqp-real-heatmap--day .liqp-hm-replay-close:hover { color: #0f172a; }
+
+.liqp-real-heatmap--day .liqp-hm-replay-scrub { background: rgba(15, 23, 42, 0.12); }
+
+.liqp-real-heatmap--day .liqp-hm-replay-scrub::-webkit-slider-thumb { background: #0f172a; }
+
+.liqp-real-heatmap--day .liqp-hm-replay-scrub::-moz-range-thumb { background: #0f172a; }
+
+.liqp-real-heatmap-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  height: 100%;
+}
+
+.liqp-error-text {
+  color: rgba(245, 245, 247, 0.5);
+  font-size: 0.875rem;
+}
+
+.liqp-error-retry {
+  padding: 8px 20px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: var(--text-primary, #f5f5f7);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.liqp-error-retry:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* ═══ SYMBOL DROPDOWN ═══ */
+
+.liqp-symbol-dropdown-wrap {
+  position: relative;
+}
+
+.liqp-token-btn-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.liqp-token-btn-dropdown.selected {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.liqp-symbol-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 220px;
+  max-height: 340px;
+  background: rgba(18, 18, 20, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md, 12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.liqp-symbol-search {
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--text-primary, #f5f5f7);
+  font-size: 0.8125rem;
+  font-family: var(--font-body);
+  outline: none;
+}
+
+.liqp-symbol-search::placeholder {
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+}
+
+.liqp-symbol-list {
+  overflow-y: auto;
+  max-height: 280px;
+  padding: 4px 0;
+}
+
+.liqp-symbol-list::-webkit-scrollbar { width: 4px; }
+.liqp-symbol-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 9999px; }
+
+.liqp-symbol-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: background 100ms ease;
+}
+
+.liqp-symbol-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.liqp-symbol-item.active {
+  color: var(--text-primary, #f5f5f7);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.liqp-symbol-item-name {
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.liqp-symbol-item-pair {
+  font-size: 0.6875rem;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+}
+
+.liqp-symbol-empty {
+  display: block;
+  padding: 16px;
+  text-align: center;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  font-size: 0.8125rem;
+}
+
+/* ═══ REAL HEATMAP DAY MODE ═══ */
+/* 🪤 This block used to force the card DARK in day mode ("a deliberate dark
+   media object"), and only wrote light counterparts for the title and the two
+   dropdown buttons. Two things had already broken that intent:
+
+     1. The page passes `dayMode` straight into HeatmapView, so the CANVAS has
+        been painting LIGHT the whole time — a white chart inside a black frame.
+     2. Every remaining control reads `var(--text-secondary/-tertiary/-muted)`,
+        and the 2026-08-03 index.css fix made `.app.app-day-mode` flip that ramp
+        to slate. Measured on this page: the exchange pills sat at 1.09 contrast
+        against the dark header (invisible), the threshold value and the Liqs
+        toggle at 2.56. The note that used to sit at the bottom of this file
+        claiming "the dark-variant pill colors are correct in both modes" was
+        written before that ramp flip and was no longer true.
+
+   The card is light in day mode now, on every host, driven by the root's own
+   `--day` class. Only page chrome outside the card stays below. */
+
+.liqp.day-mode .liqp-error-text {
+  color: #94a3b8;
+}
+
+.liqp.day-mode .liqp-error-retry {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #0f172a;
+}
+
+.liqp.day-mode .liqp-token-btn-dropdown.selected {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+/* ─── Day mode: L/S ratio bar ─── */
+.liqp.day-mode .liqp-ls-bar-long {
+  background: linear-gradient(90deg, rgba(212, 32, 32, 0.5), rgba(212, 32, 32, 0.35));
+}
+
+.liqp.day-mode .liqp-ls-bar-short {
+  background: linear-gradient(90deg, rgba(27, 158, 75, 0.35), rgba(27, 158, 75, 0.5));
+}
+
+.liqp.day-mode .liqp-ls-label.long {
+  color: rgba(212, 32, 32, 0.7);
+}
+
+.liqp.day-mode .liqp-ls-label.short {
+  color: rgba(27, 158, 75, 0.7);
+}
+
+/* ─── Day mode: Risk glow ─── */
+.liqp.day-mode .liqp-metric-card--risk-high {
+  animation: liqpRiskGlowDay 2.5s ease-in-out infinite;
+}
+
+@keyframes liqpRiskGlowDay {
+  0%, 100% {
+    border-color: rgba(212, 32, 32, 0.1);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  }
+  50% {
+    border-color: rgba(212, 32, 32, 0.2);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04), 0 0 16px rgba(212, 32, 32, 0.06);
+  }
+}
+
+/* ─── Day mode: Nearby levels ─── */
+.liqp.day-mode .liqp-levels-row--nearby {
+  background: rgba(245, 158, 11, 0.04);
+  border-color: rgba(245, 158, 11, 0.12);
+}
+
+.liqp.day-mode .liqp-levels-row--nearby:hover {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.18);
+}
+
+.liqp.day-mode .liqp-density-bar-fill--long {
+  background: linear-gradient(90deg, rgba(212, 32, 32, 0.35), rgba(212, 32, 32, 0.6));
+}
+
+.liqp.day-mode .liqp-density-bar-fill--short {
+  background: linear-gradient(90deg, rgba(27, 158, 75, 0.35), rgba(27, 158, 75, 0.6));
+}
+
+/* ─── Day mode: Hover detail row ─── */
+.liqp.day-mode .liqp-level-hover-detail {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+.liqp.day-mode .liqp-level-hover-label {
+  color: rgba(29, 29, 31, 0.35);
+}
+
+.liqp.day-mode .liqp-level-hover-bar-label {
+  color: rgba(29, 29, 31, 0.4);
+}
+
+.liqp.day-mode .liqp-level-hover-bar-track {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.liqp.day-mode .liqp-level-hover-bar-fill.long {
+  background: rgba(212, 32, 32, 0.5);
+}
+
+.liqp.day-mode .liqp-level-hover-bar-fill.short {
+  background: rgba(27, 158, 75, 0.5);
+}
+
+/* ─── Day mode: AI Analysis ─── */
+.liqp.day-mode .liqp-ai-section {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.02) 0%, rgba(0, 0, 0, 0.01) 100%);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.liqp.day-mode .liqp-ai-header {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.liqp.day-mode .liqp-ai-timeframes {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.liqp.day-mode .liqp-ai-tf-btn {
+  color: rgba(29, 29, 31, 0.4);
+}
+
+.liqp.day-mode .liqp-ai-tf-btn:hover {
+  color: rgba(29, 29, 31, 0.6);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.liqp.day-mode .liqp-ai-tf-btn.active {
+  color: #1d1d1f;
+  background: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.liqp.day-mode .liqp-ai-text {
+  color: rgba(29, 29, 31, 0.55);
+}
+
+.liqp.day-mode .liqp-ai-key-levels {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+.liqp.day-mode .liqp-ai-level {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.04);
+}
+
+.liqp.day-mode .liqp-ai-level--support .liqp-ai-level-dot {
+  background: #D42020;
+  box-shadow: 0 0 6px rgba(212, 32, 32, 0.3);
+}
+
+.liqp.day-mode .liqp-ai-level--resistance .liqp-ai-level-dot {
+  background: #1B9E4B;
+  box-shadow: 0 0 6px rgba(27, 158, 75, 0.3);
+}
+
+.liqp.day-mode .liqp-ai-level-label {
+  color: rgba(29, 29, 31, 0.5);
+}
+
+.liqp.day-mode .liqp-ai-level-price {
+  color: #1d1d1f;
+}
+
+.liqp.day-mode .liqp-ai-level-amount {
+  color: rgba(29, 29, 31, 0.4);
+}
+
+.liqp.day-mode .liqp-ai-shimmer-line {
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.04) 50%, transparent 100%);
+  background-size: 200% 100%;
+}
+
+/* ── Heatmap 2.0 header controls ── */
+.liqp-hm-ex-pills { display: flex; gap: 2px; padding: 2px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-default); border-radius: 8px; }
+.liqp-hm-ex-pill { padding: 3px 8px; font-size: 10.5px; font-weight: 500; color: var(--text-secondary); background: transparent; border: none; border-radius: 6px; cursor: pointer; transition: all var(--duration-fast) var(--ease-out); }
+.liqp-hm-ex-pill:hover { color: var(--text-primary); }
+.liqp-hm-ex-pill.active { color: var(--text-primary); background: rgba(255, 255, 255, 0.08); }
+.liqp-hm-model-note { font-size: 9.5px; color: var(--text-muted); white-space: nowrap; }
+.liqp-hm-prints-btn { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; font-size: 10.5px; font-weight: 500; color: var(--text-secondary); background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-default); border-radius: 8px; cursor: pointer; transition: all var(--duration-fast) var(--ease-out); }
+.liqp-hm-prints-btn:hover { color: var(--text-primary); border-color: var(--border-strong); }
+.liqp-hm-prints-btn.active { color: var(--text-primary); background: rgba(255, 255, 255, 0.08); }
+.liqp-hm-prints-btn.disabled { opacity: 0.55; cursor: default; }
+
+/* Liquidity Threshold slider (CoinGlass parity control) */
+.liqp-hm-threshold { display: inline-flex; align-items: center; gap: 6px; padding: 0 8px; height: 26px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-default); border-radius: 8px; }
+.liqp-hm-threshold-label { font-size: 10px; color: var(--text-tertiary); letter-spacing: 0.04em; }
+.liqp-hm-threshold-val { font-size: 10px; font-family: var(--font-mono); color: var(--text-secondary); min-width: 26px; text-align: right; }
+.liqp-hm-threshold input[type="range"] { -webkit-appearance: none; appearance: none; width: 90px; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, 0.15); outline: none; cursor: pointer; }
+.liqp-hm-threshold input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 10px; height: 10px; border-radius: 50%; background: #f5f5f7; cursor: pointer; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4); }
+.liqp-hm-threshold input[type="range"]::-moz-range-thumb { width: 10px; height: 10px; border: none; border-radius: 50%; background: #f5f5f7; cursor: pointer; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4); }
+
+/* ── Container-width collapse tiers ──────────────────────────────────────────
+   Driven by a class HeatmapView sets from its own ResizeObserver width, NOT by
+   a media query: this panel is embedded in the Command Center, traders-corner
+   and the standalone page, so the viewport says nothing about how much room the
+   toolbar actually has. Tiers only trim chrome (labels, title, slider width) —
+   no control is ever removed, everything still wraps to a second row.
+
+   Only ONE tier class is ever present, so anything a wider tier trims has to be
+   repeated for the narrower ones — otherwise the tightest layout gets the LEAST
+   trimming (at 390px the title row came back and cost a whole header row). */
+
+/* < 980px — drop the redundant title (the symbol pill already names the chart) */
+.liqp-real-heatmap--md .liqp-hm-title,
+.liqp-real-heatmap--sm .liqp-hm-title,
+.liqp-real-heatmap--xs .liqp-hm-title { display: none; }
+.liqp-real-heatmap--md .liqp-hm-threshold input[type="range"] { width: 70px; }
+
+/* < 760px — shed label text, keep every control */
+.liqp-real-heatmap--sm .liqp-hm-header { gap: 6px; padding: 8px 12px; }
+.liqp-real-heatmap--sm .liqp-hm-threshold-label,
+.liqp-real-heatmap--xs .liqp-hm-threshold-label { display: none; }
+.liqp-real-heatmap--sm .liqp-hm-threshold input[type="range"] { width: 56px; }
+.liqp-real-heatmap--sm .liqp-hm-prints-btn span,
+.liqp-real-heatmap--xs .liqp-hm-prints-btn span { display: none; }
+.liqp-real-heatmap--sm .liqp-hm-model-note,
+.liqp-real-heatmap--xs .liqp-hm-model-note { display: none; }
+.liqp-real-heatmap--sm .liqp-hm-subbar { gap: 6px; padding: 6px 10px; }
+.liqp-real-heatmap--xs .liqp-hm-subbar { gap: 6px; padding: 6px 10px; }
+
+/* < 560px — the exchange pills scroll rather than force a whole extra row;
+   the threshold slider (a power control) folds to its value chip. */
+.liqp-real-heatmap--xs .liqp-hm-header { gap: 5px; padding: 7px 10px; }
+.liqp-real-heatmap--xs .liqp-hm-ex-pills {
+  overflow-x: auto;
+  scrollbar-width: none;
+  max-width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.liqp-real-heatmap--xs .liqp-hm-ex-pills::-webkit-scrollbar { display: none; }
+.liqp-real-heatmap--xs .liqp-hm-ex-pill { flex: 0 0 auto; }
+.liqp-real-heatmap--xs .liqp-hm-spacer { display: none; }
+
+/* < 560px — the toolbar keeps ONLY symbol + timeframe + sheet + fullscreen.
+   Everything else moves into .liqp-hm-sheet (same handlers, labelled rows):
+   eight controls wrapping across four rows cost ~200px above a 440px chart,
+   and the phone has no hover to make a dense toolbar legible anyway. */
+.liqp-real-heatmap--xs .liqp-hm-header > .liqp-hm-ex-pills,
+.liqp-real-heatmap--xs .liqp-hm-header > .liqp-hm-threshold,
+.liqp-real-heatmap--xs .liqp-hm-header > .liqp-hm-prints-btn,
+.liqp-real-heatmap--xs .liqp-hm-header > .liqp-hm-zoom-controls,
+.liqp-real-heatmap--xs .liqp-hm-header > .liqp-hm-share-btn,
+.liqp-real-heatmap--xs .liqp-hm-header > .liqp-hm-rz-btn,
+.liqp-real-heatmap--xs .liqp-hm-subbar > .liqp-hm-delta-btn,
+.liqp-real-heatmap--xs .liqp-hm-subbar > .liqp-hm-dropdown-wrap,
+.liqp-real-heatmap--xs .liqp-hm-subbar > .liqp-hm-replay-toggle { display: none; }
+.liqp-real-heatmap--xs .liqp-hm-tune-btn { display: inline-flex; margin-left: auto; }
+
+/* Magnets: four ~120px chips wrapped into THREE rows on a phone, so the chrome
+   above the canvas was taller than the canvas' own breathing room. One
+   horizontally-scrolled row instead — the strip pattern used everywhere else on
+   mobile — and the Δ / leverage / replay controls get the row below. */
+.liqp-real-heatmap--xs .liqp-hm-magnets {
+  gap: 4px;
+  flex: 1 1 100%;
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.liqp-real-heatmap--xs .liqp-hm-magnets::-webkit-scrollbar { display: none; }
+.liqp-real-heatmap--xs .liqp-hm-magnet { flex: 0 0 auto; }
+.liqp-real-heatmap--xs .liqp-hm-magnets-label { flex: 0 0 auto; }
+
+/* ── Phone control sheet ─────────────────────────────────────────────────────
+   Anchored to the PANEL by default so it still makes sense inside a narrow
+   Command Center card; promoted to a real viewport bottom sheet on a phone,
+   where the panel bottom is often below the fold. */
+.liqp-hm-tune-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.04));
+  border-radius: var(--radius-sm, 8px);
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition: all var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.liqp-hm-tune-btn.active,
+.liqp-hm-tune-btn:hover {
+  color: var(--text-primary, #f5f5f7);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.liqp-hm-sheet-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.5);
+  animation: liqp-sheet-fade 180ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.liqp-hm-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 6px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: rgba(14, 14, 17, 0.98);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border-top: 1px solid var(--border-strong, rgba(255, 255, 255, 0.06));
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.55);
+  animation: liqp-sheet-up 220ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.liqp-hm-sheet-grip {
+  width: 34px;
+  height: 4px;
+  margin: 2px auto 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  flex: 0 0 auto;
+}
+
+.liqp-hm-sheet-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.liqp-hm-sheet-row--last { border-bottom: none; }
+
+.liqp-hm-sheet-label {
+  flex: 0 0 78px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+}
+
+/* The rows scroll rather than wrap — a wrapping row would grow the sheet over
+   the chart it is meant to leave visible. */
+.liqp-hm-sheet-actions,
+.liqp-hm-sheet .liqp-hm-ex-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.liqp-hm-sheet-actions::-webkit-scrollbar,
+.liqp-hm-sheet .liqp-hm-ex-pills::-webkit-scrollbar { display: none; }
+
+.liqp-hm-sheet-actions > *,
+.liqp-hm-sheet .liqp-hm-ex-pill { flex: 0 0 auto; }
+
+.liqp-hm-sheet .liqp-hm-ex-pill { padding: 6px 10px; font-size: 11px; }
+/* The --sm/--xs tiers strip the label out of .liqp-hm-prints-btn to save a
+   toolbar row. In the sheet there is room and the label is the whole point, so
+   put it back (higher specificity than the tier rule, no !important). */
+.liqp-real-heatmap .liqp-hm-sheet-btn span { display: inline; }
+.liqp-hm-sheet-btn { min-height: 32px; padding: 6px 10px; gap: 6px; }
+.liqp-hm-sheet-btn:disabled { opacity: 0.4; cursor: default; }
+.liqp-hm-sheet .liqp-hm-threshold { flex: 1 1 auto; height: 30px; }
+.liqp-hm-sheet .liqp-hm-threshold input[type="range"] { flex: 1 1 auto; width: auto; }
+
+@keyframes liqp-sheet-up {
+  from { transform: translateY(18px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes liqp-sheet-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* On a phone the panel bottom is usually past the fold — dock to the viewport,
+   clearing the mobile bottom nav. */
+@media (max-width: 768px) {
+  .liqp-hm-sheet-scrim { position: fixed; z-index: 1200; }
+  .liqp-hm-sheet {
+    position: fixed;
+    z-index: 1201;
+    bottom: calc(var(--m-bottom-nav-h, 76px) + env(safe-area-inset-bottom, 0px));
+    max-height: 62dvh;
+    padding-bottom: 14px;
+  }
+}
+
+/* Day mode */
+.liqp-real-heatmap--day .liqp-hm-sheet {
+  background: rgba(255, 255, 255, 0.98);
+  border-top-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 -12px 40px rgba(15, 23, 42, 0.18);
+}
+.liqp-real-heatmap--day .liqp-hm-sheet-grip { background: rgba(15, 23, 42, 0.18); }
+.liqp-real-heatmap--day .liqp-hm-sheet-row { border-bottom-color: rgba(15, 23, 42, 0.06); }
+.liqp-real-heatmap--day .liqp-hm-sheet-label { color: #64748b; }
+.liqp-real-heatmap--day .liqp-hm-sheet .liqp-hm-ex-pill { color: #64748b; }
+.liqp-real-heatmap--day .liqp-hm-sheet .liqp-hm-ex-pill.active { color: #0f172a; background: rgba(15, 23, 42, 0.07); }
+.liqp-real-heatmap--day .liqp-hm-sheet .liqp-hm-prints-btn {
+  color: #475569;
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+.liqp-real-heatmap--day .liqp-hm-sheet .liqp-hm-prints-btn.active {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.08);
+}
+.liqp-real-heatmap--day .liqp-hm-sheet .liqp-hm-threshold {
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+.liqp-real-heatmap--day .liqp-hm-sheet .liqp-hm-threshold-val { color: #475569; }
+/* The header keeps its dark styling in day mode (see the tier note above), but
+   the sheet is a light surface — a white thumb on a white track vanishes. */
+.liqp-real-heatmap--day .liqp-hm-sheet .liqp-hm-threshold input[type="range"] { background: rgba(15, 23, 42, 0.18); }
+.liqp-real-heatmap--day .liqp-hm-sheet .liqp-hm-threshold input[type="range"]::-webkit-slider-thumb { background: #0f172a; }
+.liqp-real-heatmap--day .liqp-hm-sheet .liqp-hm-threshold input[type="range"]::-moz-range-thumb { background: #0f172a; }
+
+/* (The header controls DO get day-mode overrides — see the `--day` block at the
+   end of this file. The note that used to sit here said the opposite.) */
+
+/* ═══════════════════════════════════════════════════════════════════
+   ChartFullscreen — the floating fullscreen control the four non-heatmap
+   views share (Liquidation Map, Levels, Magnets, Risk Zones). The Heatmap
+   view keeps its own button in its header row; this is the same mechanism
+   (useChartFullscreen) wearing a floating chip instead.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.liqp-chart-fs {
+  position: relative;
+  width: 100%;
+}
+
+/* Sits INSIDE each view's own toolbar row (next to Magnets' Orbiting pill, the
+   Levels legend, the Zones risk readout, the map legend) — an absolutely
+   floated corner icon read as detached from the panel. Sized to match the
+   pill controls it stands beside. */
+.liqp-chart-fs-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 9999px;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  transition: all var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.liqp-chart-fs-btn:hover {
+  color: rgba(245, 245, 247, 0.85);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Push the control to the trailing edge of the rows that don't already do it. */
+.liqp-zones-risk-actions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+.liqp-levels-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
+/* Fullscreen — mirrors .liqp-real-heatmap--fullscreen. position:fixed is forced
+   because the UA :fullscreen height:100% override is unreliable, and it is also
+   what makes the CSS-only fallback (iOS Safari / PWA) work at all. */
+.liqp-chart-fs.is-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 10px !important;
+  border-radius: 0 !important;
+  border: none !important;
+  background: var(--bg-void, #09090b);
+  display: flex !important;
+  flex-direction: column !important;
+  z-index: 2000;
+}
+
+/* The chart root (.lmc / .lmf / .liqp-levels-view / .liqp-zones-view) takes the
+   remaining height; every one of them redraws from its container via
+   ResizeObserver, so growing the box is the whole resize story. */
+.liqp-chart-fs.is-fullscreen > *:not(.liqp-chart-fs-btn) {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.liqp-chart-fs.is-fullscreen .lmc-plot,
+.liqp-chart-fs.is-fullscreen .lmf-plot,
+.liqp-chart-fs.is-fullscreen .liqp-levels-canvas-wrap,
+.liqp-chart-fs.is-fullscreen .liqp-zones-canvas-wrap {
+  flex: 1 1 auto !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+}
+
+.liqp.day-mode .liqp-chart-fs-btn {
+  color: rgba(245, 245, 247, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE LIGHT CARD — `.liqp-real-heatmap--day`
+
+   ONE source of truth for what this card looks like in day mode, on every host
+   that mounts it: the standalone page, the Command Center, Traders Corner and
+   LITE paper. HeatmapView stamps the class from the same `dayMode` prop the
+   canvas renderer paints from (`dark={!dayMode}`), so the chrome and the chart
+   cannot disagree.
+
+   🪤 It used to be three host-side selectors — `.app.app-day-mode` (PRO),
+   `.lhp--day` (LITE, which sits outside `.app`) and `.liqp.day-mode` (the
+   standalone page) — each covering a different subset. That is exactly how the
+   Command Center ended up with a white plate under a near-black header whose
+   pills, threshold and title had already been switched to dark slate ink by the
+   `.app.app-day-mode` half. Add a rule HERE, not to a host.
+
+   Placed at the end of the file on purpose: several of the rules it supersedes
+   match at the same specificity, so source order is what settles them.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Plate. `.lhp` hosts thin this to 0.82 so the glass card underneath reads
+   through (liq-heatmap-panel.css); the standalone page wants it opaque. */
+.liqp-real-heatmap.liqp-real-heatmap--day {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+.liqp-real-heatmap--day .liqp-real-heatmap-canvas-wrap { background: #ffffff; }
+
+/* Header strip */
+.liqp-real-heatmap--day .liqp-hm-header {
+  background: rgba(255, 255, 255, 0.9);
+  border-bottom-color: rgba(15, 23, 42, 0.07);
+}
+.liqp-real-heatmap--day .liqp-hm-title { color: #475569; }
+.liqp-real-heatmap--day .liqp-hm-model-note { color: #94a3b8; }
+.liqp-real-heatmap--day .liqp-hm-loading { background: rgba(15, 23, 42, 0.35); }
+
+/* Pill controls: symbol / timeframe / leverage pickers, Liqs, tune */
+.liqp-real-heatmap--day .liqp-hm-dropdown-btn,
+.liqp-real-heatmap--day .liqp-hm-prints-btn,
+.liqp-real-heatmap--day .liqp-hm-tune-btn {
+  color: #475569;
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+.liqp-real-heatmap--day .liqp-hm-dropdown-btn:hover,
+.liqp-real-heatmap--day .liqp-hm-dropdown-btn.open,
+.liqp-real-heatmap--day .liqp-hm-prints-btn:hover,
+.liqp-real-heatmap--day .liqp-hm-tune-btn:hover {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.06);
+  border-color: rgba(15, 23, 42, 0.18);
+}
+.liqp-real-heatmap--day .liqp-hm-prints-btn.active,
+.liqp-real-heatmap--day .liqp-hm-tune-btn.active { color: #0f172a; background: rgba(15, 23, 42, 0.08); }
+
+/* 🪤 The panel-side copy of this rule targeted `.liqp-hm-dropdown-menu` — a
+   class HeatmapView has never rendered — so the symbol and timeframe menus
+   opened as dark glass panels on a light card. */
+.liqp-real-heatmap--day .liqp-hm-dropdown-panel {
+  background: rgba(255, 255, 255, 0.97);
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.14), 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+.liqp-real-heatmap--day .liqp-hm-dropdown-search { color: #0f172a; border-bottom-color: rgba(15, 23, 42, 0.08); }
+.liqp-real-heatmap--day .liqp-hm-dropdown-search::placeholder { color: #94a3b8; }
+.liqp-real-heatmap--day .liqp-hm-dropdown-list::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, 0.14); }
+.liqp-real-heatmap--day .liqp-hm-dropdown-item { color: #475569; }
+.liqp-real-heatmap--day .liqp-hm-dropdown-item:hover { color: #0f172a; background: rgba(15, 23, 42, 0.05); }
+.liqp-real-heatmap--day .liqp-hm-dropdown-item.active { color: #0f172a; background: rgba(15, 23, 42, 0.08); }
+.liqp-real-heatmap--day .liqp-hm-dropdown-empty { color: #94a3b8; }
+
+/* Exchange pills. The TRACK carried a warm-white fill + a warm-white border, so
+   on a light header the group had no edge and `.active` (white at 0.08) was
+   indistinguishable from the pills beside it. */
+.liqp-real-heatmap--day .liqp-hm-ex-pills { background: rgba(15, 23, 42, 0.03); border-color: rgba(15, 23, 42, 0.1); }
+.liqp-real-heatmap--day .liqp-hm-ex-pill { color: #64748b; }
+.liqp-real-heatmap--day .liqp-hm-ex-pill:hover { color: #0f172a; }
+.liqp-real-heatmap--day .liqp-hm-ex-pill.active {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+/* Threshold — a white track with a white thumb is an invisible control. */
+.liqp-real-heatmap--day .liqp-hm-threshold { background: rgba(15, 23, 42, 0.03); border-color: rgba(15, 23, 42, 0.1); }
+.liqp-real-heatmap--day .liqp-hm-threshold-label { color: #64748b; }
+.liqp-real-heatmap--day .liqp-hm-threshold-val { color: #475569; }
+.liqp-real-heatmap--day .liqp-hm-threshold input[type="range"] { background: rgba(15, 23, 42, 0.18); }
+.liqp-real-heatmap--day .liqp-hm-threshold input[type="range"]::-webkit-slider-thumb { background: #0f172a; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25); }
+.liqp-real-heatmap--day .liqp-hm-threshold input[type="range"]::-moz-range-thumb { background: #0f172a; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25); }
+
+/* Zoom / share / research-zone / fullscreen — the console buttons. */
+.liqp-real-heatmap--day .liqp-hm-zoom-controls { background: rgba(15, 23, 42, 0.03); border-color: rgba(15, 23, 42, 0.1); }
+.liqp-real-heatmap--day .liqp-hm-zoom-btn,
+.liqp-real-heatmap--day .liqp-hm-share-btn,
+.liqp-real-heatmap--day .liqp-hm-rz-btn,
+.liqp-real-heatmap--day .liqp-hm-fullscreen-btn { color: #64748b; }
+.liqp-real-heatmap--day .liqp-hm-zoom-btn:hover,
+.liqp-real-heatmap--day .liqp-hm-share-btn:hover,
+.liqp-real-heatmap--day .liqp-hm-rz-btn:hover,
+.liqp-real-heatmap--day .liqp-hm-fullscreen-btn:hover { color: #0f172a; background: rgba(15, 23, 42, 0.06); }
+.liqp-real-heatmap--day .liqp-hm-zoom-reset { color: rgba(180, 83, 9, 0.75); }
+.liqp-real-heatmap--day .liqp-hm-zoom-reset:hover { color: #b45309; }
+
+/* Fallback while the Bands view's lazy chunk lands. Lives HERE, not in
+   bands-view.css — that stylesheet ships inside the very chunk we are waiting
+   for, so a skeleton defined there would be unstyled exactly when it is shown. */
+.liqp-view-skel {
+  height: 470px;
+  border-radius: var(--radius-md, 12px);
+  background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+  background-size: 200% 100%;
+  animation: liqpViewSkel 1.5s ease-in-out infinite;
+}
+@keyframes liqpViewSkel { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+.app.app-day-mode .liqp-view-skel {
+  background: linear-gradient(90deg, rgba(15,23,42,0.03), rgba(15,23,42,0.07), rgba(15,23,42,0.03));
+  background-size: 200% 100%;
+}

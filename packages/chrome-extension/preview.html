@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spectre AI Extension — Unified Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=Playfair+Display:ital,wght@0,300;0,400;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup/popup.css">
+  <style>
+    /* ═══ Preview Shell — 4K Apple Aesthetic ═══ */
+    html, body {
+      background: #040408;
+      color: #fff;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    body { width: auto !important; min-height: auto; }
+
+    .preview-shell {
+      display: flex;
+      gap: 36px;
+      padding: 56px 32px;
+      justify-content: center;
+      align-items: flex-start;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      min-width: min-content;
+    }
+
+    .preview-column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .preview-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 2.5px;
+      color: rgba(255,255,255,0.22);
+      text-transform: uppercase;
+      text-align: center;
+      font-family: 'Inter', sans-serif;
+      padding-bottom: 4px;
+    }
+
+    .preview-frame {
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow:
+        0 32px 100px rgba(0,0,0,0.7),
+        0 0 0 1px rgba(255,255,255,0.05),
+        0 0 60px rgba(139, 92, 246, 0.04);
+    }
+
+    .popup-preview { width: 360px; background: #0a0a0f; }
+    .sidebar-preview { width: 340px; background: #0a0a0f; }
+    .hover-preview { width: 300px; }
+    .search-preview { width: 360px; background: #0a0a0f; }
+
+    /* ═══ Hover popup styles (sp-* Shadow DOM classes) ═══ */
+    .sp-card {
+      --brand-rgb: 98, 126, 234;
+      width: 300px;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(var(--brand-rgb), 0.08);
+      border-radius: 12px;
+      color: #fff;
+      font-family: 'Inter', -apple-system, sans-serif;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.4), 0 0 40px rgba(var(--brand-rgb), 0.08);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .sp-card:hover { border-color: rgba(var(--brand-rgb), 0.25); transform: translateY(-4px); }
+    .sp-glow { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0%, rgba(var(--brand-rgb), 0.15) 0%, transparent 65%); opacity: 0; transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none; z-index: 1; }
+    .sp-card:hover .sp-glow { opacity: 1; }
+    .sp-corner { position: absolute; width: 20px; height: 20px; pointer-events: none; opacity: 0; transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 5; }
+    .sp-card:hover .sp-corner { opacity: 1; }
+    .sp-corner-tl { top: 0; left: 0; border-top: 1.5px solid rgba(var(--brand-rgb), 0.5); border-left: 1.5px solid rgba(var(--brand-rgb), 0.5); }
+    .sp-corner-br { bottom: 0; right: 0; border-bottom: 1.5px solid rgba(var(--brand-rgb), 0.5); border-right: 1.5px solid rgba(var(--brand-rgb), 0.5); }
+    .sp-header { display: flex; align-items: center; gap: 12px; padding: 18px 20px 14px; position: relative; z-index: 2; }
+    .sp-logo-wrap { position: relative; width: 40px; height: 40px; flex-shrink: 0; }
+    .sp-logo-ring { position: absolute; inset: -4px; border-radius: 50%; border: 1.5px solid rgba(var(--brand-rgb), 0.2); animation: cwbLogoRing 4s ease-in-out infinite; }
+    .sp-logo { width: 40px; height: 40px; border-radius: 50%; background: rgba(var(--brand-rgb), 0.15); color: rgb(var(--brand-rgb)); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; box-shadow: 0 0 20px rgba(var(--brand-rgb), 0.25); }
+    .sp-fav-btn { width: 28px; height: 28px; background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; border-radius: 50%; transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+    .sp-fav-btn svg { color: rgba(255,255,255,0.25); transition: color 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+    .sp-fav-btn:hover svg { color: rgba(255,255,255,0.5); transform: scale(1.15); }
+    .sp-fav-btn:hover { background: rgba(255,255,255,0.05); }
+    .sp-fav-btn.active svg { color: #ef4444; }
+    .sp-fav-btn.active:hover svg { color: #f87171; transform: scale(1.15); }
+    .sp-identity { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+    .sp-name { font-family: 'Playfair Display', Georgia, serif; font-size: 16px; font-weight: 400; color: #fff; }
+    .sp-ticker { font-size: 10px; color: rgba(255,255,255,0.35); font-family: 'Playfair Display', serif; font-style: italic; }
+    .sp-pulse-badge { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 100px; font-size: 9px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; }
+    .sp-pulse-risk_on { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #10B981; }
+    .sp-pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: cwbLivePulse 2s ease-in-out infinite; }
+    .sp-price-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 0 20px 10px; position: relative; z-index: 2; }
+    .sp-price { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 600; color: #fff; letter-spacing: -0.02em; }
+    .sp-change { font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace; padding: 3px 8px; border-radius: 5px; }
+    .sp-change.positive { color: #22c55e; background: rgba(34, 197, 94, 0.1); }
+    .sp-ai-analysis { padding: 10px 20px 12px; position: relative; z-index: 2; border-top: 1px solid rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .sp-ai-label { font-size: 8px; font-weight: 700; letter-spacing: 1.5px; color: rgba(var(--brand-rgb), 0.6); text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+    .sp-ai-label-dot { width: 5px; height: 5px; border-radius: 50%; background: rgb(var(--brand-rgb)); animation: cwbLivePulse 2s ease-in-out infinite; box-shadow: 0 0 6px rgba(var(--brand-rgb), 0.4); }
+    .sp-ai-text { font-family: 'Playfair Display', Georgia, serif; font-size: 13px; font-style: italic; font-weight: 300; color: rgba(255,255,255,0.7); line-height: 1.5; }
+    .sp-chart-wrap { padding: 0 20px 8px; position: relative; z-index: 2; }
+    .sp-chart-wrap svg { width: 100%; height: 60px; display: block; }
+    .sp-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0; padding: 6px 0; position: relative; z-index: 2; }
+    .sp-stat { position: relative; display: flex; flex-direction: column; gap: 3px; padding: 8px 16px 8px 18px; }
+    .sp-stat-accent { position: absolute; top: 20%; left: 6px; width: 2px; height: 60%; background: rgb(var(--brand-rgb)); opacity: 0.3; border-radius: 1px; }
+    .sp-stat-label { font-size: 8px; font-weight: 700; letter-spacing: 1.5px; color: rgba(255,255,255,0.45); text-transform: uppercase; }
+    .sp-stat-value { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: #fff; letter-spacing: -0.02em; }
+    .sp-cta { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 6px 20px; padding: 10px; border: none; background: rgba(var(--brand-rgb), 0.08); border: 1px solid rgba(var(--brand-rgb), 0.15); border-radius: 10px; color: rgb(var(--brand-rgb)); font-size: 12px; font-weight: 600; font-family: 'Inter', sans-serif; cursor: pointer; position: relative; z-index: 2; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+    .sp-cta:hover { background: rgba(var(--brand-rgb), 0.15); }
+    .sp-footer { display: flex; align-items: center; justify-content: center; padding: 10px 20px 14px; font-size: 10px; position: relative; z-index: 2; }
+    .sp-footer-text { color: rgba(255,255,255,0.25); }
+    .sp-footer-brand { color: rgba(255,255,255,0.45); font-weight: 500; }
+  </style>
+</head>
+<body>
+  <div class="preview-shell">
+
+    <!-- ═══ COLUMN 1: Extension Popup ═══ -->
+    <div class="preview-column">
+      <span class="preview-label">Extension Popup</span>
+      <div class="preview-frame popup-preview">
+        <div class="spectre-popup-app">
+          <div class="spectre-edge"></div>
+          <div class="spectre-header">
+            <div class="spectre-brand"><img class="spectre-logo" src="assets/icons/icon-32.png" alt="Spectre AI" width="22" height="22"><span class="spectre-brand-text">Spectre AI</span></div>
+            <div class="spectre-header-actions">
+              <button class="spectre-icon-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></button>
+              <button class="spectre-icon-btn" onclick="toggleDayMode()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></button>
+              <button class="spectre-icon-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M15 3v18"/></svg></button>
+              <button class="spectre-icon-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="spectre-tab-bar">
+            <button class="spectre-tab active" onclick="switchPreviewTab(this, 'p1-market')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>General Market</button>
+            <button class="spectre-tab" onclick="switchPreviewTab(this, 'p1-project')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Project</button>
+          </div>
+
+          <div class="spectre-tab-content active" id="p1-market">
+            <!-- AI Brief -->
+            <div class="cab-container" style="--sentiment-rgb: 34, 197, 94">
+              <div class="cab-glow"></div>
+              <div class="cab-eyebrow"><div class="cab-eyebrow-left"><span class="cab-pulse"></span><span class="cab-label">AI BRIEF</span></div><span class="cab-live-badge">LIVE</span></div>
+              <blockquote class="cab-statement cab-statement-visible"><span class="cab-quote-mark">&ldquo;</span>Greed rising to 72. Momentum strong but stay alert. BTC at $97,842.<span class="cab-quote-mark">&rdquo;</span></blockquote>
+              <div class="cab-rotation-nav"><button class="cab-rotation-dot active"><span class="cab-dot-fill"></span></button><button class="cab-rotation-dot"><span class="cab-dot-fill"></span></button><button class="cab-rotation-dot"><span class="cab-dot-fill"></span></button></div>
+              <div class="cab-attribution"><span class="cab-attribution-dash">&mdash;</span><span class="cab-attribution-name">SPECTRE AI</span><span class="cab-attribution-dot">&middot;</span><span class="cab-attribution-time">just now</span></div>
+            </div>
+            <!-- Featured Prices -->
+            <div class="spectre-section spectre-featured-section">
+              <span class="spectre-section-label">TOP ASSETS</span>
+              <div class="spectre-featured-row">
+                <div class="cwb-featured-card" style="--brand-rgb: 247, 147, 26"><div class="cwb-price-corner cwb-price-corner--tl"></div><div class="cwb-price-corner cwb-price-corner--br"></div><div class="cwb-price-glow"></div><div class="cwb-featured-logo-wrap"><div class="cwb-price-ring cwb-price-ring-1"></div><div class="cwb-featured-logo">B</div></div><span class="cwb-featured-symbol">BTC</span><span class="cwb-featured-price">$97,842</span><span class="cwb-featured-change positive"><span class="cwb-featured-change-arrow">&#x25B2;</span> +2.34%</span></div>
+                <div class="cwb-featured-card" style="--brand-rgb: 98, 126, 234"><div class="cwb-price-corner cwb-price-corner--tl"></div><div class="cwb-price-corner cwb-price-corner--br"></div><div class="cwb-price-glow"></div><div class="cwb-featured-logo-wrap"><div class="cwb-price-ring cwb-price-ring-1"></div><div class="cwb-featured-logo">E</div></div><span class="cwb-featured-symbol">ETH</span><span class="cwb-featured-price">$2,741</span><span class="cwb-featured-change positive"><span class="cwb-featured-change-arrow">&#x25B2;</span> +1.87%</span></div>
+                <div class="cwb-featured-card" style="--brand-rgb: 20, 241, 149"><div class="cwb-price-corner cwb-price-corner--tl"></div><div class="cwb-price-corner cwb-price-corner--br"></div><div class="cwb-price-glow"></div><div class="cwb-featured-logo-wrap"><div class="cwb-price-ring cwb-price-ring-1"></div><div class="cwb-featured-logo">S</div></div><span class="cwb-featured-symbol">SOL</span><span class="cwb-featured-price">$196.42</span><span class="cwb-featured-change negative"><span class="cwb-featured-change-arrow">&#x25BC;</span> -0.52%</span></div>
+              </div>
+            </div>
+            <!-- Market Overview -->
+            <div class="spectre-section">
+              <span class="spectre-section-label">MARKET OVERVIEW</span>
+              <div class="spectre-market-grid">
+                <div class="cwb-stat-card cwb-fng" style="--stat-rgb: 34, 197, 94"><div class="cwb-stat-header"><span class="cwb-stat-label">FEAR & GREED</span><span class="cwb-stat-live-dot"></span></div><div class="cwb-stat-body"><span class="cwb-stat-value">72</span><span class="cwb-stat-sublabel">Greed</span></div><div class="cwb-fng-bar"><div class="cwb-fng-track"><div class="cwb-fng-indicator" style="left: 72%"></div></div><div class="cwb-fng-range"><span>Fear</span><span>Greed</span></div></div></div>
+                <div class="cwb-stat-card cwb-dom" style="--stat-rgb: 247, 147, 26"><div class="cwb-stat-header"><span class="cwb-stat-label">MARKET DOMINANCE</span></div><div class="cwb-dom-bar"><div class="cwb-dom-seg cwb-dom-btc" style="width:57%"></div><div class="cwb-dom-seg cwb-dom-eth" style="width:17%"></div><div class="cwb-dom-seg cwb-dom-sol" style="width:5%"></div><div class="cwb-dom-seg cwb-dom-alts" style="width:21%"></div></div><div class="cwb-dom-legend"><span><span class="cwb-dom-dot" style="background:#f7931a"></span> BTC</span><span><span class="cwb-dom-dot" style="background:#627eea"></span> ETH</span><span><span class="cwb-dom-dot" style="background:#14f195"></span> SOL</span><span><span class="cwb-dom-dot" style="background:rgba(255,255,255,0.25)"></span> Alt</span></div></div>
+                <div class="cwb-stat-card cwb-mcap" style="--stat-rgb: 59, 130, 246"><div class="cwb-stat-header"><span class="cwb-stat-label">CRYPTO MARKET</span><span class="cwb-stat-live-dot"></span></div><div class="cwb-mcap-value-row"><span class="cwb-mcap-value">$3.42T</span><span class="cwb-mcap-change positive">+1.8%</span></div><span class="cwb-mcap-vol">Vol: $142.5B (24h)</span></div>
+                <div class="cwb-stat-card cwb-usmarket"><div class="cwb-stat-header"><span class="cwb-stat-label">US MARKET</span><span class="cwb-market-dot"></span></div><div class="cwb-usmarket-body"><span class="cwb-market-label">CLOSED</span></div><span class="cwb-market-time"></span></div>
+              </div>
+            </div>
+            <!-- Watchlist -->
+            <div class="spectre-section spectre-prices-section">
+              <span class="spectre-section-label">WATCHLIST</span>
+              <div class="spectre-price-list">
+                <div class="cwb-price-card" style="--brand-rgb: 243, 186, 47"><div class="cwb-price-corner cwb-price-corner--tl"></div><div class="cwb-price-corner cwb-price-corner--br"></div><div class="cwb-price-glow"></div><div class="cwb-price-logo-wrap"><div class="cwb-price-ring cwb-price-ring-1"></div><div class="cwb-price-logo">B</div></div><div class="cwb-price-content"><span class="cwb-price-symbol">BNB</span><span class="cwb-price-name">BNB</span></div><div class="cwb-price-right"><span class="cwb-price-value">$632.10</span><span class="cwb-price-change positive"><span class="cwb-price-change-arrow">&#x25B2;</span> +0.82%</span></div></div>
+                <div class="cwb-price-card" style="--brand-rgb: 0, 159, 246"><div class="cwb-price-corner cwb-price-corner--tl"></div><div class="cwb-price-corner cwb-price-corner--br"></div><div class="cwb-price-glow"></div><div class="cwb-price-logo-wrap"><div class="cwb-price-ring cwb-price-ring-1"></div><div class="cwb-price-logo">X</div></div><div class="cwb-price-content"><span class="cwb-price-symbol">XRP</span><span class="cwb-price-name">XRP</span></div><div class="cwb-price-right"><span class="cwb-price-value">$2.42</span><span class="cwb-price-change positive"><span class="cwb-price-change-arrow">&#x25B2;</span> +3.15%</span></div></div>
+                <div class="cwb-price-card" style="--brand-rgb: 186, 154, 51"><div class="cwb-price-corner cwb-price-corner--tl"></div><div class="cwb-price-corner cwb-price-corner--br"></div><div class="cwb-price-glow"></div><div class="cwb-price-logo-wrap"><div class="cwb-price-ring cwb-price-ring-1"></div><div class="cwb-price-logo">D</div></div><div class="cwb-price-content"><span class="cwb-price-symbol">DOGE</span><span class="cwb-price-name">Dogecoin</span></div><div class="cwb-price-right"><span class="cwb-price-value">$0.2541</span><span class="cwb-price-change negative"><span class="cwb-price-change-arrow">&#x25BC;</span> -1.23%</span></div></div>
+                <div class="cwb-price-card" style="--brand-rgb: 0, 51, 173"><div class="cwb-price-corner cwb-price-corner--tl"></div><div class="cwb-price-corner cwb-price-corner--br"></div><div class="cwb-price-glow"></div><div class="cwb-price-logo-wrap"><div class="cwb-price-ring cwb-price-ring-1"></div><div class="cwb-price-logo">A</div></div><div class="cwb-price-content"><span class="cwb-price-symbol">ADA</span><span class="cwb-price-name">Cardano</span></div><div class="cwb-price-right"><span class="cwb-price-value">$0.7842</span><span class="cwb-price-change positive"><span class="cwb-price-change-arrow">&#x25B2;</span> +4.51%</span></div></div>
+                <div class="cwb-price-card" style="--brand-rgb: 232, 65, 66"><div class="cwb-price-corner cwb-price-corner--tl"></div><div class="cwb-price-corner cwb-price-corner--br"></div><div class="cwb-price-glow"></div><div class="cwb-price-logo-wrap"><div class="cwb-price-ring cwb-price-ring-1"></div><div class="cwb-price-logo">A</div></div><div class="cwb-price-content"><span class="cwb-price-symbol">AVAX</span><span class="cwb-price-name">Avalanche</span></div><div class="cwb-price-right"><span class="cwb-price-value">$38.92</span><span class="cwb-price-change negative"><span class="cwb-price-change-arrow">&#x25BC;</span> -0.87%</span></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="spectre-tab-content" id="p1-project">
+            <div class="project-detail" style="display:block; --brand-rgb: 98, 126, 234">
+              <div class="project-header"><div class="project-logo-wrap"><div class="project-logo-ring"></div><div class="project-logo">E</div></div><div class="project-identity"><span class="project-name">Ethereum</span><span class="project-meta">ETH &middot; #2</span></div><div class="project-pulse-badge"><span class="project-pulse-dot"></span>Risk On</div></div>
+              <div class="project-price-row"><span class="project-price">$2,741.50</span><span class="project-change positive">+1.87%</span></div>
+              <div class="project-chart"><div class="project-chart-placeholder"><span>7D Chart</span></div></div>
+              <div class="project-stats">
+                <div class="project-stat-row"><span class="project-stat-label">Market Cap</span><span class="project-stat-value">$329.8B</span></div>
+                <div class="project-stat-row"><span class="project-stat-label">24H Volume</span><span class="project-stat-value">$18.2B</span></div>
+                <div class="project-stat-row"><span class="project-stat-label">24H High / Low</span><span class="project-stat-value">$2,785 / $2,690</span></div>
+                <div class="project-stat-row"><span class="project-stat-label">Circulating Supply</span><span class="project-stat-value">120.27M ETH</span></div>
+                <div class="project-stat-row"><span class="project-stat-label">All-Time High</span><span class="project-stat-value">$4,891.70</span></div>
+              </div>
+              <div class="project-changes">
+                <div class="project-change-item"><span class="project-change-label">1H</span><span class="project-change-val positive">+0.42%</span></div>
+                <div class="project-change-item"><span class="project-change-label">24H</span><span class="project-change-val positive">+1.87%</span></div>
+                <div class="project-change-item"><span class="project-change-label">7D</span><span class="project-change-val negative">-3.21%</span></div>
+                <div class="project-change-item"><span class="project-change-label">30D</span><span class="project-change-val positive">+12.45%</span></div>
+              </div>
+              <div class="project-socials">
+                <a class="project-social-link"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M2 8h12M8 2c-2 2.4-2 9.6 0 12M8 2c2 2.4 2 9.6 0 12" stroke="currentColor" stroke-width="1.2"/></svg><span>Website</span></a>
+                <a class="project-social-link"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M1.5 1.5L6.5 8.5L1.5 14.5H3L7.25 9.5L10.5 14.5H14.5L9.25 7L13.75 1.5H12.25L8.5 6L5.5 1.5H1.5Z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg><span>Twitter</span></a>
+              </div>
+              <div class="project-cta-wrap"><button class="spectre-cta-btn"><svg class="spectre-cta-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 10l8 8 8-8-8-8z" stroke="currentColor" stroke-width="1.5" fill="rgba(139,92,246,0.1)"/><path d="M12 6L8 10l4 4 4-4-4-4z" stroke="currentColor" stroke-width="1.5" fill="rgba(139,92,246,0.15)"/><circle cx="12" cy="10" r="1.5" fill="currentColor"/></svg><span>Open in Spectre</span><svg class="spectre-cta-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 9L9 3M9 3H4.5M9 3V7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+            </div>
+          </div>
+
+          <div class="spectre-footer"><a class="spectre-cta-btn" href="#"><svg class="spectre-cta-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 10l8 8 8-8-8-8z" stroke="currentColor" stroke-width="1.5" fill="rgba(139,92,246,0.1)"/><path d="M12 6L8 10l4 4 4-4-4-4z" stroke="currentColor" stroke-width="1.5" fill="rgba(139,92,246,0.15)"/><circle cx="12" cy="10" r="1.5" fill="currentColor"/></svg><span>Open Spectre AI</span><svg class="spectre-cta-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 9L9 3M9 3H4.5M9 3V7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a><span class="spectre-footer-powered">powered by spectreai.io</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ COLUMN 2: Sidebar ═══ -->
+    <div class="preview-column">
+      <span class="preview-label">Sidebar Panel (on X)</span>
+      <div class="preview-frame sidebar-preview" style="height: 780px; overflow-y: auto;">
+        <div class="spectre-popup-app" style="width: 340px;">
+          <div class="spectre-edge"></div>
+          <div class="spectre-header">
+            <div class="spectre-brand"><img class="spectre-logo" src="assets/icons/icon-32.png" alt="Spectre AI" width="22" height="22"><span class="spectre-brand-text">Spectre AI</span></div>
+            <div class="spectre-header-actions">
+              <button class="spectre-icon-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></button>
+              <button class="spectre-icon-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+            </div>
+          </div>
+          <div class="spectre-tab-bar">
+            <button class="spectre-tab active" onclick="switchPreviewTab(this, 'sb-market')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>General Market</button>
+            <button class="spectre-tab" onclick="switchPreviewTab(this, 'sb-project')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Project</button>
+          </div>
+          <div class="spectre-tab-content active" id="sb-market">
+            <!-- AI Brief -->
+            <div class="cab-container" style="--sentiment-rgb: 34, 197, 94">
+              <div class="cab-glow"></div>
+              <div class="cab-eyebrow"><div class="cab-eyebrow-left"><span class="cab-pulse"></span><span class="cab-label">AI BRIEF</span></div><span class="cab-live-badge">LIVE</span></div>
+              <blockquote class="cab-statement cab-statement-visible"><span class="cab-quote-mark">&ldquo;</span>BTC dominance holding 56.8%. Bitcoin leading &mdash; alts following with lag.<span class="cab-quote-mark">&rdquo;</span></blockquote>
+              <div class="cab-rotation-nav"><button class="cab-rotation-dot"><span class="cab-dot-fill"></span></button><button class="cab-rotation-dot"><span class="cab-dot-fill"></span></button><button class="cab-rotation-dot active"><span class="cab-dot-fill"></span></button></div>
+              <div class="cab-attribution"><span class="cab-attribution-dash">&mdash;</span><span class="cab-attribution-name">SPECTRE AI</span><span class="cab-attribution-dot">&middot;</span><span class="cab-attribution-time">just now</span></div>
+            </div>
+            <!-- Featured Prices -->
+            <div class="spectre-section spectre-featured-section">
+              <span class="spectre-section-label">TOP ASSETS</span>
+              <div class="spectre-featured-row">
+                <div class="cwb-featured-card" style="--brand-rgb: 247, 147, 26"><div class="cwb-price-corner cwb-price-corner--tl"></div><div class="cwb-price-corner cwb-price-corner--br"></div><div class="cwb-price-glow"></div><div class="cwb-featured-logo-wrap"><div class="cwb-price-ring cwb-price-ring-1"></div><div class="cwb-featured-logo">B</div></div><span class="cwb-featured-symbol">BTC</span><span class="cwb-featured-price">$97,842</span><span class="cwb-featured-change positive"><span class="cwb-featured-change-arrow">&#x25B2;</span> +2.34%</span></div>
+                <div class="cwb-featured-card" style="--brand-rgb: 98, 126, 234"><div class="cwb-price-corner cwb-price-corner--tl"></div><div class="cwb-price-corner cwb-price-corner--br"></div><div class="cwb-price-glow"></div><div class="cwb-featured-logo-wrap"><div class="cwb-price-ring cwb-price-ring-1"></div><div class="cwb-featured-logo">E</div></div><span class="cwb-featured-symbol">ETH</span><span class="cwb-featured-price">$2,741</span><span class="cwb-featured-change positive"><span class="cwb-featured-change-arrow">&#x25B2;</span> +1.87%</span></div>
+                <div class="cwb-featured-card" style="--brand-rgb: 20, 241, 149"><div class="cwb-price-corner cwb-price-corner--tl"></div><div class="cwb-price-corner cwb-price-corner--br"></div><div class="cwb-price-glow"></div><div class="cwb-featured-logo-wrap"><div class="cwb-price-ring cwb-price-ring-1"></div><div class="cwb-featured-logo">S</div></div><span class="cwb-featured-symbol">SOL</span><span class="cwb-featured-price">$196.42</span><span class="cwb-featured-change negative"><span class="cwb-featured-change-arrow">&#x25BC;</span> -0.52%</span></div>
+              </div>
+            </div>
+            <!-- Market Overview -->
+            <div class="spectre-section">
+              <span class="spectre-section-label">MARKET OVERVIEW</span>
+              <div class="spectre-market-grid">
+                <div class="cwb-stat-card cwb-fng" style="--stat-rgb: 34, 197, 94"><div class="cwb-stat-header"><span class="cwb-stat-label">FEAR & GREED</span><span class="cwb-stat-live-dot"></span></div><div class="cwb-stat-body"><span class="cwb-stat-value">72</span><span class="cwb-stat-sublabel">Greed</span></div><div class="cwb-fng-bar"><div class="cwb-fng-track"><div class="cwb-fng-indicator" style="left: 72%"></div></div><div class="cwb-fng-range"><span>Fear</span><span>Greed</span></div></div></div>
+                <div class="cwb-stat-card cwb-dom" style="--stat-rgb: 247, 147, 26"><div class="cwb-stat-header"><span class="cwb-stat-label">MARKET DOMINANCE</span></div><div class="cwb-dom-bar"><div class="cwb-dom-seg cwb-dom-btc" style="width:57%"></div><div class="cwb-dom-seg cwb-dom-eth" style="width:17%"></div><div class="cwb-dom-seg cwb-dom-sol" style="width:5%"></div><div class="cwb-dom-seg cwb-dom-alts" style="width:21%"></div></div><div class="cwb-dom-legend"><span><span class="cwb-dom-dot" style="background:#f7931a"></span> BTC</span><span><span class="cwb-dom-dot" style="background:#627eea"></span> ETH</span><span><span class="cwb-dom-dot" style="background:#14f195"></span> SOL</span><span><span class="cwb-dom-dot" style="background:rgba(255,255,255,0.25)"></span> Alt</span></div></div>
+                <div class="cwb-stat-card cwb-mcap" style="--stat-rgb: 59, 130, 246"><div class="cwb-stat-header"><span class="cwb-stat-label">CRYPTO MARKET</span><span class="cwb-stat-live-dot"></span></div><div class="cwb-mcap-value-row"><span class="cwb-mcap-value">$3.42T</span><span class="cwb-mcap-change positive">+1.8%</span></div><span class="cwb-mcap-vol">Vol: $142.5B (24h)</span></div>
+                <div class="cwb-stat-card cwb-usmarket"><div class="cwb-stat-header"><span class="cwb-stat-label">US MARKET</span><span class="cwb-market-dot"></span></div><div class="cwb-usmarket-body"><span class="cwb-market-label">CLOSED</span></div><span class="cwb-market-time"></span></div>
+              </div>
+            </div>
+            <!-- Watchlist -->
+            <div class="spectre-section spectre-prices-section">
+              <span class="spectre-section-label">WATCHLIST</span>
+              <div class="spectre-price-list">
+                <div class="cwb-price-card" style="--brand-rgb: 243, 186, 47"><div class="cwb-price-corner cwb-price-corner--tl"></div><div class="cwb-price-corner cwb-price-corner--br"></div><div class="cwb-price-glow"></div><div class="cwb-price-logo-wrap"><div class="cwb-price-ring cwb-price-ring-1"></div><div class="cwb-price-logo">B</div></div><div class="cwb-price-content"><span class="cwb-price-symbol">BNB</span><span class="cwb-price-name">BNB</span></div><div class="cwb-price-right"><span class="cwb-price-value">$632.10</span><span class="cwb-price-change positive"><span class="cwb-price-change-arrow">&#x25B2;</span> +0.82%</span></div></div>
+                <div class="cwb-price-card" style="--brand-rgb: 0, 159, 246"><div class="cwb-price-corner cwb-price-corner--tl"></div><div class="cwb-price-corner cwb-price-corner--br"></div><div class="cwb-price-glow"></div><div class="cwb-price-logo-wrap"><div class="cwb-price-ring cwb-price-ring-1"></div><div class="cwb-price-logo">X</div></div><div class="cwb-price-content"><span class="cwb-price-symbol">XRP</span><span class="cwb-price-name">XRP</span></div><div class="cwb-price-right"><span class="cwb-price-value">$2.42</span><span class="cwb-price-change positive"><span class="cwb-price-change-arrow">&#x25B2;</span> +3.15%</span></div></div>
+                <div class="cwb-price-card" style="--brand-rgb: 186, 154, 51"><div class="cwb-price-corner cwb-price-corner--tl"></div><div class="cwb-price-corner cwb-price-corner--br"></div><div class="cwb-price-glow"></div><div class="cwb-price-logo-wrap"><div class="cwb-price-ring cwb-price-ring-1"></div><div class="cwb-price-logo">D</div></div><div class="cwb-price-content"><span class="cwb-price-symbol">DOGE</span><span class="cwb-price-name">Dogecoin</span></div><div class="cwb-price-right"><span class="cwb-price-value">$0.2541</span><span class="cwb-price-change negative"><span class="cwb-price-change-arrow">&#x25BC;</span> -1.23%</span></div></div>
+                <div class="cwb-price-card" style="--brand-rgb: 0, 51, 173"><div class="cwb-price-corner cwb-price-corner--tl"></div><div class="cwb-price-corner cwb-price-corner--br"></div><div class="cwb-price-glow"></div><div class="cwb-price-logo-wrap"><div class="cwb-price-ring cwb-price-ring-1"></div><div class="cwb-price-logo">A</div></div><div class="cwb-price-content"><span class="cwb-price-symbol">ADA</span><span class="cwb-price-name">Cardano</span></div><div class="cwb-price-right"><span class="cwb-price-value">$0.7842</span><span class="cwb-price-change positive"><span class="cwb-price-change-arrow">&#x25B2;</span> +4.51%</span></div></div>
+                <div class="cwb-price-card" style="--brand-rgb: 232, 65, 66"><div class="cwb-price-corner cwb-price-corner--tl"></div><div class="cwb-price-corner cwb-price-corner--br"></div><div class="cwb-price-glow"></div><div class="cwb-price-logo-wrap"><div class="cwb-price-ring cwb-price-ring-1"></div><div class="cwb-price-logo">A</div></div><div class="cwb-price-content"><span class="cwb-price-symbol">AVAX</span><span class="cwb-price-name">Avalanche</span></div><div class="cwb-price-right"><span class="cwb-price-value">$38.92</span><span class="cwb-price-change negative"><span class="cwb-price-change-arrow">&#x25BC;</span> -0.87%</span></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="spectre-tab-content" id="sb-project">
+            <div class="project-empty"><div class="project-empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div><span class="project-empty-title">Select a Token</span><span class="project-empty-desc">Click any token from your watchlist or hover a $cashtag on X</span></div>
+          </div>
+          <div class="spectre-footer"><a class="spectre-cta-btn" href="#"><svg class="spectre-cta-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 10l8 8 8-8-8-8z" stroke="currentColor" stroke-width="1.5" fill="rgba(139,92,246,0.1)"/><path d="M12 6L8 10l4 4 4-4-4-4z" stroke="currentColor" stroke-width="1.5" fill="rgba(139,92,246,0.15)"/><circle cx="12" cy="10" r="1.5" fill="currentColor"/></svg><span>Open Spectre AI</span><svg class="spectre-cta-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 9L9 3M9 3H4.5M9 3V7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a><span class="spectre-footer-powered">powered by spectreai.io</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ COLUMN 3: Hover Popup ═══ -->
+    <div class="preview-column">
+      <span class="preview-label">Cashtag Hover Popup</span>
+      <div class="preview-frame hover-preview">
+        <div class="sp-card" style="--brand-rgb: 98, 126, 234">
+          <div class="sp-glow"></div>
+          <div class="sp-corner sp-corner-tl"></div>
+          <div class="sp-corner sp-corner-br"></div>
+          <div class="sp-header">
+            <div class="sp-logo-wrap"><div class="sp-logo-ring"></div><div class="sp-logo">E</div></div>
+            <div class="sp-identity"><span class="sp-name">Ethereum</span><span class="sp-ticker">ETH &middot; #2</span></div>
+            <button class="sp-fav-btn" title="Favorite" onclick="this.classList.toggle('active');this.querySelector('svg').setAttribute('fill',this.classList.contains('active')?'currentColor':'none')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+            <div class="sp-pulse-badge sp-pulse-risk_on"><span class="sp-pulse-dot"></span>Risk On</div>
+          </div>
+          <div class="sp-price-row"><span class="sp-price">$2,741.50</span><span class="sp-change positive">+1.87%</span></div>
+          <div class="sp-ai-analysis">
+            <div class="sp-ai-label"><span class="sp-ai-label-dot"></span>AI ANALYSIS</div>
+            <p class="sp-ai-text">Strong momentum with greed rising. ETH holding above key support at $2,700 with healthy volume.</p>
+          </div>
+          <div class="sp-chart-wrap">
+            <svg viewBox="0 0 260 60" preserveAspectRatio="none">
+              <defs><linearGradient id="hg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgb(98, 126, 234)" stop-opacity="0.2"/><stop offset="100%" stop-color="rgb(98, 126, 234)" stop-opacity="0"/></linearGradient></defs>
+              <polygon points="0,60 0,40 20,35 40,38 60,30 80,32 100,25 120,28 140,22 160,20 180,24 200,18 220,15 240,12 260,8 260,60" fill="url(#hg1)"/>
+              <polyline points="0,40 20,35 40,38 60,30 80,32 100,25 120,28 140,22 160,20 180,24 200,18 220,15 240,12 260,8" fill="none" stroke="rgb(98, 126, 234)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+              <circle cx="260" cy="8" r="2.5" fill="rgb(98, 126, 234)"><animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/></circle>
+            </svg>
+          </div>
+          <div class="sp-stats">
+            <div class="sp-stat"><div class="sp-stat-accent"></div><span class="sp-stat-label">MARKET CAP</span><span class="sp-stat-value">$329.8B</span></div>
+            <div class="sp-stat"><div class="sp-stat-accent"></div><span class="sp-stat-label">24H VOLUME</span><span class="sp-stat-value">$18.2B</span></div>
+          </div>
+          <button class="sp-cta"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 10l8 8 8-8-8-8z" stroke="currentColor" stroke-width="1.5" fill="rgba(98,126,234,0.1)"/><path d="M12 6L8 10l4 4 4-4-4-4z" stroke="currentColor" stroke-width="1.5" fill="rgba(98,126,234,0.15)"/><circle cx="12" cy="10" r="1.5" fill="currentColor"/></svg><span>Open in Spectre</span><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 9L9 3M9 3H4.5M9 3V7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="sp-footer"><span class="sp-footer-text">powered by </span><span class="sp-footer-brand">spectreai.io</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ COLUMN 4: Search Overlay ═══ -->
+    <div class="preview-column">
+      <span class="preview-label">Search Overlay</span>
+      <div class="preview-frame search-preview">
+        <div class="spectre-popup-app" style="width: 360px;">
+          <div class="spectre-edge"></div>
+          <div class="spectre-search-overlay" style="display: flex; position: relative;">
+            <div class="spectre-search-bar">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="8" cy="8" r="5" stroke="currentColor" stroke-width="1.3"/><path d="M12 12L16 16" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              <input class="spectre-search-input" type="text" placeholder="Search tokens or paste contract address..." disabled>
+              <div class="spectre-search-actions">
+                <button class="spectre-search-action-btn"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3v8M3 7h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
+                <button class="spectre-search-action-btn"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 4l6 6M10 4l-6 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
+              </div>
+            </div>
+            <div class="spectre-search-results">
+              <div class="spectre-search-section-label">
+                <span><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="2" width="11" height="10" rx="1.5" stroke="currentColor" stroke-width="1.1"/><path d="M1.5 5.5h11M4.5 2V1M9.5 2V1" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>RECENT (LIVE)</span>
+                <button class="spectre-search-clear-btn">Clear</button>
+              </div>
+              <div class="spectre-search-token">
+                <div class="spectre-search-token-logo" style="background: rgba(34, 197, 94, 0.12);"><span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 16px; color: #34d399;">N</span></div>
+                <div class="spectre-search-token-info">
+                  <div class="spectre-search-token-top"><span class="spectre-search-token-symbol">NEURAL</span><span class="spectre-search-token-chain">ETHEREUM</span></div>
+                  <span class="spectre-search-token-name">NeuralAI</span>
+                  <div class="spectre-search-token-addr"><span class="spectre-search-token-addr-dot"></span>0x32b...e6e1</div>
+                </div>
+                <div class="spectre-search-token-right"><span class="spectre-search-token-price">$0.594</span><span class="spectre-search-token-change negative">-1.26%</span><div class="spectre-search-token-meta"><span>MC $5.94M</span><span>&middot;</span><span>Liq $305K</span></div></div>
+              </div>
+              <div class="spectre-search-token">
+                <span class="spectre-search-token-fav active">&hearts;</span>
+                <div class="spectre-search-token-logo" style="background: rgba(139, 92, 246, 0.12);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 10l8 8 8-8-8-8z" stroke="rgba(167,139,250,0.8)" stroke-width="1.5" fill="rgba(139,92,246,0.15)"/><path d="M12 6L8 10l4 4 4-4-4-4z" stroke="rgba(167,139,250,0.8)" stroke-width="1.5" fill="rgba(139,92,246,0.2)"/><circle cx="12" cy="10" r="1.5" fill="rgba(167,139,250,0.9)"/></svg></div>
+                <div class="spectre-search-token-info">
+                  <div class="spectre-search-token-top"><span class="spectre-search-token-symbol">SPECTRE</span><span class="spectre-search-token-chain">ETHEREUM</span></div>
+                  <span class="spectre-search-token-name">SPECTRE AI</span>
+                  <div class="spectre-search-token-addr"><span class="spectre-search-token-addr-dot"></span>0x9cf...dad6</div>
+                </div>
+                <div class="spectre-search-token-right"><span class="spectre-search-token-price">$0.326</span><span class="spectre-search-token-change positive">+2.90%</span><div class="spectre-search-token-meta"><span>MC $3.26M</span><span>&middot;</span><span>Liq $184K</span></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchPreviewTab(btn, contentId) {
+      const bar = btn.parentElement;
+      bar.querySelectorAll('.spectre-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      const parent = bar.parentElement;
+      parent.querySelectorAll('.spectre-tab-content').forEach(c => c.classList.remove('active'));
+      const target = document.getElementById(contentId);
+      if (target) target.classList.add('active');
+    }
+    function toggleDayMode() {
+      document.body.classList.toggle('day-mode');
+      document.querySelectorAll('.spectre-popup-app').forEach(el => el.classList.toggle('day-mode'));
+    }
+
+    // US Market Status — update all preview panels
+    function getUSMarketStatus() {
+      const now = new Date();
+      const etStr = now.toLocaleString('en-US', { timeZone: 'America/New_York' });
+      const et = new Date(etStr);
+      const day = et.getDay();
+      const totalMinutes = et.getHours() * 60 + et.getMinutes();
+      const isWeekday = day >= 1 && day <= 5;
+      const isOpen = isWeekday && totalMinutes >= 570 && totalMinutes < 960;
+      const timeStr = et.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/New_York' });
+      return { isOpen, label: isOpen ? 'US OPEN' : 'US CLOSED', time: timeStr + ' ET' };
+    }
+    function updateAllMarketStatus() {
+      const status = getUSMarketStatus();
+      document.querySelectorAll('.cwb-usmarket').forEach(el => {
+        el.classList.toggle('open', status.isOpen);
+        const label = el.querySelector('.cwb-market-label');
+        const time = el.querySelector('.cwb-market-time');
+        if (label) label.textContent = status.isOpen ? 'OPEN' : 'CLOSED';
+        if (time) time.textContent = status.time;
+      });
+    }
+    updateAllMarketStatus();
+    setInterval(updateAllMarketStatus, 60000);
+  </script>
+</body>
+</html>

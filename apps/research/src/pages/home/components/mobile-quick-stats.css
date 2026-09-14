@@ -1,0 +1,288 @@
+/* ===== MobileQuickStats - Cinematic 2x2 stat grid (mobile) ===== */
+
+.mobile-quick-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 16px;
+}
+
+/* ── Individual stat card - radial gradient top-lit glass.
+   2026-05-13 (Gleb feedback): tighter padding + smaller min-height
+   so the 4 cards (Crypto Market Cap, Fear & Greed, BTC Dominance,
+   Alt Season) take less vertical space inside the embedded iframe
+   on spectreai.io. Value font also pinned smaller — 22px instead of
+   26px — since the iframe runs at ~350px wide on mobile. */
+.mobile-quick-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background:
+    radial-gradient(ellipse 140% 60% at 50% 0%, rgba(255, 255, 255, 0.06) 0%, transparent 55%),
+    rgba(255, 255, 255, 0.025);
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-lg);
+  min-height: 72px;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.mobile-quick-stat-card--clickable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), border-color 150ms;
+}
+
+.mobile-quick-stat-card--clickable:active {
+  transform: scale(0.97);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.mobile-quick-stat-card--clickable:focus-visible {
+  outline: 1px solid rgba(255, 255, 255, 0.2);
+  outline-offset: 1px;
+}
+
+/* Top-edge warm line */
+.mobile-quick-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 245, 247, 0.1), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Label ── */
+.mobile-quick-stat-label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  text-transform: uppercase;
+  line-height: 1;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+/* ── Value - HERO number, dominant visual anchor.
+   Tightened from 26px → 22px so it sits inside the embedded
+   iframe at ~350px viewport without overpowering surrounding rows. */
+.mobile-quick-stat-value {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary, #f5f5f7);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+}
+
+.mobile-quick-stat-of {
+  font-size: var(--m-text-sm);
+  font-weight: 400;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  letter-spacing: 0;
+}
+
+/* ── Change badge - with subtle glow ── */
+.mobile-quick-stat-change {
+  display: inline-flex;
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  padding: 3px 7px;
+  border-radius: var(--radius-sm);
+  line-height: 1.2;
+  margin-top: 3px;
+}
+
+.mobile-quick-stat-change.positive {
+  color: var(--bull, #10B981);
+  background: rgba(16, 185, 129, 0.1);
+  border: 0.5px solid rgba(16, 185, 129, 0.12);
+}
+
+.mobile-quick-stat-change.negative {
+  color: var(--bear, #EF4444);
+  background: rgba(239, 68, 68, 0.1);
+  border: 0.5px solid rgba(239, 68, 68, 0.12);
+}
+
+/* ── Sub-label (Fear & Greed classification) ── */
+.mobile-quick-stat-sub {
+  font-family: var(--font-body);
+  font-size: var(--m-text-xs);
+  font-weight: 500;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  text-transform: capitalize;
+  line-height: 1;
+}
+
+/* ── Progress bar - rounded, gradient, inner shadow.
+   Margin-top tightened 8 → 5 to match the smaller card. */
+.mobile-quick-stat-bar {
+  width: 100%;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 5px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-quick-stat-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, rgba(245, 245, 247, 0.2), rgba(245, 245, 247, 0.4));
+  transition: width 0.8s var(--spring-gentle, cubic-bezier(0.16, 1, 0.3, 1));
+  box-shadow: 0 0 6px rgba(245, 245, 247, 0.08);
+}
+
+.mobile-quick-stat-bar-fill.alt {
+  background: linear-gradient(90deg, rgba(245, 245, 247, 0.12), rgba(245, 245, 247, 0.35));
+}
+
+/* ── Skeleton loader - cinematic shimmer ── */
+.mobile-quick-stat-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-sm);
+  padding: 2px 0;
+}
+
+.mobile-quick-stat-skeleton-label {
+  width: 60%;
+  height: 10px;
+  border-radius: 5px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: mobileStatShimmer 2s infinite;
+}
+
+.mobile-quick-stat-skeleton-value {
+  width: 45%;
+  height: 18px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: mobileStatShimmer 2s infinite;
+  animation-delay: 80ms;
+}
+
+@keyframes mobileStatShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── iPhone SE (320px) and iframe-embedded (≤ 374px) ── */
+@media (max-width: 374px) {
+  .mobile-quick-stats {
+    gap: 6px;
+    padding: 0 10px;
+  }
+
+  .mobile-quick-stat-card {
+    padding: 8px 10px;
+    min-height: 64px;
+    gap: 3px;
+  }
+
+  .mobile-quick-stat-value {
+    font-size: 19px;
+  }
+
+  .mobile-quick-stat-label {
+    font-size: 10px;
+  }
+
+  .mobile-quick-stat-bar {
+    margin-top: 4px;
+  }
+}
+
+/* ═══ Day mode ═══ */
+.app.app-day-mode .mobile-quick-stats .mobile-quick-stat-card,
+.mobile-quick-stats.mobile-quick-stats--day .mobile-quick-stat-card {
+  background: linear-gradient(168deg, #ffffff 0%, #f8fafc 40%, #f1f5f9 100%);
+  border-color: rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.app.app-day-mode .mobile-quick-stats .mobile-quick-stat-label,
+.mobile-quick-stats.mobile-quick-stats--day .mobile-quick-stat-label {
+  color: #64748b;
+}
+
+.app.app-day-mode .mobile-quick-stats .mobile-quick-stat-value,
+.mobile-quick-stats.mobile-quick-stats--day .mobile-quick-stat-value {
+  color: #0f172a;
+}
+
+.app.app-day-mode .mobile-quick-stats .mobile-quick-stat-of,
+.mobile-quick-stats.mobile-quick-stats--day .mobile-quick-stat-of {
+  color: #94a3b8;
+}
+
+.app.app-day-mode .mobile-quick-stats .mobile-quick-stat-sub,
+.mobile-quick-stats.mobile-quick-stats--day .mobile-quick-stat-sub {
+  color: #64748b;
+}
+
+.app.app-day-mode .mobile-quick-stats .mobile-quick-stat-change.positive,
+.mobile-quick-stats.mobile-quick-stats--day .mobile-quick-stat-change.positive {
+  color: #16a34a;
+  background: rgba(22, 163, 74, 0.08);
+  border-color: rgba(22, 163, 74, 0.1);
+}
+
+.app.app-day-mode .mobile-quick-stats .mobile-quick-stat-change.negative,
+.mobile-quick-stats.mobile-quick-stats--day .mobile-quick-stat-change.negative {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.1);
+}
+
+.app.app-day-mode .mobile-quick-stats .mobile-quick-stat-bar,
+.mobile-quick-stats.mobile-quick-stats--day .mobile-quick-stat-bar {
+  background: rgba(0, 0, 0, 0.04);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.app.app-day-mode .mobile-quick-stats .mobile-quick-stat-bar-fill,
+.mobile-quick-stats.mobile-quick-stats--day .mobile-quick-stat-bar-fill {
+  background: linear-gradient(90deg, rgba(17, 17, 19, 0.15), rgba(17, 17, 19, 0.3));
+  box-shadow: none;
+}
+
+.app.app-day-mode .mobile-quick-stats .mobile-quick-stat-bar-fill.alt,
+.mobile-quick-stats.mobile-quick-stats--day .mobile-quick-stat-bar-fill.alt {
+  background: linear-gradient(90deg, rgba(17, 17, 19, 0.1), rgba(17, 17, 19, 0.25));
+}
+
+.app.app-day-mode .mobile-quick-stats .mobile-quick-stat-skeleton-label,
+.app.app-day-mode .mobile-quick-stats .mobile-quick-stat-skeleton-value,
+.mobile-quick-stats.mobile-quick-stats--day .mobile-quick-stat-skeleton-label,
+.mobile-quick-stats.mobile-quick-stats--day .mobile-quick-stat-skeleton-value {
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.06) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: mobileStatShimmer 2s infinite;
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-quick-stat-card {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+}

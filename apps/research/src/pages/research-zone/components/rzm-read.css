@@ -1,0 +1,412 @@
+/* ────────────────────────────────────────────────────────────────────────────
+   RzmRead — the chart TA read on a phone. Prefix: rzr-
+
+   The desktop read is a horizontal strip above the chart. That primitive does
+   not survive 390px: it is one flex row (timeframe · window · change · two
+   actions · dismiss), and below 768px styles/app-store-ready.css force-bumps
+   every <button> to a 38px floor through a hardcoded exempt list that no
+   .rzta-* class is on — so it wraps into stacked chunky boxes, the exact
+   failure named in that file's own comment (founder, 08-04).
+
+   So mobile gets a different shape, not a squeezed one: the chart keeps only
+   the drawn geometry, and every word moves into a bottom sheet. Chrome is
+   lifted from rzm-agent-sheet.css so this reads as the same product — same
+   #09090b ground, same 36x4 grabber, same segmented control, same 8px blur
+   ceiling (above that costs Android frame rate).
+
+   No left colour rails anywhere. Direction reads from the words and the
+   numbers, per the rule already written into rzm-agent-sheet.css.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* ── the window lens ─────────────────────────────────────────────────────────
+   How you choose the read window with a thumb. A drag-a-box gesture on the
+   chart fights the page scroller; a trim strip under it does not, and it makes
+   the window a thing you hold — which matters, because the window is what
+   decides every touch count in the read. */
+.rzr-lenswrap {
+  flex: none;
+  padding: 4px 14px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rzr-lens {
+  position: relative;
+  margin: 0;
+  touch-action: none;          /* the browser must not read this as a page pull */
+  cursor: grab;
+}
+.rzr-lens.is-drag { cursor: grabbing; }
+.rzr-lens canvas { display: block; width: 100%; border-radius: 9px; }
+
+.rzr-lens-cap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 2px 0;
+  font-size: 10.5px;
+  color: rgba(245, 245, 247, 0.35);
+}
+.rzr-lens-cap b {
+  font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.55);
+  font-variant-numeric: tabular-nums;
+}
+.rzr-lens-cap .rzr-hint { margin-left: auto; color: rgba(245, 245, 247, 0.22); }
+
+/* ── sheet ─────────────────────────────────────────────────────────────────── */
+.rzr-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1200;               /* above --z-nav (400), below the agent sheet (6000) */
+  display: flex;
+  flex-direction: column;
+  /* Leaves the chart and its lens on screen above the sheet — the read is
+     about the chart, so burying it defeats the point. Pull the grabber for
+     the rail when you want the whole chart back. */
+  max-height: 56vh;
+  max-height: 56dvh;
+  background: #09090b;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.6);
+  transition: max-height 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.rzr-sheet.is-rail { max-height: 190px; }
+.rzr-sheet.is-idle { max-height: 168px; }
+
+.rzr-grab {
+  width: 36px;
+  height: 4px;
+  margin: 8px auto 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  flex: none;
+}
+.rzr-grabbtn {
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.rzr-hdr {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.rzr-seg {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px) saturate(160%);
+  -webkit-backdrop-filter: blur(8px) saturate(160%);
+}
+.rzr-seg button {
+  min-height: 36px;
+  padding: 0 15px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.5);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 200ms ease, background 200ms ease;
+}
+.rzr-seg button[aria-selected="true"] {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.06) 100%);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 2px 8px rgba(0, 0, 0, 0.28);
+  color: #f5f5f7;
+}
+.rzr-close {
+  margin-left: auto;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.7);
+  cursor: pointer;
+}
+
+.rzr-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;   /* never chain to the page — that is pull-to-refresh */
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 14px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+/* ── cards ─────────────────────────────────────────────────────────────────── */
+.rzr-card {
+  padding: 13px 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.018) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+.rzr-vt { display: flex; align-items: center; gap: 8px; }
+.rzr-vn {
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: -0.015em;
+}
+.rzr-chip {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 5px;
+  color: rgba(245, 245, 247, 0.55);
+  background: rgba(255, 255, 255, 0.05);
+}
+.rzr-chip.is-bear { color: #F87171; background: rgba(239, 68, 68, 0.1); }
+.rzr-chip.is-bull { color: #34D399; background: rgba(16, 185, 129, 0.1); }
+.rzr-fit {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.55);
+  font-variant-numeric: tabular-nums;
+}
+/* Confidence as an instrument, not a score. */
+.rzr-meter {
+  margin-top: 10px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.rzr-meter i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(245, 245, 247, 0.4), #f5f5f7);
+  transition: width 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.rzr-say { margin-top: 10px; font-size: 13px; line-height: 1.5; color: rgba(245, 245, 247, 0.55); }
+
+/* what decides it — confirmation/invalidation arrive as SENTENCES from the
+   pattern book, so these are full-width rows, never three cramped columns */
+.rzr-gates { padding: 4px 0; }
+.rzr-gate { padding: 10px 14px; }
+.rzr-gate + .rzr-gate { border-top: 1px solid rgba(255, 255, 255, 0.05); }
+.rzr-gk {
+  display: block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.35);
+}
+.rzr-gv { display: block; margin-top: 4px; font-size: 12.5px; line-height: 1.45; color: #f5f5f7; }
+.rzr-gv .rzr-num {
+  font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.rzr-gv.is-bear { color: #F87171; }
+.rzr-gsub { display: block; margin-top: 2px; font-size: 10.5px; color: rgba(245, 245, 247, 0.35); }
+
+/* jump into the levels pane */
+.rzr-jump {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 11px 13px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.018) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rzr-jn {
+  font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+  font-size: 15px;
+  font-weight: 600;
+  color: #f5f5f7;
+  min-width: 18px;
+}
+.rzr-jt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; color: rgba(245, 245, 247, 0.55); }
+.rzr-jt em { font-style: normal; font-size: 11px; color: rgba(245, 245, 247, 0.35); }
+.rzr-ja { color: rgba(245, 245, 247, 0.35); font-size: 17px; }
+
+.rzr-note { padding: 0 3px 4px; font-size: 11px; line-height: 1.45; color: rgba(245, 245, 247, 0.22); }
+
+/* ── level rows ────────────────────────────────────────────────────────────── */
+.rzr-lv {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.018) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 260ms cubic-bezier(0.16, 1, 0.3, 1), border-color 260ms ease, box-shadow 260ms ease;
+}
+.rzr-lv[aria-pressed="true"] {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 4px 14px rgba(0, 0, 0, 0.34);
+}
+.rzr-lv.is-outside { opacity: 0.5; }
+.rzr-lr { display: flex; align-items: baseline; gap: 8px; }
+.rzr-lp {
+  font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.rzr-lo { font-size: 11px; color: rgba(245, 245, 247, 0.35); }
+.rzr-lc {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.55);
+  font-variant-numeric: tabular-nums;
+}
+.rzr-ls { margin-top: 3px; font-size: 11px; color: rgba(245, 245, 247, 0.35); }
+.rzr-ls em { font-style: normal; color: rgba(245, 245, 247, 0.55); }
+.rzr-fx { margin-top: 7px; font-size: 10.5px; color: rgba(245, 245, 247, 0.35); display: none; align-items: center; gap: 6px; }
+.rzr-lv[aria-pressed="true"] .rzr-fx { display: flex; }
+/* strength reads UNDER the row — a bar down its left edge is the accent-rail
+   pattern the founder has rejected repeatedly */
+.rzr-dens { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(255, 255, 255, 0.045); }
+.rzr-dens i { display: block; height: 100%; background: rgba(245, 245, 247, 0.4); transition: width 300ms cubic-bezier(0.16, 1, 0.3, 1), background 260ms ease; }
+.rzr-lv[aria-pressed="true"] .rzr-dens i { background: #f5f5f7; }
+
+/* ── honest states ─────────────────────────────────────────────────────────── */
+.rzr-empty { padding: 16px 14px; }
+.rzr-empty h3 {
+  font-family: 'Space Grotesk', -apple-system, system-ui, sans-serif;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #f5f5f7;
+  margin-bottom: 6px;
+}
+.rzr-empty p { font-size: 12.5px; line-height: 1.5; color: rgba(245, 245, 247, 0.55); }
+
+/* shimmer, never spinner */
+.rzr-skel { position: relative; overflow: hidden; border-radius: 14px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.04); }
+.rzr-skel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  animation: rzrShim 1.25s infinite;
+}
+@keyframes rzrShim { 100% { transform: translateX(100%); } }
+
+/* ── footer ────────────────────────────────────────────────────────────────── */
+.rzr-ft {
+  flex: none;
+  display: flex;
+  gap: 9px;
+  /* the sheet is offset above the bottom nav, which already clears the
+     home indicator — adding the inset again would double-count it */
+  padding: 10px 14px 12px;
+}
+.rzr-cta {
+  flex: 1;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 13px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #f5f5f7;
+  cursor: pointer;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.055) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 4px 16px rgba(0, 0, 0, 0.34);
+}
+.rzr-cta:disabled { opacity: 0.55; cursor: default; }
+.rzr-cta .rzr-sc {
+  font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.35);
+  font-variant-numeric: tabular-nums;
+}
+.rzr-icobtn {
+  width: 48px;
+  min-height: 48px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  font-size: 15px;
+  color: rgba(245, 245, 247, 0.55);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.018) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  cursor: pointer;
+}
+
+/* ── rail: the resting state after a read, so the chart stays yours ────────── */
+.rzr-rail { display: none; flex-direction: column; padding: 12px 16px 0; }
+.rzr-sheet.is-rail .rzr-rail { display: flex; }
+.rzr-sheet.is-rail .rzr-hdr,
+.rzr-sheet.is-rail .rzr-body { display: none; }
+.rzr-rail-row { display: flex; align-items: center; gap: 8px; }
+.rzr-rail-sub { margin-top: 8px; font-size: 12px; line-height: 1.45; color: rgba(245, 245, 247, 0.55); }
+
+/* .rzr-idle removed: the lens plus its own caption ("reading 120 bars · 4d 23h
+   — drag to change") says what a paragraph of instructions used to. */
+
+.rzr-seg button:focus-visible,
+.rzr-close:focus-visible,
+.rzr-cta:focus-visible,
+.rzr-icobtn:focus-visible,
+.rzr-lv:focus-visible,
+.rzr-jump:focus-visible {
+  outline: 2px solid #f5f5f7;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rzr-sheet, .rzr-meter i, .rzr-lv, .rzr-dens i { transition: none; }
+  .rzr-skel::after { animation: none; }
+}

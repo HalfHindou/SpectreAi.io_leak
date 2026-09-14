@@ -1,0 +1,325 @@
+/* ═══════════════════════════════════════════════════════════════════════════════
+   RzPriceHistoryBars - Animated ATL→ATH daily bar chart
+   Premium glassmorphic design with gradient bars + glow effects
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.rzphb-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 18px;
+  overflow: hidden;
+  padding: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ─── Header ─── */
+.rzphb-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 12px 16px 6px;
+  flex-shrink: 0;
+}
+.rzphb-title {
+  font-family: var(--font-display, 'SF Pro Display', -apple-system, sans-serif);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.rzphb-subtitle {
+  font-size: 0.62rem;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.03em;
+  font-weight: 500;
+}
+
+/* ─── Y-axis ─── */
+.rzphb-y-axis {
+  position: absolute;
+  left: 0;
+  top: 38px;
+  bottom: 12px;
+  width: 52px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 4px 6px;
+  z-index: 2;
+  pointer-events: none;
+}
+.rzphb-y-label {
+  font-size: 0.58rem;
+  font-family: var(--font-mono, var(--font-mono));
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+.rzphb-y-ath { color: rgba(0, 240, 220, 0.5); }
+.rzphb-y-atl { color: rgba(255, 100, 180, 0.5); }
+
+/* ─── Chart Area ─── */
+.rzphb-chart-area {
+  flex: 1;
+  position: relative;
+  margin: 0 12px 12px 54px;
+  overflow: hidden;
+}
+
+/* Grid lines */
+.rzphb-gridline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+}
+
+/* Current price line */
+.rzphb-price-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--token-color, #00f0ff) 15%,
+    var(--token-color, #00f0ff) 85%,
+    transparent 100%
+  );
+  opacity: 0.5;
+  z-index: 3;
+  pointer-events: none;
+}
+.rzphb-price-tag {
+  position: absolute;
+  right: -2px;
+  top: -10px;
+  font-size: 0.58rem;
+  font-family: var(--font-mono, var(--font-mono));
+  color: var(--token-color, #00f0ff);
+  background: rgba(0, 0, 0, 0.7);
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid color-mix(in srgb, var(--token-color, #00f0ff) 25%, transparent);
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+
+/* ─── Bars Container ─── */
+.rzphb-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 100%;
+  padding: 0 2px;
+}
+
+/* ─── Individual Bar ─── */
+.rzphb-bar-wrapper {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.rzphb-bar {
+  width: 100%;
+  height: 0%;
+  min-height: 2px;
+  border-radius: 3px 3px 1px 1px;
+  position: relative;
+  transition: none;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--bar-color) 40%, rgba(0, 0, 0, 0.3)),
+    var(--bar-color),
+    color-mix(in srgb, var(--bar-color) 90%, white)
+  );
+  box-shadow:
+    0 0 6px color-mix(in srgb, var(--bar-glow) 60%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Animated entrance */
+.rzphb-animated .rzphb-bar {
+  animation: rzphbBarGrow 0.8s cubic-bezier(0.16, 1, 0.3, 1) var(--bar-delay, 0s) both;
+}
+
+@keyframes rzphbBarGrow {
+  0% {
+    height: 0%;
+    opacity: 0;
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+  40% {
+    opacity: 0.7;
+  }
+  100% {
+    height: var(--bar-height, 50%);
+    opacity: 1;
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+}
+
+/* Glowing pip at top of each bar */
+.rzphb-bar-pip {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: white;
+  opacity: 0;
+  box-shadow:
+    0 0 4px var(--bar-color),
+    0 0 8px var(--bar-glow);
+}
+
+.rzphb-animated .rzphb-bar-pip {
+  animation: rzphbPipFade 0.5s ease-out calc(var(--bar-delay, 0s) + 0.7s) both;
+}
+
+@keyframes rzphbPipFade {
+  0% { opacity: 0; transform: translateX(-50%) scale(0); }
+  60% { opacity: 1; transform: translateX(-50%) scale(1.5); }
+  100% { opacity: 0.7; transform: translateX(-50%) scale(1); }
+}
+
+/* Subtle continuous glow pulse on bars after load */
+.rzphb-animated .rzphb-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(to top, transparent 40%, rgba(255, 255, 255, 0.06) 100%);
+  animation: rzphbBarShimmer 3s ease-in-out infinite alternate;
+  animation-delay: var(--bar-delay, 0s);
+}
+
+@keyframes rzphbBarShimmer {
+  0% { opacity: 0.3; }
+  100% { opacity: 0.8; }
+}
+
+/* ─── Bottom glow accent ─── */
+.rzphb-bottom-glow {
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 40px;
+  background: radial-gradient(
+    ellipse 80% 100% at 50% 100%,
+    rgba(180, 80, 255, 0.08) 0%,
+    rgba(0, 240, 255, 0.04) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* ─── Empty state ─── */
+.rzphb-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 0.75rem;
+}
+
+/* ─── Hover interactivity ─── */
+.rzphb-bar-wrapper:hover .rzphb-bar {
+  filter: brightness(1.25);
+  box-shadow:
+    0 0 12px color-mix(in srgb, var(--bar-glow) 80%, transparent),
+    0 0 24px color-mix(in srgb, var(--bar-glow) 40%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.rzphb-bar-wrapper:hover .rzphb-bar-pip {
+  opacity: 1 !important;
+  transform: translateX(-50%) scale(1.4) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   DAY MODE
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.rzphb-container.day-mode {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+.rzphb-container.day-mode .rzphb-title {
+  color: #1e293b;
+}
+.rzphb-container.day-mode .rzphb-subtitle {
+  color: #94a3b8;
+}
+.rzphb-container.day-mode .rzphb-y-label {
+  color: rgba(0, 0, 0, 0.3);
+}
+.rzphb-container.day-mode .rzphb-y-ath {
+  color: rgba(0, 180, 160, 0.6);
+}
+.rzphb-container.day-mode .rzphb-y-atl {
+  color: rgba(200, 60, 130, 0.6);
+}
+.rzphb-container.day-mode .rzphb-gridline {
+  background: rgba(0, 0, 0, 0.06);
+}
+.rzphb-container.day-mode .rzphb-price-line {
+  opacity: 0.6;
+}
+.rzphb-container.day-mode .rzphb-price-tag {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: color-mix(in srgb, var(--token-color, #00f0ff) 30%, rgba(0, 0, 0, 0.1));
+}
+.rzphb-container.day-mode .rzphb-bar {
+  box-shadow:
+    0 0 4px color-mix(in srgb, var(--bar-glow) 40%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.rzphb-container.day-mode .rzphb-bottom-glow {
+  background: radial-gradient(
+    ellipse 80% 100% at 50% 100%,
+    rgba(180, 80, 255, 0.04) 0%,
+    rgba(0, 200, 220, 0.02) 50%,
+    transparent 100%
+  );
+}
+.rzphb-container.day-mode .rzphb-empty {
+  color: #94a3b8;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1100px) {
+  .rzphb-bars {
+    gap: 1px;
+  }
+  .rzphb-y-axis {
+    width: 44px;
+  }
+  .rzphb-chart-area {
+    margin-left: 46px;
+  }
+  .rzphb-y-label {
+    font-size: 0.52rem;
+  }
+}

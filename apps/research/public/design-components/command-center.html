@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1000">
+  <title>Spectre — Command Center Widget</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-void: #09090b; --bg-surface: #111113; --bg-elevated: #18181b;
+      --glass-bg: rgba(9,9,11,0.88); --glass-border: rgba(255,255,255,0.04);
+      --text-primary: #f5f5f7; --text-secondary: rgba(245,245,247,0.6);
+      --text-tertiary: rgba(245,245,247,0.5); --text-muted: rgba(245,245,247,0.35);
+      --bull: #10B981; --bear: #EF4444; --cyan: #06B6D4; --amber: #F59E0B; --violet: #A78BFA;
+      --border-subtle: rgba(255,255,255,0.03); --border-default: rgba(255,255,255,0.04);
+      --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0f;
+      font-family: var(--font-body);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .widget {
+      width: 900px;
+      padding: 28px;
+    }
+
+    /* ── Glass Card ─────────────────────────────── */
+    .command-center {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 28px;
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      box-shadow:
+        0 4px 24px rgba(0,0,0,0.12),
+        0 20px 60px rgba(0,0,0,0.18),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+      position: relative;
+      overflow: hidden;
+    }
+    .command-center::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    }
+
+    /* ── Header ─────────────────────────────────── */
+    .cc-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .cc-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(167,139,250,0.1));
+      border: 1px solid rgba(6,182,212,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 700; color: var(--cyan);
+    }
+    .cc-title {
+      font-size: 13px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-secondary);
+    }
+    .cc-live-badge {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--bull);
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.12);
+      border-radius: 20px;
+      padding: 4px 12px;
+    }
+    .cc-live-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--bull);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── Tab Bar ────────────────────────────────── */
+    .cc-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      position: relative;
+    }
+    .cc-tab {
+      padding: 10px 18px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      cursor: pointer;
+      position: relative;
+      transition: color 0.2s ease;
+      user-select: none;
+    }
+    .cc-tab:hover {
+      color: var(--text-secondary);
+    }
+    .cc-tab.active {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    .cc-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 18px; right: 18px;
+      height: 2px;
+      border-radius: 2px 2px 0 0;
+      background: linear-gradient(90deg, var(--cyan), var(--violet));
+    }
+
+    /* ── 3-Column Grid ─────────────────────────── */
+    .cc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+    }
+
+    /* ── Column ─────────────────────────────────── */
+    .cc-column {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    /* ── Chapter Header ────────────────────────── */
+    .chapter-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .chapter-line {
+      flex: 0 0 20px;
+      height: 1px;
+      background: var(--border-default);
+    }
+    .chapter-label {
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .chapter-line-end {
+      flex: 1;
+      height: 1px;
+      background: var(--border-default);
+    }
+
+    /* ── NEWS Items ─────────────────────────────── */
+    .news-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .news-item {
+      background: rgba(255,255,255,0.015);
+      border: 1px solid rgba(255,255,255,0.03);
+      border-radius: 12px;
+      padding: 12px 14px;
+      transition: background 0.2s ease, border-color 0.2s ease;
+      cursor: pointer;
+    }
+    .news-item:hover {
+      background: rgba(255,255,255,0.03);
+      border-color: rgba(255,255,255,0.06);
+    }
+    .news-item-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .news-badge {
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 2px 8px;
+      border-radius: 6px;
+      line-height: 1.4;
+    }
+    .news-badge.bitcoin {
+      color: var(--amber);
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.15);
+    }
+    .news-badge.defi {
+      color: var(--violet);
+      background: rgba(167,139,250,0.1);
+      border: 1px solid rgba(167,139,250,0.15);
+    }
+    .news-badge.regulation {
+      color: var(--bear);
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.15);
+    }
+    .sentiment-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    .sentiment-dot.bullish { background: var(--bull); }
+    .sentiment-dot.bearish { background: var(--bear); }
+    .sentiment-dot.neutral { background: var(--amber); }
+    .news-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.4;
+      margin-bottom: 4px;
+      letter-spacing: -0.01em;
+    }
+    .news-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+    .news-meta span {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* ── ACTIVITY Items ────────────────────────── */
+    .activity-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .activity-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: rgba(255,255,255,0.015);
+      border: 1px solid rgba(255,255,255,0.03);
+      border-radius: 12px;
+      padding: 12px 14px;
+      transition: background 0.2s ease, border-color 0.2s ease;
+      cursor: pointer;
+    }
+    .activity-item:hover {
+      background: rgba(255,255,255,0.03);
+      border-color: rgba(255,255,255,0.06);
+    }
+    .activity-icon {
+      width: 32px; height: 32px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .activity-icon.whale {
+      background: rgba(167,139,250,0.12);
+      border: 1px solid rgba(167,139,250,0.2);
+      color: var(--violet);
+    }
+    .activity-icon.volume {
+      background: rgba(6,182,212,0.12);
+      border: 1px solid rgba(6,182,212,0.2);
+      color: var(--cyan);
+    }
+    .activity-icon.liquidation {
+      background: rgba(239,68,68,0.12);
+      border: 1px solid rgba(239,68,68,0.2);
+      color: var(--bear);
+    }
+    .activity-icon.listing {
+      background: rgba(16,185,129,0.12);
+      border: 1px solid rgba(16,185,129,0.2);
+      color: var(--bull);
+    }
+    .activity-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .activity-desc {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+      line-height: 1.4;
+      margin-bottom: 4px;
+    }
+    .activity-value {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    .activity-time {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ── ALPHA Items ────────────────────────────── */
+    .alpha-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .alpha-item {
+      background: rgba(255,255,255,0.015);
+      border: 1px solid rgba(255,255,255,0.03);
+      border-radius: 12px;
+      padding: 14px;
+      transition: background 0.2s ease, border-color 0.2s ease;
+      cursor: pointer;
+    }
+    .alpha-item:hover {
+      background: rgba(255,255,255,0.03);
+      border-color: rgba(255,255,255,0.06);
+    }
+    .alpha-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .alpha-severity {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 3px 8px;
+      border-radius: 6px;
+      line-height: 1.3;
+    }
+    .alpha-severity.critical {
+      color: #fff;
+      background: rgba(239,68,68,0.25);
+      border: 1px solid rgba(239,68,68,0.4);
+    }
+    .alpha-severity.high {
+      color: var(--amber);
+      background: rgba(245,158,11,0.12);
+      border: 1px solid rgba(245,158,11,0.2);
+    }
+    .alpha-severity.medium {
+      color: var(--cyan);
+      background: rgba(6,182,212,0.1);
+      border: 1px solid rgba(6,182,212,0.18);
+    }
+    .alpha-confidence {
+      margin-left: auto;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+    .alpha-confidence.high-conf { color: var(--bull); }
+    .alpha-confidence.med-conf { color: var(--amber); }
+    .alpha-headline {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.4;
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+    .alpha-detail {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ── Confidence Bar ─────────────────────────── */
+    .confidence-bar-track {
+      width: 100%;
+      height: 3px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.04);
+      margin-top: 10px;
+      overflow: hidden;
+    }
+    .confidence-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.6s ease;
+    }
+    .confidence-bar-fill.critical { background: linear-gradient(90deg, var(--bear), var(--amber)); }
+    .confidence-bar-fill.high { background: linear-gradient(90deg, var(--amber), var(--bull)); }
+    .confidence-bar-fill.medium { background: linear-gradient(90deg, var(--cyan), var(--bull)); }
+  </style>
+</head>
+<body>
+  <div class="widget">
+    <div class="command-center">
+
+      <!-- Header -->
+      <div class="cc-header">
+        <div class="cc-icon">&#x2318;</div>
+        <div class="cc-title">Command Center</div>
+        <div class="cc-live-badge">
+          <div class="cc-live-dot"></div>
+          Live Feed
+        </div>
+      </div>
+
+      <!-- Tab Bar -->
+      <div class="cc-tabs">
+        <div class="cc-tab active">News</div>
+        <div class="cc-tab">Activity</div>
+        <div class="cc-tab">Alpha</div>
+        <div class="cc-tab">Heatmap</div>
+        <div class="cc-tab">Calendar</div>
+      </div>
+
+      <!-- 3-Column Grid -->
+      <div class="cc-grid">
+
+        <!-- Column 1: NEWS -->
+        <div class="cc-column">
+          <div class="chapter-header">
+            <div class="chapter-line"></div>
+            <div class="chapter-label">Chapter 1: News</div>
+            <div class="chapter-line-end"></div>
+          </div>
+
+          <div class="news-list">
+            <!-- News Item 1 -->
+            <div class="news-item">
+              <div class="news-item-top">
+                <div class="news-badge bitcoin">Bitcoin</div>
+                <div class="sentiment-dot bullish"></div>
+              </div>
+              <div class="news-title">Bitcoin ETF Inflows Hit $1.2B</div>
+              <div class="news-meta"><span>CoinDesk</span> &middot; 5m ago</div>
+            </div>
+
+            <!-- News Item 2 -->
+            <div class="news-item">
+              <div class="news-item-top">
+                <div class="news-badge defi">DeFi</div>
+                <div class="sentiment-dot bullish"></div>
+              </div>
+              <div class="news-title">Ethereum L2 Costs Drop 90%</div>
+              <div class="news-meta"><span>CoinTelegraph</span> &middot; 12m ago</div>
+            </div>
+
+            <!-- News Item 3 -->
+            <div class="news-item">
+              <div class="news-item-top">
+                <div class="news-badge regulation">Regulation</div>
+                <div class="sentiment-dot bearish"></div>
+              </div>
+              <div class="news-title">SEC Delays Solana ETF</div>
+              <div class="news-meta"><span>The Block</span> &middot; 28m ago</div>
+            </div>
+
+            <!-- News Item 4 -->
+            <div class="news-item">
+              <div class="news-item-top">
+                <div class="news-badge bitcoin">Bitcoin</div>
+                <div class="sentiment-dot neutral"></div>
+              </div>
+              <div class="news-title">Whale Buys 15,000 ETH</div>
+              <div class="news-meta"><span>CoinDesk</span> &middot; 45m ago</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 2: ACTIVITY -->
+        <div class="cc-column">
+          <div class="chapter-header">
+            <div class="chapter-line"></div>
+            <div class="chapter-label">Chapter 2: Activity</div>
+            <div class="chapter-line-end"></div>
+          </div>
+
+          <div class="activity-list">
+            <!-- Activity Item 1 -->
+            <div class="activity-item">
+              <div class="activity-icon whale">&#x1F40B;</div>
+              <div class="activity-content">
+                <div class="activity-desc">Whale Transfer: 500 BTC &rarr; Coinbase</div>
+                <div class="activity-value">$48.9M</div>
+                <div class="activity-time">2m ago</div>
+              </div>
+            </div>
+
+            <!-- Activity Item 2 -->
+            <div class="activity-item">
+              <div class="activity-icon volume">&#x26A1;</div>
+              <div class="activity-content">
+                <div class="activity-desc">Volume Spike: SOL +340%</div>
+                <div class="activity-value">Alert</div>
+                <div class="activity-time">8m ago</div>
+              </div>
+            </div>
+
+            <!-- Activity Item 3 -->
+            <div class="activity-item">
+              <div class="activity-icon liquidation">&#x1F4A5;</div>
+              <div class="activity-content">
+                <div class="activity-desc">Liquidation: $24M Long BTC</div>
+                <div class="activity-value">Binance</div>
+                <div class="activity-time">15m ago</div>
+              </div>
+            </div>
+
+            <!-- Activity Item 4 -->
+            <div class="activity-item">
+              <div class="activity-icon listing">&#x2728;</div>
+              <div class="activity-content">
+                <div class="activity-desc">New Listing: TOKEN on Binance</div>
+                <div class="activity-value">Live</div>
+                <div class="activity-time">22m ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 3: ALPHA -->
+        <div class="cc-column">
+          <div class="chapter-header">
+            <div class="chapter-line"></div>
+            <div class="chapter-label">Chapter 3: Alpha</div>
+            <div class="chapter-line-end"></div>
+          </div>
+
+          <div class="alpha-list">
+            <!-- Alpha Item 1 -->
+            <div class="alpha-item">
+              <div class="alpha-top">
+                <div class="alpha-severity critical">Critical</div>
+                <div class="alpha-confidence high-conf">94%</div>
+              </div>
+              <div class="alpha-headline">BTC Breakout Imminent</div>
+              <div class="alpha-detail">Multiple technical indicators converging on $100K resistance with high volume support</div>
+              <div class="confidence-bar-track">
+                <div class="confidence-bar-fill critical" style="width: 94%"></div>
+              </div>
+            </div>
+
+            <!-- Alpha Item 2 -->
+            <div class="alpha-item">
+              <div class="alpha-top">
+                <div class="alpha-severity high">High</div>
+                <div class="alpha-confidence high-conf">87%</div>
+              </div>
+              <div class="alpha-headline">ETH/BTC Ratio Reversal</div>
+              <div class="alpha-detail">Historical ratio floor reached, on-chain accumulation signals strong reversion setup</div>
+              <div class="confidence-bar-track">
+                <div class="confidence-bar-fill high" style="width: 87%"></div>
+              </div>
+            </div>
+
+            <!-- Alpha Item 3 -->
+            <div class="alpha-item">
+              <div class="alpha-top">
+                <div class="alpha-severity medium">Medium</div>
+                <div class="alpha-confidence med-conf">72%</div>
+              </div>
+              <div class="alpha-headline">DeFi Rotation Signal</div>
+              <div class="alpha-detail">TVL migration pattern detected from L1s to L2 protocols, early rotation phase</div>
+              <div class="confidence-bar-track">
+                <div class="confidence-bar-fill medium" style="width: 72%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /cc-grid -->
+    </div><!-- /command-center -->
+  </div><!-- /widget -->
+</body>
+</html>

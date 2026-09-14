@@ -1,0 +1,431 @@
+/* ═══════════════════════════════════════════════════════════════
+   DominanceChart — Bitcoin Dominance overlay modal
+   Glass card, premium dark styling matching Spectre design law
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Overlay backdrop ── */
+.dominance-chart-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: domOverlayIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes domOverlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Modal card ── */
+.dominance-chart-modal {
+  width: min(92vw, 960px);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 8px 48px rgba(0,0,0,0.6),
+    0 2px 8px rgba(0,0,0,0.3);
+  overflow: hidden;
+  animation: domModalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes domModalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Header ── */
+.dominance-chart-header {
+  padding: 20px 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dominance-chart-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dominance-chart-title {
+  font-family: var(--font-display, 'Space Grotesk');
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: rgba(255,255,255,0.92);
+  margin: 0;
+}
+
+.dominance-chart-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: rgba(255,255,255,0.06);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dominance-chart-close svg {
+  width: 16px;
+  height: 16px;
+  color: rgba(255,255,255,0.48);
+}
+
+.dominance-chart-close:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+.dominance-chart-close:hover svg {
+  color: rgba(255,255,255,0.72);
+}
+
+/* ── Controls row: legend + timeframes ── */
+.dominance-chart-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dominance-chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dominance-chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body, 'Inter');
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.55);
+}
+
+.dominance-chart-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* Timeframe buttons */
+.dominance-chart-timeframes {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.dominance-chart-tf-btn {
+  padding: 5px 12px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.40);
+  font-family: var(--font-body, 'Inter');
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dominance-chart-tf-btn:hover {
+  color: rgba(255,255,255,0.60);
+}
+
+.dominance-chart-tf-btn.active {
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.88);
+}
+
+/* ── Chart canvas area ── */
+.dominance-chart-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 380px;
+  padding: 16px 0 16px 0;
+  cursor: crosshair;
+}
+
+.dominance-chart-canvas svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── TradingView popout variant ── */
+.dominance-chart-modal--tv {
+  width: min(94vw, 880px);
+  height: min(80vh, 620px);
+  max-height: 90vh;
+}
+
+.dominance-chart-canvas--tv {
+  cursor: default;
+  padding: 12px 16px 16px;
+  min-height: 420px;
+  flex: 1 1 auto;
+}
+
+.dominance-chart-canvas--tv .tradingview-widget-container,
+.dominance-chart-canvas--tv .tradingview-widget-container__widget,
+.dominance-chart-canvas--tv iframe {
+  height: 100% !important;
+  width: 100% !important;
+  border-radius: 12px;
+}
+
+.dominance-chart-canvas--tv iframe {
+  border: 0 !important;
+  display: block;
+}
+
+/* Symbol toggle pills (BTC.D / ETH-BTC / SOL.D / TOTAL / OTHERS / OTHERS.D) */
+.dominance-chart-controls--tv {
+  justify-content: flex-start;
+}
+
+.dominance-chart-symbols {
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.dominance-chart-symbols .dominance-chart-tf-btn {
+  padding: 6px 11px;
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 640px) {
+  .dominance-chart-symbols .dominance-chart-tf-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+}
+
+/* ── Loading shimmer ── */
+.dominance-chart-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 60px 40px;
+}
+
+.dominance-chart-shimmer {
+  height: 10px;
+  width: 90%;
+  border-radius: 6px;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.03) 0%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: domShimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes domShimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Hover tooltip ── */
+.dominance-chart-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(20,20,26,0.95) 0%, rgba(16,16,20,0.95) 100%);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 10px;
+  padding: 10px 14px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  z-index: 10;
+  min-width: 150px;
+}
+
+.dominance-chart-tooltip-date {
+  font-family: var(--font-body, 'Inter');
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.40);
+  display: block;
+  margin-bottom: 8px;
+  letter-spacing: 0.02em;
+}
+
+.dominance-chart-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.dominance-chart-tooltip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dominance-chart-tooltip-label {
+  font-family: var(--font-body, 'Inter');
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+  flex: 1;
+}
+
+.dominance-chart-tooltip-value {
+  font-family: var(--font-num, 'Inter');
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.88);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   DAY MODE
+   ═══════════════════════════════════════════════════════════════ */
+
+.dominance-chart-overlay.day-mode {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.dominance-chart-overlay.day-mode .dominance-chart-modal {
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 8px 48px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.dominance-chart-overlay.day-mode .dominance-chart-title {
+  color: #0f172a;
+}
+
+.dominance-chart-overlay.day-mode .dominance-chart-close {
+  background: rgba(0,0,0,0.04);
+}
+
+.dominance-chart-overlay.day-mode .dominance-chart-close svg {
+  color: rgba(0,0,0,0.4);
+}
+
+.dominance-chart-overlay.day-mode .dominance-chart-close:hover {
+  background: rgba(0,0,0,0.08);
+}
+
+.dominance-chart-overlay.day-mode .dominance-chart-legend-item {
+  color: rgba(0,0,0,0.55);
+}
+
+.dominance-chart-overlay.day-mode .dominance-chart-timeframes {
+  background: rgba(0,0,0,0.04);
+}
+
+.dominance-chart-overlay.day-mode .dominance-chart-tf-btn {
+  color: rgba(0,0,0,0.40);
+}
+
+.dominance-chart-overlay.day-mode .dominance-chart-tf-btn:hover {
+  color: rgba(0,0,0,0.60);
+}
+
+.dominance-chart-overlay.day-mode .dominance-chart-tf-btn.active {
+  background: rgba(0,0,0,0.08);
+  color: #0f172a;
+}
+
+.dominance-chart-overlay.day-mode .dominance-chart-tooltip {
+  background: rgba(255,255,255,0.95);
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+
+.dominance-chart-overlay.day-mode .dominance-chart-tooltip-date {
+  color: rgba(0,0,0,0.40);
+}
+
+.dominance-chart-overlay.day-mode .dominance-chart-tooltip-label {
+  color: rgba(0,0,0,0.55);
+}
+
+.dominance-chart-overlay.day-mode .dominance-chart-tooltip-value {
+  color: #0f172a;
+}
+
+.dominance-chart-overlay.day-mode .dominance-chart-shimmer {
+  background: linear-gradient(90deg,
+    rgba(0,0,0,0.03) 0%,
+    rgba(0,0,0,0.06) 50%,
+    rgba(0,0,0,0.03) 100%
+  );
+  background-size: 200% 100%;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 640px) {
+  .dominance-chart-modal {
+    width: 98vw;
+    border-radius: 14px;
+  }
+
+  .dominance-chart-modal--tv {
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+
+  .dominance-chart-header {
+    padding: 16px 16px 0;
+  }
+
+  .dominance-chart-title {
+    font-size: 17px;
+  }
+
+  .dominance-chart-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .dominance-chart-canvas {
+    min-height: 280px;
+  }
+
+  .dominance-chart-canvas--tv {
+    padding: 8px 8px 12px;
+  }
+
+  .dominance-chart-legend {
+    gap: 10px;
+  }
+
+  .dominance-chart-legend-item {
+    font-size: 11px;
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "cleanUrls": true,
+  "regions": ["fra1"],
+  "ignoreCommand": "bash ../../scripts/vercel-ignore-build.sh trading",
+  "functions": {
+    "api/codex.js": {
+      "includeFiles": "../../packages/server/lib/{token-registry,codex-metrics-kv}.js",
+      "maxDuration": 60
+    },
+    "api/codex-stream.js": {
+      "includeFiles": "../../packages/server/lib/codex-metrics-kv.js"
+    },
+    "api/bars.js": {
+      "includeFiles": "../../packages/server/lib/{token-registry,codex-metrics-kv}.js"
+    },
+    "api/research-desk.js": {
+      "includeFiles": "../../packages/server/lib/{token-registry,codex-metrics-kv}.js"
+    },
+    "api/alerts.js": {
+      "includeFiles": "../../packages/server/lib/codex-metrics-kv.js"
+    },
+    "api/wallet-tokens.js": {
+      "includeFiles": "../../packages/server/lib/wallet-tokens-core.js"
+    },
+    "api/swap.js": {
+      "includeFiles": "../../packages/server/lib/{swap-simulate-core,agent-orders-core}.js"
+    },
+    "api/agent.js": {
+      "maxDuration": 60,
+      "includeFiles": "../../packages/server/lib/{agent-core,llm-gateway,agent-brief}.js"
+    },
+    "api/agent-orders.js": {
+      "includeFiles": "../../packages/server/lib/agent-orders-core.js"
+    },
+    "api/cron/consolidate-and-distribute.js": {
+      "maxDuration": 300
+    },
+    "api/cron/check-alert-rules.js": {
+      "maxDuration": 60
+    }
+  },
+  "crons": [
+    { "path": "/api/cron/consolidate-and-distribute?chain=solana",   "schedule": "0 */6 * * *" },
+    { "path": "/api/cron/consolidate-and-distribute?chain=base",     "schedule": "10 2 * * *" },
+    { "path": "/api/cron/consolidate-and-distribute?chain=arbitrum", "schedule": "20 2 * * *" },
+    { "path": "/api/cron/consolidate-and-distribute?chain=bsc",      "schedule": "30 2 * * *" },
+    { "path": "/api/cron/consolidate-and-distribute?chain=polygon",  "schedule": "40 2 * * *" },
+    { "path": "/api/cron/consolidate-and-distribute?chain=ethereum", "schedule": "0 3 * * 0" },
+    { "path": "/api/cron/refresh-token-snapshot",                    "schedule": "*/3 * * * *" },
+    { "path": "/api/cron/refresh-cg-snapshot",                       "schedule": "*/3 * * * *" },
+    { "path": "/api/cron/check-alert-rules",                         "schedule": "*/10 * * * *" }
+  ],
+  "rewrites": [
+    { "source": "/ingest/static/(.*)", "destination": "https://us-assets.i.posthog.com/static/$1" },
+    { "source": "/ingest/(.*)",        "destination": "https://us.i.posthog.com/$1" },
+    { "source": "/api/market/fear-greed", "destination": "/api/market-fear-greed" },
+    { "source": "/api/market/stats", "destination": "/api/codex?action=market-stats" },
+    { "source": "/api/tweets/official", "destination": "/api/tweets-official" },
+    { "source": "/api/tweets/search", "destination": "/api/tweets-search" },
+    { "source": "/api/x-dash/token/:cgId", "destination": "/api/x-dash-token?cgId=:cgId" },
+    { "source": "/api/x-dash/search", "destination": "/api/x-dash-search" },
+    { "source": "/api/x-dash/narrative-tokens", "destination": "/api/x-dash-narrative-tokens" },
+    { "source": "/api/x-dash/kols", "destination": "/api/x-dash-kols" },
+    { "source": "/api/xdash/momentum-origin/:asset", "destination": "/api/xdash?route=momentum-origin&asset=:asset" },
+    { "source": "/api/xdash/:route", "destination": "/api/xdash?route=:route" },
+    { "source": "/api/dexscreener-watchlist/:id", "destination": "/api/dexscreener-watchlist?id=:id" },
+    { "source": "/api/dexscreener-pair/:chain/:address", "destination": "/api/dexscreener-pair?chain=:chain&address=:address" },
+    { "source": "/api/agent/orders/cancel", "destination": "/api/agent-orders?action=cancel" },
+    { "source": "/api/agent/orders/inbox", "destination": "/api/agent-orders?action=inbox" },
+    { "source": "/api/agent/orders", "destination": "/api/agent-orders" },
+    { "source": "/api/agent/:route(.*)", "destination": "/api/agent?route=:route" },
+    { "source": "/api/swap/:action(.*)", "destination": "/api/swap?action=:action" },
+    { "source": "/api/user/:route(.*)", "destination": "/api/user?route=:route" },
+    { "source": "/api/referral/:action(.*)", "destination": "/api/referral?_action=:action" },
+    { "source": "/api/onchain/:path(.*)", "destination": "/api/onchain?_path=:path" },
+    { "source": "/api/coingecko/:path(.*)", "destination": "/api/cg-proxy" },
+    { "source": "/api/codex/stream", "destination": "/api/codex-stream" },
+    { "source": "/api/codex/stream/status", "destination": "/api/codex-stream" },
+    { "source": "/api/codex/trades-stream", "destination": "/api/codex-stream" },
+    { "source": "/api/token-tax", "destination": "/api/token-tax" },
+    { "source": "/api/token-color", "destination": "/api/token-color" },
+    { "source": "/api/tokens/prices", "destination": "/api/codex?action=prices" },
+    { "source": "/api/tokens/sparklines", "destination": "/api/codex?action=sparklines" },
+    { "source": "/api/research-desk/:sub(.*)", "destination": "/api/research-desk?sub=:sub" },
+    { "source": "/api/trending/(.*)", "destination": "https://api.spectreai.io/api/trending/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/charting_library/bundles/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/charting_library/charting_library.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600, stale-while-revalidate=86400" }
+      ]
+    },
+    {
+      "source": "/error-beacon.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600, stale-while-revalidate=86400" }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(self), geolocation=(self), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), display-capture=(), screen-wake-lock=(), web-share=()" },
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin-allow-popups" },
+        { "key": "Cross-Origin-Resource-Policy", "value": "cross-origin" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://us.i.posthog.com https://us-assets.i.posthog.com https://telegram.org https://auth.privy.io https://privy.spectreai.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://assets.coingecko.com https://coin-images.coingecko.com https://*.dexscreener.com https://cryptologos.cc https://*.cloudfront.net https://*.amazonaws.com data: blob: https:; connect-src 'self' https://onchain.spectreai.io https://stream.spectreai.io https://srv.spectreai.io https://api.dexscreener.com https://api.geckoterminal.com https://us.i.posthog.com https://us-assets.i.posthog.com wss://*.privy.io https://auth.privy.io https://privy.spectreai.io https://*.privy.systems wss://relay.walletconnect.org https://ethereum-rpc.publicnode.com https://bsc-dataseed.binance.org https://polygon-bor-rpc.publicnode.com https://arb1.arbitrum.io https://mainnet.base.org https://rpc.mainnet.chain.robinhood.com https://api.mainnet-beta.solana.com https://solana-rpc.publicnode.com wss://solana-rpc.publicnode.com https://api.open-meteo.com https://geocoding-api.open-meteo.com https://explorer-api.walletconnect.com https://developer-control.vercel.app https://oauth.telegram.org; media-src 'self' blob:; frame-src https://auth.privy.io https://privy.spectreai.io https://oauth.telegram.org https://s.tradingview.com blob:; frame-ancestors 'self' https://spectreai.io https://research.spectreai.io https://trade.spectreai.io https://app.spectreai.io https://spectre-app-research.vercel.app; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,136 @@
+/* LiqHeatmapPanel — host shell for the shared liquidation heatmap.
+   The chart itself is styled by pages/liquidation-heatmap/components/views.css;
+   this only sizes the box and adds the provenance note. */
+/* 🪤 The old rule here sized `.lh-heatmap-wrap` / `.lh-chart-box` — classes
+   HeatmapView has NEVER rendered (its canvas box is `.liqp-real-heatmap-canvas-wrap`).
+   So the `height` prop was dead: the canvas stayed at its hardcoded 520px and the
+   panel came out ~680px tall inside a Command Center slot that only grants ~557px,
+   which is the clipped chart in the report.
+   Now the panel FILLS the height its host grants (CC gives a bounded flex column;
+   the standalone page / traders-corner give auto height) and the chart takes
+   whatever the toolbars leave. `--lhp-h` is the PREFERRED chart height, not a hard
+   one — it still wins when nothing above constrains us. */
+.lhp {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+}
+.lhp > .lhp-views,
+.lhp > .lhp-note { flex: 0 0 auto; }
+/* ── One dark media plate ──
+   Every host puts this panel on translucent glass (LITE wallpapers, Command
+   Center, PRO themes). The heatmap card's own shell is a 0.04-alpha white
+   gradient and its subbar is 0.01 — over a bright wallpaper those zones glowed
+   while the canvas stayed opaque black, so the card read as a bright band with
+   a hard seam ("feels cut"). The chart is a deliberately-dark media object
+   (same call as .liqp.day-mode on the standalone page), so the whole card —
+   toolbar, magnets row, canvas, and the map view's legend/footer — sits on one
+   near-opaque dark plate. Fill only, NO backdrop-filter (pro-themes T4: big
+   filtered areas are the jank engine). */
+.lhp .liqp-real-heatmap,
+.lhp > .lmc {
+  background: rgba(10, 11, 14, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+.lhp > .lmc {
+  border-radius: var(--radius-lg, 16px);
+  padding: 10px 12px 9px;
+}
+/* ── Light hosts: the PLATE only ──
+   The card's own day-mode treatment (header, console buttons, pills, threshold,
+   dropdowns, canvas plate) lives ONCE on `.liqp-real-heatmap--day` in
+   liquidation-page.css, stamped by HeatmapView from the same `dayMode` prop the
+   canvas paints from. Do NOT add control rules here — a host-side copy is what
+   let the chrome and the chart disagree in the first place.
+
+   What stays host-side is the plate alpha: inside `.lhp` the card sits on the
+   host's own glass, so it is translucent enough to let that read through, where
+   the standalone page wants it opaque. */
+.app.app-day-mode .lhp .liqp-real-heatmap,
+.app.app-day-mode .lhp > .lmc,
+.lhp--day .liqp-real-heatmap,
+.lhp--day > .lmc {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+/* The switch is an inline-flex pill — a flex column stretches its children to
+   full width by default, which blew it up into a full-bleed bar. */
+.lhp > .lhp-views { align-self: flex-start; }
+.lhp > .liqp-real-heatmap,
+.lhp > .lmc { flex: 1 1 auto; min-height: 0; }
+.lhp .liqp-real-heatmap-canvas-wrap,
+.lhp .lmc-plot {
+  flex: 1 1 var(--lhp-h, 460px);
+  height: auto;
+  min-height: 200px;
+  max-height: none;
+}
+.lhp-skel {
+  flex: 1 1 var(--lhp-h, 460px);
+  height: var(--lhp-h, 460px);
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+  background-size: 200% 100%;
+  animation: lhpShimmer 1.5s ease-in-out infinite;
+}
+@keyframes lhpShimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+.lhp-note {
+  margin: 8px 2px 0;
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: rgba(245, 245, 247, 0.45);
+}
+.app.app-day-mode .lhp-note,
+.lhp--day .lhp-note { color: #94a3b8; }
+.app.app-day-mode .lhp-skel,
+.lhp--day .lhp-skel {
+  background: linear-gradient(90deg, rgba(15,23,42,0.03), rgba(15,23,42,0.07), rgba(15,23,42,0.03));
+  background-size: 200% 100%;
+}
+
+/* Heatmap | Liquidation Map switch — a real chip, not a 0.04-alpha ghost: it
+   sits directly on the host's wallpaper, where the inactive label at 0.55
+   warm-white vanished over bright backdrops. */
+.lhp-views { display: inline-flex; gap: 3px; padding: 3px; margin-bottom: 8px;
+  border-radius: 10px; background: rgba(12, 14, 19, 0.55); border: 1px solid rgba(255,255,255,0.08); }
+.lhp-view { appearance: none; border: none; cursor: pointer; padding: 5px 12px; border-radius: 8px;
+  background: transparent; color: rgba(245,245,247,0.72); font-size: 12px; font-weight: 700;
+  transition: background 0.15s, color 0.15s; }
+.lhp-view:hover { color: rgba(245,245,247,0.9); }
+.lhp-view--on { background: rgba(245,245,247,0.12); color: #f5f5f7; }
+.app.app-day-mode .lhp-views,
+.lhp--day .lhp-views { background: rgba(15,23,42,0.05); border-color: rgba(15,23,42,0.1); }
+.app.app-day-mode .lhp-view,
+.lhp--day .lhp-view { color: #475569; }
+.app.app-day-mode .lhp-view--on,
+.lhp--day .lhp-view--on { background: #fff; color: #12151d; box-shadow: 0 1px 4px rgba(15,23,42,0.14); }
+
+/* ── Mobile ──
+   The desktop switch is a shrink-to-fit pill pinned left (`align-self:
+   flex-start` above). On a 390px phone that is a 202px control with 188px of
+   dead space beside it — the "elements very to the left with the right empty"
+   the founder reported. Here it becomes a real full-width segmented control,
+   which also gives it the touch target the desktop pill never had. */
+@media (max-width: 768px) {
+  .lhp > .lhp-views { align-self: stretch; }
+  .lhp-views { display: flex; width: 100%; }
+  .lhp-view {
+    flex: 1 1 0;
+    /* 38px full-width segments read as chunky desktop buttons on a 390px
+       screen (founder: "look big for mobile, must match the phone px").
+       32px + 11.5px type is the phone scale the rest of the app uses. */
+    min-height: 32px;
+    padding: 4px 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+  .lhp-views { padding: 2px; border-radius: 9px; gap: 2px; }
+  /* 🪤 app-store-ready.css floors EVERY button at `min-height: var(--touch-min)`
+     (38px) with a (0,2,1) selector, which outranks a single class — the height
+     above was silently ignored. These segments are full-width, so the tap area
+     is ~190x32 and stays far past any reasonable target even at 32px. */
+  .lhp .lhp-views .lhp-view { min-height: 32px !important; height: 32px; }
+}

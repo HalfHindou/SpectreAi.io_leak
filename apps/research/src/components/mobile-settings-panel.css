@@ -1,0 +1,844 @@
+/**
+ * MobileSettingsPanel — Right-side glass panel
+ * CSS values pulled directly from navigation-sidebar.css.
+ * Link: padding 9px 12px, radius 10px, font 13px weight 450, gap 12px.
+ * Active: gradient 0.06→0.025, border 0.06, titanium edge bar.
+ * Category label: 10px weight 600 tracking 0.10em uppercase.
+ */
+
+.msp-root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay, 500);
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.msp-root.is-open {
+  pointer-events: auto;
+  visibility: visible;
+}
+
+/* ── Backdrop ── */
+.msp-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.msp-root.is-open .msp-backdrop {
+  opacity: 1;
+}
+
+/* ── Panel ── */
+.msp-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 80vw;
+  /* Same gradient as navigation-sidebar */
+  background: linear-gradient(
+    180deg,
+    rgba(17, 17, 19, 0.98) 0%,
+    rgba(12, 12, 14, 0.99) 100%
+  );
+  /* Mobile blur budget: bg is 0.98 opaque, 12px is visually identical to 40px */
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border-left: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow:
+    -4px 0 24px rgba(0, 0, 0, 0.3),
+    inset 1px 0 0 rgba(255, 255, 255, 0.03);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-top: env(safe-area-inset-top, 0px);
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.msp-root.is-open .msp-panel {
+  transform: translateX(0);
+}
+
+/* Flex children must not shrink — the panel scrolls instead of clipping groups */
+.msp-panel > * { flex-shrink: 0; }
+
+/* Scrollbar — matches sidebar */
+.msp-panel::-webkit-scrollbar { width: 4px; }
+.msp-panel::-webkit-scrollbar-track { background: transparent; }
+.msp-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 9999px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   PROFILE — Same spacing as sidebar header
+   ══════════════════════════════════════════════════════════ */
+.msp-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 14px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.msp-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  overflow: hidden;
+  /* Same gradient as sidebar active link */
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.025) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.msp-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.msp-avatar-initial {
+  font-size: 16px;
+  font-weight: 600;
+  color: #f5f5f7;
+}
+
+.msp-profile-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.msp-profile-name {
+  /* Same as sidebar link text: 13px 450 */
+  font-size: 13px;
+  font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.msp-profile-sub {
+  /* Same as nav-category-header: 10px 600 uppercase */
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.06em;
+}
+
+/* Editable name — borderless, name + faint pen */
+.msp-profile-name-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: 0.005em;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.msp-profile-name-btn > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.msp-profile-name-btn svg {
+  flex-shrink: 0;
+  opacity: 0.3;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.msp-profile-name-btn:active svg { opacity: 0.7; }
+
+.msp-name-input {
+  width: 100%;
+  padding: 4px 8px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f5f5f7;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* Avatar edit affordance — camera chip on the corner */
+.msp-avatar-edit {
+  position: relative;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.msp-avatar-badge {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #232328;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.msp-close {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.msp-close:active {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+  color: #f5f5f7;
+}
+
+.msp-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   QUICK ACTIONS — 4 icon grid, sidebar icon style
+   ══════════════════════════════════════════════════════════ */
+.msp-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 14px 14px 10px;
+}
+
+.msp-quick-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px 8px;
+  /* Same radius as sidebar links: 10px */
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.62);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* Same transition as sidebar: 0.2s cubic-bezier(0.16, 1, 0.3, 1) */
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.msp-quick-btn:active {
+  /* Same hover as sidebar link */
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.msp-quick-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Match sidebar icon sizing */
+.msp-quick-icon svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.5;
+}
+
+.msp-quick-btn span:last-child {
+  /* Same as category header: 10px 600 */
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+}
+
+/* ══════════════════════════════════════════════════════════
+   SETTINGS GROUP — Exact sidebar link styling
+   ══════════════════════════════════════════════════════════ */
+.msp-settings-group {
+  margin: 4px 14px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  /* Subtle surface, not heavy */
+  background: rgba(255, 255, 255, 0.015);
+  overflow: hidden;
+}
+
+.msp-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Same padding as sidebar link: 9px 12px */
+  padding: 10px 12px;
+}
+
+.msp-setting-row + .msp-setting-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.msp-setting-label {
+  /* Same as sidebar link: 13px weight 450 */
+  font-size: 13px;
+  font-weight: 450;
+  color: rgba(255, 255, 255, 0.62);
+  letter-spacing: 0.005em;
+}
+
+/* Toggle group — pill with 2 options */
+.msp-toggle-group {
+  display: flex;
+  padding: 2px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  gap: 2px;
+}
+
+.msp-toggle-opt {
+  /* app-store-ready.css forces 38px min on all mobile buttons — segmented
+     pills are compact by design; the 50px row is the touch target */
+  min-height: 26px !important;
+  min-width: 0 !important;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 14px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.msp-toggle-opt.active {
+  /* Same as sidebar active: gradient + border + shadow */
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.025) 100%);
+  color: #f5f5f7;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.msp-toggle-opt:active {
+  transform: scale(0.96);
+}
+
+/* ── iOS switch — matches np-toggle-switch semantics, touch-sized ── */
+.msp-ios-switch {
+  position: relative;
+  width: 44px;
+  height: 26px;
+  /* opt out of the global 38px mobile min (app-store-ready.css) —
+     44px wide stays a valid touch target, the row adds vertical slack */
+  min-height: 26px !important;
+  min-width: 44px !important;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.25s, border-color 0.25s;
+}
+
+.msp-ios-switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(245, 245, 247, 0.85);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transition:
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.25s;
+}
+
+.msp-ios-switch.on {
+  background: rgba(16, 185, 129, 0.35);
+  border-color: rgba(16, 185, 129, 0.45);
+}
+
+.msp-ios-switch.on .msp-ios-switch-thumb {
+  transform: translateX(18px);
+  background: #ffffff;
+}
+
+/* ══════════════════════════════════════════════════════════
+   CURRENCY / LANGUAGE GRIDS
+   ══════════════════════════════════════════════════════════ */
+.msp-group-label {
+  padding: 10px 12px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.msp-currency-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 4px 8px 10px;
+}
+
+.msp-currency-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 7px 2px 6px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.msp-currency-btn:active { transform: scale(0.95); }
+
+.msp-currency-flag {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.msp-currency-code {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.45);
+  transition: color 0.2s;
+}
+
+.msp-currency-btn.active {
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.025) 100%);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.msp-currency-btn.active .msp-currency-code { color: #f5f5f7; }
+
+.msp-lang-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px 8px 10px;
+}
+
+.msp-lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  min-height: 38px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+}
+
+.msp-lang-btn:active { transform: scale(0.97); }
+
+.msp-lang-flag {
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.msp-lang-name {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.2s;
+}
+
+.msp-lang-btn.active {
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.025) 100%);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.msp-lang-btn.active .msp-lang-name {
+  color: #f5f5f7;
+  font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════════════════
+   NAV LINKS — Exact sidebar link clone
+   ══════════════════════════════════════════════════════════ */
+.msp-nav-links {
+  padding: 4px 14px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.msp-nav-link {
+  display: flex;
+  align-items: center;
+  /* Exact sidebar: gap 12px, padding 9px 12px, radius 10px */
+  gap: 12px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  /* Exact sidebar text: 13px 450 0.005em */
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 13px;
+  font-weight: 450;
+  letter-spacing: 0.005em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* Exact sidebar transition */
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+}
+
+/* Exact sidebar hover */
+.msp-nav-link:active {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.02),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* Icon — exact sidebar: 17x17, stroke-width 1.75 */
+.msp-nav-icon {
+  width: 17px;
+  height: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0.55;
+}
+
+.msp-nav-icon svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.5;
+}
+
+.msp-nav-link > span:nth-child(2) {
+  flex: 1;
+}
+
+.msp-nav-chevron {
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0.25;
+}
+
+.msp-nav-chevron svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.5;
+}
+
+/* ══════════════════════════════════════════════════════════
+   FOOTER
+   ══════════════════════════════════════════════════════════ */
+.msp-footer {
+  margin-top: auto;
+  padding: 20px 14px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  text-align: center;
+}
+
+.msp-version {
+  /* Same as category header: 10px 600 tracking 0.10em */
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.2);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ══════════════════════════════════════════════════════════
+   DAY MODE — From navigation-sidebar.css day mode values
+   ══════════════════════════════════════════════════════════ */
+.app-day-mode .msp-panel,
+.welcome-day-mode .msp-panel {
+  background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+  border-left-color: rgba(0, 0, 0, 0.06);
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.06);
+}
+
+.app-day-mode .msp-profile,
+.welcome-day-mode .msp-profile {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.app-day-mode .msp-avatar,
+.welcome-day-mode .msp-avatar {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.app-day-mode .msp-avatar-initial,
+.welcome-day-mode .msp-avatar-initial { color: #0f172a; }
+
+.app-day-mode .msp-profile-name,
+.welcome-day-mode .msp-profile-name { color: #0f172a; }
+
+.app-day-mode .msp-profile-sub,
+.welcome-day-mode .msp-profile-sub { color: #94a3b8; }
+
+.app-day-mode .msp-close,
+.welcome-day-mode .msp-close { color: #64748b; }
+
+/* Day: quick actions */
+.app-day-mode .msp-quick-btn,
+.welcome-day-mode .msp-quick-btn { color: #64748b; }
+
+.app-day-mode .msp-quick-btn:active,
+.welcome-day-mode .msp-quick-btn:active {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: #0f172a;
+}
+
+/* Day: settings */
+.app-day-mode .msp-settings-group,
+.welcome-day-mode .msp-settings-group {
+  border-color: rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.015);
+}
+
+.app-day-mode .msp-setting-row + .msp-setting-row,
+.welcome-day-mode .msp-setting-row + .msp-setting-row {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+.app-day-mode .msp-setting-label,
+.welcome-day-mode .msp-setting-label { color: #64748b; }
+
+.app-day-mode .msp-toggle-group,
+.welcome-day-mode .msp-toggle-group {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.app-day-mode .msp-toggle-opt,
+.welcome-day-mode .msp-toggle-opt { color: #94a3b8; }
+
+.app-day-mode .msp-toggle-opt.active,
+.welcome-day-mode .msp-toggle-opt.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* Day: nav links — from sidebar day mode */
+.app-day-mode .msp-nav-link,
+.welcome-day-mode .msp-nav-link { color: #64748b; }
+
+.app-day-mode .msp-nav-link:active,
+.welcome-day-mode .msp-nav-link:active {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: #0f172a;
+}
+
+.app-day-mode .msp-version,
+.welcome-day-mode .msp-version { color: #94a3b8; }
+
+/* Day: profile editing */
+.app-day-mode .msp-profile-name-btn,
+.welcome-day-mode .msp-profile-name-btn { color: #0f172a; }
+
+.app-day-mode .msp-name-input,
+.welcome-day-mode .msp-name-input {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #0f172a;
+}
+
+.app-day-mode .msp-avatar-badge,
+.welcome-day-mode .msp-avatar-badge {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #64748b;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+/* Day: iOS switch */
+.app-day-mode .msp-ios-switch,
+.welcome-day-mode .msp-ios-switch {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.app-day-mode .msp-ios-switch-thumb,
+.welcome-day-mode .msp-ios-switch-thumb {
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.app-day-mode .msp-ios-switch.on,
+.welcome-day-mode .msp-ios-switch.on {
+  background: rgba(16, 185, 129, 0.5);
+  border-color: rgba(16, 185, 129, 0.55);
+}
+
+/* Day: currency / language grids */
+.app-day-mode .msp-group-label,
+.welcome-day-mode .msp-group-label { color: rgba(15, 23, 42, 0.4); }
+
+.app-day-mode .msp-currency-code,
+.welcome-day-mode .msp-currency-code { color: #64748b; }
+
+.app-day-mode .msp-lang-name,
+.welcome-day-mode .msp-lang-name { color: #64748b; }
+
+.app-day-mode .msp-currency-btn.active,
+.welcome-day-mode .msp-currency-btn.active,
+.app-day-mode .msp-lang-btn.active,
+.welcome-day-mode .msp-lang-btn.active {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.app-day-mode .msp-currency-btn.active .msp-currency-code,
+.welcome-day-mode .msp-currency-btn.active .msp-currency-code,
+.app-day-mode .msp-lang-btn.active .msp-lang-name,
+.welcome-day-mode .msp-lang-btn.active .msp-lang-name { color: #0f172a; }
+
+/* Beta marker on a settings row — the feature is real but gated, and the
+   label should say so without a second line of copy. */
+.msp-setting-beta {
+  margin-left: 6px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 4px;
+  padding: 1px 4px;
+  vertical-align: middle;
+}
+.app.app-day-mode .msp-setting-beta {
+  color: #64748b;
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+/* Mobile glass polish: readable text over a stable translucent surface. */
+.app .msp-panel {
+  --drawer-ink:#f5f5f7; --drawer-muted:#b9bfcb; --drawer-edge:rgba(230,235,255,.16);
+  --drawer-glass:linear-gradient(145deg,rgba(255,255,255,.11),rgba(255,255,255,.025) 55%,rgba(255,255,255,.055));
+  --drawer-selected:linear-gradient(145deg,rgba(255,255,255,.2),rgba(255,255,255,.07));
+  background:linear-gradient(145deg,rgba(26,28,35,.97),rgba(13,15,21,.97));
+  color:var(--drawer-ink); border-color:var(--drawer-edge);
+  box-shadow:inset 1px 0 0 rgba(255,255,255,.13),0 12px 40px rgba(0,0,0,.25);
+  padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));
+}
+.app.app-day-mode .msp-panel {
+  --drawer-ink:#202b3d; --drawer-muted:#59687e; --drawer-edge:rgba(159,176,203,.3);
+  --drawer-glass:linear-gradient(145deg,rgba(255,255,255,.94),rgba(239,244,251,.65) 60%,rgba(255,255,255,.9));
+  --drawer-selected:linear-gradient(145deg,#fff,rgba(246,249,255,.92));
+  background:linear-gradient(145deg,rgba(253,254,255,.98),rgba(239,243,250,.97));
+}
+.app .msp-panel :is(.msp-setting-label,.msp-quick-btn,.msp-nav-link,.msp-currency-code,.msp-lang-name,.msp-toggle-opt,.msp-profile-sub,.msp-group-label,.msp-version,.msp-close) { color:var(--drawer-muted); }
+.app .msp-panel :is(.msp-profile-name-btn,.msp-avatar-initial,.msp-name-input) { color:var(--drawer-ink); }
+.app .msp-panel :is(.msp-settings-group,.msp-toggle-group) { background:var(--drawer-glass); border-color:var(--drawer-edge); box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 4px 16px rgba(0,0,0,.035); }
+.app .msp-panel :is(.msp-toggle-opt,.msp-currency-btn,.msp-lang-btn).active { background:var(--drawer-selected); color:var(--drawer-ink); box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 3px 9px rgba(0,0,0,.09); }
+.app .msp-panel :is(.msp-currency-btn,.msp-lang-btn).active span { color:var(--drawer-ink); }
+.app .msp-panel .msp-setting-row { flex-wrap:wrap; gap:10px; }
+.app .msp-panel .msp-setting-label { min-width:0; }
+.app .msp-panel .msp-toggle-group { margin-left:auto; }
+.app .msp-panel :is(.msp-toggle-opt,.msp-quick-btn,.msp-currency-btn,.msp-lang-btn,.msp-close) { min-height:44px !important; min-width:44px !important; }
+.app .msp-panel .msp-close { flex-shrink:0; }
+.app .msp-panel .msp-profile-info { min-width:0; }
+.app .msp-panel .msp-profile-name-btn { max-width:100%; overflow-wrap:anywhere; text-align:left; }
+.app .msp-panel .msp-avatar-edit { overflow:visible; width:44px; height:44px; }
+.app .msp-panel .msp-avatar-img { border-radius:inherit; display:block; }
+.app .msp-panel .msp-avatar-badge { right:-4px; bottom:-4px; width:22px; height:22px; color:var(--drawer-ink); background:#272b35; border:1px solid var(--drawer-edge); }
+.app.app-day-mode .msp-panel .msp-avatar-badge { background:#fff; }
+.app .msp-panel .msp-avatar-badge svg { display:block; width:12px; height:12px; flex-shrink:0; }
+.app .msp-panel :is(button,input):focus-visible { outline:2px solid var(--drawer-muted); outline-offset:3px; }
+@media(max-width:360px) {
+  .app .msp-panel { max-width:calc(100vw - 28px); }
+  .app .msp-panel .msp-lang-grid { grid-template-columns:minmax(0,1fr); }
+}
+
+.app .msp-panel .msp-setting-beta { color:var(--drawer-muted); border-color:var(--drawer-edge); }

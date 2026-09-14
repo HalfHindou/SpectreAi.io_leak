@@ -1,0 +1,480 @@
+/* XChartsTab — "X Charts" data tab. Reuses the .xfv-* panels and adds a
+   metrics row + a responsive 2-col chart/board layout for the wider DataTabs
+   area below the price chart. */
+
+.xct {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  min-height: 0;
+}
+
+.xct--state {
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+}
+
+/* ---- Header -------------------------------------------------------------- */
+.xct-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.xct-head-mark {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.92);
+}
+
+.xct-head-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: rgba(245, 245, 247, 0.95);
+}
+
+.xct-head-sub {
+  font-size: 0.75rem;
+  color: rgba(245, 245, 247, 0.4);
+}
+
+.xct-cgid {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(245, 245, 247, 0.5);
+  font-size: 0.6875rem;
+  font-weight: 500;
+}
+
+/* ---- View toggle (Bubbles | Charts) -------------------------------------- */
+.xct-viewtoggle {
+  margin-left: auto;
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 9px;
+}
+
+.xct-viewtoggle-btn {
+  padding: 5px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 7px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.45);
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.xct-viewtoggle-btn:hover { color: rgba(245, 245, 247, 0.8); }
+
+.xct-viewtoggle-btn.is-active {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.95);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ---- Bubbles view -------------------------------------------------------- */
+.xct-bubbles-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.xct-bubble-metrics {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.xct-bubble-metrics-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.4);
+  margin-right: 2px;
+}
+
+.xct-bubble-metric-btn {
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.5);
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.xct-bubble-metric-btn:hover { color: rgba(245, 245, 247, 0.85); }
+
+.xct-bubble-metric-btn.is-active {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(245, 245, 247, 0.95);
+}
+
+.xct-bubbles {
+  position: relative;
+  width: 100%;
+  border-radius: 14px;
+  background:
+    radial-gradient(120% 100% at 50% 0%, rgba(255, 255, 255, 0.03), transparent 70%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.008));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.xct-bubbles-canvas { display: block; width: 100%; }
+
+.xct-bubbles-hint {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  font-size: 0.6875rem;
+  color: rgba(245, 245, 247, 0.35);
+  pointer-events: none;
+}
+
+.xct-bubbles-empty {
+  padding: 60px 20px;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: rgba(245, 245, 247, 0.4);
+}
+
+.xct-bubble-tip {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  max-width: 220px;
+  padding: 8px 11px;
+  border-radius: 10px;
+  background: var(--ob-surface-3, rgba(18, 18, 22, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+}
+
+.xct-bubble-tip-name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.96);
+}
+.xct-bubble-tip-vf { color: rgba(245, 245, 247, 0.7); font-size: 0.6875rem; }
+.xct-bubble-tip-handle { font-size: 0.6875rem; color: rgba(245, 245, 247, 0.5); margin-top: 1px; }
+.xct-bubble-tip-row {
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
+  font-size: 0.6875rem;
+  color: rgba(245, 245, 247, 0.7);
+}
+
+/* Day mode */
+body.theme-light .xct-viewtoggle { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); }
+body.theme-light .xct-viewtoggle-btn { color: #64748b; }
+body.theme-light .xct-viewtoggle-btn.is-active { background: #ffffff; color: #0f172a; }
+body.theme-light .xct-bubble-metric-btn { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.08); color: #64748b; }
+body.theme-light .xct-bubble-metric-btn.is-active { background: rgba(0,0,0,0.08); color: #0f172a; }
+body.theme-light .xct-bubbles { background: #f8f9fa; border-color: rgba(0,0,0,0.07); }
+body.theme-light .xct-bubble-tip { background: #ffffff; border-color: rgba(0,0,0,0.1); }
+body.theme-light .xct-bubble-tip-name { color: #0f172a; }
+body.theme-light .xct-bubble-tip-handle { color: #64748b; }
+body.theme-light .xct-bubble-tip-row { color: #475569; }
+
+/* ---- Metrics row --------------------------------------------------------- */
+.xct-stats {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.xct-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  background: rgba(18, 18, 22, 0.6);
+}
+
+.xct-stat-label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.4);
+}
+
+.xct-stat-value {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: rgba(245, 245, 247, 0.95);
+}
+
+.xct-stat-sub {
+  font-size: 0.6875rem;
+  color: rgba(245, 245, 247, 0.4);
+}
+
+/* On-brand: warm-white values (no amber/green); the Spectre system reserves
+   bright colors for bull/bear price only. */
+.xct-stat--hot .xct-stat-value,
+.xct-stat--warm .xct-stat-value,
+.xct-stat--live .xct-stat-value { color: #f5f5f7; }
+
+/* ---- Chart + board grid -------------------------------------------------- */
+.xct-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.xct-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.xct-col--side .xfv-panel-body {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+@media (max-width: 900px) {
+  .xct-grid { grid-template-columns: 1fr; }
+  .xct-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ---- States -------------------------------------------------------------- */
+.xct-skeleton { display: flex; flex-direction: column; gap: 14px; }
+.xct-skel {
+  border-radius: 14px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 100%);
+  background-size: 200% 100%;
+  animation: xct-shimmer 1.6s ease-in-out infinite;
+}
+.xct-skel--row { height: 72px; }
+.xct-skel--chart { height: 240px; }
+
+@keyframes xct-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.xct-notindexed {
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 20px;
+  text-align: center;
+  color: rgba(245, 245, 247, 0.45);
+}
+.xct-notindexed svg { color: rgba(245, 245, 247, 0.3); }
+.xct-notindexed strong { font-size: 0.875rem; font-weight: 600; color: rgba(245, 245, 247, 0.7); }
+.xct-notindexed span { font-size: 0.8125rem; max-width: 320px; line-height: 1.45; }
+
+/* ---- Day mode ------------------------------------------------------------ */
+body.theme-light .xct-head-mark {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #0f172a;
+}
+body.theme-light .xct-head-title { color: #0f172a; }
+body.theme-light .xct-head-sub { color: #64748b; }
+body.theme-light .xct-cgid { background: rgba(0, 0, 0, 0.05); color: #64748b; }
+body.theme-light .xct-stats { background: rgba(0, 0, 0, 0.06); border-color: rgba(0, 0, 0, 0.08); }
+body.theme-light .xct-stat { background: #ffffff; }
+body.theme-light .xct-stat-label { color: #64748b; }
+body.theme-light .xct-stat-value { color: #0f172a; }
+body.theme-light .xct-stat-sub { color: #94a3b8; }
+body.theme-light .xct-notindexed { color: #94a3b8; }
+body.theme-light .xct-notindexed strong { color: #334155; }
+body.theme-light .xct-notindexed svg { color: #cbd5e1; }
+
+/* ---- MentionPriceChart (Price · KOL mentions) ---------------------------- */
+.xmc {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-radius: 14px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.03), transparent 65%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.022), rgba(255, 255, 255, 0.006));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 12px 14px 6px;
+}
+
+.xmc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.xmc-title { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.xmc-title-lbl {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.4);
+}
+.xmc-price { font-size: 1.0625rem; font-weight: 700; color: rgba(245, 245, 247, 0.96); letter-spacing: -0.02em; }
+.xmc-chg { font-size: 0.8125rem; font-weight: 600; }
+.xmc-chg.up { color: #34d399; }
+.xmc-chg.down { color: #f87171; }
+
+.xmc-ranges {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+}
+.xmc-range-btn {
+  padding: 4px 11px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.45);
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+.xmc-range-btn:hover { color: rgba(245, 245, 247, 0.8); }
+.xmc-range-btn.is-active {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.95);
+}
+
+.xmc-stage { position: relative; width: 100%; }
+.xmc-svg { display: block; width: 100%; overflow: visible; }
+.xmc-axis { fill: rgba(245, 245, 247, 0.35); font-size: 10px; font-family: -apple-system, system-ui, sans-serif; }
+.xmc-marker:hover { filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5)); }
+
+.xmc-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  color: rgba(245, 245, 247, 0.4);
+}
+
+.xmc-legend {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ob-surface-2, #0E0F11) 82%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+.xmc-legend-title {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.4);
+  margin-bottom: 5px;
+}
+.xmc-legend-voices { display: flex; flex-wrap: wrap; gap: 6px 12px; max-width: 240px; }
+.xmc-legend-voice {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6875rem;
+  color: rgba(245, 245, 247, 0.7);
+}
+.xmc-legend-dot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; }
+.xmc-legend-foot {
+  margin-top: 7px;
+  font-size: 0.625rem;
+  color: rgba(245, 245, 247, 0.35);
+}
+
+.xmc-tip {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+  max-width: 200px;
+  padding: 8px 11px;
+  border-radius: 10px;
+  background: var(--ob-surface-3, rgba(18, 18, 22, 0.97));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+.xmc-tip-name { font-size: 0.8125rem; font-weight: 700; color: rgba(245, 245, 247, 0.96); }
+.xmc-tip-handle { font-size: 0.6875rem; color: rgba(245, 245, 247, 0.55); margin-top: 1px; }
+.xmc-tip-price { font-size: 0.6875rem; color: rgba(245, 245, 247, 0.8); margin-top: 4px; }
+
+/* Day mode */
+body.theme-light .xmc { background: #f8f9fa; border-color: rgba(0,0,0,0.07); }
+body.theme-light .xmc-title-lbl { color: #64748b; }
+body.theme-light .xmc-price { color: #0f172a; }
+body.theme-light .xmc-ranges { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); }
+body.theme-light .xmc-range-btn { color: #64748b; }
+body.theme-light .xmc-range-btn.is-active { background: #ffffff; color: #0f172a; }
+body.theme-light .xmc-axis { fill: #94a3b8; }
+body.theme-light .xmc-legend { background: rgba(255,255,255,0.92); border-color: rgba(0,0,0,0.08); }
+body.theme-light .xmc-legend-title { color: #64748b; }
+body.theme-light .xmc-legend-voice { color: #475569; }
+body.theme-light .xmc-tip { background: #ffffff; border-color: rgba(0,0,0,0.1); }
+body.theme-light .xmc-tip-name { color: #0f172a; }
+body.theme-light .xmc-tip-handle { color: #64748b; }
+body.theme-light .xmc-tip-price { color: #475569; }
+
+/* ---- Fade / bearish tag (trading signal) --------------------------------- */
+.xct-fade {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.xct-fade--bearish { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+.xct-fade--hype { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.22); }
+body.theme-light .xct-fade--bearish { background: rgba(239,68,68,0.08); color: #dc2626; border-color: rgba(239,68,68,0.2); }
+body.theme-light .xct-fade--hype { background: rgba(245,158,11,0.08); color: #b45309; border-color: rgba(245,158,11,0.2); }
+
+/* Cosmos stage — definite height so the KolCosmos previewer can measure. */
+.xct-cosmos-stage {
+  display: flex;
+  height: clamp(380px, 52vh, 620px);
+}

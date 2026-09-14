@@ -1,0 +1,571 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Accelerator Feed — YC + Hub71 crypto deal pipeline
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.acc-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 0;
+  color: var(--text-primary);
+}
+
+.acc-feed-header {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-xl);
+  position: relative;
+  /* No overflow: hidden — it was clipping the batches dropdown menu when open.
+     The ::before below uses border-radius: inherit so the radial gradient still
+     respects the rounded corners without needing the parent to clip.
+     z-index lifts the header (and its overflowing dropdown menu) above the
+     card grid below, which uses position: relative and would otherwise paint over. */
+  z-index: 20;
+}
+
+/* The .vd-dropdown component inside this header needs its own stacking lift while
+   open so the menu paints above the cards regardless of sibling order. */
+.acc-feed-header .vd-dropdown {
+  position: relative;
+  z-index: 21;
+}
+
+.acc-feed-header .vd-dropdown--open {
+  z-index: 50;
+}
+
+.acc-feed-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(900px 240px at 100% 0%, rgba(255, 102, 0, 0.07) 0%, transparent 55%);
+  pointer-events: none;
+}
+
+.acc-feed-header > * {
+  position: relative;
+}
+
+.acc-feed-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.acc-feed-eyebrow {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 102, 0, 0.85);
+  margin-bottom: 10px;
+}
+
+.acc-feed-title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  line-height: 1.15;
+}
+
+.acc-feed-sub {
+  margin: 10px 0 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: rgba(245, 245, 247, 0.55);
+  max-width: 58ch;
+}
+
+.acc-feed-sub a {
+  color: rgba(255, 102, 0, 0.85);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 102, 0, 0.3);
+  transition: all 0.2s;
+}
+
+.acc-feed-sub a:hover {
+  color: #ff8833;
+  border-bottom-color: #ff8833;
+}
+
+.acc-feed-stats {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.acc-stat {
+  min-width: 78px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.018) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.acc-stat-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.acc-stat-label {
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.45);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* ═══ Controls ═══ */
+
+.acc-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.acc-search-wrap {
+  position: relative;
+  flex: 1 1 280px;
+  min-width: 220px;
+}
+
+.acc-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(245, 245, 247, 0.45);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.acc-search,
+input.acc-search {
+  width: 100%;
+  padding: 10px 14px 10px 38px !important;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font-body);
+  outline: none;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.acc-search::placeholder {
+  color: rgba(245, 245, 247, 0.3);
+}
+
+.acc-search:focus {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.acc-filter-group {
+  display: inline-flex;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.acc-filter-btn {
+  padding: 7px 13px;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  color: rgba(245, 245, 247, 0.55);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: var(--font-body);
+}
+
+.acc-filter-btn:hover {
+  color: var(--text-primary);
+}
+
+.acc-filter-btn--active {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.acc-batch-select {
+  padding: 9px 30px 9px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(245,245,247,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+}
+
+.acc-batch-select:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* ═══ Card grid ═══ */
+
+.acc-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+}
+
+.acc-card {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 18px 16px;
+  background:
+    linear-gradient(160deg, rgba(26, 26, 32, 0.66) 0%, rgba(14, 14, 18, 0.66) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.acc-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  opacity: 0;
+  transition: opacity 0.35s;
+}
+
+.acc-card:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+.acc-card:hover::before {
+  opacity: 1;
+}
+
+.acc-card-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.acc-card-identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.acc-card-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.acc-card-name {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acc-card-top-badge {
+  flex-shrink: 0;
+  padding: 2px 6px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.06) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 9999px;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: #fbbf24;
+}
+
+.acc-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+
+.acc-src-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 8px;
+  border-radius: 9999px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  border: 1px solid;
+}
+
+.acc-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 9px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(245, 245, 247, 0.65);
+  font-variant-numeric: tabular-nums;
+}
+
+.acc-card-oneliner {
+  margin: 0 0 12px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.6);
+  letter-spacing: -0.005em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.acc-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+
+.acc-tag {
+  padding: 3px 8px;
+  background: rgba(255, 255, 255, 0.028);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: 0.1px;
+}
+
+.acc-tag--crypto {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(245, 245, 247, 0.85);
+  font-weight: 600;
+}
+
+.acc-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  margin-top: auto;
+}
+
+.acc-card-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.5);
+  font-family: var(--font-mono);
+  letter-spacing: -0.1px;
+}
+
+.acc-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.75);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+
+.acc-card:hover .acc-card-link {
+  color: var(--text-primary);
+}
+
+/* ═══ Logo ═══ */
+
+.acc-logo {
+  flex-shrink: 0;
+  border-radius: 11px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.acc-logo--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(255, 102, 0, 0.22) 0%, rgba(255, 255, 255, 0.12) 100%);
+  color: rgba(245, 245, 247, 0.85);
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+/* ═══ States ═══ */
+
+.acc-feed-state {
+  padding: 32px 0;
+}
+
+.acc-feed-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 240px;
+  text-align: center;
+  color: rgba(245, 245, 247, 0.5);
+}
+
+.acc-feed-empty svg {
+  color: rgba(245, 245, 247, 0.2);
+}
+
+.acc-reset {
+  margin-top: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-body);
+}
+
+.acc-reset:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.acc-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+}
+
+.acc-skeleton {
+  height: 210px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  animation: acc-shimmer 2.2s ease-in-out infinite;
+}
+
+@keyframes acc-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ═══ Responsive ═══ */
+
+@media (max-width: 760px) {
+  .acc-feed-header {
+    padding: 20px;
+  }
+  .acc-feed-title {
+    font-size: 1.375rem;
+  }
+  .acc-feed-stats {
+    width: 100%;
+    justify-content: space-between;
+  }
+  /* Stack controls vertically — search bar takes its own row, batch dropdown
+     drops below so neither gets clipped on narrow viewports. */
+  .acc-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .acc-search-wrap {
+    flex: 1 1 100%;
+    min-width: 0;
+    width: 100%;
+  }
+  .acc-controls .vd-dropdown {
+    width: 100%;
+  }
+  .acc-controls .vd-dropdown-trigger {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .acc-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ═══ Day mode ═══ */
+
+.app.app-day-mode .acc-feed-header,
+.app.app-day-mode .acc-card {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.app.app-day-mode .acc-feed-title,
+.app.app-day-mode .acc-card-name,
+.app.app-day-mode .acc-stat-value {
+  color: #0f172a;
+}

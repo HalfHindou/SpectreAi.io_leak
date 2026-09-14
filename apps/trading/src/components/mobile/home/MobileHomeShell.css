@@ -1,0 +1,50 @@
+/* MobileHomeShell (prefix mhs-). Fixed shell below the global Header;
+   each screen is its own scroll container so tabs keep scroll positions. */
+
+.mhs {
+  position: fixed;
+  inset: 0;
+  z-index: 1; /* above the AuroraField (z-index: 0 inside .app) */
+  display: flex;
+  flex-direction: column;
+  /* Clear the fixed global Header — same offset MobileTokenPage uses. */
+  padding-top: calc(env(safe-area-inset-top, 0px) + 68px);
+  background: var(--ob-surface-1, #09090b);
+}
+
+.mhs-screens {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Embedded (iframe inside the research /trade page): the research shell owns
+   the fixed header + top safe-area and the trading Header is unmounted, so
+   the reserve was a dead void above the board (iOS resolves
+   env(safe-area-inset-*) inside iframes with the TOP-LEVEL page's values).
+   Bottom insets stay untouched - the iframe runs full-bleed to the screen
+   edge since 2026-07-17. See MobileTokenPage.css embedded block. */
+.app-embedded .mhs { padding-top: 0; }
+
+.mhs-screen {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  visibility: hidden;
+  pointer-events: none;
+}
+.mhs-screen.is-active {
+  visibility: visible;
+  pointer-events: auto;
+  animation: mhsScreenIn 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes mhsScreenIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ================= day mode ================= */
+body.theme-light .mhs { background: #f5f6f8; }

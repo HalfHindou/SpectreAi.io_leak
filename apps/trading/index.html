@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/spectre-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#09090b" />
+    <!--
+      CSP is also set as an HTTP response header in vercel.json (preferred,
+      covers initial doc load and can't be overridden by injected <meta>).
+      This <meta> CSP exists for dev where vercel.json headers don't apply.
+      Keep the two policies in sync.
+
+      DO NOT remove `'unsafe-inline'` from `script-src`. The TradingView
+      Advanced Charting Library (`/charting_library/`) creates `srcdoc`
+      iframes at runtime whose bodies contain inline `<script>` blocks.
+      Those iframes inherit the parent document CSP, so without
+      `'unsafe-inline'` the iframe scripts get blocked and the chart
+      silently fails to boot (blank white canvas + cascading
+      `changeSymbol/changeTheme/activeChart` undefined errors in console).
+      This has now broken prod THREE TIMES because the inline checks only
+      look at the built `dist/index.html`, which contains no inline
+      <script> tags — the inline scripts only appear at runtime inside
+      TradingView's srcdoc iframes. Tightening this requires a real
+      replacement (e.g. SHA-256 hash list of every srcdoc inline script
+      TradingView injects), not a removal. See research app's vercel.json
+      for the hash-based approach if you do tackle this.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://us.i.posthog.com https://us-assets.i.posthog.com https://telegram.org https://auth.privy.io https://privy.spectreai.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://assets.coingecko.com https://coin-images.coingecko.com https://*.dexscreener.com https://cryptologos.cc https://*.cloudfront.net https://*.amazonaws.com data: blob: https:; connect-src 'self' https://onchain.spectreai.io https://stream.spectreai.io https://srv.spectreai.io https://graph.codex.io https://pro-api.coingecko.com https://api.coingecko.com https://api.binance.com https://api.allorigins.win https://api.alternative.me https://min-api.cryptocompare.com https://api.dexscreener.com https://api.geckoterminal.com https://gamma-api.polymarket.com https://us.i.posthog.com https://us-assets.i.posthog.com wss://*.privy.io https://auth.privy.io https://privy.spectreai.io https://*.privy.systems wss://relay.walletconnect.org https://api.open-meteo.com https://geocoding-api.open-meteo.com https://explorer-api.walletconnect.com https://developer-control.vercel.app https://ipapi.co http://localhost:* https://oauth.telegram.org https://ethereum-rpc.publicnode.com https://bsc-dataseed.binance.org https://polygon-bor-rpc.publicnode.com https://arb1.arbitrum.io https://mainnet.base.org https://rpc.mainnet.chain.robinhood.com https://api.mainnet-beta.solana.com https://solana-rpc.publicnode.com wss://solana-rpc.publicnode.com; media-src 'self' blob:; frame-src https://auth.privy.io https://privy.spectreai.io https://oauth.telegram.org https://s.tradingview.com blob:; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spectre AI - Trading Platform</title>
+    <!--
+      GP6 boot accelerator: on a #token/<addr> deep link, fire the aggregate
+      /api/token snapshot fetch AT HTML-PARSE TIME - before the multi-MB
+      bundle downloads and parses - and stash the promise on
+      window.__SPECTRE_BOOT. codexApi.fetchTokenSnapshot ADOPTS it as the
+      in-flight entry (single consumption, never a duplicate request), so the
+      data round-trip overlaps the entire bundle boot instead of starting
+      after it. Also modulepreloads the chart chunks (paths injected at build
+      time as window.__SPECTRE_CHUNKS) so they download in parallel with main.
+      Best-effort by design: embed mode bails (auths later via postMessage -
+      a boot fetch would 401), pre-gate visitors get a no-store 401 -> null ->
+      the normal resolver path, any error leaves the app exactly on today's
+      path. NEVER lowercase the address in the fetch URL (Solana base58 is
+      case-sensitive); only the matching key is lowercased.
+    -->
+    <script>
+      ;(function () {
+        try {
+          if (new URLSearchParams(location.search).get('embedded') === 'true') return
+          var m = (location.hash || '').match(/^#token\/(.+)$/)
+          if (!m) return
+          var addr = decodeURIComponent(m[1])
+          var isEvm = addr.slice(0, 2) === '0x' && addr.length === 42
+          var isSol = !isEvm && addr.length >= 32 && addr.length <= 44 && /^[1-9A-HJ-NP-Za-km-z]+$/.test(addr)
+          if (!isEvm && !isSol) return
+          var networkId = 1
+          // netKnown gates the DIRECT bars early-fetch below: Solana is inferable
+          // from the address format; an EVM address only when the saved token
+          // matches (a networkId=1 guess on an unknown 0x address would burn a
+          // billed wrong-chain Codex query). The snapshot fires either way -
+          // it always did - and stays the fallback data path.
+          var netKnown = isSol
+          if (isSol) {
+            networkId = 1399811149
+          } else {
+            try {
+              var saved = JSON.parse(localStorage.getItem('spectre-selected-token') || 'null')
+              if (saved && String(saved.address || '').toLowerCase() === addr.toLowerCase() && saved.networkId) {
+                networkId = saved.networkId
+                netKnown = true
+              }
+            } catch (e) {}
+          }
+          var isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+          // Boot the snapshot at the user's SAVED timeframe's resolution (not a
+          // hardcoded 1H) so the chart's actual default timeframe paints from the
+          // snapshot instead of cold-fetching the full window on mount (the 4-6s
+          // initial-load gap on reload).
+          // KEEP IN SYNC with src/lib/chartTimeframes.js TIMEFRAME_TO_RESOLUTION
+          // (this pre-JS boot script cannot import modules).
+          // NOTE the lowercase '1m'/'5m'/'15m' keys - the saved timeframe
+          // migrated to lowercase minutes; this copy only had the legacy
+          // uppercase set, so every minute-TF user's boot snapshot fetched
+          // the WRONG resolution ('60') and the chart seed silently missed.
+          var tfRes = { '1m':'1','5m':'5','15m':'15','1H':'60','4H':'240','12H':'720','1D':'1D','1W':'1W','All':'1D','1M':'1','5M':'5','15M':'15','30M':'30' }
+          var savedTf = '1H'
+          try { savedTf = localStorage.getItem('spectre-timeframe') || '1H' } catch (e) {}
+          var bootRes = tfRes[savedTf] || '60'
+          // phase=fast: the server responds as soon as details+bars settle
+          // (trades/color race short budgets and backfill separately) instead
+          // of gating the whole snapshot on its slowest member. Old servers
+          // ignore the param and return the full legacy payload.
+          var url = (isDev ? '/api/token/snapshot' : '/api/token-snapshot') +
+            '?address=' + encodeURIComponent(addr) + '&networkId=' + networkId +
+            '&resolution=' + bootRes + '&phase=fast'
+          window.__SPECTRE_BOOT = {
+            address: addr.toLowerCase(),
+            networkId: networkId,
+            snapshot: fetch(url).then(function (r) { return r.ok ? r.json() : null }).catch(function () { return null }),
+          }
+          if (window.performance && performance.mark) performance.mark('spectre:boot-snapshot-fired')
+          // DIRECT bars alongside the snapshot (2026-08-05): even phase=fast
+          // gates on details+bars settling together (~1.2-1.5s cold), while a
+          // lone /api/bars lands in 0.65-0.9s - the same 300-500ms the click
+          // path won by racing snapshot vs direct (85c1483f). Same wide shape
+          // as prefetchChartBars' boot probe (from clamped to the 3y window,
+          // src=codex) = same KV bucket; codexApi.getBars ADOPTS this promise
+          // once (single consumption, never a duplicate request). KEEP the
+          // clamp IN SYNC with codexApi MAX_BARS_RANGE_SEC (3 years).
+          if (netKnown) {
+            var barsTo = Math.floor(Date.now() / 1000) + 60
+            var barsFrom = Math.max(0, barsTo - 3 * 365 * 24 * 3600)
+            window.__SPECTRE_BOOT.bars = {
+              resolution: bootRes,
+              ts: Date.now(),
+              promise: fetch('/api/bars?symbol=' + encodeURIComponent(addr) + '&from=' + barsFrom +
+                '&to=' + barsTo + '&resolution=' + bootRes + '&networkId=' + networkId + '&src=codex')
+                .then(function (r) {
+                  if (!r.ok) return null
+                  var tier = r.headers.get('X-Spectre-Tier') || null
+                  return r.json().then(function (j) { return { data: j, tier: tier } })
+                })
+                .catch(function () { return null }),
+            }
+            if (window.performance && performance.mark) performance.mark('spectre:boot-bars-fired')
+          }
+          var chunks = window.__SPECTRE_CHUNKS
+          if (chunks) {
+            ;['tradingChart'].forEach(function (k) {
+              if (!chunks[k]) return
+              var l = document.createElement('link')
+              l.rel = 'modulepreload'
+              l.href = chunks[k]
+              document.head.appendChild(l)
+            })
+          }
+        } catch (e) { /* boot accel is best-effort - normal path unaffected */ }
+      })()
+    </script>
+    <!-- Fonts: Inter (body, incl. wght 300 used by RightPanel) + Geist/Geist Mono
+         (design-tokens surfaces). Loaded ASYNC via the preload->stylesheet swap so
+         font CSS never render-blocks first paint (display=swap keeps text visible
+         on system fallbacks meanwhile - identical pixels once loaded). The font
+         @imports that used to live in src CSS files were render-blocking
+         cross-origin chains baked into the built main-*.css - keep fonts HERE. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+    </noscript>
+    <!-- Warm the connections the boot path hits before paint -->
+    <link rel="preconnect" href="https://auth.privy.io">
+    <link rel="preconnect" href="https://explorer-api.walletconnect.com" crossorigin>
+    <link rel="dns-prefetch" href="https://stream.spectreai.io">
+    <!-- Token/chain logo CDNs. A discover load pulls ~180 images across five
+         third-party origins, and none of them is known until React has rendered
+         rows - so each origin pays DNS+TCP+TLS (measured ~80-135ms warm, ~670ms
+         on a cold DNS lookup) AFTER first paint, serialised in front of the
+         first logo from that host. Warming them at parse time takes that off
+         the post-render path. No `crossorigin`: the row logos are plain <img>
+         with no crossOrigin attribute, so they use the non-CORS socket pool
+         (the share-card canvas is the only CORS consumer and is user-initiated).
+         The two heaviest hosts get a full preconnect; the rest resolve DNS only,
+         which is nearly free and avoids holding five idle sockets open.
+         NOT routed through /api/img-proxy: measured, that is SLOWER per image
+         (edge HIT 193-231ms vs 97-120ms direct) and one discover page alone
+         exceeds the proxy's 120 req/min per-IP budget. -->
+    <link rel="preconnect" href="https://token-media.defined.fi">
+    <link rel="preconnect" href="https://coin-images.coingecko.com">
+    <link rel="dns-prefetch" href="https://assets.coingecko.com">
+    <link rel="dns-prefetch" href="https://icons.llamao.fi">
+    <!-- TradingView library preload is injected by the hash-gated boot script
+         below at HIGH priority for #token/ deep links ONLY (the chart is the
+         primary content there). #discover loads it lazily via the deferred
+         <script> at body end, so it never competes with the main bundle/fonts. -->
+  </head>
+  <body>
+    <div id="root"></div>
+    <!--
+      GP8 pre-JS chrome skeleton: paints the page void + header/ticker bands
+      at HTML-parse time so a cold prod load shows Spectre chrome immediately
+      instead of a blank page while the bundle parses. MINIMAL SCOPE by
+      design (drift-proof): background #09090b + 68px header zone
+      (--header-height) + 44px ticker band (--ticker-height) - full-width
+      bands, no cloned component internals. React removes the node in a
+      layout effect on first commit (App.jsx, search: boot-skeleton), so the
+      swap is atomic with the real chrome's first paint.
+      Gates (must ALL pass, else the node stays display:none):
+        - #token/ deep link only
+        - not ?embedded=true (research iframe paints its own chrome)
+        - auth gate passed (sessionStorage spectre-auth) or localhost
+          (AuthGate auto-bypasses there) - pre-gate visitors must see the
+          password gate, never token chrome
+        - dark mode only (day mode users keep current behavior)
+      If the real header/ticker geometry changes (--header-height /
+      --ticker-height in src/index.css), update the band heights here.
+    -->
+    <div id="boot-skeleton" aria-hidden="true" style="display:none"></div>
+    <style>
+      #boot-skeleton{position:fixed;inset:0;z-index:9999;pointer-events:none;background:#09090b}
+      #boot-skeleton::before{content:'';position:absolute;top:0;left:0;right:0;height:56px;background:#0a0a0c;border-bottom:1px solid rgba(255,255,255,.07)}
+      #boot-skeleton::after{content:'';position:absolute;top:56px;left:0;right:0;height:44px;border-bottom:1px solid rgba(255,255,255,.04)}
+    </style>
+    <script>
+      ;(function () {
+        try {
+          if (!/^#token\//.test(location.hash || '')) return
+          // #token/ deep link: the chart is the primary content, so fetch the
+          // TradingView library at HIGH priority. Runs before the auth/skeleton
+          // gates below (the preload is harmless pre-auth) and applies to the
+          // research iframe too (embedded=true) where the chart is also shown.
+          try {
+            var lp = document.createElement('link')
+            lp.rel = 'preload'; lp.as = 'script'
+            lp.href = '/charting_library/charting_library.js'
+            lp.setAttribute('fetchpriority', 'high')
+            document.head.appendChild(lp)
+          } catch (e) {}
+          if (new URLSearchParams(location.search).get('embedded') === 'true') return
+          var isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+          if (!isLocal && sessionStorage.getItem('spectre-auth') !== 'true') return
+          if (localStorage.getItem('spectre-color-mode') === 'light') return
+          try {
+            var settings = JSON.parse(localStorage.getItem('spectre-settings') || 'null')
+            if (settings && settings.state && settings.state.dayMode) return
+          } catch (e) {}
+          var el = document.getElementById('boot-skeleton')
+          if (el) el.style.display = 'block'
+        } catch (e) { /* skeleton is best-effort chrome - never block boot */ }
+      })()
+    </script>
+    <!--
+      Warm the TradingView chart bundle.
+
+      `charting_library.js` above is only a 28KB loader; the actual chart is
+      `/charting_library/bundles/library.<hash>.js` (4.4MB raw / 800KB gzip)
+      plus the widget-gui + atlas chunks, and the loader does not request any
+      of them until `new TradingView.widget()` runs. TradingView Advanced is
+      the DEFAULT engine (TradingChart.jsx), so anyone who lands on #discover
+      and then clicks a token pays that whole download cold, at click time.
+
+      This prefetches the main bundle at idle, at LOW priority, so it is warm
+      in the HTTP cache by the time a token is opened. The filename is read
+      out of the loader source rather than hardcoded, so a TradingView version
+      bump can't leave a stale hash behind (the loader is already in cache by
+      then, so the read costs nothing). Deep links (#token/) skip the idle wait
+      and go straight for it - the chart is their primary content.
+
+      Safari (all of iOS) does NOT support rel=prefetch - the link is silently
+      ignored, so every mobile token open used to pay the full download + parse
+      at click time (the "chart loads much slower on my phone" report). When
+      relList.supports('prefetch') is false we warm via a plain fetch() instead:
+      the bundle is served `max-age=31536000, immutable` (vercel.json), so the
+      fetch fills the HTTP cache and the later <script> load is a cache hit.
+    -->
+    <script>
+      ;(function () {
+        try {
+          if (navigator.connection && navigator.connection.saveData) return
+          var isDeepLink = /^#token\//.test(location.hash || '')
+          var warm = function () {
+            fetch('/charting_library/charting_library.js')
+              .then(function (r) { return r.ok ? r.text() : '' })
+              .then(function (src) {
+                var m = src.match(/library\.[a-f0-9]+\.js/)
+                if (!m) return
+                var href = '/charting_library/bundles/' + m[0]
+                var rl = document.createElement('link').relList
+                var canPrefetch = !!(rl && rl.supports && rl.supports('prefetch'))
+                if (isDeepLink) {
+                  // NOT rel=preload. The chart runs inside a TradingView
+                  // `srcdoc` iframe, and the preload cache is PER-DOCUMENT -
+                  // the parent can never "use" what the iframe requests, so
+                  // Chrome logged "preloaded but not used" on every deep link
+                  // (4 times per load) even though the bytes did land. A plain
+                  // fetch warms the SHARED HTTP cache, which the iframe does
+                  // hit (the bundle is served immutable/1y), at the same high
+                  // priority and with no phantom warning. Body must be read
+                  // for the download to complete.
+                  fetch(href, { priority: 'high' })
+                    .then(function (r) { return r.ok ? r.blob() : null })
+                    .catch(function () { /* best-effort */ })
+                } else if (canPrefetch) {
+                  var l = document.createElement('link')
+                  l.rel = 'prefetch'
+                  l.as = 'script'
+                  l.href = href
+                  l.setAttribute('fetchpriority', 'low')
+                  document.head.appendChild(l)
+                } else {
+                  // Safari/iOS: no rel=prefetch - warm the immutable bundle via
+                  // fetch so the HTTP cache holds it before a token is opened.
+                  // Body must be read for the download to complete.
+                  fetch(href, { priority: 'low' })
+                    .then(function (r) { return r.ok ? r.blob() : null })
+                    .catch(function () { /* best-effort */ })
+                }
+              })
+              .catch(function () { /* warm-up is best-effort - never block boot */ })
+          }
+          if (isDeepLink) { warm(); return }
+          // Not chart-first: don't spend a user's bandwidth on 4.4MB while
+          // they may still be sitting on the password gate. The old form of
+          // this gate checked sessionStorage ONCE, right here at HTML-parse
+          // time - but AuthGate writes 'spectre-auth' only after its ASYNC
+          // server check, seconds later. Verified on prod 2026-08-04: a fresh
+          // tab at 26s had spectre-auth='true' and ZERO prefetch - the warm
+          // lost the race on every first load of every tab, so the first
+          // token click paid the whole 833KB-gz download (~2s) + parse cold.
+          // Now: wait for the flag (checked every 500ms for up to 60s) and
+          // warm on the idle tick after it appears. Same spend, same gate
+          // intent - someone parked on the password gate still downloads
+          // nothing - it just fires when auth actually lands.
+          var isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+          var authed = function () {
+            try { return isLocal || sessionStorage.getItem('spectre-auth') === 'true' } catch (e) { return false }
+          }
+          var scheduleWarm = function () {
+            if (window.requestIdleCallback) requestIdleCallback(warm, { timeout: 5000 })
+            else setTimeout(warm, 2500)
+          }
+          if (authed()) { scheduleWarm(); return }
+          var tries = 0
+          var poll = setInterval(function () {
+            if (authed()) { clearInterval(poll); scheduleWarm() }
+            else if (++tries > 120) clearInterval(poll)
+          }, 500)
+        } catch (e) { /* warm-up is best-effort - never block boot */ }
+      })()
+    </script>
+    <script type="module" src="/src/main.jsx"></script>
+    <script src="/charting_library/charting_library.js" defer></script>
+    <script src="/error-beacon.js" defer></script>
+  </body>
+</html>

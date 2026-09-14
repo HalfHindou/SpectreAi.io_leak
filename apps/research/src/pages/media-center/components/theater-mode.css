@@ -1,0 +1,1074 @@
+/**
+ * Theater Mode – Apple Cinematic full-screen video overlay
+ * Deep black overlay, glass controls, queue sidebar, day-mode, reduced motion
+ */
+
+/* ===========================================
+   Animations
+   =========================================== */
+
+@keyframes mc-theater-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes mc-theater-video-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(16px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes mc-theater-controls-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mc-theater-sidebar-in {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes mc-theater-eq-bar {
+  0%, 100% { height: 3px; }
+  50%      { height: 10px; }
+}
+
+/* ===========================================
+   Overlay
+   =========================================== */
+
+.mc-theater {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: flex-start;
+  animation: mc-theater-overlay-in 0.2s ease-out both;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===========================================
+   Close Button
+   =========================================== */
+
+.mc-theater-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.25s var(--ease-out);
+}
+
+.mc-theater-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #f5f5f7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.mc-theater-close:active {
+  transform: scale(0.95);
+}
+
+/* ===========================================
+   Main Content Area
+   =========================================== */
+
+.mc-theater-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 52px 40px 48px;
+  gap: 18px;
+  overflow-y: auto;
+}
+.mc-theater-main::-webkit-scrollbar { width: 6px; }
+.mc-theater-main::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 6px; }
+
+/* The video + controls + more-rail all share one max-width, driven by the
+   player-size cycle. Default is already big; Cinema fills the area. */
+.mc-theater-video-wrap,
+.mc-theater-controls,
+.mc-theater-more {
+  width: 100%;
+  max-width: 1040px;
+  margin-left: auto;
+  margin-right: auto;
+  transition: max-width 0.35s var(--ease-out);
+}
+.mc-theater-syn {
+  width: 100%;
+  max-width: 1040px;
+  margin: 4px auto 22px;
+  transition: max-width 0.35s var(--ease-out);
+}
+.mc-theater--large .mc-theater-video-wrap,
+.mc-theater--large .mc-theater-controls,
+.mc-theater--large .mc-theater-syn,
+.mc-theater--large .mc-theater-more { max-width: 1320px; }
+.mc-theater--cinema .mc-theater-video-wrap,
+.mc-theater--cinema .mc-theater-controls,
+.mc-theater--cinema .mc-theater-syn,
+.mc-theater--cinema .mc-theater-more { max-width: 1760px; }
+
+/* ===========================================
+   Video Container
+   =========================================== */
+
+.mc-theater-video-wrap {
+  width: 100%;
+  animation: mc-theater-video-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+}
+
+.mc-theater-video {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 */
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.6),
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.mc-theater-iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ===========================================
+   Controls Bar
+   =========================================== */
+
+.mc-theater-controls {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 16px;
+  gap: 16px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.028) 0%, rgba(255, 255, 255, 0.008) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  animation: mc-theater-controls-in 0.4s var(--ease-out) 0.15s both;
+}
+
+.mc-theater-controls-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.mc-theater-controls-center {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 8px;
+}
+
+.mc-theater-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ===========================================
+   Transport Buttons
+   =========================================== */
+
+.mc-theater-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: all 0.25s var(--ease-out);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.mc-theater-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.mc-theater-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #f5f5f7;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.mc-theater-btn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.mc-theater-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* ── Save button ────────────────────────── */
+
+.mc-theater-save.saved {
+  color: var(--amber);
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.15);
+}
+
+.mc-theater-save.saved:hover {
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: var(--amber);
+}
+
+.mc-theater-save svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* ── Queue toggle button ────────────────── */
+
+.mc-theater-queue-btn {
+  position: relative;
+}
+
+.mc-theater-queue-btn.active {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f5f5f7;
+}
+
+.mc-theater-queue-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.mc-theater-queue-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 600;
+  line-height: 16px;
+  text-align: center;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9px;
+  pointer-events: none;
+}
+
+/* ===========================================
+   Title & Channel (center area)
+   =========================================== */
+
+.mc-theater-title {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mc-theater-channel {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.3;
+}
+
+/* ===========================================
+   Auto-play Toggle
+   =========================================== */
+
+.mc-theater-autoplay {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mc-theater-autoplay-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.mc-theater-toggle {
+  position: relative;
+  width: 34px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 9px;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.25s var(--ease-out);
+}
+
+.mc-theater-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  transition: all 0.25s var(--ease-out);
+  pointer-events: none;
+}
+
+.mc-theater-toggle.on {
+  background: var(--bull);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.mc-theater-toggle.on .mc-theater-toggle-thumb {
+  left: 18px;
+  background: #fff;
+}
+
+.mc-theater-toggle:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.mc-theater-toggle.on:hover {
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+/* ===========================================
+   Queue Sidebar
+   =========================================== */
+
+.mc-theater-sidebar {
+  position: relative;
+  flex: 0 0 360px;
+  width: 360px;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  border-left: 1px solid rgba(255, 255, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  animation: mc-theater-sidebar-in 0.35s var(--ease-out) both;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ── Side-rail tabs (Chat/Comments | Up Next) ─────────────── */
+.mctc-tabs {
+  display: flex; gap: 4px; flex-shrink: 0;
+  padding: 16px 14px 10px;
+}
+.mctc-tab {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 10px; border-radius: 9px;
+  background: transparent; border: 1px solid transparent;
+  color: rgba(255,255,255,0.5); font-size: 0.8125rem; font-weight: 600; cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+.mctc-tab:hover { color: #f5f5f7; }
+.mctc-tab.active {
+  background: rgba(255,255,255,0.08); color: #f5f5f7;
+  border-color: rgba(255,255,255,0.06);
+}
+.mctc-tab-count {
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+  background: rgba(255,255,255,0.14); color: #f5f5f7;
+  font-size: 0.625rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* ── Comments / chat panel ────────────────────────────────── */
+.mctc { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.mctc--live { padding: 0 10px 12px; }
+.mctc-livechat { flex: 1; width: 100%; border: 0; border-radius: 12px; background: #0b0b0d; }
+.mctc-list { flex: 1; overflow-y: auto; padding: 4px 12px 18px; display: flex; flex-direction: column; gap: 16px; }
+.mctc-list::-webkit-scrollbar { width: 3px; }
+.mctc-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+.mctc-row { display: flex; gap: 10px; }
+.mctc-av {
+  flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%; overflow: hidden;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.08); color: #f5f5f7; font-size: 0.75rem; font-weight: 700;
+}
+.mctc-av img { width: 100%; height: 100%; object-fit: cover; }
+.mctc-body { min-width: 0; flex: 1; }
+.mctc-meta { display: flex; align-items: baseline; gap: 7px; margin-bottom: 2px; }
+.mctc-author { font-size: 0.75rem; font-weight: 600; color: #f5f5f7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mctc-when { font-size: 0.6875rem; color: rgba(255,255,255,0.35); flex: 0 0 auto; }
+.mctc-text { margin: 0; font-size: 0.8125rem; line-height: 1.45; color: rgba(255,255,255,0.82); word-break: break-word; }
+.mctc-likes { display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; font-size: 0.6875rem; color: rgba(255,255,255,0.4); }
+.mctc--empty { flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px 24px; text-align: center; }
+.mctc--empty p { margin: 0; font-size: 0.8125rem; color: rgba(255,255,255,0.4); line-height: 1.5; }
+.mctc-queue-empty { padding: 24px 16px; text-align: center; font-size: 0.8125rem; color: rgba(255,255,255,0.4); }
+.mctc-skel { padding: 4px 12px; display: flex; flex-direction: column; gap: 16px; }
+.mctc-skel-row { display: flex; gap: 10px; }
+.mctc-skel-av { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.06); flex: 0 0 auto; }
+.mctc-skel-lines { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.mctc-skel-line { height: 10px; border-radius: 5px; background: rgba(255,255,255,0.06); }
+.mctc-skel-line--sm { width: 60%; }
+
+/* day mode */
+.mc-theater.day-mode .mctc-tab { color: #64748b; }
+.mc-theater.day-mode .mctc-tab.active { background: rgba(0,0,0,0.05); color: #0f172a; border-color: rgba(0,0,0,0.08); }
+.mc-theater.day-mode .mctc-av { background: #e8edf2; color: #0f172a; }
+.mc-theater.day-mode .mctc-author { color: #0f172a; }
+.mc-theater.day-mode .mctc-text { color: #334155; }
+.mc-theater.day-mode .mctc-when, .mc-theater.day-mode .mctc-likes, .mc-theater.day-mode .mctc--empty p { color: #94a3b8; }
+.mc-theater.day-mode .mctc-livechat { background: #fff; }
+
+.mc-theater-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 16px 12px;
+  flex-shrink: 0;
+}
+
+.mc-theater-sidebar-title {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.mc-theater-sidebar-count {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.mc-theater-sidebar-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 8px 16px;
+}
+
+.mc-theater-sidebar-list::-webkit-scrollbar { width: 3px; }
+.mc-theater-sidebar-list::-webkit-scrollbar-track { background: transparent; }
+.mc-theater-sidebar-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+}
+
+/* ===========================================
+   Queue Item
+   =========================================== */
+
+.mc-theater-queue-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  text-align: left;
+}
+
+.mc-theater-queue-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.04);
+}
+
+.mc-theater-queue-item.active {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.mc-theater-queue-thumb {
+  position: relative;
+  width: 80px;
+  min-width: 80px;
+  height: 45px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.03);
+  flex-shrink: 0;
+}
+
+.mc-theater-queue-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Equalizer bars (playing indicator) ──── */
+
+.mc-theater-queue-playing {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  padding-bottom: 6px;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.mc-theater-queue-bar {
+  width: 3px;
+  height: 3px;
+  background: #f5f5f7;
+  border-radius: 1px;
+  animation: mc-theater-eq-bar 0.6s ease-in-out infinite;
+}
+
+.mc-theater-queue-bar:nth-child(1) { animation-delay: 0s; }
+.mc-theater-queue-bar:nth-child(2) { animation-delay: 0.15s; }
+.mc-theater-queue-bar:nth-child(3) { animation-delay: 0.3s; }
+
+.mc-theater-queue-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mc-theater-queue-title {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.3;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mc-theater-queue-item.active .mc-theater-queue-title {
+  color: #f5f5f7;
+}
+
+.mc-theater-queue-channel {
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.3);
+  line-height: 1.3;
+}
+
+/* ===========================================
+   Audio Player (podcast-index source)
+   =========================================== */
+
+.mc-theater-audio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: var(--sp-4);
+  padding: var(--sp-8);
+}
+
+.mc-theater-audio-art {
+  width: 280px;
+  height: 280px;
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+  box-shadow: var(--shadow-xl);
+}
+
+.mc-theater-audio-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  max-width: 500px;
+  margin: 0;
+}
+
+.mc-theater-audio-channel {
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+}
+
+.mc-theater-audio-player {
+  width: 100%;
+  max-width: 500px;
+  margin-top: var(--sp-2);
+}
+
+/* ===========================================
+   Day Mode
+   =========================================== */
+
+.mc-theater.day-mode {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+
+/* Close */
+.mc-theater.day-mode .mc-theater-close {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: rgba(15, 23, 42, 0.5);
+}
+
+.mc-theater.day-mode .mc-theater-close:hover {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #0f172a;
+}
+
+/* Video shadow */
+.mc-theater.day-mode .mc-theater-video {
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Controls */
+.mc-theater.day-mode .mc-theater-controls {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+/* Buttons */
+.mc-theater.day-mode .mc-theater-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: rgba(15, 23, 42, 0.55);
+}
+
+.mc-theater.day-mode .mc-theater-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #0f172a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.mc-theater.day-mode .mc-theater-btn:disabled {
+  opacity: 0.2;
+}
+
+/* Save */
+.mc-theater.day-mode .mc-theater-save.saved {
+  color: var(--amber);
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.12);
+}
+
+/* Queue badge */
+.mc-theater.day-mode .mc-theater-queue-btn.active {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #0f172a;
+}
+
+.mc-theater.day-mode .mc-theater-queue-count {
+  background: rgba(0, 0, 0, 0.1);
+  color: #0f172a;
+}
+
+/* Title & channel */
+.mc-theater.day-mode .mc-theater-title {
+  color: #0f172a;
+}
+
+.mc-theater.day-mode .mc-theater-channel {
+  color: rgba(15, 23, 42, 0.45);
+}
+
+/* Auto-play */
+.mc-theater.day-mode .mc-theater-autoplay-label {
+  color: rgba(15, 23, 42, 0.4);
+}
+
+.mc-theater.day-mode .mc-theater-toggle {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.mc-theater.day-mode .mc-theater-toggle-thumb {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.mc-theater.day-mode .mc-theater-toggle.on {
+  background: var(--bull);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.mc-theater.day-mode .mc-theater-toggle.on .mc-theater-toggle-thumb {
+  background: #fff;
+}
+
+/* Sidebar */
+.mc-theater.day-mode .mc-theater-sidebar {
+  background: rgba(255, 255, 255, 0.6);
+  border-left-color: rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+}
+
+.mc-theater.day-mode .mc-theater-sidebar-title {
+  color: #0f172a;
+}
+
+.mc-theater.day-mode .mc-theater-sidebar-count {
+  color: rgba(15, 23, 42, 0.4);
+}
+
+.mc-theater.day-mode .mc-theater-sidebar-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* Queue items */
+.mc-theater.day-mode .mc-theater-queue-item:hover {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.04);
+}
+
+.mc-theater.day-mode .mc-theater-queue-item.active {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.mc-theater.day-mode .mc-theater-queue-thumb {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.mc-theater.day-mode .mc-theater-queue-playing {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.mc-theater.day-mode .mc-theater-queue-bar {
+  background: #0f172a;
+}
+
+.mc-theater.day-mode .mc-theater-queue-title {
+  color: rgba(15, 23, 42, 0.75);
+}
+
+.mc-theater.day-mode .mc-theater-queue-item.active .mc-theater-queue-title {
+  color: #0f172a;
+}
+
+.mc-theater.day-mode .mc-theater-queue-channel {
+  color: rgba(15, 23, 42, 0.4);
+}
+
+/* ===========================================
+   Reduced Motion
+   =========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-theater,
+  .mc-theater-video-wrap,
+  .mc-theater-controls,
+  .mc-theater-sidebar {
+    animation: none !important;
+  }
+
+  .mc-theater-close,
+  .mc-theater-btn,
+  .mc-theater-toggle,
+  .mc-theater-toggle-thumb,
+  .mc-theater-queue-item {
+    transition: none !important;
+  }
+
+  .mc-theater-queue-bar {
+    animation: none !important;
+  }
+}
+
+/* ===========================================
+   Mobile (max-width: 768px)
+   =========================================== */
+
+@media (max-width: 768px) {
+  .mc-theater-main {
+    padding: 60px 12px 12px;
+    max-width: 100%;
+    justify-content: flex-start;
+  }
+
+  .mc-theater.queue-open .mc-theater-main {
+    max-width: 100%;
+    padding-right: 12px;
+  }
+
+  /* Close button */
+  .mc-theater-close {
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+  }
+
+  .mc-theater-close svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Video takes full width */
+  .mc-theater-video {
+    border-radius: 8px;
+  }
+
+  /* Controls stack vertically */
+  .mc-theater-controls {
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .mc-theater-controls-left {
+    width: 100%;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .mc-theater-controls-center {
+    width: 100%;
+    align-items: center;
+    text-align: center;
+    padding: 0;
+  }
+
+  .mc-theater-controls-right {
+    width: 100%;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .mc-theater-title {
+    font-size: 0.8125rem;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Queue sidebar hidden on mobile */
+  .mc-theater-sidebar {
+    display: none;
+  }
+}
+
+/* ===========================================
+   Small Mobile (max-width: 480px)
+   =========================================== */
+
+@media (max-width: 480px) {
+  .mc-theater-main {
+    padding: 56px 8px 8px;
+    gap: 10px;
+  }
+
+  .mc-theater-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .mc-theater-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .mc-theater-autoplay-label {
+    font-size: 0.625rem;
+  }
+
+  .mc-theater-toggle {
+    width: 30px;
+    height: 16px;
+    border-radius: 8px;
+  }
+
+  .mc-theater-toggle-thumb {
+    width: 10px;
+    height: 10px;
+    top: 2px;
+    left: 2px;
+  }
+
+  .mc-theater-toggle.on .mc-theater-toggle-thumb {
+    left: 16px;
+  }
+}
+
+/* ===========================================
+   Player size button + "More to watch" rail
+   =========================================== */
+.mc-theater-size-btn {
+  width: auto !important;
+  padding: 0 12px;
+  gap: 7px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.mc-theater-size-label { color: inherit; }
+@media (max-width: 880px) { .mc-theater-size-label { display: none; } }
+
+.mc-theater-more {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 10px;
+  animation: mc-theater-controls-in 0.4s var(--ease-out) 0.2s both;
+}
+.mc-theater-more-head {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #f5f5f7;
+}
+.mc-theater-more-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 20px 16px;
+}
+.mc-theater-more-card {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  min-width: 0;
+}
+.mc-theater-more-thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: transform 0.25s var(--ease-out), border-color 0.25s var(--ease-out);
+}
+.mc-theater-more-card:hover .mc-theater-more-thumb {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.mc-theater-more-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mc-theater-more-thumb--ph { display: block; width: 100%; height: 100%; background: linear-gradient(135deg, #18181b, #0c0c0e); }
+.mc-theater-more-dur,
+.mc-theater-more-live {
+  position: absolute;
+  bottom: 7px;
+  right: 7px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  background: rgba(5, 5, 7, 0.82);
+  color: #fff;
+}
+.mc-theater-more-live { left: 7px; right: auto; background: #EF4444; letter-spacing: 0.04em; }
+.mc-theater-more-meta { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.mc-theater-more-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #f5f5f7;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.mc-theater-more-chan { font-size: 0.75rem; color: rgba(255, 255, 255, 0.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* day mode */
+.mc-theater.day-mode .mc-theater-more-head,
+.mc-theater.day-mode .mc-theater-more-title { color: #0f172a; }
+.mc-theater.day-mode .mc-theater-more-chan { color: #64748b; }
+.mc-theater.day-mode .mc-theater-more-thumb { background: #eef1f4; border-color: rgba(0,0,0,0.07); }
+
+/* mobile: rail full-width, sidebar collapses under */
+@media (max-width: 880px) {
+  .mc-theater { flex-direction: column; overflow-y: auto; }
+  .mc-theater-main { overflow-y: visible; padding: 48px 16px 24px; }
+  .mc-theater-sidebar { width: 100%; flex-basis: auto; height: auto; min-height: 60vh; border-left: none; border-top: 1px solid rgba(255,255,255,0.06); }
+  .mc-theater-more-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+}

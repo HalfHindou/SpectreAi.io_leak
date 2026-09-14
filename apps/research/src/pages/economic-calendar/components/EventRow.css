@@ -1,0 +1,863 @@
+/**
+ * EventRow — Card-based event display
+ * Spectre Premium Recipe: gradient bg, multi-layered shadow, shine sweep,
+ * bell-curve dividers, 450/600 font-weights.
+ *
+ * Critical/High  → Full glass card with category left border
+ * Medium/Low     → Compact inline card
+ */
+
+/* ═══════════════════════════════════════════════
+   Base Card
+   ═══════════════════════════════════════════════ */
+.event-card {
+  border-radius: 16px;
+  border: 1px solid rgba(var(--pro-ink, 255, 255, 255), 0.05);
+  background:
+    linear-gradient(158deg,
+      rgba(var(--pro-ink, 255, 255, 255), 0.05) 0%,
+      rgba(var(--pro-ink, 255, 255, 255), 0.016) 48%,
+      rgba(var(--pro-ink, 255, 255, 255), 0.008) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    0 2px 4px rgba(0, 0, 0, 0.26),
+    0 10px 26px rgba(0, 0, 0, 0.22);
+  transition: border-color var(--duration-base) var(--ease-out),
+              background var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out),
+              transform var(--duration-base) var(--ease-out);
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+}
+
+/* ── Tier light — the same material the month board and the week columns use.
+   A row of cards that all read grey makes the reader do the ranking; the
+   surface should already have done it. ─────────────────────────────────── */
+.event-card::after {
+  content: '';
+  position: absolute;
+  /* A day row is ~1600px wide, so the month's corner bloom becomes a smudge
+     across a third of the card. Here the light is a tight bar hugging the
+     right edge — present, but clearly an edge condition. */
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 180px;
+  filter: blur(10px);
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.event-card--critical::after {
+  opacity: 1;
+  background: linear-gradient(90deg, transparent 0%, rgba(239, 68, 68, 0.12) 55%, rgba(239, 68, 68, 0.34) 100%);
+}
+
+.event-card--high::after {
+  opacity: 1;
+  background: linear-gradient(90deg, transparent 0%, rgba(249, 115, 22, 0.08) 55%, rgba(249, 115, 22, 0.24) 100%);
+}
+
+/* Medium is the BACKGROUND of a day list — dozens of rows. Lighting all of
+   them lights none of them, so the tier dots carry it and the surface stays
+   quiet. Colour is reserved for what can move the tape. */
+
+.event-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(var(--pro-ink, 255, 255, 255), 0.11);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 3px 6px rgba(0, 0, 0, 0.3),
+    0 18px 38px rgba(0, 0, 0, 0.3);
+}
+
+/* Shine sweep pseudo */
+.event-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.03) 45%, transparent 50%);
+  opacity: 0;
+  transition: opacity 300ms ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.event-card:hover::before {
+  opacity: 1;
+}
+
+.event-card:hover {
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16), 0 12px 40px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  transform: translateY(-1px);
+}
+
+/* Prominent cards (critical/high) — full glass */
+.event-card--prominent {
+  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.event-card--prominent:hover {
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16), 0 12px 40px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════
+   Main Clickable Area
+   ═══════════════════════════════════════════════ */
+.event-card__main {
+  cursor: pointer;
+  padding: var(--sp-3) var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  transition: background var(--duration-fast) var(--ease-out);
+  position: relative;
+  z-index: 2;
+}
+
+.event-card--prominent .event-card__main {
+  padding: var(--sp-4) var(--sp-5);
+  gap: var(--sp-3);
+}
+
+/* ═══════════════════════════════════════════════
+   Prominent Card — Header
+   ═══════════════════════════════════════════════ */
+.event-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.event-card__header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.event-card__header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-shrink: 0;
+}
+
+/* Flag */
+.event-card__flag {
+  font-size: 15px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.event-card__crypto-icon {
+  font-size: 15px;
+  line-height: 1;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* Source */
+.event-card__source {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 450;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Time */
+.event-card__time {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 450;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* ═══════════════════════════════════════════════
+   Prominent Card — Name
+   ═══════════════════════════════════════════════ */
+.event-card__name {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.event-card--critical .event-card__name {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+/* ═══════════════════════════════════════════════
+   Prominent Card — Footer (values + status)
+   ═══════════════════════════════════════════════ */
+.event-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-top: var(--sp-1);
+}
+
+.event-card__footer-right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-shrink: 0;
+}
+
+.event-card__values {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.event-card__val {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.event-card__val-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 450;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.event-card__val-num {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 450;
+  font-variant-numeric: tabular-nums;
+}
+
+.event-card__val-num--pending {
+  color: var(--text-disabled);
+}
+
+.event-card__val-num--bull {
+  color: var(--bull);
+  font-weight: 600;
+}
+
+.event-card__val-num--bear {
+  color: var(--bear);
+  font-weight: 600;
+}
+
+.event-card__val-sep {
+  color: var(--text-disabled);
+  font-size: 12px;
+  user-select: none;
+}
+
+/* Deviation badge */
+.event-card__dev {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 4px;
+}
+
+.event-card__dev--beat {
+  color: var(--bull);
+  background: var(--bull-muted);
+}
+
+.event-card__dev--miss {
+  color: var(--bear);
+  background: var(--bear-muted);
+}
+
+.event-card__dev--inline {
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ═══════════════════════════════════════════════
+   Status / Countdown / Live
+   ═══════════════════════════════════════════════ */
+.event-card__status {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.event-card__live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 10px;
+  background: var(--bear-muted);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.15);
+}
+
+.event-card__live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--bear);
+  box-shadow: 0 0 6px var(--bear-glow);
+  animation: event-card-pulse 1.5s var(--ease-in-out) infinite;
+}
+
+.event-card__live-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--bear);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.event-card__released {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Bookmark star */
+.event-card__bookmark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+  opacity: 0;
+  padding: 0;
+}
+
+.event-card:hover .event-card__bookmark,
+.event-card__bookmark--active {
+  opacity: 1;
+}
+
+.event-card__bookmark:hover {
+  color: #F59E0B;
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.event-card__bookmark--active {
+  color: #F59E0B;
+}
+
+.event-card__bookmark--active:hover {
+  color: #D97706;
+}
+
+/* Chevron */
+.event-card__chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: transform var(--duration-fast) var(--ease-out);
+  flex-shrink: 0;
+}
+
+.event-card__chevron--open {
+  transform: rotate(180deg);
+}
+
+/* Share button — sits between time and chevron */
+.event-card__share-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.18s var(--ease-out);
+  flex-shrink: 0;
+}
+.event-card__share-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.app-day-mode .event-card__share-btn {
+  color: rgba(0, 0, 0, 0.4);
+}
+.app-day-mode .event-card__share-btn:hover {
+  color: #0f172a;
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+/* ═══════════════════════════════════════════════
+   Compact Layout (Medium / Low)
+   ═══════════════════════════════════════════════ */
+.event-card__compact-top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.event-card__name-inline {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+
+.event-card__time-inline {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 450;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.event-card__compact-values {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-left: 40px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 450;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ═══════════════════════════════════════════════
+   State Modifiers
+   ═══════════════════════════════════════════════ */
+
+/* Live — subtle glow, no colored border */
+.event-card--live {
+  box-shadow: 0 1px 8px rgba(239, 68, 68, 0.08), 0 8px 32px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Beat / Miss tints */
+.event-card--beat {
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.04) 0%, rgba(16, 185, 129, 0.01) 100%);
+}
+
+.event-card--miss {
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.04) 0%, rgba(239, 68, 68, 0.01) 100%);
+}
+
+/* PASSED — settled, not deleted. Faded with INK so the printed value keeps its
+   full strength and its beat/miss colour: `opacity: 0.5` on the card dimmed the
+   result too, and on a past day the result is the whole point. */
+.event-card--passed {
+  background: var(--cal-past-surface);
+}
+
+.event-card--passed .event-card__name {
+  color: var(--cal-past-ink);
+  font-weight: 550;
+}
+
+.event-card--passed .event-card__val-label,
+.event-card--passed .event-card__time,
+.event-card--passed .event-card__source,
+.event-card--passed .event-card__compact-name {
+  color: var(--cal-past-ink-dim);
+}
+
+.event-card--passed .event-card__val-num:not(.event-card__val-num--bull):not(.event-card__val-num--bear) {
+  color: var(--cal-past-ink);
+}
+
+.event-card--passed .impact-badge__dot {
+  opacity: var(--cal-past-dot);
+}
+
+.event-card--passed .impact-badge__label {
+  opacity: 0.6;
+}
+
+/* The actual is exempt from every fade above — it is why the row is on screen. */
+.event-card--passed .event-card__val--actual .event-card__val-num,
+.event-card--passed .actual-reveal {
+  opacity: 1;
+}
+
+.event-card--passed:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.event-card--passed .impact-badge__dot--pulse {
+  animation: none;
+}
+
+/* Critical — warm glass. The day's biggest print should be the first thing
+   the eye lands on without reading a word. */
+.event-card--critical {
+  border-color: rgba(239, 68, 68, 0.2);
+  background:
+    linear-gradient(158deg,
+      rgba(239, 68, 68, 0.1) 0%,
+      rgba(239, 68, 68, 0.03) 46%,
+      rgba(var(--pro-ink, 255, 255, 255), 0.01) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 2px 4px rgba(0, 0, 0, 0.28),
+    0 12px 32px rgba(0, 0, 0, 0.26);
+}
+
+.event-card--critical:hover {
+  border-color: rgba(239, 68, 68, 0.34);
+  background:
+    linear-gradient(158deg,
+      rgba(239, 68, 68, 0.14) 0%,
+      rgba(239, 68, 68, 0.045) 46%,
+      rgba(var(--pro-ink, 255, 255, 255), 0.015) 100%);
+}
+
+.event-card--high { border-color: rgba(249, 115, 22, 0.12); }
+.event-card--high:hover { border-color: rgba(249, 115, 22, 0.24); }
+
+/* Focused (keyboard nav) */
+.event-card--focused {
+  box-shadow: 0 0 0 2px rgba(245, 245, 247, 0.12),
+              0 2px 4px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+/* Expanded */
+.event-card--expanded {
+  border-color: rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+}
+
+/* ═══════════════════════════════════════════════
+   Micro-interactions
+   ═══════════════════════════════════════════════ */
+
+/* Name brightens on hover */
+.event-card:hover .event-card__name,
+.event-card:hover .event-card__name-inline {
+  color: #ffffff;
+  transition: color 150ms ease;
+}
+
+/* Critical card — shimmer sweep on hover */
+.event-card--critical::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(239, 68, 68, 0.04) 40%,
+    rgba(239, 68, 68, 0.06) 45%,
+    rgba(239, 68, 68, 0.04) 50%,
+    transparent 60%
+  );
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 300ms ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.event-card--critical:hover::after {
+  opacity: 1;
+  animation: ec-critical-shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes ec-critical-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Live event — expanding ring */
+.event-card--live::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 18px;
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  animation: ec-live-ring 2.5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes ec-live-ring {
+  0% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  70% {
+    opacity: 0;
+    transform: scale(1.015);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.015);
+  }
+}
+
+/* Beat/Miss card flash — triggered on actual value arrival */
+.event-card--flash-beat {
+  animation: card-beat-flash 800ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.event-card--flash-miss {
+  animation: card-miss-flash 800ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes card-beat-flash {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.3), 0 2px 4px rgba(0,0,0,0.2); }
+  30% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15), 0 2px 4px rgba(0,0,0,0.2); border-color: rgba(16, 185, 129, 0.2); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0), 0 2px 4px rgba(0,0,0,0.2); border-color: rgba(255, 255, 255, 0.04); }
+}
+
+@keyframes card-miss-flash {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3), 0 2px 4px rgba(0,0,0,0.2); }
+  30% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15), 0 2px 4px rgba(0,0,0,0.2); border-color: rgba(239, 68, 68, 0.2); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0), 0 2px 4px rgba(0,0,0,0.2); border-color: rgba(255, 255, 255, 0.04); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .event-card--flash-beat,
+  .event-card--flash-miss {
+    animation: none;
+  }
+}
+
+/* Category accents removed — no colored edge borders */
+
+@keyframes event-card-pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.6), 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    opacity: 0.6;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.3), 0 0 0 5px rgba(239, 68, 68, 0);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   Day Mode
+   ═══════════════════════════════════════════════ */
+.app-day-mode .event-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.88) 100%);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.app-day-mode .event-card::before {
+  background: linear-gradient(105deg, transparent 40%, rgba(0, 0, 0, 0.015) 45%, transparent 50%);
+}
+
+.app-day-mode .event-card:hover {
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.app-day-mode .event-card--prominent {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.88) 100%);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.app-day-mode .event-card--prominent:hover {
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06), 0 12px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.app-day-mode .event-card__name,
+.app-day-mode .event-card__name-inline {
+  color: #0f172a;
+}
+
+.app-day-mode .event-card__source {
+  color: #94a3b8;
+}
+
+.app-day-mode .event-card__time,
+.app-day-mode .event-card__time-inline {
+  color: #94a3b8;
+}
+
+.app-day-mode .event-card__val-label {
+  color: #94a3b8;
+}
+
+.app-day-mode .event-card__val-num {
+  color: #334155;
+}
+
+.app-day-mode .event-card__val-num--pending {
+  color: #cbd5e1;
+}
+
+.app-day-mode .event-card__val-sep {
+  color: #cbd5e1;
+}
+
+.app-day-mode .event-card__compact-values {
+  color: #94a3b8;
+}
+
+.app-day-mode .event-card__released {
+  color: #64748b;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.app-day-mode .event-card__bookmark {
+  color: #94a3b8;
+}
+
+.app-day-mode .event-card__bookmark:hover {
+  color: #F59E0B;
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.app-day-mode .event-card__bookmark--active {
+  color: #F59E0B;
+}
+
+.app-day-mode .event-card__chevron {
+  color: #94a3b8;
+}
+
+.app-day-mode .event-card__crypto-icon {
+  color: #475569;
+}
+
+.app-day-mode .event-card--beat {
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%);
+}
+
+.app-day-mode .event-card--miss {
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%);
+}
+
+.app-day-mode .event-card--passed {
+  opacity: 0.45;
+}
+
+.app-day-mode .event-card--focused {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2),
+              0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.app-day-mode .event-card--expanded {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.app-day-mode .event-card__dev--inline {
+  color: #64748b;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.app-day-mode .event-card__live-badge {
+  background: rgba(239, 68, 68, 0.08);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.1);
+}
+
+.app-day-mode .event-card:hover .event-card__name,
+.app-day-mode .event-card:hover .event-card__name-inline {
+  color: #0f172a;
+}
+
+.app-day-mode .event-card--critical::after {
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(239, 68, 68, 0.03) 40%,
+    rgba(239, 68, 68, 0.05) 45%,
+    rgba(239, 68, 68, 0.03) 50%,
+    transparent 60%
+  );
+  background-size: 200% 100%;
+}
+
+.app-day-mode .event-card--live::after {
+  border-color: rgba(239, 68, 68, 0.1);
+}
+
+/* ═══════════════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .event-card--prominent .event-card__main {
+    padding: var(--sp-3) var(--sp-4);
+  }
+
+  .event-card__name {
+    font-size: 15px;
+  }
+
+  .event-card--critical .event-card__name {
+    font-size: 16px;
+  }
+
+  .event-card__compact-values {
+    padding-left: 0;
+  }
+
+  .event-card__values {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-1);
+  }
+
+  .event-card__val-sep {
+    display: none;
+  }
+
+  .event-card__footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

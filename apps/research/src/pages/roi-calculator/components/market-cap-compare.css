@@ -1,0 +1,763 @@
+/* MarketCapCompare — cinematic "market cap of" projection.
+   Glass surfaces, big system-sans numbers, bull-green multipliers, framed
+   logos. Warm-white on black, near-invisible borders, no purple chrome. */
+
+.mcc {
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.mcc-head { margin-bottom: 14px; }
+
+.mcc-head__eyebrow {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  margin-bottom: 8px;
+}
+
+.mcc-head__title {
+  font-family: 'SF Pro Display', -apple-system, Inter, sans-serif;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary, #f5f5f7);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.mcc-head__token {
+  background: linear-gradient(180deg, #f5f5f7, rgba(245, 245, 247, 0.7));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+}
+
+/* ═══ Search any project ═══ */
+.mcc-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 0 14px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+.mcc-search:focus-within {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+}
+.mcc-search__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--text-muted, rgba(245, 245, 247, 0.4));
+}
+.mcc-search__icon svg { width: 18px; height: 18px; }
+.mcc-search__input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--text-primary, #f5f5f7);
+  font-family: inherit;
+  font-size: 15px;
+}
+.mcc-search__input::placeholder { color: var(--text-muted, rgba(245, 245, 247, 0.35)); }
+.mcc-search__spin {
+  width: 15px; height: 15px; flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-top-color: rgba(245, 245, 247, 0.8);
+  animation: mcc-spin 0.7s linear infinite;
+}
+@keyframes mcc-spin { to { transform: rotate(360deg); } }
+
+.mcc-search__list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  max-height: 300px;
+  overflow-y: auto;
+  background: var(--bg-elevated, #18181b);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.mcc-search__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+.mcc-search__item:hover { background: rgba(255, 255, 255, 0.06); }
+.mcc-search__item-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--text-primary, #f5f5f7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mcc-search__item-sym {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.mcc-card--custom { border-color: rgba(255, 255, 255, 0.14); }
+
+/* ═══ Hero result ═══ */
+.mcc-hero {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.018) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  padding: 18px 20px 20px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 36px rgba(0, 0, 0, 0.28);
+  margin-bottom: 22px;
+}
+
+.mcc-hero__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mcc-hero__label {
+  font-family: 'SF Pro Display', -apple-system, Inter, sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary, #f5f5f7);
+}
+
+.mcc-hero__toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 11px;
+}
+
+.mcc-hero__toggle-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  transition: color 200ms ease, background 200ms ease;
+}
+
+.mcc-hero__toggle-btn:hover:not(.is-active):not(:disabled) {
+  color: var(--text-secondary, rgba(245, 245, 247, 0.75));
+}
+
+.mcc-hero__toggle-btn.is-active {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary, #f5f5f7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.mcc-hero__toggle-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.mcc-hero__statement {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.mcc-hero__side { display: inline-flex; align-items: center; gap: 10px; }
+
+.mcc-hero__name {
+  font-family: 'SF Pro Display', -apple-system, Inter, sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-primary, #f5f5f7);
+}
+
+.mcc-hero__conn {
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.62));
+}
+
+.mcc-hero__result {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 18px 20px;
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.mcc-hero__price {
+  font-family: var(--font-mono);
+  font-size: clamp(30px, 6vw, 42px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #f5f5f7);
+  line-height: 1;
+}
+
+.mcc-hero__mult {
+  font-family: var(--font-mono);
+  font-size: clamp(20px, 4vw, 28px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--bull-bright, #34d399);
+  line-height: 1;
+}
+.mcc-hero__mult.is-down { color: var(--text-tertiary, rgba(245, 245, 247, 0.5)); }
+
+.mcc-hero__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.mcc-hero__foot-meta {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted, rgba(245, 245, 247, 0.4));
+}
+
+.mcc-hero__bag { font-size: 12.5px; color: var(--text-tertiary, rgba(245, 245, 247, 0.6)); }
+.mcc-hero__bag strong {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--bull-bright, #34d399);
+  margin-left: 4px;
+}
+
+/* ═══ Logos ═══ */
+.mcc-logo {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.mcc-logo--framed {
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.mcc-logo--fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.72);
+  background: rgba(255, 255, 255, 0.08);
+}
+.mcc-logo--gold {
+  color: #1a1407;
+  background: linear-gradient(150deg, #f4d27a 0%, #c8973a 100%);
+  border-color: rgba(244, 210, 122, 0.4);
+}
+.mcc-logo--silver {
+  color: #16181c;
+  background: linear-gradient(150deg, #e8ecf2 0%, #9aa4b2 100%);
+  border-color: rgba(232, 236, 242, 0.4);
+}
+
+/* ═══ Picker grid ═══ */
+.mcc-grid-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.mcc-grid-label > span:first-child {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.62));
+}
+.mcc-grid-label__hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, rgba(245, 245, 247, 0.38));
+}
+
+.mcc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.mcc-card {
+  appearance: none;
+  display: block;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  font: inherit;
+  color: inherit;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.016) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 15px 15px 13px;
+  transition: border-color 240ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 240ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: mcc-card-in 460ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes mcc-card-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.mcc-card:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transform: translateY(-3px);
+}
+
+.mcc-card.is-active {
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.mcc-card:focus-visible { outline: 2px solid var(--accent, #f5f5f7); outline-offset: 2px; }
+
+.mcc-card__sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, 0.045) 47%, transparent 52%);
+  opacity: 0;
+  transition: opacity 320ms ease, transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateX(-30%);
+  pointer-events: none;
+}
+.mcc-card:hover .mcc-card__sheen { opacity: 1; transform: translateX(30%); }
+
+.mcc-card__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.mcc-card__pair { display: inline-flex; align-items: center; gap: 6px; }
+
+.mcc-card__at {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted, rgba(245, 245, 247, 0.32));
+}
+
+.mcc-card__bench {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  text-transform: uppercase;
+}
+
+.mcc-card__price {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #f5f5f7);
+  line-height: 1.05;
+}
+
+.mcc-card__mult {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--bull, #10b981);
+  margin-top: 3px;
+}
+.mcc-card__mult.is-down { color: var(--text-muted, rgba(245, 245, 247, 0.4)); }
+
+.mcc-card__foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px solid rgba(255, 255, 255, 0.045);
+}
+
+.mcc-card__foot-label {
+  font-size: 11px;
+  color: var(--text-muted, rgba(245, 245, 247, 0.4));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mcc-card__foot-val {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.55));
+  flex-shrink: 0;
+}
+
+.mcc-card__bag {
+  display: block;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(16, 185, 129, 0.07);
+  border: 1px solid rgba(16, 185, 129, 0.14);
+  font-size: 12px;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.6));
+}
+.mcc-card__bag strong {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--bull-bright, #34d399);
+  margin-left: 4px;
+}
+
+/* ═══ Day mode ═══ */
+.mcc--day .mcc { border-top-color: rgba(0, 0, 0, 0.07); }
+.mcc--day .mcc-head__title { color: #0f172a; }
+.mcc--day .mcc-head__token {
+  background: linear-gradient(180deg, #0f172a, #475569);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.mcc--day .mcc-head__eyebrow { color: #94a3b8; }
+
+.mcc--day .mcc-search { background: rgba(0, 0, 0, 0.03); border-color: rgba(0, 0, 0, 0.1); }
+.mcc--day .mcc-search:focus-within { border-color: rgba(0, 0, 0, 0.25); background: rgba(0, 0, 0, 0.05); }
+.mcc--day .mcc-search__icon { color: #94a3b8; }
+.mcc--day .mcc-search__input { color: #0f172a; }
+.mcc--day .mcc-search__input::placeholder { color: #94a3b8; }
+.mcc--day .mcc-search__list { background: #ffffff; border-color: rgba(0, 0, 0, 0.1); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12); }
+.mcc--day .mcc-search__item:hover { background: rgba(0, 0, 0, 0.05); }
+.mcc--day .mcc-search__item-name { color: #0f172a; }
+.mcc--day .mcc-search__item-sym { color: #64748b; }
+
+.mcc--day .mcc-hero {
+  background: linear-gradient(155deg, #ffffff 0%, #f8fafc 100%);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.mcc--day .mcc-hero__bar { border-bottom-color: rgba(0, 0, 0, 0.08); }
+.mcc--day .mcc-hero__label { color: #0f172a; }
+.mcc--day .mcc-hero__name { color: #0f172a; }
+.mcc--day .mcc-hero__conn { color: #475569; }
+.mcc--day .mcc-hero__toggle { background: rgba(0, 0, 0, 0.04); border-color: rgba(0, 0, 0, 0.08); }
+.mcc--day .mcc-hero__toggle-btn { color: #64748b; }
+.mcc--day .mcc-hero__toggle-btn.is-active { background: #ffffff; color: #0f172a; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+.mcc--day .mcc-hero__result { border-color: rgba(0, 0, 0, 0.16); background: rgba(0, 0, 0, 0.015); }
+.mcc--day .mcc-hero__price { color: #0f172a; }
+.mcc--day .mcc-hero__mult { color: #059669; }
+.mcc--day .mcc-hero__mult.is-down { color: #94a3b8; }
+.mcc--day .mcc-hero__foot-meta { color: #94a3b8; }
+.mcc--day .mcc-hero__bag { color: #475569; }
+.mcc--day .mcc-hero__bag strong { color: #059669; }
+
+.mcc--day .mcc-logo--framed { border-color: rgba(0, 0, 0, 0.1); background: #f1f5f9; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6); }
+.mcc--day .mcc-logo--fallback { color: #334155; background: #e2e8f0; }
+
+.mcc--day .mcc-grid-label > span:first-child { color: #475569; }
+.mcc--day .mcc-grid-label__hint { color: #94a3b8; }
+
+.mcc--day .mcc-card {
+  background: linear-gradient(150deg, #ffffff 0%, #f8fafc 100%);
+  border-color: rgba(0, 0, 0, 0.07);
+}
+.mcc--day .mcc-card:hover {
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.mcc--day .mcc-card.is-active { border-color: rgba(0, 0, 0, 0.28); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12); }
+.mcc--day .mcc-card__price { color: #0f172a; }
+.mcc--day .mcc-card__bench { color: #64748b; }
+.mcc--day .mcc-card__foot { border-top-color: rgba(0, 0, 0, 0.07); }
+.mcc--day .mcc-card__foot-label { color: #94a3b8; }
+.mcc--day .mcc-card__foot-val { color: #475569; }
+.mcc--day .mcc-card__mult { color: #059669; }
+.mcc--day .mcc-card__mult.is-down { color: #94a3b8; }
+.mcc--day .mcc-card__bag { background: rgba(5, 150, 105, 0.06); border-color: rgba(5, 150, 105, 0.16); color: #475569; }
+.mcc--day .mcc-card__bag strong { color: #059669; }
+
+@media (max-width: 540px) {
+  .mcc-hero { padding: 16px 15px 18px; }
+  .mcc-hero__name { font-size: 20px; }
+  .mcc-hero__conn { font-size: 15px; }
+  .mcc-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .mcc-card__price { font-size: 22px; }
+  .mcc-head__title { font-size: 17px; }
+
+  /* Two columns on a 390px phone leave each card ~136px of content, which is
+     narrower than "Saudi Aramco cap  $1.80T" — so the label was ellipsised
+     hard against the card's inner edge ("Saudi Aramco …"). Let the pair wrap
+     onto a second line instead; the value stays right-aligned and nothing
+     gets hidden to save a row. */
+  .mcc-card__foot {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  .mcc-card__foot-label {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  /* `space-between` puts a lone item on a wrapped line at flex-START, so the
+     value would jump to the left edge on exactly the cards that wrapped.
+     `margin-left: auto` keeps it right-aligned on whichever line it lands. */
+  .mcc-card__foot-val {
+    margin-left: auto;
+  }
+
+  /* The "your bag" pill spans almost the full card width, so its own inset is
+     the last thing between the number and the card edge. */
+  .mcc-card__bag {
+    padding: 9px 12px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Day mode — ancestor-scoped overrides (dual selector)
+   Works whether the widget carries the `dayMode` prop (root gets
+   `.roi-calculator.day-mode`) or is portaled into an app-day-mode
+   shell (`.app.app-day-mode`). Mirrors the `.mcc--day` prop-driven
+   block above so day mode holds even when the prop isn't threaded.
+   Bull greens (--bull/--bull-bright) read fine on light → deepened
+   to #059669 for contrast. Brand gold/silver logos left untouched.
+   ══════════════════════════════════════════════════════════════════ */
+
+.app.app-day-mode .mcc,
+.roi-calculator.day-mode .mcc { border-top-color: rgba(0, 0, 0, 0.07); }
+
+.app.app-day-mode .mcc-head__title,
+.roi-calculator.day-mode .mcc-head__title { color: #0f172a; }
+.app.app-day-mode .mcc-head__token,
+.roi-calculator.day-mode .mcc-head__token {
+  background: linear-gradient(180deg, #0f172a, #475569);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.app.app-day-mode .mcc-head__eyebrow,
+.roi-calculator.day-mode .mcc-head__eyebrow { color: rgba(15, 23, 42, 0.45); }
+
+/* Search */
+.app.app-day-mode .mcc-search,
+.roi-calculator.day-mode .mcc-search {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+.app.app-day-mode .mcc-search:focus-within,
+.roi-calculator.day-mode .mcc-search:focus-within {
+  border-color: rgba(0, 0, 0, 0.22);
+  background: rgba(0, 0, 0, 0.05);
+}
+.app.app-day-mode .mcc-search__icon,
+.roi-calculator.day-mode .mcc-search__icon { color: rgba(15, 23, 42, 0.45); }
+.app.app-day-mode .mcc-search__input,
+.roi-calculator.day-mode .mcc-search__input { color: #0f172a; }
+.app.app-day-mode .mcc-search__input::placeholder,
+.roi-calculator.day-mode .mcc-search__input::placeholder { color: rgba(15, 23, 42, 0.45); }
+.app.app-day-mode .mcc-search__spin,
+.roi-calculator.day-mode .mcc-search__spin {
+  border-color: rgba(0, 0, 0, 0.12);
+  border-top-color: rgba(15, 23, 42, 0.7);
+}
+.app.app-day-mode .mcc-search__list,
+.roi-calculator.day-mode .mcc-search__list {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.app.app-day-mode .mcc-search__item:hover,
+.roi-calculator.day-mode .mcc-search__item:hover { background: rgba(0, 0, 0, 0.04); }
+.app.app-day-mode .mcc-search__item-name,
+.roi-calculator.day-mode .mcc-search__item-name { color: #0f172a; }
+.app.app-day-mode .mcc-search__item-sym,
+.roi-calculator.day-mode .mcc-search__item-sym { color: #64748b; }
+
+.app.app-day-mode .mcc-card--custom,
+.roi-calculator.day-mode .mcc-card--custom { border-color: rgba(0, 0, 0, 0.16); }
+
+/* Hero */
+.app.app-day-mode .mcc-hero,
+.roi-calculator.day-mode .mcc-hero {
+  background: linear-gradient(155deg, #ffffff 0%, #f8fafc 100%);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.app.app-day-mode .mcc-hero__bar,
+.roi-calculator.day-mode .mcc-hero__bar { border-bottom-color: rgba(0, 0, 0, 0.08); }
+.app.app-day-mode .mcc-hero__label,
+.roi-calculator.day-mode .mcc-hero__label { color: #0f172a; }
+.app.app-day-mode .mcc-hero__name,
+.roi-calculator.day-mode .mcc-hero__name { color: #0f172a; }
+.app.app-day-mode .mcc-hero__conn,
+.roi-calculator.day-mode .mcc-hero__conn { color: #475569; }
+.app.app-day-mode .mcc-hero__toggle,
+.roi-calculator.day-mode .mcc-hero__toggle {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+.app.app-day-mode .mcc-hero__toggle-btn,
+.roi-calculator.day-mode .mcc-hero__toggle-btn { color: #64748b; }
+.app.app-day-mode .mcc-hero__toggle-btn:hover:not(.is-active):not(:disabled),
+.roi-calculator.day-mode .mcc-hero__toggle-btn:hover:not(.is-active):not(:disabled) { color: #334155; }
+.app.app-day-mode .mcc-hero__toggle-btn.is-active,
+.roi-calculator.day-mode .mcc-hero__toggle-btn.is-active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+.app.app-day-mode .mcc-hero__result,
+.roi-calculator.day-mode .mcc-hero__result {
+  border-color: rgba(0, 0, 0, 0.16);
+  background: rgba(0, 0, 0, 0.015);
+}
+.app.app-day-mode .mcc-hero__price,
+.roi-calculator.day-mode .mcc-hero__price { color: #0f172a; }
+.app.app-day-mode .mcc-hero__mult,
+.roi-calculator.day-mode .mcc-hero__mult { color: #059669; }
+.app.app-day-mode .mcc-hero__mult.is-down,
+.roi-calculator.day-mode .mcc-hero__mult.is-down { color: rgba(15, 23, 42, 0.45); }
+.app.app-day-mode .mcc-hero__foot-meta,
+.roi-calculator.day-mode .mcc-hero__foot-meta { color: rgba(15, 23, 42, 0.45); }
+.app.app-day-mode .mcc-hero__bag,
+.roi-calculator.day-mode .mcc-hero__bag { color: #475569; }
+.app.app-day-mode .mcc-hero__bag strong,
+.roi-calculator.day-mode .mcc-hero__bag strong { color: #059669; }
+
+/* Logos */
+.app.app-day-mode .mcc-logo,
+.roi-calculator.day-mode .mcc-logo { background: rgba(0, 0, 0, 0.04); }
+.app.app-day-mode .mcc-logo--framed,
+.roi-calculator.day-mode .mcc-logo--framed {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: #f1f5f9;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+.app.app-day-mode .mcc-logo--fallback,
+.roi-calculator.day-mode .mcc-logo--fallback {
+  color: #334155;
+  background: #e2e8f0;
+}
+
+/* Picker grid */
+.app.app-day-mode .mcc-grid-label > span:first-child,
+.roi-calculator.day-mode .mcc-grid-label > span:first-child { color: #475569; }
+.app.app-day-mode .mcc-grid-label__hint,
+.roi-calculator.day-mode .mcc-grid-label__hint { color: rgba(15, 23, 42, 0.45); }
+
+/* Cards */
+.app.app-day-mode .mcc-card,
+.roi-calculator.day-mode .mcc-card {
+  background: linear-gradient(150deg, #ffffff 0%, #f8fafc 100%);
+  border-color: rgba(0, 0, 0, 0.07);
+}
+.app.app-day-mode .mcc-card:hover,
+.roi-calculator.day-mode .mcc-card:hover {
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.app.app-day-mode .mcc-card.is-active,
+.roi-calculator.day-mode .mcc-card.is-active {
+  border-color: rgba(0, 0, 0, 0.28);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.app.app-day-mode .mcc-card:focus-visible,
+.roi-calculator.day-mode .mcc-card:focus-visible { outline-color: #0f172a; }
+.app.app-day-mode .mcc-card__sheen,
+.roi-calculator.day-mode .mcc-card__sheen {
+  background: linear-gradient(105deg, transparent 42%, rgba(15, 23, 42, 0.04) 47%, transparent 52%);
+}
+.app.app-day-mode .mcc-card__at,
+.roi-calculator.day-mode .mcc-card__at { color: rgba(15, 23, 42, 0.45); }
+.app.app-day-mode .mcc-card__bench,
+.roi-calculator.day-mode .mcc-card__bench { color: #64748b; }
+.app.app-day-mode .mcc-card__price,
+.roi-calculator.day-mode .mcc-card__price { color: #0f172a; }
+.app.app-day-mode .mcc-card__mult,
+.roi-calculator.day-mode .mcc-card__mult { color: #059669; }
+.app.app-day-mode .mcc-card__mult.is-down,
+.roi-calculator.day-mode .mcc-card__mult.is-down { color: rgba(15, 23, 42, 0.45); }
+.app.app-day-mode .mcc-card__foot,
+.roi-calculator.day-mode .mcc-card__foot { border-top-color: rgba(0, 0, 0, 0.07); }
+.app.app-day-mode .mcc-card__foot-label,
+.roi-calculator.day-mode .mcc-card__foot-label { color: rgba(15, 23, 42, 0.45); }
+.app.app-day-mode .mcc-card__foot-val,
+.roi-calculator.day-mode .mcc-card__foot-val { color: #475569; }
+.app.app-day-mode .mcc-card__bag,
+.roi-calculator.day-mode .mcc-card__bag {
+  background: rgba(5, 150, 105, 0.06);
+  border-color: rgba(5, 150, 105, 0.16);
+  color: #475569;
+}
+.app.app-day-mode .mcc-card__bag strong,
+.roi-calculator.day-mode .mcc-card__bag strong { color: #059669; }

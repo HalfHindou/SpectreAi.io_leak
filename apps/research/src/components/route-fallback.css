@@ -1,0 +1,155 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+ * RouteFallback — Spectre-style skeleton for in-app navigation.
+ * Mirrors the boot skeleton in index.html so cold-load and route-change feel
+ * like the same loading language. No spinning orb — pure shimmer placeholders.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+.route-fallback {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-void, #09090b);
+  z-index: 1;
+  animation: rf-in 240ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) 80ms both;
+}
+
+/* Shell variant — sits inside AppShell main content area, never the full
+   viewport. AppShell sidebar/header stay painted on top. */
+.route-fallback--shell {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  min-height: 60vh;
+  background: transparent;
+  z-index: auto;
+  display: block;
+  padding: 34px 30px;
+  box-sizing: border-box;
+  animation: rf-in 240ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) 60ms both;
+}
+
+@keyframes rf-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Shimmer base ───────────────────────────────────────────────────────── */
+/* Composite-only opacity dip — same pattern as boot skeleton (Lighthouse-
+   friendly, no per-frame paint from background-position slides). The base
+   surface is a warm-white glass gradient; the dip reads as "live". */
+.rf-shimmer {
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%);
+  border-radius: 14px;
+  animation: rf-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes rf-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+/* ── Head row — title + subtitle ────────────────────────────────────────── */
+.rf-head { margin-bottom: 24px; }
+.rf-title    { height: 30px; width: 220px; border-radius: 10px; margin-bottom: 12px; }
+.rf-subtitle { height: 16px; width: 360px; border-radius: 8px; }
+
+/* ── Stat cards row (4 cards) ───────────────────────────────────────────── */
+.rf-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.rf-card { height: 118px; border-radius: 16px; }
+
+/* ── Tab pills row ──────────────────────────────────────────────────────── */
+.rf-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.rf-tab { height: 34px; border-radius: 9999px; flex: none; }
+
+/* ── Body — list of rows + side panel ───────────────────────────────────── */
+.rf-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+}
+.rf-panel { display: flex; flex-direction: column; gap: 10px; }
+.rf-row   { height: 62px; border-radius: 14px; }
+.rf-aside { display: flex; flex-direction: column; gap: 14px; }
+.rf-aside-card { border-radius: 16px; }
+.rf-aside-card--sm { height: 90px; }
+.rf-aside-card--lg { height: 240px; }
+
+@media (max-width: 1100px) {
+  .rf-body { grid-template-columns: minmax(0, 1fr); }
+  .rf-aside { display: none; }
+}
+@media (max-width: 768px) {
+  .route-fallback--shell { padding: 18px 14px; }
+  .rf-title { width: 60%; }
+  .rf-subtitle { width: 80%; }
+  .rf-tabs { margin-bottom: 14px; }
+}
+
+/* ── Viewport variant — standalone routes (newsroom, website) ───────────── */
+/* Centered Spectre waveform — 7 bars with a phase-shifted sine wave. Replaces
+   the old orb-with-rings. Cinematic, warm-white, restrained. */
+.route-fallback .rf-wave {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 56px;
+  filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.08));
+}
+
+.rf-wave-bar {
+  width: 4px;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #f5f5f7 0%, rgba(245, 245, 247, 0.45) 100%);
+  transform-origin: center;
+  animation: rf-wave 1.4s ease-in-out infinite;
+}
+.rf-wave-bar:nth-child(1) { animation-delay: 0s; }
+.rf-wave-bar:nth-child(2) { animation-delay: 0.10s; }
+.rf-wave-bar:nth-child(3) { animation-delay: 0.20s; }
+.rf-wave-bar:nth-child(4) { animation-delay: 0.30s; }
+.rf-wave-bar:nth-child(5) { animation-delay: 0.40s; }
+.rf-wave-bar:nth-child(6) { animation-delay: 0.50s; }
+.rf-wave-bar:nth-child(7) { animation-delay: 0.60s; }
+
+@keyframes rf-wave {
+  0%, 100% { transform: scaleY(0.28); opacity: 0.45; }
+  50%      { transform: scaleY(1);    opacity: 1; }
+}
+
+/* ── Day mode overrides ─────────────────────────────────────────────────── */
+.app.app-day-mode .route-fallback,
+.app.welcome-day-mode .route-fallback {
+  background: #f8f9fa;
+}
+.app.app-day-mode .route-fallback--shell,
+.app.welcome-day-mode .route-fallback--shell {
+  background: transparent;
+}
+.app.app-day-mode .rf-shimmer,
+.app.welcome-day-mode .rf-shimmer {
+  background: linear-gradient(135deg, rgba(15,23,42,0.06) 0%, rgba(15,23,42,0.02) 100%);
+}
+.app.app-day-mode .rf-wave-bar,
+.app.welcome-day-mode .rf-wave-bar {
+  background: linear-gradient(180deg, #0f172a 0%, rgba(15, 23, 42, 0.45) 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-fallback { animation: none; }
+  .rf-shimmer { animation: none; opacity: 0.7; }
+  .rf-wave-bar { animation: none; transform: scaleY(0.7); opacity: 0.7; }
+}

@@ -1,0 +1,372 @@
+/* MoneyFlowTreemap — money added / money removed map.
+   Prefix: mfx-  ·  day-mode + mobile counterparts live in the sibling files. */
+
+.mfx {
+  --mfx-void: #05070a;
+  --mfx-gap: 2px;
+  --mfx-flow-up: 52, 211, 153;
+  --mfx-flow-down: 248, 113, 113;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  width: 100%;
+  animation: mfxIn var(--duration-slow) var(--ease-out) both;
+}
+
+@keyframes mfxIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── headline ─────────────────────────────────────────────────────────── */
+.mfx-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-6);
+  flex-wrap: wrap;
+}
+
+.mfx-headline {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.mfx-arrow {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  flex: none;
+}
+.mfx-arrow svg { width: 15px; height: 15px; }
+.mfx-arrow--up { color: rgb(var(--mfx-flow-up)); background: rgba(16, 185, 129, 0.12); }
+.mfx-arrow--down { color: rgb(var(--mfx-flow-down)); background: rgba(239, 68, 68, 0.12); }
+
+.mfx-amount {
+  font-family: var(--font-mono);
+  font-size: clamp(1.9rem, 3.6vw, 2.9rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.mfx[data-dir='up'] .mfx-amount { color: #eafff5; }
+.mfx[data-dir='down'] .mfx-amount { color: #fff0f0; }
+
+.mfx-verb {
+  font-size: clamp(0.95rem, 1.5vw, 1.25rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-secondary);
+}
+
+/* ── detail rail (hover on pointer, tap on touch) ─────────────────────── */
+.mfx-rail {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-inner);
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.mfx-rail-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: 0 4px;
+  white-space: nowrap;
+}
+
+.mfx-rail-sym {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.mfx-rail-name {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mfx-rail-flow,
+.mfx-rail-pct,
+.mfx-rail-mcap {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.mfx-rail-flow--up, .mfx-rail-pct--up { color: var(--bull-bright); }
+.mfx-rail-flow--down, .mfx-rail-pct--down { color: var(--bear-bright); }
+.mfx-rail-flow { font-weight: 700; }
+.mfx-rail-mcap { color: var(--text-muted); font-weight: 500; }
+
+.mfx-rail-open {
+  margin-left: 2px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all var(--duration-base) var(--ease-out);
+}
+.mfx-rail-open:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-accent);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── sub line ─────────────────────────────────────────────────────────── */
+.mfx-sub {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: -8px;
+  font-size: 0.78rem;
+}
+.mfx-split {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.mfx-split--in { color: var(--bull-bright); }
+.mfx-split--out { color: var(--bear-bright); }
+.mfx-sep {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+}
+.mfx-scope { color: var(--text-muted); }
+
+/* ── stage ────────────────────────────────────────────────────────────── */
+.mfx-stage {
+  position: relative;
+  width: 100%;
+  height: clamp(460px, 62vh, 720px);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--mfx-void);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-inner), var(--shadow-lg);
+  isolation: isolate;
+}
+.mfx--fill .mfx-stage { flex: 1; height: auto; min-height: 320px; }
+.mfx--compact .mfx-stage { height: clamp(380px, 52vh, 560px); }
+
+/* Corner bloom — the reference's soft radial glow behind the map. Direction
+   follows the net flow, so a red day blooms red. */
+.mfx-bloom {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.mfx[data-dir='up'] .mfx-bloom {
+  background:
+    radial-gradient(60% 55% at 0% 0%, rgba(16, 185, 129, 0.22) 0%, transparent 70%),
+    radial-gradient(55% 50% at 100% 100%, rgba(16, 185, 129, 0.14) 0%, transparent 72%);
+}
+.mfx[data-dir='down'] .mfx-bloom {
+  background:
+    radial-gradient(60% 55% at 0% 0%, rgba(239, 68, 68, 0.2) 0%, transparent 70%),
+    radial-gradient(55% 50% at 100% 100%, rgba(239, 68, 68, 0.12) 0%, transparent 72%);
+}
+
+/* ── tiles ────────────────────────────────────────────────────────────── */
+.mfx-tile {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  outline: none;
+  transition: filter var(--duration-fast) var(--ease-out);
+}
+/* The gap between tiles is the void showing through — exactly the reference.
+   No separator borders anywhere; the ring doubles as the hover state. */
+.mfx-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: var(--mfx-gap) solid var(--mfx-void);
+  pointer-events: none;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+.mfx-tile:hover,
+.mfx-tile:focus-visible,
+.mfx-tile--active {
+  filter: brightness(1.2) saturate(1.06);
+  z-index: 3;
+}
+.mfx-tile:hover::after,
+.mfx-tile:focus-visible::after,
+.mfx-tile--active::after { border-color: rgba(255, 255, 255, 0.5); }
+
+.mfx-chip {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: var(--radius-full);
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+.mfx-chip img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.mfx-chip--mono {
+  background: #fff;
+  color: #0b0f14;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.62em;
+  line-height: 1;
+}
+
+.mfx-tile-sym {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.94);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+  line-height: 1;
+  max-width: 92%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mfx-tile-pct {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.mfx-tile-flow {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* type scales with tile size — the reference's whole visual grammar */
+.mfx-tile--t1 { gap: 10px; }
+.mfx-tile--t1 .mfx-tile-sym { font-size: 1.35rem; }
+.mfx-tile--t1 .mfx-tile-pct { font-size: 1.55rem; }
+.mfx-tile--t1 .mfx-tile-flow { font-size: 0.82rem; }
+.mfx-tile--t2 { gap: 6px; }
+.mfx-tile--t2 .mfx-tile-sym { font-size: 0.85rem; }
+.mfx-tile--t2 .mfx-tile-pct { font-size: 1rem; }
+.mfx-tile--t3 { gap: 4px; }
+.mfx-tile--t3 .mfx-tile-pct { font-size: 0.76rem; }
+.mfx-tile--t4 { gap: 2px; }
+.mfx-tile--t4 .mfx-tile-pct { font-size: 0.6rem; font-weight: 600; }
+.mfx-tile--t5 { gap: 0; }
+.mfx-tile--t6 { cursor: default; }
+
+/* ── legend ───────────────────────────────────────────────────────────── */
+.mfx-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+.mfx-legend-label {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.mfx-legend-bar {
+  width: 160px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg,
+    hsl(2 80% 51%) 0%,
+    hsl(356 50% 10%) 46%,
+    hsl(150 54% 8.5%) 54%,
+    hsl(141 81% 51%) 100%);
+}
+.mfx-legend-note { margin-left: 6px; }
+
+/* ── loading: shimmer skeleton shaped like the map ────────────────────── */
+.mfx-skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 1fr 1fr;
+  grid-template-rows: repeat(4, 1fr);
+  gap: 2px;
+}
+.mfx-skeleton-tile {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.07) 50%, rgba(255, 255, 255, 0.02) 100%);
+  background-size: 200% 100%;
+  animation: mfxShimmer 2s infinite linear;
+}
+.mfx-sk-0 { grid-column: 1; grid-row: 1 / span 2; }
+.mfx-sk-1 { grid-column: 2; grid-row: 1 / span 2; animation-delay: 60ms; }
+.mfx-sk-2 { animation-delay: 120ms; }
+.mfx-sk-3 { animation-delay: 180ms; }
+.mfx-sk-4 { animation-delay: 240ms; }
+.mfx-sk-5 { animation-delay: 300ms; }
+.mfx-sk-6 { animation-delay: 360ms; }
+
+@keyframes mfxShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mfx { animation: none; }
+  .mfx-skeleton-tile { animation: none; }
+}

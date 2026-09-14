@@ -1,0 +1,195 @@
+/**
+ * AuroraField — fixed full-viewport atmosphere layer.
+ * Z-index 0; #root in index.css must be position:relative; z-index:1.
+ */
+
+.aurora-field {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  /* The page background. This layer is what the user actually sees behind
+     everything - it is fixed/inset:0 and opaque, so it covers the
+     background set on .app.token-page. It used to paint --ob-void (#000),
+     which made every panel shadow on the page inert. --ob-page is a few
+     points up so that depth reads. */
+  background: var(--ob-page);
+}
+
+.aurora-bloom {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 1;
+  will-change: transform, opacity;
+}
+
+/* Cool bloom — upper-right, the "light from above" the brief asks for.
+   Largest of the three, anchors the page's lit zone. */
+.aurora-bloom--cool {
+  top: -25vh;
+  right: -15vw;
+  width: 80vw;
+  height: 75vh;
+  background: radial-gradient(circle at center,
+    var(--aurora-cool-color),
+    transparent 65%);
+  animation: aurora-drift-cool 38s var(--ease-soft) infinite alternate;
+}
+
+/* Warm bloom — lower-left counter-glow. Subtle counterbalance. */
+.aurora-bloom--warm {
+  bottom: -30vh;
+  left: -20vw;
+  width: 65vw;
+  height: 60vh;
+  background: radial-gradient(circle at center,
+    var(--aurora-warm-color),
+    transparent 60%);
+  animation: aurora-drift-warm 52s var(--ease-soft) infinite alternate;
+  animation-delay: -8s;
+}
+
+/* Ember bloom — the SIGNATURE LIME thread, very faint, lower-right.
+   This is the only place lime touches the atmosphere — at ~6% alpha it
+   reads as a colored heartbeat in the page background, not a glow. */
+.aurora-bloom--ember {
+  bottom: 5vh;
+  right: 8vw;
+  width: 38vw;
+  height: 32vh;
+  background: radial-gradient(circle at center,
+    var(--aurora-ember-color),
+    transparent 60%);
+  animation: aurora-drift-ember 44s var(--ease-soft) infinite alternate;
+  animation-delay: -22s;
+}
+
+@keyframes aurora-drift-cool {
+  0%   { transform: translate3d(0, 0, 0) scale(1);    opacity: 0.85; }
+  50%  { transform: translate3d(-3vw, 2vh, 0) scale(1.06); opacity: 1; }
+  100% { transform: translate3d(2vw, -1vh, 0) scale(0.98); opacity: 0.9; }
+}
+
+@keyframes aurora-drift-warm {
+  0%   { transform: translate3d(0, 0, 0) scale(1);    opacity: 0.7; }
+  50%  { transform: translate3d(4vw, -2vh, 0) scale(1.08); opacity: 1; }
+  100% { transform: translate3d(-2vw, 1vh, 0) scale(0.95); opacity: 0.8; }
+}
+
+@keyframes aurora-drift-ember {
+  0%   { transform: translate3d(0, 0, 0) scale(1);    opacity: 0.6; }
+  50%  { transform: translate3d(-2vw, -3vh, 0) scale(1.12); opacity: 0.95; }
+  100% { transform: translate3d(3vw, 2vh, 0) scale(0.92); opacity: 0.7; }
+}
+
+/* ============================================================
+   Reduced motion — pause drift, leave the blooms static
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-bloom {
+    animation: none !important;
+  }
+}
+
+.app[data-reduced-motion="true"] .aurora-bloom {
+  animation: none !important;
+}
+
+/* ============================================================
+   Mobile - keep the atmosphere, stop paying for it every frame
+   ============================================================ */
+
+/* The drift keyframes animate `scale`, and a scale change INVALIDATES the
+   rasterized blur - so `filter: blur(120px)` was being recomputed
+   continuously, on every screen, for the life of the session. Measured on
+   the live mobile tree (440px viewport): the three blooms rasterize at up
+   to 696x1127 device px, and they are 3 of the only 4 infinite animations
+   running on the home surface.
+
+   Worse, they are the app's BACKDROP: ~1.9-2.4 screens' worth of
+   `backdrop-filter` surfaces sit above them (nav bars, sheets, screen
+   headers), and each one must re-sample its backdrop whenever the backdrop
+   changes - so one animation multiplied into a continuous re-filter of
+   every blurred surface on the page. Same mechanism as the research app's
+   ParticleBackground heat fix (2026-07-07); the trading app never got it.
+
+   A desktop GPU has the headroom to hide this (120fps either way, measured);
+   a phone does not, which is why the report was "browser lags, phone gets
+   hot" on mobile only.
+
+   Fix is deliberately conservative: the blooms STAY (same colours, same
+   positions, same 120px blur, so the look is unchanged) - they just stop
+   moving, which lets the blur rasterize once instead of every frame.
+   Dropping `will-change` releases the permanently-promoted GPU layers too.
+   Matches MOBILE_MEDIA_QUERY in hooks/useIsMobile.js, so this turns off on
+   exactly the viewports that mount the mobile tree.
+
+   2026-08-03 - freezing them was not enough. Dismissing anything full-screen
+   (the filter sheet, the fullscreen chart) took 3-4 SECONDS on a phone, and
+   the founder's own A/B named the culprit: in day mode, where the blooms are
+   `display:none`, the same dismissal is instant. The static blur still has to
+   be re-rasterized whenever the phone drops its cached texture - and a phone
+   drops it exactly when a big layer comes and goes.
+
+   So the blur goes, but the blooms stay: `filter: blur(120px)` over a radial
+   gradient is a very expensive way to draw something a gradient can draw for
+   free. `ellipse closest-side` makes the gradient reach zero alpha exactly at
+   the box edge, so there is no disc outline to hide (that outline is the ONLY
+   thing the blur was contributing), and the boxes grow to cover the spread the
+   blur used to add. Compared side by side against the blurred version with the
+   app content hidden: same glow, same placement, no edges, zero filter. */
+@media (max-width: 768px), (max-height: 540px) and (pointer: coarse) {
+  .aurora-bloom {
+    animation: none;
+    will-change: auto;
+    filter: none;
+    /* The gradient owns the shape now - the circular clip would cut it. */
+    border-radius: 0;
+  }
+  .aurora-bloom--cool {
+    top: -45vh;
+    right: -45vw;
+    width: 150vw;
+    height: 120vh;
+    background: radial-gradient(ellipse closest-side, var(--aurora-cool-color), transparent);
+  }
+  .aurora-bloom--warm {
+    bottom: -45vh;
+    left: -45vw;
+    width: 130vw;
+    height: 100vh;
+    background: radial-gradient(ellipse closest-side, var(--aurora-warm-color), transparent);
+  }
+  .aurora-bloom--ember {
+    bottom: -10vh;
+    right: -15vw;
+    width: 90vw;
+    height: 70vh;
+    background: radial-gradient(ellipse closest-side, var(--aurora-ember-color), transparent);
+  }
+}
+
+/* ============================================================
+   Day mode
+   ============================================================ */
+
+/* The earlier "soften the blooms" pass targeted `.app.app-day-mode`, which the
+   trading app never sets (it toggles `body.theme-light`), so day mode was
+   running the blooms at full strength. Three 120px-blurred gray-blue discs
+   over a white page read as a dirty vignette (worst over the trades table:
+   rows looked progressively grayed out). Light mode gets a clean white
+   atmosphere instead — the depth in day mode comes from hairlines + shadows. */
+body.theme-light .aurora-field {
+  /* --ob-page, not a literal #ffffff. In light mode every --ob-surface-*
+     collapses to #ffffff, so a white substrate under white panels gives the
+     ladder nothing to work with - separation falls entirely to hairline
+     borders. Dropping the substrate a couple of points below the panels is
+     the light-mode equivalent of lifting it above them in dark mode, and it
+     keeps both themes on the same token instead of a hardcoded hex. */
+  background: var(--ob-page);
+}
+body.theme-light .aurora-bloom {
+  display: none;
+}

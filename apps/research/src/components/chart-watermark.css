@@ -1,0 +1,82 @@
+/* ChartWatermark — adaptive Spectre brand mark. See chart-watermark.jsx. */
+
+.spectre-wm-host { position: relative; }
+
+.spectre-wm {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  container-type: size;
+  z-index: 2;
+  border-radius: inherit;
+}
+
+/* faint centered logotype behind the data */
+.spectre-wm__ghost {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif);
+  font-weight: 700;
+  letter-spacing: 0.42em;
+  text-indent: 0.42em; /* balance the trailing letter-space so it stays centered */
+  white-space: nowrap;
+  color: #f5f5f7;
+  opacity: 0.08;
+  font-size: clamp(15px, 9cqw, 60px);
+  line-height: 1;
+  user-select: none;
+}
+
+/* corner brand lockup (logo + wordmark) — same asset as the header */
+.spectre-wm__corner {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+  user-select: none;
+}
+.spectre-wm--br .spectre-wm__corner { right: var(--wm-px, 14px); bottom: var(--wm-py, 12px); }
+.spectre-wm--bl .spectre-wm__corner { left: var(--wm-px, 14px); bottom: var(--wm-py, 12px); }
+.spectre-wm--tr .spectre-wm__corner { right: var(--wm-px, 14px); top: var(--wm-py, 12px); }
+.spectre-wm--tl .spectre-wm__corner { left: var(--wm-px, 14px); top: var(--wm-py, 12px); }
+
+.spectre-wm__lockup {
+  display: block;
+  height: 16px;
+  width: auto;
+  opacity: 0.72;
+}
+.spectre-wm__lockup--day { display: none; }
+
+/* only genuinely large / hero charts carry the centered logotype;
+   medium panels get the clean corner lockup only */
+@container (max-height: 118px) { .spectre-wm__ghost { display: none; } }
+@container (max-width: 280px) { .spectre-wm__ghost { display: none; } }
+
+/* small charts (detail sparklines): shrink the lockup */
+@container (max-width: 200px), (max-height: 96px) {
+  .spectre-wm__lockup { height: 13px; opacity: 0.68; }
+  .spectre-wm--br .spectre-wm__corner,
+  .spectre-wm--bl .spectre-wm__corner { bottom: 6px; }
+  .spectre-wm--br .spectre-wm__corner,
+  .spectre-wm--tr .spectre-wm__corner { right: 8px; }
+}
+
+/* tiny (row / card sparkline): a mark here is clutter — render nothing */
+@container (max-width: 108px) { .spectre-wm__corner { display: none; } }
+@container (max-height: 44px) { .spectre-wm__corner { display: none; } }
+
+/* Light surfaces — swap to the day-mode lockup (matches the header behaviour) */
+.app.app-day-mode .spectre-wm__ghost,
+.lite-root--paper .spectre-wm__ghost { color: #0f172a; opacity: 0.07; }
+.lite-root--glass.lite-root--daylight .spectre-wm__ghost { color: #171a20; opacity: 0.075; }
+
+.app.app-day-mode .spectre-wm__lockup--dark,
+.lite-root--paper .spectre-wm__lockup--dark,
+.lite-root--glass.lite-root--daylight .spectre-wm__lockup--dark { display: none; }
+.app.app-day-mode .spectre-wm__lockup--day,
+.lite-root--paper .spectre-wm__lockup--day,
+.lite-root--glass.lite-root--daylight .spectre-wm__lockup--day { display: block; }

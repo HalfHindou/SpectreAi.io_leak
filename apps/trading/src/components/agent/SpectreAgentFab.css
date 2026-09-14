@@ -1,0 +1,152 @@
+/* SpectreAgentFab - draggable agent launcher (z 5000, below search modal
+   99999 / profile dropdown 1000005, above panels). Per-token theming rides
+   the existing --accent* channel written by useAccentTheme. */
+
+/* VOICE FIRST: the FAB is a living orb - the same luminous presence that
+   speaks in the panel, breathing at rest, not a logo button. Tapping it
+   opens the agent straight into the live conversation. */
+.sagent-fab {
+  position: fixed;
+  z-index: 5000;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 50%;
+  border: none;
+  background:
+    radial-gradient(circle at 36% 32%, rgba(255, 255, 255, 0.95) 0%, rgba(222, 222, 228, 0.82) 42%, rgba(150, 150, 160, 0.55) 72%, rgba(90, 90, 100, 0.35) 100%);
+  /* Glow held at the midpoint of the old `sagent-orb-alive` sweep
+     (0.14/26px -> 0.26/42px), so the orb reads the same at a glance. */
+  box-shadow:
+    0 4px 21px rgba(0, 0, 0, 0.5),
+    0 0 34px rgba(245, 245, 247, 0.2),
+    inset 0 -6px 14px rgba(0, 0, 0, 0.16),
+    inset 0 2px 6px rgba(255, 255, 255, 0.55);
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  user-select: none;
+  /* NO box-shadow animation here. The FAB is mounted for the whole life of
+     the token page, and an animated multi-layer shadow with a 26-42px blur
+     is a full repaint every frame - it was the ONLY paint-driven infinite
+     animation left on the mobile token page (measured live). The orb still
+     reads as alive: the ::before/::after breathing rings animate opacity +
+     transform, which the compositor handles for free. */
+  transition: box-shadow 220ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+              transform 150ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.sagent-fab:hover {
+  transform: scale(1.06);
+  box-shadow:
+    0 6px 26px rgba(0, 0, 0, 0.55),
+    0 0 52px rgba(245, 245, 247, 0.32),
+    inset 0 -6px 14px rgba(0, 0, 0, 0.14),
+    inset 0 2px 7px rgba(255, 255, 255, 0.65);
+}
+
+.sagent-fab:active { cursor: grabbing; transform: scale(0.97); }
+.sagent-fab--dragging { cursor: grabbing; transition: none; transform: scale(1.06); }
+.sagent-fab--hidden { display: none; }
+
+/* The logo dissolves into the orb - a watermark, not a button icon. */
+.sagent-fab__logo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+  filter: none;
+}
+
+/* Breathing waveform rings - the orb is quietly alive at rest. */
+.sagent-fab::before,
+.sagent-fab::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1px solid rgba(245, 245, 247, 0.28);
+  opacity: 0;
+  animation: sagent-fab-breathe 4s ease-in-out infinite;
+  pointer-events: none;
+}
+.sagent-fab::after {
+  inset: -8px;
+  border-color: rgba(245, 245, 247, 0.14);
+  animation-delay: 0.6s;
+}
+
+@keyframes sagent-fab-breathe {
+  0%, 100% { opacity: 0; transform: scale(0.96); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+/* ── LISTENING ("Hey Spectre" armed): the orb visibly hears - continuous
+      ripple waves radiating out, like the session's waveform breathing. ── */
+.sagent-fab--listening::before,
+.sagent-fab--listening::after {
+  animation: sagent-fab-ripple 2.1s ease-out infinite;
+  border-color: rgba(245, 245, 247, 0.45);
+}
+.sagent-fab--listening::after { animation-delay: 0.7s; }
+
+.sagent-fab__wave { display: none; }
+.sagent-fab--listening .sagent-fab__wave {
+  display: block;
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  border: 1px solid rgba(245, 245, 247, 0.2);
+  animation: sagent-fab-ripple 2.1s ease-out infinite;
+  animation-delay: 1.4s;
+  pointer-events: none;
+}
+
+@keyframes sagent-fab-ripple {
+  0% { opacity: 0.8; transform: scale(0.9); }
+  70% { opacity: 0; transform: scale(1.55); }
+  100% { opacity: 0; transform: scale(1.55); }
+}
+
+/* Hearing: a brighter, steady glow instead of a pulsing one. The "it is
+   listening" motion is carried by the ripple rings above (opacity +
+   transform = compositor-only), so the heartbeat costs no repaints. */
+.sagent-fab--listening {
+  box-shadow:
+    0 4px 22px rgba(0, 0, 0, 0.5),
+    0 0 44px rgba(245, 245, 247, 0.28),
+    inset 0 -6px 14px rgba(0, 0, 0, 0.14),
+    inset 0 2px 7px rgba(255, 255, 255, 0.6);
+}
+
+.app[data-reduced-motion='true'] .sagent-fab,
+.app[data-reduced-motion='true'] .sagent-fab::before,
+.app[data-reduced-motion='true'] .sagent-fab::after,
+.app[data-reduced-motion='true'] .sagent-fab__wave { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .sagent-fab, .sagent-fab::before, .sagent-fab::after, .sagent-fab__wave { animation: none; }
+  .sagent-fab, .sagent-fab:hover, .sagent-fab:active { transition: none; transform: none; }
+}
+
+/* Day mode - trading uses body.theme-light; the orb inverts to obsidian. */
+body.theme-light .sagent-fab {
+  background:
+    radial-gradient(circle at 36% 32%, #475569 0%, #1e293b 48%, #0f172a 100%);
+  box-shadow:
+    0 4px 18px rgba(15, 23, 42, 0.35),
+    0 0 26px rgba(15, 23, 42, 0.15),
+    inset 0 2px 5px rgba(255, 255, 255, 0.18);
+  animation: none;
+}
+body.theme-light .sagent-fab:hover {
+  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.45), 0 0 40px rgba(15, 23, 42, 0.22), inset 0 2px 5px rgba(255, 255, 255, 0.22);
+}
+body.theme-light .sagent-fab__logo { opacity: 0.85; mix-blend-mode: normal; filter: invert(1) brightness(1.6); }
+body.theme-light .sagent-fab::before, body.theme-light .sagent-fab::after { border-color: rgba(15, 23, 42, 0.25); }
+body.theme-light .sagent-fab--listening::before,
+body.theme-light .sagent-fab--listening::after { border-color: rgba(15, 23, 42, 0.4); }
+body.theme-light .sagent-fab--listening .sagent-fab__wave { border-color: rgba(15, 23, 42, 0.22); }

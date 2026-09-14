@@ -1,0 +1,541 @@
+/* ETF Net Flows — shared surface for the /etfs page, the Command Center Flows
+ * tab, the Command Center full-view overlay and the Wallets page. Prefix: etf-
+ *
+ * Dark is the base. Every rule that sets a colour has an .app.app-day-mode
+ * counterpart in etf-flows.day-mode.css, and every narrow-viewport rule lives
+ * in etf-flows.mobile.css.
+ *
+ * SURFACE. The panels used to come from a navy ramp
+ * (rgba(30,36,52,0.4) -> rgba(13,17,27,0.5)) with cool-navy hairlines
+ * (rgba(150,160,192,0.14)) — a different material from the rest of the app.
+ * Every plane is now the app's .glass-card, taken whole off /fear-greed
+ * (.fg-metric-card) the way /why and /alt-rotation took it: the same
+ * `135deg rgba(255,255,255,0.04) -> 0.016` gradient, the same 0.04 hairline,
+ * the same 16px radius, the same `blur(24px) saturate(1.8)`, the same
+ * --shadow-lg. The saturate is the part that matters — it lifts the near-black
+ * page THROUGH the panel; without it the identical gradient reads flat grey.
+ *
+ * COLOUR. Only where it carries meaning. Flow direction takes the
+ * design-system bull/bear channel, the spot-price series takes one gold, and
+ * each asset keeps its own brand dot (#f7931a / #627eea — the canonical values
+ * from tokenColors.js, not the invented #8a92ff periwinkle that was here).
+ * Everything else — the active card, the toggles, the share bars — is
+ * warm-white. The old selected-asset state was an orange ring
+ * (rgba(232,146,58,0.45) + a 26px orange glow), which is exactly the "hue in
+ * the chrome" the design system bans; an active control in this app is
+ * white-based.
+ */
+.etf-view {
+  /* text ramp — floor is 0.46; the app's --text-muted (0.35) reads as
+     grey-on-black at the 10-11px labels this surface is full of */
+  --etf-t1: #f5f5f7;
+  --etf-t2: rgba(245, 245, 247, 0.82);
+  --etf-t3: rgba(245, 245, 247, 0.62);
+  --etf-t4: rgba(245, 245, 247, 0.46);
+
+  /* market semantics — design-system tokens, nothing bespoke */
+  --etf-bull: #34D399;
+  --etf-bear: #F87171;
+  --etf-gold: #F59E0B;
+  --etf-gold-ink: #f5c265;
+
+  /* asset identity — canonical brand values (constants/tokenColors.js) */
+  --etf-btc: #f7931a;
+  --etf-eth: #627eea;
+
+  /* the app's .glass-card */
+  --etf-pane: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.016) 100%);
+  --etf-pane-lit: linear-gradient(135deg, rgba(255, 255, 255, 0.075) 0%, rgba(255, 255, 255, 0.028) 100%);
+  --etf-edge: rgba(255, 255, 255, 0.06);
+  --etf-edge-soft: rgba(255, 255, 255, 0.04);
+  --etf-glass: blur(24px) saturate(1.8);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  width: 100%;
+  font-family: var(--font-display);
+  color: var(--etf-t1);
+}
+
+/* ── header ──────────────────────────────────────────────────────────────
+   The subject line renders only where the surface is EMBEDDED (compact, and
+   the Command Center full-view overlay, which passes neither prop). On the
+   dedicated /etfs page the page masthead already says "ETF Flows" and repeats
+   the same sentence, so the head there is a control bar and nothing else. */
+.etf-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+.etf-head-title h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--etf-t1);
+}
+.etf-head-title span {
+  display: block;
+  margin-top: 3px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--etf-t3);
+}
+.etf-head-right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-left: auto;
+}
+.etf-asof {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--etf-t4);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── segmented controls ──────────────────────────────────────────────────
+   One recipe for both the range and the asset switch: a hairline track, a
+   lit-glass thumb on the active item. Never a coloured fill. */
+.etf-toggle,
+.etf-range {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--etf-edge-soft);
+}
+.etf-toggle-btn,
+.etf-range-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--etf-t3);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+.etf-toggle-btn:hover,
+.etf-range-btn:hover { color: var(--etf-t1); }
+.etf-toggle-btn i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.etf-toggle-btn--on,
+.etf-range-btn--on {
+  background: var(--etf-pane-lit);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--etf-t1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* ── summary strip ───────────────────────────────────────────────────────
+   Two cards, one per asset, and they are the asset switch — clicking one
+   selects it for the chart and the table below. */
+.etf-sum {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+.etf-view--compact .etf-sum { grid-template-columns: minmax(0, 1fr); }
+
+.etf-sum-row {
+  display: grid;
+  grid-template-columns: 1.15fr repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--etf-edge-soft);
+  background: var(--etf-pane);
+  backdrop-filter: var(--etf-glass);
+  -webkit-backdrop-filter: var(--etf-glass);
+  box-shadow: var(--shadow-lg);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color var(--duration-base) var(--ease-out),
+    background var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out);
+}
+.etf-sum-row:hover { border-color: var(--etf-edge); }
+.etf-sum-row:focus-visible {
+  outline: 2px solid rgba(245, 245, 247, 0.55);
+  outline-offset: 2px;
+}
+/* selected = lit glass + a brighter hairline, the app's active language */
+.etf-sum-row--active {
+  background: var(--etf-pane-lit);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), var(--shadow-lg);
+}
+.etf-sum-name {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 14.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--etf-t1);
+}
+.etf-sum-name i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.etf-sum-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.etf-sum-cell label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--etf-t4);
+}
+.etf-sum-cell b {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  font-variant-numeric: tabular-nums;
+  color: var(--etf-t1);
+}
+
+/* ── chart ───────────────────────────────────────────────────────────── */
+.etf-chart-card {
+  padding: var(--sp-4) var(--sp-3) var(--sp-2);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--etf-edge-soft);
+  background: var(--etf-pane);
+  backdrop-filter: var(--etf-glass);
+  -webkit-backdrop-filter: var(--etf-glass);
+  box-shadow: var(--shadow-lg);
+}
+.etf-chart-wrap {
+  position: relative;
+  width: 100%;
+}
+.etf-chart-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+.etf-grid {
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 1;
+}
+.etf-grid--zero {
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 1.2;
+}
+.etf-axis {
+  fill: var(--etf-t4);
+  font-size: 11px;
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+.etf-axis--price { fill: var(--etf-gold-ink); }
+.etf-priceline {
+  stroke: var(--etf-gold);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.etf-pricedot { fill: var(--etf-gold-ink); }
+.etf-crosshair {
+  stroke: rgba(255, 255, 255, 0.28);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+.etf-chart-empty,
+.etf-empty {
+  padding: var(--sp-10) var(--sp-4);
+  text-align: center;
+  color: var(--etf-t3);
+  font-size: 13.5px;
+}
+.etf-tip {
+  position: absolute;
+  top: 6px;
+  transform: translateX(-50%);
+  padding: 8px 11px;
+  border-radius: var(--radius-sm);
+  background: rgba(18, 18, 20, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 0.5px 0 rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 3;
+}
+.etf-tip-date {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--etf-t4);
+  margin-bottom: 4px;
+}
+.etf-tip-flow {
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.etf-tip-flow.up { color: var(--etf-bull); }
+.etf-tip-flow.down { color: var(--etf-bear); }
+.etf-tip-price {
+  font-size: 11.5px;
+  color: var(--etf-gold-ink);
+  font-variant-numeric: tabular-nums;
+  margin-top: 3px;
+}
+
+/* ── issuer table ────────────────────────────────────────────────────── */
+.etf-table-card {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--etf-edge-soft);
+  overflow: hidden;
+  background: var(--etf-pane);
+  backdrop-filter: var(--etf-glass);
+  -webkit-backdrop-filter: var(--etf-glass);
+  box-shadow: var(--shadow-lg);
+}
+/* card header — gives the table a subject line and the totals up front */
+.etf-tbl-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  padding: var(--sp-4) var(--sp-5);
+  border-bottom: 1px solid var(--etf-edge-soft);
+}
+.etf-tbl-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--etf-t1);
+}
+.etf-tbl-sub {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--etf-t4);
+}
+.etf-tbl-head-r {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+}
+.etf-tbl-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: right;
+}
+.etf-tbl-stat label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--etf-t4);
+}
+.etf-tbl-stat b {
+  font-size: 13.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--etf-t1);
+}
+
+.etf-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  table-layout: fixed;
+}
+.etf-tbl thead th {
+  padding: 10px var(--sp-5);
+  font-size: 10px;
+  font-weight: 600;
+  text-align: right;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--etf-t4);
+  border-bottom: 1px solid var(--etf-edge-soft);
+}
+.etf-th-rank { width: 46px; padding-right: 0 !important; }
+.etf-th-iss { text-align: left !important; width: 26%; }
+.etf-th-share { text-align: left !important; width: 24%; }
+
+.etf-tbl tbody td,
+.etf-tbl tfoot td {
+  padding: 11px var(--sp-5);
+  text-align: right;
+  vertical-align: middle;
+}
+.etf-tbl tbody td { border-bottom: 1px solid rgba(255, 255, 255, 0.03); }
+.etf-tbl tbody tr:last-child td { border-bottom: none; }
+.etf-tbl tbody tr { transition: background var(--duration-fast) var(--ease-out); }
+.etf-tbl tbody tr:hover td { background: rgba(255, 255, 255, 0.022); }
+
+.etf-rank {
+  width: 46px;
+  padding-right: 0 !important;
+  text-align: right;
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--etf-t4);
+}
+.etf-iss {
+  text-align: left !important;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--etf-t1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.etf-iss-name { vertical-align: middle; }
+.etf-iss em {
+  font-style: normal;
+  color: var(--etf-t4);
+  font-weight: 600;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  margin-left: var(--sp-2);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  background: rgba(255, 255, 255, 0.045);
+  vertical-align: middle;
+}
+
+/* NEVER set display:flex on a <td> — it drops the cell out of the table
+   layout, the browser wraps each one into its own anonymous row, and the
+   table renders as a vertical stack (that was the bug here). Stack with
+   block children instead; the cell stays a real table-cell. */
+.etf-num { text-align: right; line-height: 1.25; }
+.etf-num b {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--etf-t1);
+}
+.etf-num b .etf-unit {
+  font-style: normal;
+  font-weight: 600;
+  margin-left: 4px;
+  color: var(--etf-t4);
+}
+.etf-num span {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--etf-t4);
+}
+
+/* share of all holdings — turns a column of numbers into a readable ranking.
+   The fill is warm-white, not the asset's brand hue: every row in this table
+   is the SAME asset, so a coloured bar distinguishes nothing and eleven of
+   them become the loudest thing on the page. Identity lives on the summary
+   card dot and the asset toggle, where it actually separates two things. */
+.etf-share { text-align: left !important; white-space: nowrap; }
+.etf-share-track {
+  display: inline-block;
+  width: calc(100% - 54px);
+  min-width: 40px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  vertical-align: middle;
+}
+.etf-share-track i {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: rgba(245, 245, 247, 0.55);
+}
+.etf-share-pct {
+  display: inline-block;
+  width: 46px;
+  margin-left: var(--sp-2);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--etf-t3);
+  vertical-align: middle;
+}
+
+.etf-tbl-others .etf-iss,
+.etf-tbl-others .etf-iss-name { color: var(--etf-t3); }
+.etf-tbl-total td {
+  background: rgba(255, 255, 255, 0.024);
+  border-top: 1px solid var(--etf-edge);
+}
+.etf-tbl-total .etf-iss-name {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--etf-t4);
+}
+.etf-tbl-total .etf-num b { color: var(--etf-t1); }
+.etf-tbl-total .etf-share-pct { color: var(--etf-t4); }
+
+/* shared value colours — the only place hue means direction */
+.etf-view .up { color: var(--etf-bull); }
+.etf-view .down { color: var(--etf-bear); }
+.etf-view .flat { color: var(--etf-t3); }
+
+/* ── skeletons ──────────────────────────────────────────────────────────
+   Shape-matched to what lands, so nothing jumps when the data arrives. */
+.etf-skel {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--etf-edge-soft);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.06) 50%, rgba(255, 255, 255, 0.02) 100%);
+  background-size: 200% 100%;
+  animation: etfShimmer 2s ease-in-out infinite;
+}
+.etf-skel--strip { height: 86px; }
+.etf-skel--chart { height: 380px; }
+.etf-skel--table { height: 300px; }
+.etf-view--compact .etf-skel--chart { height: 240px; }
+@keyframes etfShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .etf-skel { animation: none; }
+}
+
+/* ── share ───────────────────────────────────────────────────────────────
+   The share affordance sits with the range and asset toggles, so "post this"
+   is one reach from the numbers being read. */
+.etf-head-right .etf-share-btn { flex: 0 0 auto; }

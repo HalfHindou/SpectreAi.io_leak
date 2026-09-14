@@ -1,0 +1,137 @@
+/* ChartLoader — shared chart loading placeholder. The Spectre brand mark,
+   centered on the chart void, gently breathing over a soft radial glow.
+   Used by TradingChart (native + TV paths) and TradingViewAdvanced.
+   .chart-empty-state reuses .chart-loading-state as its base (the centered
+   "No chart data" text path), so the base stays flex-centered and the
+   .loading-text styles live here too. */
+
+.chart-loading-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(120% 90% at 50% 46%, rgba(255, 255, 255, 0.022) 0%, transparent 60%),
+    #0a0a0c;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.chart-loading-state .cl-logo-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Soft radial halo behind the mark — breathes in counter-phase to the logo */
+.chart-loading-state .cl-logo-glow {
+  position: absolute;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0.035) 38%,
+    transparent 70%
+  );
+  filter: blur(6px);
+  pointer-events: none;
+  animation: clGlow 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.chart-loading-state .cl-logo {
+  position: relative;
+  width: clamp(62px, 15vw, 84px);
+  height: auto;
+  border-radius: 23%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  animation: clBreathe 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes clBreathe {
+  0%, 100% { transform: scale(0.96); opacity: 0.8; }
+  50%      { transform: scale(1.04); opacity: 1; }
+}
+
+@keyframes clGlow {
+  0%, 100% { opacity: 0.3; transform: scale(0.82); }
+  50%      { opacity: 0.9; transform: scale(1.15); }
+}
+
+/* Reduced motion: hold the mark, drop the pulse */
+@media (prefers-reduced-motion: reduce) {
+  .chart-loading-state .cl-logo { animation: none; opacity: 1; transform: none; }
+  .chart-loading-state .cl-logo-glow { animation: none; opacity: 0.55; transform: none; }
+}
+
+.chart-loading-state.chart-empty-state {
+  z-index: 120;
+  background: none;
+  pointer-events: none;
+}
+.chart-loading-state.chart-empty-state .loading-text {
+  padding: 14px 20px;
+  border-radius: 12px;
+  background: rgba(8, 9, 10, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+/* Empty-state / fallback text (native "No chart data" path reuses the base) */
+.chart-loading-state .loading-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+}
+.chart-loading-state .loading-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.02em;
+}
+.chart-loading-state .loading-subtitle {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── Day mode ────────────────────────────────────────────────
+   Loader is authored dark; invert so the slot reads as a light chart surface.
+   The dark brand tile stands out cleanly on white — no image swap needed. */
+body.theme-light .chart-loading-state {
+  background:
+    radial-gradient(120% 90% at 50% 46%, rgba(15, 23, 42, 0.025) 0%, transparent 60%),
+    #ffffff;
+}
+body.theme-light .chart-loading-state.chart-empty-state { background: none; }
+body.theme-light .chart-loading-state.chart-empty-state .loading-text {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.14);
+}
+body.theme-light .chart-loading-state.chart-empty-state .loading-title { color: #0f172a; }
+body.theme-light .chart-loading-state.chart-empty-state .loading-subtitle { color: rgba(15, 23, 42, 0.55); }
+body.theme-light .chart-loading-state .cl-logo-glow {
+  background: radial-gradient(
+    circle,
+    rgba(15, 23, 42, 0.09) 0%,
+    rgba(15, 23, 42, 0.03) 38%,
+    transparent 70%
+  );
+}
+body.theme-light .chart-loading-state .cl-logo {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+}
+body.theme-light .chart-loading-state .loading-title { color: rgba(15, 23, 42, 0.9); }
+body.theme-light .chart-loading-state .loading-subtitle { color: rgba(15, 23, 42, 0.5); }

@@ -1,0 +1,99 @@
+/* Shared TA surface — the agent panel used by every chart that has no
+   sidebar of its own (Traders Corner, home chart panel, heatmaps window).
+   The panel FLOATS over the chart area (absolute inside the chart wrap, which
+   the consumer makes position:relative), never position:fixed — the Traders
+   Corner columns are container-query containers, and a fixed panel there gets
+   trapped in that containing block and glues itself to the screen mid-page. */
+
+.cta-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: ctaScrimIn 200ms ease-out;
+}
+
+@keyframes ctaScrimIn { from { opacity: 0 } to { opacity: 1 } }
+
+.cta-drawer {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  bottom: 8px;
+  width: min(400px, calc(100% - 16px));
+  z-index: 501;
+  display: flex;
+  flex-direction: column;
+  background: rgba(10, 10, 12, 0.97);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transform: translateX(calc(100% + 16px));
+  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cta-drawer.is-open { transform: translateX(0); }
+
+.cta-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.cta-drawer-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.7);
+}
+
+.cta-drawer-close {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.45);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cta-drawer-close:hover { background: rgba(255, 255, 255, 0.06); color: #f5f5f7; }
+
+.cta-drawer-body { flex: 1; min-height: 0; display: flex; }
+.cta-drawer-body > * { flex: 1; min-height: 0; }
+.cta-drawer-loading { flex: 1; margin: 16px; border-radius: 12px; }
+
+.app.app-day-mode .cta-drawer,
+body.theme-light .cta-drawer {
+  background: rgba(255, 255, 255, 0.97);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.16);
+}
+.app.app-day-mode .cta-drawer-head { border-bottom-color: rgba(15, 23, 42, 0.07); }
+.app.app-day-mode .cta-drawer-title { color: #475569; }
+.app.app-day-mode .cta-drawer-close { color: #94a3b8; }
+.app.app-day-mode .cta-drawer-close:hover { background: rgba(15, 23, 42, 0.05); color: #0f172a; }
+
+@media (max-width: 768px) {
+  .cta-drawer { width: calc(100% - 16px); }
+}
+
+/* The agent chat pops out to a <body>-level window (rz-agent-chat.jsx). Its
+   host drawer would otherwise stay parked over the chart as an empty 400px
+   card with just a title bar - and its scrim would eat clicks meant for the
+   window. Stand both down while the window is out. */
+body.rz-agent-windowed .cta-drawer,
+body.rz-agent-windowed .cta-scrim {
+  display: none;
+}

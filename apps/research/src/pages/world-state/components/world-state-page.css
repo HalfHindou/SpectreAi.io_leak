@@ -1,0 +1,853 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   WORLD STATE — prefix wst-
+   ══════════════════════════════════════════════════════════════════════════
+
+   ⚠️  NUMBERS: every figure, price, percentage, count, timestamp and countdown
+   on this page carries `.wst-num`. Not "most of them" — all of them. That
+   class is the page's only source of tabular figures, and a number set in
+   proportional digits inside a right-aligned column will visibly dance every
+   time it updates. If you add a cell that holds a digit, it gets .wst-num.
+
+   ⚠️  NO backdrop-filter anywhere in this file. The page scrolls, and a blurred
+   surface under a scrolling document repaints the whole layer every frame.
+   Surfaces here are translucent FILLS over the app background.
+
+   ⚠️  Borders are hairlines (0.03–0.06 alpha). A separator you can actually
+   see is a separator that makes the page look cheap.
+
+   Ink is a LOCAL ramp declared on .wst-root and overridden wholesale in
+   world-state-page.day-mode.css — never a hard-coded grey in a rule below.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.wst-root {
+  /* ink ramp */
+  --wst-ink: rgba(245, 245, 247, 0.95);
+  --wst-ink-2: rgba(245, 245, 247, 0.78);
+  --wst-ink-3: rgba(245, 245, 247, 0.55);
+  --wst-hair: rgba(255, 255, 255, 0.06);
+  --wst-hair-soft: rgba(255, 255, 255, 0.03);
+  /* surfaces */
+  --wst-fill: rgba(255, 255, 255, 0.022);
+  --wst-fill-hi: rgba(255, 255, 255, 0.038);
+  --wst-ground: rgba(255, 255, 255, 0.05);
+  --wst-zero: rgba(255, 255, 255, 0.2);
+  /* semantics */
+  --wst-bull: #10b981;
+  --wst-bear: #ef4444;
+  /* an odds track is NEVER semantic — a filled bar means "priced", not "good" */
+  --wst-track: rgba(245, 245, 247, 0.55);
+
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 40px 24px 96px;
+  color: var(--wst-ink-2);
+  font-family: var(--font-body);
+}
+
+.wst-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: -0.005em;
+}
+
+/* Scoped to the page root — `.is-bull` / `.is-bear` / `.is-quiet` are generic
+   names and must never escape into the app's global namespace. */
+.wst-root .is-bull { color: var(--wst-bull); }
+.wst-root .is-bear { color: var(--wst-bear); }
+.wst-root .is-quiet { color: var(--wst-ink-3); }
+.wst-dot-sep { color: var(--wst-ink-3); }
+
+/* Buttons on this page are content surfaces, not controls with their own
+   voice: they inherit the page's type rather than the UA's. */
+.wst-odds-row, .wst-stance, .wst-more, .wst-log-btn, .wst-retry, .wst-toggle {
+  font-family: var(--font-body);
+}
+
+/* ── bands ───────────────────────────────────────────────────────────────── */
+
+.wst-band {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 400ms var(--ease-out), transform 400ms var(--ease-out);
+}
+.wst-band.is-in { opacity: 1; transform: none; }
+.wst-band + .wst-band { margin-top: 72px; }
+.wst-diff + .wst-band { margin-top: 56px; }
+
+.wst-hd {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--wst-hair-soft);
+}
+.wst-hd-l { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.wst-hd-eb { display: flex; align-items: center; gap: 8px; }
+.wst-hd-r { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+
+.wst-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--wst-ink-3);
+}
+.wst-eyebrow--sm { font-size: 0.625rem; letter-spacing: 0.14em; }
+.wst-hd-sub { font-size: 0.8125rem; color: var(--wst-ink-3); }
+.wst-hd-meta { font-size: 0.75rem; color: var(--wst-ink-3); }
+
+/* 30s change mark. Expires on a timeout and never returns on its own —
+   this is NOT a live indicator. */
+.wst-mark {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--wst-ink);
+  flex-shrink: 0;
+}
+
+.wst-none { margin: 0; font-size: 0.875rem; color: var(--wst-ink-3); line-height: 1.5; }
+.wst-foot { margin: 14px 0 0; font-size: 0.75rem; color: var(--wst-ink-3); line-height: 1.5; max-width: 78ch; }
+.wst-note { margin: 16px 0 0; font-size: 0.8125rem; color: var(--wst-ink-2); line-height: 1.55; max-width: 68ch; }
+
+/* ── A · masthead ────────────────────────────────────────────────────────── */
+
+.wst-mast {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 40px;
+  align-items: start;
+  min-height: 180px;
+}
+.wst-mast-l { display: flex; flex-direction: column; min-width: 0; }
+.wst-h1 {
+  margin: 14px 0 0;
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--wst-ink);
+  max-width: 18ch;
+}
+.wst-src { margin: 14px 0 0; font-size: 0.8125rem; color: var(--wst-ink-3); }
+.wst-micro { margin: 6px 0 0; font-size: 0.75rem; color: var(--wst-ink-3); }
+
+.wst-mast-r {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  text-align: right;
+}
+.wst-ver-row { display: flex; align-items: baseline; gap: 10px; }
+
+/* The loudest chrome on the page. */
+.wst-ver {
+  position: relative;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--wst-ink);
+}
+.wst-ver--none { color: var(--wst-ink-3); }
+/* arrive: pre-painted overlay, opacity only, one shot, on the CHANGED CELL */
+.wst-ver.is-flash::after {
+  content: '';
+  position: absolute;
+  inset: -5px -9px;
+  border-radius: 6px;
+  background: currentColor;
+  opacity: 0;
+  pointer-events: none;
+  animation: wstArrive 600ms var(--ease-out) 1;
+}
+@keyframes wstArrive { from { opacity: 0.14; } to { opacity: 0; } }
+
+.wst-stale { font-size: 0.6875rem; color: var(--wst-bear); }
+.wst-stale .wst-num { color: inherit; }
+.wst-stamp { font-size: 0.75rem; color: var(--wst-ink-3); }
+.wst-stamp-d { color: var(--wst-ink-3); }
+
+.wst-regime {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 6px;
+  color: var(--wst-ink-2);
+  background: var(--wst-ground);
+  border: 1px solid var(--wst-hair-soft);
+}
+.wst-regime--bull { color: var(--wst-bull); }
+.wst-regime--bear { color: var(--wst-bear); }
+
+/* ── B · diff strip ──────────────────────────────────────────────────────── */
+
+.wst-diff { margin-top: 28px; }
+.wst-diff-strip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  min-height: 56px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: var(--wst-fill);
+  border: 1px solid var(--wst-hair-soft);
+}
+/* Silence is set at the SAME weight as a change. One class, both branches. */
+.wst-diff-txt {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--wst-ink);
+  transition: opacity 250ms var(--ease-out);
+}
+.wst-diff-ago { color: var(--wst-ink-3); }
+
+.wst-log-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--wst-hair-soft);
+  background: none;
+  color: var(--wst-ink-3);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--duration-base) var(--ease-out);
+}
+.wst-log-btn:hover {
+  color: var(--wst-ink);
+  border-color: var(--wst-hair);
+  background: var(--wst-fill-hi);
+  transform: translateY(-1px);
+}
+.wst-caret { transition: transform var(--duration-base) var(--ease-out); }
+.wst-log-btn.is-open .wst-caret { transform: rotate(180deg); }
+
+.wst-log {
+  margin-top: 10px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: var(--wst-fill);
+  border: 1px solid var(--wst-hair-soft);
+  animation: wstFadeIn 150ms var(--ease-out);
+}
+@keyframes wstFadeIn { from { opacity: 0; } to { opacity: 1; } }
+.wst-log-note { margin: 0 0 10px; font-size: 0.75rem; color: var(--wst-ink-3); line-height: 1.5; max-width: 78ch; }
+.wst-log-list { list-style: none; margin: 0; padding: 0; }
+.wst-log-row {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: baseline;
+  min-height: 26px;
+  padding: 4px 0;
+  border-top: 1px solid var(--wst-hair-soft);
+}
+.wst-log-row:first-child { border-top: 0; }
+.wst-log-v { font-size: 0.75rem; font-weight: 700; color: var(--wst-ink-2); }
+.wst-log-t { font-size: 0.8125rem; color: var(--wst-ink-2); line-height: 1.45; }
+/* Printed, never hover-only. */
+.wst-log-ts { font-size: 0.6875rem; text-align: right; color: var(--wst-ink-3); white-space: nowrap; }
+
+/* ── C · tide ────────────────────────────────────────────────────────────── */
+
+.wst-tide {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.85fr) minmax(0, 1.15fr);
+  gap: 48px;
+  align-items: center;
+  min-height: 140px;
+}
+.wst-tide-l { display: flex; flex-direction: column; gap: 8px; }
+.wst-trend {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--wst-ink-3);
+}
+.wst-fig { font-size: 2.75rem; font-weight: 700; letter-spacing: -0.035em; line-height: 1; color: var(--wst-ink); }
+.wst-fig--sm { font-size: 1.75rem; letter-spacing: -0.025em; }
+.wst-tide-sub { font-size: 0.8125rem; color: var(--wst-ink-3); }
+
+.wst-bar { position: relative; height: 56px; border-radius: 8px; background: var(--wst-ground); }
+.wst-bar-zero { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--wst-zero); }
+.wst-bar-fill {
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  width: calc(var(--mag) * 50%);
+  border-radius: 4px;
+  transform: scaleX(0);
+  transition: transform 600ms var(--ease-out);
+}
+.wst-bar-fill.is-bear { right: 50%; transform-origin: right center; background: var(--wst-bear); }
+.wst-bar-fill.is-bull { left: 50%; transform-origin: left center; background: var(--wst-bull); }
+.wst-tide-r.is-in .wst-bar-fill { transform: scaleX(1); }
+.wst-bar-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 0.6875rem;
+  color: var(--wst-ink-3);
+}
+
+/* ── D · rates ───────────────────────────────────────────────────────────── */
+
+.wst-rates { display: grid; grid-template-columns: minmax(240px, 0.8fr) minmax(0, 1.2fr); gap: 48px; }
+.wst-rates-l { display: flex; flex-direction: column; gap: 28px; }
+.wst-fomc { display: flex; flex-direction: column; gap: 6px; }
+.wst-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.wst-stat { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.wst-stat-k {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--wst-ink-3);
+  white-space: nowrap;
+}
+.wst-stat-v { font-size: 1.375rem; font-weight: 600; letter-spacing: -0.02em; color: var(--wst-ink); }
+.wst-stat-s { font-size: 0.75rem; color: var(--wst-ink-3); }
+.wst-sub { margin-top: 24px; display: flex; flex-direction: column; gap: 10px; }
+
+/* ── the odds ladder (D + G) ─────────────────────────────────────────────── */
+
+.wst-odds-list, .wst-odds-explist { list-style: none; margin: 0; padding: 0; }
+.wst-odds-li + .wst-odds-li { border-top: 1px solid var(--wst-hair-soft); }
+.wst-odds-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px 44px 56px;
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--duration-base) var(--ease-out);
+}
+/* Rows brighten rather than lift — a row in a ladder that rises off its
+   neighbours reads as broken, not responsive. */
+.wst-odds-row:hover { background: var(--wst-fill-hi); }
+.wst-odds-q { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.wst-odds-qt {
+  min-width: 0;
+  font-size: 0.8125rem;
+  color: var(--wst-ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wst-flagchip {
+  flex-shrink: 0;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--wst-ink-3);
+  border: 1px solid var(--wst-hair);
+}
+.wst-odds-track { position: relative; height: 8px; border-radius: 4px; background: var(--wst-ground); overflow: hidden; }
+/* Rule 1: no money, no fill. */
+.wst-odds-track.is-outline { background: none; border: 1px solid var(--wst-hair); }
+.wst-odds-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  background: var(--wst-track);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 400ms var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 40ms);
+}
+.wst-band.is-in .wst-odds-fill { transform: scaleX(var(--w, 0)); }
+.wst-odds-pct { font-size: 0.8125rem; font-weight: 600; text-align: right; color: var(--wst-ink); }
+.wst-odds-vol { font-size: 0.75rem; text-align: right; color: var(--wst-ink-3); }
+
+.wst-odds-more {
+  padding: 4px 10px 14px;
+  animation: wstFadeIn 150ms var(--ease-out);
+}
+.wst-odds-full { margin: 0 0 6px; font-size: 0.8125rem; color: var(--wst-ink); line-height: 1.5; max-width: 68ch; }
+.wst-odds-meta { margin: 0; display: flex; gap: 8px; font-size: 0.75rem; color: var(--wst-ink-3); flex-wrap: wrap; }
+.wst-odds-flag { margin: 6px 0 0; font-size: 0.75rem; color: var(--wst-ink-3); }
+
+.wst-odds-exp { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+.wst-odds-exprow {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  font-size: 0.75rem;
+  color: var(--wst-ink-3);
+  padding: 3px 10px;
+}
+
+/* ── E · COT (the only mirrored form) ────────────────────────────────────── */
+
+.wst-cot-row { display: grid; grid-template-columns: 132px minmax(0, 1fr) 88px; gap: 16px; align-items: center; }
+.wst-cot-k { font-size: 0.75rem; font-weight: 600; color: var(--wst-ink-2); }
+.wst-cot-track { position: relative; height: 36px; }
+/* Rows are adjacent so the two zero rules read as ONE continuous axis. */
+.wst-cot-zero { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--wst-zero); }
+.wst-cot-bar {
+  position: absolute;
+  top: 11px;
+  height: 14px;
+  width: calc(var(--mag) * 50%);
+  border-radius: 3px;
+  transform: scaleX(0);
+  transition: transform 600ms var(--ease-out);
+}
+.wst-cot-bar.is-left { right: 50%; transform-origin: right center; }
+.wst-cot-bar.is-right { left: 50%; transform-origin: left center; }
+.wst-cot-bar.is-bull { background: var(--wst-bull); }
+.wst-cot-bar.is-bear { background: var(--wst-bear); }
+.wst-cot.is-in .wst-cot-bar { transform: scaleX(1); }
+.wst-cot-ghost { position: absolute; top: 5px; height: 26px; width: 2px; background: var(--wst-ink-3); opacity: 0.55; }
+.wst-cot-ghost.is-left { right: calc(50% + var(--mag) * 50% - 1px); }
+.wst-cot-ghost.is-right { left: calc(50% + var(--mag) * 50% - 1px); }
+.wst-cot-v { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right; }
+.wst-cot-v .wst-num:first-child { font-size: 1rem; font-weight: 600; }
+.wst-cot-wow { font-size: 0.6875rem; color: var(--wst-ink-3); }
+/* Aligned to the track column: 132 + 16 left, 88 + 16 right. */
+.wst-cot-axis {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 104px 0 148px;
+  font-size: 0.6875rem;
+  color: var(--wst-ink-3);
+}
+.wst-cot-legend { margin: 10px 0 0; padding-left: 148px; font-size: 0.6875rem; color: var(--wst-ink-3); }
+
+/* ── F · stances (the only serif, the only prose) ────────────────────────── */
+
+.wst-stance-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.wst-stance {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 200px;
+  padding: 18px;
+  border-radius: 14px;
+  background: var(--wst-fill);
+  border: 1px solid var(--wst-hair-soft);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform var(--duration-base) var(--ease-out),
+              border-color var(--duration-base) var(--ease-out),
+              background var(--duration-base) var(--ease-out);
+}
+.wst-stance:hover { transform: translateY(-2px); border-color: var(--wst-hair); background: var(--wst-fill-hi); }
+.wst-stance.is-open { height: auto; }
+.wst-stance-hd { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.wst-stance-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--wst-ink-3); flex-shrink: 0; }
+.wst-stance-dot.is-bull { background: var(--wst-bull); }
+.wst-stance-dot.is-bear { background: var(--wst-bear); }
+/* Stance colours the DOT only. Two red politician names in a three-card row
+   read as a partisan wall — the stance word at the card's foot carries the
+   classification; the name stays ink. */
+.wst-stance-who {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--wst-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wst-stance-age { margin-left: auto; font-size: 0.6875rem; color: var(--wst-ink-3); white-space: nowrap; }
+
+.wst-quote {
+  margin: 0;
+  flex: 1;
+  min-height: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: normal; /* ROMAN. Never italic. */
+  font-weight: 400;
+  font-size: 1.0625rem;
+  line-height: 1.45;
+  color: var(--wst-ink);
+}
+.wst-quote.is-clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.wst-stance-ft { display: flex; align-items: center; gap: 8px; margin-top: auto; }
+.wst-stance-word {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--wst-ink-3);
+}
+.wst-stance-attr { font-size: 0.75rem; color: var(--wst-ink-3); }
+
+.wst-chip {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--wst-ink-3);
+  border: 1px solid var(--wst-hair);
+}
+
+.wst-more {
+  margin-top: 16px;
+  padding: 9px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--wst-hair-soft);
+  background: none;
+  color: var(--wst-ink-3);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-base) var(--ease-out);
+}
+.wst-more:hover { color: var(--wst-ink); border-color: var(--wst-hair); background: var(--wst-fill-hi); transform: translateY(-1px); }
+
+/* ── G · policy toggle ───────────────────────────────────────────────────── */
+
+.wst-toggle-set {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--wst-fill);
+  border: 1px solid var(--wst-hair-soft);
+}
+/* 28px pill — excluded from the global 38px touch-min inside that rule's own
+   :not() chain (see app-store-ready.css). */
+.wst-toggle {
+  height: 28px;
+  min-height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--wst-ink-3);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--duration-base) var(--ease-out), background var(--duration-base) var(--ease-out);
+}
+.wst-toggle:hover { color: var(--wst-ink-2); }
+.wst-toggle.is-on { color: var(--wst-ink); background: var(--wst-fill-hi); }
+
+/* ── H · stablecoins + tape ──────────────────────────────────────────────── */
+
+.wst-liq { display: grid; grid-template-columns: minmax(200px, 0.7fr) minmax(0, 1.3fr); gap: 48px; align-items: center; }
+.wst-liq-l { display: flex; flex-direction: column; gap: 8px; }
+.wst-stats--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* ── I · docket ──────────────────────────────────────────────────────────── */
+
+.wst-dk { list-style: none; margin: 0; padding: 0; }
+.wst-dk-row { padding: 14px 0; border-top: 1px solid var(--wst-hair-soft); }
+.wst-dk-row:first-child { border-top: 0; padding-top: 0; }
+.wst-dk-h { margin: 0 0 6px; font-size: 0.9375rem; line-height: 1.45; color: var(--wst-ink); max-width: 68ch; }
+.wst-dk-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.6875rem; color: var(--wst-ink-3); }
+.wst-tag {
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--wst-ink-3);
+  background: var(--wst-ground);
+}
+.wst-dk-n { color: var(--wst-ink-3); }
+
+/* ── J · provenance ──────────────────────────────────────────────────────── */
+
+.wst-prov { margin: 0; }
+.wst-prov-row {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 16px;
+  padding: 9px 0;
+  border-top: 1px solid var(--wst-hair-soft);
+}
+.wst-prov-row:first-child { border-top: 0; }
+.wst-prov-k { font-size: 0.75rem; font-weight: 600; color: var(--wst-ink-2); }
+.wst-prov-v { margin: 0; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.wst-prov-src { font-size: 0.75rem; color: var(--wst-ink-3); }
+.wst-prov-as { font-size: 0.75rem; color: var(--wst-ink-3); white-space: nowrap; }
+.wst-prov-note { margin: 20px 0 0; font-size: 0.75rem; color: var(--wst-ink-3); line-height: 1.6; max-width: 78ch; }
+.wst-prov-foot { margin: 12px 0 0; font-size: 0.75rem; color: var(--wst-ink-3); line-height: 1.6; max-width: 78ch; }
+.wst-link { color: var(--wst-ink-2); text-decoration: none; border-bottom: 1px solid var(--wst-hair); transition: color var(--duration-base) var(--ease-out), border-color var(--duration-base) var(--ease-out); }
+.wst-link:hover { color: var(--wst-ink); border-color: var(--wst-ink-3); }
+
+/* ── cold / empty ────────────────────────────────────────────────────────── */
+
+.wst-cold { margin-top: 24px; }
+.wst-retry {
+  padding: 11px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--wst-hair);
+  background: var(--wst-fill);
+  color: var(--wst-ink);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-base) var(--ease-out);
+}
+.wst-retry:hover { background: var(--wst-fill-hi); transform: translateY(-1px); }
+
+/* ── skeleton (6 elements, geometry matches what replaces it) ────────────── */
+
+.wst-sk { border-radius: 10px; }
+.wst-sk--h1 { height: 84px; margin-top: 14px; max-width: 560px; }
+.wst-sk--diff { height: 56px; margin-top: 28px; }
+.wst-sk--tide { height: 142px; }
+.wst-sk--stats { height: 128px; }
+.wst-sk--odds { height: 44px; margin-top: 10px; }
+.wst-skel .wst-band { opacity: 1; transform: none; }
+.wst-skel .wst-band + .wst-band { margin-top: 56px; }
+
+/* ── focus ───────────────────────────────────────────────────────────────── */
+
+.wst-root :focus-visible {
+  outline: 2px solid var(--wst-ink-3);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* ── reduced motion: enters instant, nothing draws ───────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .wst-band { opacity: 1; transform: none; transition: none; }
+  .wst-bar-fill, .wst-cot-bar, .wst-odds-fill { transition: none; }
+  .wst-tide-r .wst-bar-fill, .wst-cot .wst-cot-bar { transform: scaleX(1); }
+  .wst-odds-fill { transform: scaleX(var(--w, 0)); }
+  .wst-ver.is-flash::after { animation: none; }
+  .wst-log, .wst-odds-more { animation: none; }
+  .wst-stance:hover, .wst-more:hover, .wst-log-btn:hover, .wst-retry:hover { transform: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE ART LAYER — appended 2026-08-13
+   ══════════════════════════════════════════════════════════════════════════
+
+   Everything below animates; nothing below states a quantity that the data
+   layer above does not already print. Three rules held throughout:
+
+   1. NO backdrop-filter (the file's standing rule — the page scrolls).
+   2. Every motion respects prefers-reduced-motion, and the reduced-motion
+      block at the very end of this file is the single place that switches it
+      all off.
+   3. The engine stage paints its own opaque near-black from WebGL, so the
+      colour here is only the pre-mount ground and the frame around it.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── A½ · the world engine ───────────────────────────────────────────────── */
+
+.wste {
+  position: relative;
+  border-radius: 16px;
+}
+
+.wste-stage {
+  position: relative;
+  height: min(56vh, 600px);
+  min-height: 360px;
+  border: 1px solid var(--wst-hair);
+  border-radius: 16px;
+  background: #08080a;
+  overflow: hidden;
+}
+.wste-canvas { display: block; width: 100%; height: 100%; }
+
+/* Cinematic falloff at the frame edge. A gradient CANNOT be mistaken for a
+   reading, which is why the depth in this hero comes from a vignette and a
+   starfield rather than from extra rings: a dim ring already means "no report
+   on file". */
+.wste-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 54%,
+    transparent 42%, rgba(0, 0, 0, 0.28) 74%, rgba(0, 0, 0, 0.6) 100%);
+}
+
+/* The instrument plate: the edition stamp lives ON the scene, in the corner,
+   the way a serial number sits on a machine. */
+.wste-plate {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.42);
+  pointer-events: none;
+}
+.wste-plate-v {
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: rgba(245, 245, 247, 0.95);
+}
+.wste-plate-t { font-size: 0.75rem; color: rgba(245, 245, 247, 0.62); }
+.wste-plate-d { font-size: 0.6875rem; color: rgba(245, 245, 247, 0.42); }
+
+.wste-key {
+  position: absolute;
+  left: 18px;
+  bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+.wste-key-li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  color: rgba(245, 245, 247, 0.5);
+}
+.wste-key-n {
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 50%;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.72);
+}
+
+.wste-mkt {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  max-width: min(48%, 420px);
+  pointer-events: none;
+}
+.wste-mkt-v {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.92);
+  flex-shrink: 0;
+}
+.wste-mkt-q {
+  min-width: 0;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: rgba(245, 245, 247, 0.46);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wste-mkt-n { font-size: 0.6875rem; color: rgba(245, 245, 247, 0.42); flex-shrink: 0; }
+
+/* ── C · the tide, running as liquid ─────────────────────────────────────── */
+
+/* The canvas replaces the CSS fill; the zero rule stays in the DOM ABOVE it so
+   the anchor is never something the renderer can get wrong. */
+.wst-tank {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+}
+.wst-bar { overflow: hidden; }
+.wst-bar-zero { z-index: 1; }
+
+/* ── E · the pull ────────────────────────────────────────────────────────── */
+
+/* ±3.5% around the true length, in antiphase, starting only once the entrance
+   transition has drawn the bar (fill-mode stays `none` through the delay, so
+   the transition owns the first 760ms and the animation owns the rest). Both
+   legs pass through scaleX(1) at 0/50/100%, so neither ever starts on a jump.
+   The ghost tick is a sibling and does not breathe: last week's position holds
+   still while this week's leans. */
+@media (prefers-reduced-motion: no-preference) {
+  .wst-cot.is-in .wst-cot-bar--a {
+    animation: wstPullA 5.6s var(--ease-in-out) 760ms infinite;
+  }
+  .wst-cot.is-in .wst-cot-bar--b {
+    animation: wstPullB 5.6s var(--ease-in-out) 760ms infinite;
+  }
+}
+@keyframes wstPullA {
+  0% { transform: scaleX(1); }
+  25% { transform: scaleX(1.035); }
+  50% { transform: scaleX(1); }
+  75% { transform: scaleX(0.985); }
+  100% { transform: scaleX(1); }
+}
+@keyframes wstPullB {
+  0% { transform: scaleX(1); }
+  25% { transform: scaleX(0.985); }
+  50% { transform: scaleX(1); }
+  75% { transform: scaleX(1.035); }
+  100% { transform: scaleX(1); }
+}
+
+/* ── D + G · the richest book on the ladder ──────────────────────────────── */
+
+/* Marks the ONE row with enough money behind it to be read as a probability
+   (row 0 of a ladder sorted by volume, and only at state `ok`). It travels
+   slowly — a shimmer that hurries reads as a loading state. */
+.wst-odds-fill { overflow: hidden; }
+@media (prefers-reduced-motion: no-preference) {
+  .wst-odds-fill.is-lead::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg,
+      transparent 0%, rgba(255, 255, 255, 0.42) 50%, transparent 100%);
+    background-size: 240% 100%;
+    animation: wstLead 4.2s linear 1200ms infinite;
+  }
+}
+@keyframes wstLead {
+  from { background-position: 200% 0; }
+  to { background-position: -140% 0; }
+}
+
+/* ── reduced motion, part two: the art layer stands still ────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  /* The engine never mounts under reduced motion (wst-engine.jsx returns
+     null), so there is nothing to disable here — but the tank falls back to
+     the CSS bar and the two ladder/COT decorations must be inert. */
+  .wst-cot-bar--a, .wst-cot-bar--b { animation: none; }
+  .wst-odds-fill.is-lead::after { content: none; }
+}

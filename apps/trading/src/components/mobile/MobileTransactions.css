@@ -1,0 +1,695 @@
+/* ============================================
+   MobileTransactions — DexScreener-style trade tape.
+   Prefix: mtx-
+
+   Single-line row, 4 cols:  TXN (arrow + age) | USD | PRICE | TRADER
+   A faint size-graded bar sits behind each row.
+   Numbers use --font-num-chip (Geist sans, round zeros) + tabular-nums.
+   ============================================ */
+
+.mtx {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: transparent;
+  font-variant-numeric: tabular-nums;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Shared track so header + rows line up exactly: a 22px pfp gutter, then the
+   four data columns. */
+.mtx-head,
+.mtx-row {
+  display: grid;
+  grid-template-columns: 22px 0.78fr 0.76fr 0.8fr 1.18fr;
+  align-items: center;
+  gap: 6px;
+}
+.mtx-pfp { position: relative; z-index: 1; display: inline-flex; align-items: center; }
+
+/* ── Header ──────────────────────────────── */
+.mtx-head {
+  padding: 7px 14px;
+  font-family: var(--font-body, system-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text-3, rgba(255, 255, 255, 0.4));
+  background: rgba(9, 9, 11, 0.6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.mtx-head-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.mtx-head-cell--right { justify-content: flex-end; }
+.mtx-head-label { white-space: nowrap; }
+.mtx-head-filter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-3, rgba(255, 255, 255, 0.32));
+  cursor: pointer;
+  flex: none;
+}
+.mtx-head-filter:active { background: rgba(255, 255, 255, 0.06); }
+.mtx-head-filter.is-active { color: var(--accent, #f5f5f7); }
+
+/* ── Body ────────────────────────────────── */
+.mtx-body { display: flex; flex-direction: column; }
+
+/* ── Row ─────────────────────────────────── */
+/* TRIED AND REJECTED (2026-07-30): `content-visibility: auto` +
+   `contain-intrinsic-size: auto 52px` here, to skip rendering for the ~41
+   off-screen rows. Injected the exact rule into the live prod page and
+   measured: ZERO rows were actually skipped
+   (`checkVisibility({contentVisibilityAuto:true})` stayed true for all 49),
+   while the list grew from 2548px to 2973px (+17%) because the implied
+   `contain: layout style paint` changes how these grid rows size. No win, a
+   real layout regression - do not re-add without re-measuring both numbers. */
+.mtx-row {
+  position: relative;
+  width: 100%;
+  padding: 8px 14px;
+  min-height: 52px;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-num-chip, system-ui);
+  color: var(--text-1, #f5f5f7);
+  transition: background 140ms ease;
+  appearance: none;
+  overflow: hidden;
+}
+.mtx-row.is-static { cursor: default; }
+.mtx-row:not(.is-static):active { background: rgba(255, 255, 255, 0.04); }
+.mtx-row.is-filtered { background: rgba(255, 255, 255, 0.05); }
+.mtx-row[role="button"]:focus-visible { outline: 2px solid var(--accent, #f5f5f7); outline-offset: -2px; }
+
+/* size-graded background bar (behind the cells) — a SOLID block with a hard
+   right edge from the left, DexScreener-style (not a gradient wash) */
+.mtx-depth {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.mtx-depth--buy  { background: rgba(52, 232, 158, 0.13); }
+.mtx-depth--sell { background: rgba(255, 81, 105, 0.13); }
+.mtx-depth--neutral { background: rgba(255, 255, 255, 0.07); }
+
+/* keep cells above the depth bar */
+.mtx-txn, .mtx-usd, .mtx-price, .mtx-trader { position: relative; z-index: 1; min-width: 0; }
+
+/* col 1 — arrow chip + age */
+.mtx-txn { display: flex; align-items: center; gap: 8px; }
+.mtx-ico {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%; /* circular chips (DexScreener) */
+}
+.mtx-ico--buy  { color: var(--up, #34e89e);  background: var(--bull-muted, rgba(52, 232, 158, 0.12)); }
+.mtx-ico--sell { color: var(--down, #ff5169); background: var(--bear-muted, rgba(255, 81, 105, 0.12)); }
+.mtx-ico--neutral { color: var(--text-2, rgba(255,255,255,0.6)); background: rgba(255, 255, 255, 0.08); }
+.mtx-age {
+  font-size: 12px;
+  color: var(--text-3, rgba(255, 255, 255, 0.5));
+  white-space: nowrap;
+}
+
+/* col 2 — USD total.
+   Values stay warm-white: the side already reads from the arrow chip, the
+   depth bar and the trader icon, so tinting the numbers too made a sell-heavy
+   tape a wall of red with no hierarchy left. */
+.mtx-usd {
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-1, #f5f5f7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* col 3 — price / mcap */
+.mtx-price {
+  font-size: 12.5px;
+  color: var(--text-1, #f5f5f7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mtx-sub { font-size: 0.72em; vertical-align: -0.15em; padding: 0 0.5px; }
+
+/* col 4 — trader: size-tier meter + maker + volume bar */
+.mtx-trader {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  max-width: 100%;
+}
+/* size-tier animal glyph — colour set by net lean via currentColor */
+.mtx-tier { position: relative; flex: none; display: inline-flex; align-items: center; }
+.mtx-tier--buy  { color: var(--up, #34e89e); }
+.mtx-tier--sell { color: var(--down, #ff5169); }
+.mtx-tier--flat { color: var(--text-3, rgba(255, 255, 255, 0.5)); }
+/* newly-active spark riding the glyph's shoulder (DexScreener ✦) */
+.mtx-tier-spark {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  color: #fbbf24;
+  fill: #fbbf24;
+}
+
+.mtx-trader-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  min-width: 0;
+  /* no flex-grow — the tier glyph must hug the address, not drift to the
+     column's left edge */
+  flex: 0 1 auto;
+}
+.mtx-trader-id { display: flex; align-items: center; gap: 4px; min-width: 0; max-width: 100%; }
+
+/* volume-share bar under the address (share of the busiest maker) */
+.mtx-volbar {
+  width: 48px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.mtx-volbar-fill { display: block; height: 100%; border-radius: 2px; background: var(--text-3, rgba(255, 255, 255, 0.4)); }
+.mtx-volbar--buy  .mtx-volbar-fill { background: var(--up, #34e89e); }
+.mtx-volbar--sell .mtx-volbar-fill { background: var(--down, #ff5169); }
+
+.mtx-spectre { width: 13px; height: 13px; border-radius: 50%; flex: none; }
+.mtx-rep {
+  flex: none;
+  font-family: var(--font-body, system-ui);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-2, rgba(255, 255, 255, 0.6));
+}
+.mtx-maker {
+  font-size: 12.5px;
+  color: var(--text-1, #f5f5f7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* The wallet's pfp (WalletAvatar.jsx) opens the row; the app the swap came
+   through rides its corner as a mini tile. The corner keyline matches the
+   row ground. */
+.mtx-pfp .wav .tsrc.wav-src { box-shadow: 0 0 0 1.5px #09090b; }
+.mtx-chev {
+  flex: none;
+  color: var(--text-3, rgba(255, 255, 255, 0.32));
+  margin-left: -2px;
+}
+/* per-row filter funnel (DexScreener) — filters the tape by this trader */
+.mtx-row-funnel {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 30px;
+  margin: -6px -8px -6px -2px; /* extend hit area, pull to the row edge */
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 7px;
+  color: var(--text-3, rgba(255, 255, 255, 0.34));
+  cursor: pointer;
+  transition: color 140ms ease, background 140ms ease;
+}
+.mtx-row-funnel:active { background: rgba(255, 255, 255, 0.08); }
+.mtx-row-funnel.is-active { color: var(--accent, #f5f5f7); }
+
+/* ── Skeleton ────────────────────────────── */
+.mtx-row--skel { pointer-events: none; }
+.mtx-skel {
+  height: 11px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 100%);
+  background-size: 200% 100%;
+  animation: mtxShimmer 1.4s ease-in-out infinite;
+}
+.mtx-skel--ico { width: 24px; height: 24px; border-radius: 7px; flex: none; }
+.mtx-skel--w40 { width: 40%; }
+.mtx-skel--w60 { width: 60%; }
+.mtx-skel--w70 { width: 70%; justify-self: flex-end; }
+@keyframes mtxShimmer {
+  0%, 100% { background-position: 200% 0; }
+  50% { background-position: -200% 0; }
+}
+
+/* ── Empty / error ───────────────────────── */
+.mtx-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 40px 16px;
+  text-align: center;
+  font-family: var(--font-body, system-ui);
+}
+.mtx-empty p { margin: 0; font-size: 13px; font-weight: 500; color: var(--text-2, rgba(255,255,255,0.65)); }
+.mtx-empty span { font-size: 11.5px; color: var(--text-3, rgba(255,255,255,0.4)); }
+.mtx-retry {
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 15px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-1, #f5f5f7);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ── Load more ───────────────────────────── */
+.mtx-more {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 16px 20px;
+}
+.mtx-more-btn {
+  padding: 9px 20px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-1, #f5f5f7);
+  font-family: var(--font-body, system-ui);
+  font-size: 13px;
+  font-weight: 500;
+}
+.mtx-more-btn:disabled { opacity: 0.5; }
+.mtx-more-count { font-size: 11px; color: var(--text-3, rgba(255,255,255,0.4)); }
+
+/* ── Day mode (trading = body.theme-light) ── */
+body.theme-light .mtx-head {
+  /* Near-opaque: at 0.7 the rows scrolled through the sticky header and
+     muddied the labels. */
+  background: rgba(255, 255, 255, 0.94);
+  border-bottom-color: rgba(0, 0, 0, 0.09);
+  color: rgba(15, 23, 42, 0.58);
+}
+body.theme-light .mtx-head-filter { color: rgba(15, 23, 42, 0.35); }
+body.theme-light .mtx-head-filter.is-active { color: var(--accent, #0f172a); }
+body.theme-light .mtx-row {
+  color: #0f172a;
+  border-bottom-color: rgba(0, 0, 0, 0.07);
+}
+body.theme-light .mtx-row:not(.is-static):active { background: rgba(0, 0, 0, 0.03); }
+body.theme-light .mtx-row.is-filtered { background: rgba(0, 0, 0, 0.04); }
+body.theme-light .mtx-tier--buy  { color: #059669; }
+body.theme-light .mtx-tier--sell { color: #DC2626; }
+body.theme-light .mtx-tier--flat { color: rgba(15, 23, 42, 0.5); }
+body.theme-light .mtx-volbar { background: rgba(0, 0, 0, 0.08); }
+body.theme-light .mtx-volbar-fill { background: rgba(15, 23, 42, 0.4); }
+body.theme-light .mtx-volbar--buy  .mtx-volbar-fill { background: #059669; }
+body.theme-light .mtx-volbar--sell .mtx-volbar-fill { background: #DC2626; }
+body.theme-light .mtx-row-funnel { color: rgba(15, 23, 42, 0.32); }
+body.theme-light .mtx-row-funnel.is-active { color: var(--accent, #0f172a); }
+body.theme-light .mtx-row-funnel:active { background: rgba(0, 0, 0, 0.05); }
+/* Depth bar is context, not content — on white it competes with the numbers,
+   so it stays a whisper (was 0.12: the rows read as colored blocks). */
+body.theme-light .mtx-depth--buy  { background: rgba(5, 150, 105, 0.1); }
+body.theme-light .mtx-depth--sell { background: rgba(220, 38, 38, 0.09); }
+/* Neon mint/coral (the dark-theme --up/--down) has no contrast on white:
+   pin the arrow chips + maker text to the deeper day-mode market pair. */
+body.theme-light .mtx-ico--buy  { color: #059669; background: rgba(5, 150, 105, 0.1); }
+body.theme-light .mtx-ico--sell { color: #DC2626; background: rgba(220, 38, 38, 0.09); }
+body.theme-light .mtx-ico--neutral { color: rgba(15, 23, 42, 0.6); background: rgba(0, 0, 0, 0.06); }
+body.theme-light .mtx-usd { color: #0f172a; }
+body.theme-light .mtx-age { color: rgba(15, 23, 42, 0.58); }
+body.theme-light .mtx-price { color: #0f172a; }
+body.theme-light .mtx-maker { color: #0f172a; }
+body.theme-light .mtx-rep { color: rgba(15, 23, 42, 0.6); }
+body.theme-light .mtx-chev { color: rgba(15, 23, 42, 0.3); }
+body.theme-light .mtx-empty p { color: rgba(15, 23, 42, 0.65); }
+body.theme-light .mtx-empty span { color: rgba(15, 23, 42, 0.4); }
+body.theme-light .mtx-retry,
+body.theme-light .mtx-more-btn { background: rgba(0, 0, 0, 0.05); border-color: rgba(0, 0, 0, 0.08); color: #0f172a; }
+body.theme-light .mtx-more-count { color: rgba(15, 23, 42, 0.4); }
+
+/* ── TXN type dropdown (DexScreener menu — flat, check-left, no dots) ── */
+.mtx-typemenu {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 8px;
+  min-width: 168px;
+  padding: 4px 0;
+  display: flex;
+  flex-direction: column;
+  background: #1a1a1e;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 5;
+  animation: mtxMenuIn 0.12s var(--ease-out, ease-out) both;
+}
+@keyframes mtxMenuIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.mtx-typemenu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px 10px 12px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-2, rgba(255, 255, 255, 0.78));
+  font-family: var(--font-body, system-ui);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: left;
+  cursor: pointer;
+}
+.mtx-typemenu-item:active { background: rgba(255, 255, 255, 0.06); }
+.mtx-typemenu-item.is-active { color: var(--text-1, #f5f5f7); font-weight: 600; }
+.mtx-typemenu-check {
+  width: 15px;
+  display: inline-flex;
+  justify-content: center;
+  flex: none;
+  color: var(--text-1, #f5f5f7);
+}
+
+body.theme-light .mtx-typemenu {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18), 0 4px 12px rgba(15, 23, 42, 0.1);
+}
+body.theme-light .mtx-typemenu-item { color: rgba(15, 23, 42, 0.72); }
+body.theme-light .mtx-typemenu-item:active { background: rgba(0, 0, 0, 0.05); }
+body.theme-light .mtx-typemenu-item.is-active { color: #0f172a; }
+body.theme-light .mtx-typemenu-check { color: #0f172a; }
+
+/* ── "Filter Amount (USD)" modal — anchored below the table header
+      (DexScreener), not a bottom sheet. `top` comes inline from anchorY. ── */
+.mtx-usd-root {
+  position: fixed;
+  inset: 0;
+  /* Above the Spectre Agent FAB (z 5000) — it floated over the sheet footer. */
+  z-index: 5100;
+}
+.mtx-usd-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  border: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  animation: mtxUsdFadeIn var(--dur-base) var(--ease-out) both;
+}
+@keyframes mtxUsdFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.mtx-usd-sheet {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  /* Spectre glass panel - same surface language as the alert sheet (mals-). */
+  background: rgba(12, 12, 14, 0.94);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  padding: 14px 16px 16px;
+  transform-origin: top center;
+  animation: mtxUsdPanelIn var(--dur-micro) var(--ease-out) both;
+}
+@keyframes mtxUsdPanelIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.mtx-usd-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 -16px 14px;
+  padding: 0 16px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.mtx-usd-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: #f5f5f7;
+}
+/* Largest loaded trade - the reference point for picking a floor. Same
+   labeled-chip language as the screener row chips / alert sheet's current. */
+.mtx-usd-max {
+  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  white-space: nowrap;
+}
+.mtx-usd-max i {
+  font-style: normal;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: rgba(245, 245, 247, 0.38);
+}
+.mtx-usd-max b {
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: rgba(245, 245, 247, 0.85);
+}
+/* Plain icon close (mals-close) - the circle chip read as one more button. */
+.mtx-usd-close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  margin-right: -6px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: color 0.2s ease;
+}
+.mtx-usd-close:active { color: #f5f5f7; }
+
+/* USD quick floors. Same chip language as the full filter sheet's
+   .mfs-preset (pill, glass fill, accent-mixed active) — same data, so the two
+   filter surfaces must not diverge. Kept in a 3-col grid rather than a wrap
+   row because these are the modal's primary thumb targets. */
+.mtx-usd-presets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.mtx-usd-preset {
+  padding: 7px 0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  color: rgba(255, 255, 255, 0.55);
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+.mtx-usd-preset:active { background: rgba(255, 255, 255, 0.12); color: #f5f5f7; }
+.mtx-usd-preset.is-active {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f5f5f7;
+}
+
+/* Min-Max side by side (matches the full filter sheet's range rows) - two
+   stacked full-width fields read as two separate questions. */
+.mtx-usd-fields {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.mtx-usd-dash { flex: 0 0 auto; color: rgba(255, 255, 255, 0.3); }
+.mtx-usd-field {
+  display: flex;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 46px;
+  padding: 0 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  transition: border-color 0.2s ease;
+}
+.mtx-usd-field:focus-within { border-color: rgba(255, 255, 255, 0.14); }
+.mtx-usd-prefix {
+  margin-right: 8px;
+  font-family: var(--font-num-chip);
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.35);
+}
+.mtx-usd-field input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #f5f5f7;
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 16px;
+  font-weight: 600;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.mtx-usd-field input::placeholder { color: rgba(255, 255, 255, 0.25); font-weight: 500; }
+/* Kill the number spinners — they crowd the field and are useless on touch
+   (the full filter sheet already does this for .mfs-input). */
+.mtx-usd-field input::-webkit-outer-spin-button,
+.mtx-usd-field input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.mtx-usd-field input[type=number] { -moz-appearance: textfield; }
+
+/* Live draft feedback - how many loaded rows survive the range. */
+.mtx-usd-hint {
+  margin: -6px 0 12px;
+  font-size: 12px;
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.4);
+}
+.mtx-usd-hint b {
+  font-weight: 650;
+  color: #f5f5f7;
+}
+.mtx-usd-hint--none,
+.mtx-usd-hint--none b { color: var(--down, #FF5169); }
+
+.mtx-usd-actions { display: flex; gap: 8px; }
+.mtx-usd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 13px 16px;
+  border-radius: 12px;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+}
+.mtx-usd-btn:active { transform: translateY(1px); }
+.mtx-usd-btn--primary {
+  flex: 1 1 0;
+  background: #f5f5f7;
+  border: none;
+  color: #09090b;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.10);
+}
+.mtx-usd-btn--ghost {
+  flex: 0 0 34%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Day mode. The obsidian tokens above are NOT redefined under
+   `body.theme-light`, so every surface/border/text colour is restated here. */
+body.theme-light .mtx-usd-backdrop { background: rgba(0, 0, 0, 0.35); }
+body.theme-light .mtx-usd-sheet {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2), 0 6px 16px rgba(15, 23, 42, 0.12);
+}
+body.theme-light .mtx-usd-title { color: #0f172a; }
+body.theme-light .mtx-usd-head { border-bottom-color: rgba(0, 0, 0, 0.06); }
+body.theme-light .mtx-usd-max { background: rgba(0, 0, 0, 0.03); border-color: rgba(0, 0, 0, 0.06); }
+body.theme-light .mtx-usd-max i { color: rgba(15, 23, 42, 0.4); }
+body.theme-light .mtx-usd-max b { color: rgba(15, 23, 42, 0.8); }
+body.theme-light .mtx-usd-dash { color: rgba(15, 23, 42, 0.45); }
+body.theme-light .mtx-usd-hint { color: rgba(15, 23, 42, 0.55); }
+body.theme-light .mtx-usd-hint b { color: #0f172a; }
+body.theme-light .mtx-usd-hint--none,
+body.theme-light .mtx-usd-hint--none b { color: #dc2626; }
+body.theme-light .mtx-usd-close { color: rgba(15, 23, 42, 0.4); }
+body.theme-light .mtx-usd-close:active { color: #0f172a; }
+body.theme-light .mtx-usd-preset {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: rgba(15, 23, 42, 0.6);
+}
+body.theme-light .mtx-usd-preset.is-active {
+  background: rgba(15, 23, 42, 0.08);
+  border-color: rgba(15, 23, 42, 0.3);
+  color: #0f172a;
+}
+body.theme-light .mtx-usd-field {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+body.theme-light .mtx-usd-field:focus-within { border-color: rgba(15, 23, 42, 0.3); }
+body.theme-light .mtx-usd-field input { color: #0f172a; }
+body.theme-light .mtx-usd-field input::placeholder { color: rgba(15, 23, 42, 0.35); }
+body.theme-light .mtx-usd-prefix { color: rgba(15, 23, 42, 0.4); }
+body.theme-light .mtx-usd-btn--primary { background: #111113; color: #ffffff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
+body.theme-light .mtx-usd-btn--ghost {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: rgba(15, 23, 42, 0.65);
+}

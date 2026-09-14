@@ -1,0 +1,1303 @@
+/* ═══════════════════════════════════════════════════════
+   SPECTRE COSMOS — spatial market universe
+   Glass HUD floating over the WebGL stage. Warm-white,
+   near-invisible borders, no purple chrome.
+   ═══════════════════════════════════════════════════════ */
+
+.cosmos-root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.cosmos-stage {
+  position: absolute;
+  inset: 0;
+}
+.cosmos-stage .cosmos-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  /* the engine owns every gesture — without this, touch drags become page
+     scrolls and the browser fires pointercancel mid-orbit (broken drags) */
+  touch-action: none;
+}
+.cosmos-stage .cosmos-canvas:active { cursor: grabbing; }
+
+/* vignette for cinematic depth */
+.cosmos-root::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.38) 100%);
+  z-index: 1;
+}
+.cosmos-root.cosmos-day::after {
+  background: radial-gradient(ellipse at 50% 45%, transparent 62%, rgba(15, 23, 42, 0.07) 100%);
+}
+
+/* ── HUD chrome ── */
+.cosmos-hud {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  transition: opacity 0.6s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+              transform 0.6s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.cosmos-hud-tl {
+  top: 14px;
+  left: 14px;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.cosmos-source-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.cosmos-seg-mini .cosmos-seg-btn { padding: 5px 9px; font-size: 0.66rem; }
+.cosmos-labels-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.cosmos-labels-eyebrow {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.35);
+  padding: 4px 8px;
+  border-radius: 7px;
+  background: rgba(9, 9, 11, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.cosmos-seg-xdash .cosmos-social-dot { width: 6px; height: 6px; }
+.cosmos-anchor-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 200, 90, 0.14);
+  background: rgba(9, 9, 11, 0.66);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  color: rgba(245, 245, 247, 0.55);
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.cosmos-anchor-btn:hover { color: #f5f5f7; }
+.cosmos-anchor-btn.active {
+  color: #ffce7a;
+  border-color: rgba(255, 200, 90, 0.35);
+}
+.cosmos-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 9px;
+  border: 1px solid rgba(245, 245, 247, 0.16);
+  background: rgba(245, 245, 247, 0.1);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  color: #f5f5f7;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+  animation: cosmosFadeDown 0.25s var(--ease-out, ease) both;
+}
+.cosmos-breadcrumb:hover { background: rgba(245, 245, 247, 0.16); transform: translateY(-1px); }
+.cosmos-breadcrumb svg { width: 12px; height: 12px; }
+.cosmos-breadcrumb em {
+  font-style: normal;
+  font-weight: 500;
+  font-size: 0.6rem;
+  color: rgba(245, 245, 247, 0.45);
+}
+.cosmos-hud-tr { top: 14px; right: 14px; align-items: center; }
+.cosmos-hud-bl { bottom: 14px; left: 14px; flex-direction: column; gap: 8px; }
+.cosmos-hud-br { bottom: 14px; right: 14px; }
+
+/* cinematic mode: chrome breathes out */
+.cosmos-cinematic .cosmos-hud {
+  opacity: 0;
+  pointer-events: none;
+}
+.cosmos-cinematic .cosmos-hud-tl { transform: translateY(-8px); }
+.cosmos-cinematic .cosmos-hud-tr { transform: translateY(-8px); }
+.cosmos-cinematic .cosmos-hud-bl { transform: translateY(8px); }
+.cosmos-cinematic .cosmos-hud-br { transform: translateY(8px); }
+
+/* ── segmented view switcher ── */
+.cosmos-seg {
+  display: flex;
+  padding: 3px;
+  background: rgba(9, 9, 11, 0.66);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.cosmos-seg-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  color: rgba(245, 245, 247, 0.45);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+.cosmos-seg-btn:hover { color: rgba(245, 245, 247, 0.75); }
+.cosmos-seg-btn.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f5f5f7;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.cosmos-seg-icon { display: flex; }
+.cosmos-seg-icon svg { width: 14px; height: 14px; }
+
+/* ── round HUD buttons ── */
+.cosmos-hud-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(9, 9, 11, 0.66);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  color: rgba(245, 245, 247, 0.6);
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 700;
+  transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+.cosmos-hud-btn svg { width: 15px; height: 15px; }
+.cosmos-hud-btn:hover {
+  color: #f5f5f7;
+  background: rgba(24, 24, 27, 0.8);
+  transform: translateY(-1px);
+}
+.cosmos-hud-btn.active {
+  color: #09090b;
+  background: #f5f5f7;
+  border-color: transparent;
+}
+
+/* ── search ── */
+.cosmos-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.cosmos-search-icon {
+  position: absolute;
+  left: 10px;
+  width: 13px;
+  height: 13px;
+  color: rgba(245, 245, 247, 0.35);
+  pointer-events: none;
+}
+.cosmos-search input {
+  width: 172px;
+  height: 32px;
+  padding: 0 10px 0 30px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(9, 9, 11, 0.66);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  color: #f5f5f7;
+  font-size: 0.75rem;
+  outline: none;
+  transition: border-color 0.2s ease, width 0.25s var(--ease-out, ease);
+}
+.cosmos-search input:focus {
+  width: 210px;
+  border-color: rgba(245, 245, 247, 0.18);
+}
+.cosmos-search input::placeholder { color: rgba(245, 245, 247, 0.3); }
+
+.cosmos-search-results {
+  position: absolute;
+  top: 38px;
+  left: 0;
+  right: 0;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(14, 14, 17, 0.92);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: cosmosFadeDown 0.18s var(--ease-out, ease) both;
+}
+@keyframes cosmosFadeDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.cosmos-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: rgba(245, 245, 247, 0.85);
+  font-size: 0.74rem;
+  cursor: pointer;
+  text-align: left;
+}
+.cosmos-search-row:hover { background: rgba(255, 255, 255, 0.06); }
+.cosmos-search-row img { width: 16px; height: 16px; border-radius: 50%; }
+.cosmos-search-sym { font-weight: 700; }
+.cosmos-search-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(245, 245, 247, 0.4);
+  font-size: 0.7rem;
+}
+.cosmos-search-sun { font-size: 0.7rem; }
+.cosmos-search-src {
+  flex-shrink: 0;
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 5px;
+  color: rgba(245, 245, 247, 0.45);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+.cosmos-day .cosmos-search-src {
+  color: rgba(15, 23, 42, 0.5);
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+/* ── sun chip + legend ── */
+.cosmos-sun-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 200, 90, 0.14);
+  background: rgba(9, 9, 11, 0.66);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  color: #f5f5f7;
+  font-size: 0.74rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.cosmos-sun-chip:hover {
+  border-color: rgba(255, 200, 90, 0.35);
+  transform: translateY(-1px);
+}
+.cosmos-sun-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff6d8, #ffb62e 60%, #ff7a00);
+  box-shadow: 0 0 10px rgba(255, 170, 40, 0.8);
+  animation: cosmosSunPulse 3s ease-in-out infinite;
+}
+@keyframes cosmosSunPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 170, 40, 0.65); }
+  50% { box-shadow: 0 0 14px rgba(255, 170, 40, 0.95); }
+}
+.cosmos-sun-sym { font-weight: 700; letter-spacing: 0.02em; }
+.cosmos-sun-price { color: rgba(245, 245, 247, 0.65); font-variant-numeric: tabular-nums; }
+.cosmos-sun-change.pos { color: #34d399; }
+.cosmos-sun-change.neg { color: #f87171; }
+
+.cosmos-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: rgba(9, 9, 11, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.cosmos-legend-grad {
+  width: 44px;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #34d399 0%, rgba(245, 245, 247, 0.35) 50%, #f87171 100%);
+}
+.cosmos-legend-text {
+  font-size: 0.64rem;
+  letter-spacing: 0.02em;
+  color: rgba(245, 245, 247, 0.42);
+}
+
+.cosmos-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-width: 380px;
+}
+.cosmos-group-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(9, 9, 11, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.62rem;
+  color: rgba(245, 245, 247, 0.6);
+}
+.cosmos-group-chip em {
+  font-style: normal;
+  color: rgba(245, 245, 247, 0.35);
+}
+.cosmos-group-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.cosmos-hint {
+  font-size: 0.64rem;
+  letter-spacing: 0.03em;
+  color: rgba(245, 245, 247, 0.3);
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: rgba(9, 9, 11, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ── hover card ── */
+.cosmos-hover-card {
+  /* absolute inside .cosmos-root, NOT fixed: embedded surfaces (x-dash tab)
+     have filtered/transformed ancestors that re-anchor fixed elements, which
+     threw the card across the screen. The views translate by host-local px. */
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 99999;
+  min-width: 168px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(14, 14, 17, 0.94);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.cosmos-hover-card.visible { opacity: 1; }
+.cosmos-hover-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-bottom: 6px;
+}
+.cosmos-hover-dive { text-align: center; }
+.cosmos-hover-head img { width: 18px; height: 18px; border-radius: 50%; }
+.cosmos-hover-sym {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #f5f5f7;
+}
+.cosmos-hover-suntag {
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  border-radius: 5px;
+  color: #ffce7a;
+  background: rgba(255, 170, 40, 0.12);
+  border: 1px solid rgba(255, 170, 40, 0.25);
+}
+.cosmos-hover-row {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 0.76rem;
+  color: rgba(245, 245, 247, 0.85);
+  font-variant-numeric: tabular-nums;
+}
+.cosmos-hover-row .pos { color: #34d399; }
+.cosmos-hover-row .neg { color: #f87171; }
+.cosmos-hover-sector-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.cosmos-hover-dive {
+  margin-top: 6px;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.4);
+}
+
+/* ── focus dossier ── */
+.cosmos-dossier {
+  position: absolute;
+  top: 60px;
+  right: 14px;
+  z-index: 5;
+  width: 252px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(12, 12, 15, 0.88);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  animation: cosmosDossierIn 0.35s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+@keyframes cosmosDossierIn {
+  from { opacity: 0; transform: translateX(14px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.cosmos-cinematic .cosmos-dossier { opacity: 0; pointer-events: none; }
+
+.cosmos-dossier-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(245, 245, 247, 0.5);
+  cursor: pointer;
+}
+.cosmos-dossier-close:hover { color: #f5f5f7; background: rgba(255, 255, 255, 0.1); }
+.cosmos-dossier-close svg { width: 12px; height: 12px; }
+
+.cosmos-dossier-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-right: 22px;
+}
+.cosmos-dossier-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.cosmos-dossier-name {
+  font-size: 0.88rem;
+  font-weight: 650;
+  color: #f5f5f7;
+  line-height: 1.2;
+}
+.cosmos-dossier-sub {
+  font-size: 0.66rem;
+  color: rgba(245, 245, 247, 0.42);
+  margin-top: 2px;
+}
+.cosmos-dossier-price {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.cosmos-dossier-px {
+  font-size: 1.24rem;
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.cosmos-dossier-chg { font-size: 0.78rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+.cosmos-dossier-chg em {
+  font-style: normal;
+  font-size: 0.62rem;
+  color: rgba(245, 245, 247, 0.35);
+  font-weight: 500;
+  margin-left: 2px;
+}
+.cosmos-dossier-chg.pos { color: #34d399; }
+.cosmos-dossier-chg.neg { color: #f87171; }
+
+.cosmos-spark {
+  width: 100%;
+  height: 44px;
+  margin-bottom: 12px;
+}
+
+.cosmos-dossier-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.cosmos-dossier-grid label {
+  display: block;
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.35);
+  margin-bottom: 2px;
+}
+.cosmos-dossier-grid span {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.88);
+  font-variant-numeric: tabular-nums;
+}
+
+.cosmos-dossier-orbit {
+  padding: 7px 10px;
+  margin-bottom: 12px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.66rem;
+  line-height: 1.4;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.cosmos-dossier-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 10px;
+  background: #f5f5f7;
+  color: #09090b;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+.cosmos-dossier-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4), 0 0 20px rgba(245, 245, 247, 0.12);
+}
+.cosmos-dossier-cta svg { width: 13px; height: 13px; }
+
+/* ── social heat panel (X Dash leaderboard) ── */
+.cosmos-social {
+  width: 248px;
+  border-radius: 14px;
+  border: 1px solid rgba(103, 232, 249, 0.1);
+  background: rgba(9, 9, 11, 0.72);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+.cosmos-social-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  background: none;
+  color: rgba(245, 245, 247, 0.75);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.cosmos-social-chev {
+  width: 12px;
+  height: 12px;
+  margin-left: auto;
+  opacity: 0.4;
+  transition: transform 0.25s var(--ease-out, ease);
+}
+.cosmos-social.open .cosmos-social-chev { transform: rotate(180deg); }
+.cosmos-social-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #67e8f9;
+  box-shadow: 0 0 8px rgba(103, 232, 249, 0.8);
+  animation: cosmosSocialPulse 2.6s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes cosmosSocialPulse {
+  0%, 100% { box-shadow: 0 0 5px rgba(103, 232, 249, 0.5); }
+  50% { box-shadow: 0 0 12px rgba(103, 232, 249, 0.95); }
+}
+.cosmos-social-body {
+  padding: 2px 5px 5px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.cosmos-social-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 5px 7px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  color: rgba(245, 245, 247, 0.85);
+  text-align: left;
+}
+.cosmos-social-row:hover { background: rgba(103, 232, 249, 0.07); }
+.cosmos-social-rank {
+  width: 14px;
+  font-size: 0.62rem;
+  color: rgba(245, 245, 247, 0.3);
+  font-variant-numeric: tabular-nums;
+}
+.cosmos-social-row img {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+}
+.cosmos-social-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(103, 232, 249, 0.14);
+  color: #9be9ff;
+  font-size: 0.58rem;
+  font-weight: 700;
+}
+.cosmos-social-sym {
+  flex: 1;
+  font-size: 0.72rem;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cosmos-social-sym em {
+  font-style: normal;
+  font-size: 0.66rem;
+}
+.cosmos-social-mentions,
+.cosmos-social-authors {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 0.68rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  min-width: 40px;
+}
+.cosmos-social-mentions label,
+.cosmos-social-authors label {
+  font-size: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.3);
+  cursor: pointer;
+}
+.cosmos-social-mentions { color: #9be9ff; }
+.cosmos-social-authors { color: rgba(245, 245, 247, 0.7); }
+.cosmos-social-foot {
+  padding: 6px 8px 3px;
+  font-size: 0.56rem;
+  color: rgba(245, 245, 247, 0.3);
+  letter-spacing: 0.03em;
+}
+
+/* comet + social accents */
+.cosmos-hover-comettag {
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  border-radius: 5px;
+  color: #9be9ff;
+  background: rgba(103, 232, 249, 0.1);
+  border: 1px solid rgba(103, 232, 249, 0.25);
+}
+.cosmos-dossier-comet-tag { color: #9be9ff; }
+.cosmos-dossier-social {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  margin-bottom: 10px;
+  border-radius: 9px;
+  background: rgba(103, 232, 249, 0.06);
+  border: 1px solid rgba(103, 232, 249, 0.12);
+  font-size: 0.64rem;
+  color: rgba(155, 233, 255, 0.9);
+}
+
+/* ── chain filter ── */
+.cosmos-chain { position: relative; }
+.cosmos-chain-btn { gap: 6px; }
+.cosmos-chain-btn.active {
+  color: #f5f5f7;
+  border-color: rgba(245, 245, 247, 0.25);
+}
+.cosmos-chain-menu {
+  position: absolute;
+  top: 36px;
+  left: 0;
+  z-index: 8;
+  min-width: 170px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(14, 14, 17, 0.94);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  animation: cosmosFadeDown 0.18s var(--ease-out, ease) both;
+}
+.cosmos-chain-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: rgba(245, 245, 247, 0.8);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+.cosmos-chain-row:hover { background: rgba(255, 255, 255, 0.06); }
+.cosmos-chain-row.active { color: #f5f5f7; background: rgba(255, 255, 255, 0.09); }
+.cosmos-chain-row em {
+  font-style: normal;
+  font-size: 0.64rem;
+  color: rgba(245, 245, 247, 0.35);
+}
+.cosmos-day .cosmos-chain-menu {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
+}
+.cosmos-day .cosmos-chain-row { color: rgba(15, 23, 42, 0.8); }
+.cosmos-day .cosmos-chain-row:hover { background: rgba(15, 23, 42, 0.05); }
+.cosmos-day .cosmos-chain-row.active { color: #0f172a; background: rgba(15, 23, 42, 0.08); }
+.cosmos-day .cosmos-chain-btn.active { color: #0f172a; border-color: rgba(15, 23, 42, 0.3); }
+
+/* ── legend "why?" + explainer ── */
+.cosmos-legend-why {
+  border: none;
+  background: none;
+  padding: 0 2px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: rgba(155, 233, 255, 0.75);
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+.cosmos-legend-why:hover { color: #9be9ff; }
+.cosmos-day .cosmos-legend-why { color: #0e7490; }
+
+.cosmos-explain-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2, 2, 7, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: cosmosFadeDown 0.25s ease both;
+}
+.cosmos-explain {
+  position: relative;
+  width: min(460px, calc(100% - 32px));
+  max-height: calc(100% - 40px);
+  overflow-y: auto;
+  padding: 24px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(12, 12, 15, 0.92);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.cosmos-explain-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #f5f5f7;
+  margin-bottom: 16px;
+}
+.cosmos-explain-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.cosmos-explain-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.cosmos-explain-row b {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #f5f5f7;
+  margin-bottom: 2px;
+}
+.cosmos-explain-row span:not(.cosmos-glyph) {
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.55);
+}
+.cosmos-glyph {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  margin-top: 2px;
+}
+.cosmos-glyph-sun {
+  background: radial-gradient(circle at 40% 35%, #fff6d8, #ffb62e 55%, #ff7a00 90%);
+  box-shadow: 0 0 14px rgba(255, 170, 40, 0.7);
+}
+.cosmos-glyph-orbit {
+  border-radius: 6px;
+  height: 8px;
+  margin-top: 10px;
+  background: linear-gradient(90deg, #34d399, rgba(245, 245, 247, 0.3) 50%, #f87171);
+}
+.cosmos-glyph-size {
+  background:
+    radial-gradient(circle 5px at 30% 65%, rgba(245, 245, 247, 0.9) 98%, transparent),
+    radial-gradient(circle 9px at 68% 40%, rgba(245, 245, 247, 0.5) 98%, transparent);
+}
+.cosmos-glyph-glow {
+  background:
+    radial-gradient(circle at 32% 50%, rgba(52, 211, 153, 0.9), transparent 55%),
+    radial-gradient(circle at 72% 50%, rgba(248, 113, 113, 0.9), transparent 55%);
+  filter: blur(1px);
+}
+.cosmos-glyph-aura {
+  border: 2px solid rgba(103, 232, 249, 0.85);
+  box-shadow: 0 0 12px rgba(103, 232, 249, 0.55), inset 0 0 8px rgba(103, 232, 249, 0.3);
+}
+.cosmos-glyph-nav {
+  border: 1.5px dashed rgba(245, 245, 247, 0.4);
+  position: relative;
+}
+.cosmos-glyph-nav::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(245, 245, 247, 0.8);
+}
+.cosmos-day .cosmos-explain {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.2);
+}
+.cosmos-day .cosmos-explain-title,
+.cosmos-day .cosmos-explain-row b { color: #0f172a; }
+.cosmos-day .cosmos-explain-row span:not(.cosmos-glyph) { color: rgba(15, 23, 42, 0.6); }
+.cosmos-day .cosmos-explain-scrim { background: rgba(226, 231, 240, 0.55); }
+
+/* ── watchlist empty state ── */
+.cosmos-empty {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 22px 28px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(12, 12, 15, 0.82);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  animation: cosmosFadeDown 0.3s var(--ease-out, ease) both;
+  max-width: 320px;
+}
+.cosmos-empty svg {
+  width: 26px;
+  height: 26px;
+  color: rgba(255, 200, 90, 0.7);
+}
+.cosmos-empty span {
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: #f5f5f7;
+}
+.cosmos-empty em {
+  font-style: normal;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.45);
+}
+.cosmos-day .cosmos-empty {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 16px 44px rgba(15, 23, 42, 0.15);
+}
+.cosmos-day .cosmos-empty span { color: #0f172a; }
+.cosmos-day .cosmos-empty em { color: rgba(15, 23, 42, 0.5); }
+
+/* ── cinema exit controls ── */
+.cosmos-cinema-back {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(12, 12, 15, 0.78);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.85);
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  animation: cosmosCinemaIn 0.5s var(--ease-out, ease) both;
+  transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.cosmos-cinema-back:hover {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.32);
+  transform: translateX(-50%) translateY(-2px);
+}
+@keyframes cosmosCinemaIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.cosmos-cinema-x {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(12, 12, 15, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: rgba(245, 245, 247, 0.7);
+  cursor: pointer;
+  animation: cosmosCinemaXIn 0.5s var(--ease-out, ease) both;
+  transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.cosmos-cinema-x:hover {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.06);
+}
+.cosmos-cinema-x svg { width: 15px; height: 15px; }
+@keyframes cosmosCinemaXIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+.cosmos-cinema-back svg { width: 13px; height: 13px; }
+.cosmos-cinema-back em {
+  font-style: normal;
+  font-size: 0.56rem;
+  padding: 2px 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(245, 245, 247, 0.35);
+}
+@keyframes cosmosHintBreathe {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+/* ═══════════════ DAY MODE ═══════════════ */
+.cosmos-day .cosmos-seg,
+.cosmos-day .cosmos-hud-btn,
+.cosmos-day .cosmos-search input,
+.cosmos-day .cosmos-sun-chip {
+  background: rgba(255, 255, 255, 0.78);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+}
+.cosmos-day .cosmos-seg-btn { color: rgba(15, 23, 42, 0.45); }
+.cosmos-day .cosmos-seg-btn:hover { color: rgba(15, 23, 42, 0.75); }
+.cosmos-day .cosmos-seg-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+.cosmos-day .cosmos-hud-btn { color: rgba(15, 23, 42, 0.55); }
+.cosmos-day .cosmos-hud-btn:hover { color: #0f172a; background: rgba(255, 255, 255, 0.95); }
+.cosmos-day .cosmos-hud-btn.active { background: #0f172a; color: #ffffff; }
+.cosmos-day .cosmos-search input { color: #0f172a; }
+.cosmos-day .cosmos-search input::placeholder { color: rgba(15, 23, 42, 0.35); }
+.cosmos-day .cosmos-search-icon { color: rgba(15, 23, 42, 0.35); }
+.cosmos-day .cosmos-search-results {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
+}
+.cosmos-day .cosmos-search-row { color: rgba(15, 23, 42, 0.85); }
+.cosmos-day .cosmos-search-row:hover { background: rgba(15, 23, 42, 0.05); }
+.cosmos-day .cosmos-search-name { color: rgba(15, 23, 42, 0.4); }
+.cosmos-day .cosmos-sun-chip { color: #0f172a; }
+.cosmos-day .cosmos-sun-price { color: rgba(15, 23, 42, 0.6); }
+.cosmos-day .cosmos-sun-change.pos { color: #059669; }
+.cosmos-day .cosmos-sun-change.neg { color: #dc2626; }
+.cosmos-day .cosmos-legend,
+.cosmos-day .cosmos-hint,
+.cosmos-day .cosmos-group-chip {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(15, 23, 42, 0.06);
+}
+.cosmos-day .cosmos-legend-text { color: rgba(15, 23, 42, 0.5); }
+.cosmos-day .cosmos-hint { color: rgba(15, 23, 42, 0.4); }
+.cosmos-day .cosmos-group-chip { color: rgba(15, 23, 42, 0.65); }
+.cosmos-day .cosmos-group-chip em { color: rgba(15, 23, 42, 0.4); }
+.cosmos-day .cosmos-hover-card {
+  background: rgba(255, 255, 255, 0.97);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
+}
+.cosmos-day .cosmos-hover-sym { color: #0f172a; }
+.cosmos-day .cosmos-hover-row { color: rgba(15, 23, 42, 0.85); }
+.cosmos-day .cosmos-hover-row .pos { color: #059669; }
+.cosmos-day .cosmos-hover-row .neg { color: #dc2626; }
+.cosmos-day .cosmos-dossier {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
+}
+.cosmos-day .cosmos-dossier-name,
+.cosmos-day .cosmos-dossier-px { color: #0f172a; }
+.cosmos-day .cosmos-dossier-sub { color: rgba(15, 23, 42, 0.45); }
+.cosmos-day .cosmos-dossier-grid label { color: rgba(15, 23, 42, 0.4); }
+.cosmos-day .cosmos-dossier-grid span { color: rgba(15, 23, 42, 0.85); }
+.cosmos-day .cosmos-dossier-orbit {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.06);
+  color: rgba(15, 23, 42, 0.6);
+}
+.cosmos-day .cosmos-dossier-chg.pos { color: #059669; }
+.cosmos-day .cosmos-dossier-chg.neg { color: #dc2626; }
+.cosmos-day .cosmos-dossier-close {
+  background: rgba(15, 23, 42, 0.05);
+  color: rgba(15, 23, 42, 0.5);
+}
+.cosmos-day .cosmos-dossier-cta { background: #0f172a; color: #ffffff; }
+.cosmos-day .cosmos-cinema-back,
+.cosmos-day .cosmos-cinema-x {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(15, 23, 42, 0.15);
+  color: rgba(15, 23, 42, 0.7);
+}
+.cosmos-day .cosmos-cinema-back:hover,
+.cosmos-day .cosmos-cinema-x:hover { color: #0f172a; }
+.cosmos-day .cosmos-breadcrumb {
+  background: rgba(15, 23, 42, 0.08);
+  border-color: rgba(15, 23, 42, 0.15);
+  color: #0f172a;
+}
+.cosmos-day .cosmos-breadcrumb em { color: rgba(15, 23, 42, 0.45); }
+.cosmos-day .cosmos-hover-dive { color: rgba(15, 23, 42, 0.45); }
+.cosmos-day .cosmos-anchor-btn {
+  background: rgba(255, 255, 255, 0.78);
+  border-color: rgba(180, 120, 20, 0.25);
+  color: rgba(15, 23, 42, 0.55);
+}
+.cosmos-day .cosmos-anchor-btn.active { color: #b45309; border-color: rgba(180, 83, 9, 0.4); }
+.cosmos-day .cosmos-social {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(8, 145, 178, 0.15);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+}
+.cosmos-day .cosmos-social-head { color: rgba(15, 23, 42, 0.7); }
+.cosmos-day .cosmos-social-row { color: rgba(15, 23, 42, 0.85); }
+.cosmos-day .cosmos-social-row:hover { background: rgba(8, 145, 178, 0.06); }
+.cosmos-day .cosmos-social-rank { color: rgba(15, 23, 42, 0.35); }
+.cosmos-day .cosmos-social-mentions { color: #0e7490; }
+.cosmos-day .cosmos-social-authors { color: rgba(15, 23, 42, 0.6); }
+.cosmos-day .cosmos-social-mentions label,
+.cosmos-day .cosmos-social-authors label { color: rgba(15, 23, 42, 0.35); }
+.cosmos-day .cosmos-social-foot { color: rgba(15, 23, 42, 0.4); }
+.cosmos-day .cosmos-dossier-comet-tag { color: #0e7490; }
+.cosmos-day .cosmos-dossier-social {
+  background: rgba(8, 145, 178, 0.06);
+  border-color: rgba(8, 145, 178, 0.15);
+  color: #0e7490;
+}
+.cosmos-day .cosmos-hover-comettag {
+  color: #0e7490;
+  background: rgba(8, 145, 178, 0.08);
+  border-color: rgba(8, 145, 178, 0.25);
+}
+
+/* ═══════════════ MOBILE ═══════════════ */
+@media (max-width: 768px) {
+  /* One finger vertical = PAGE SCROLL (the canvas was a scroll trap: with
+     touch-action:none you couldn't leave the cosmos once it filled the
+     screen). Horizontal single-finger drags still orbit (pan-y only allows
+     the browser vertical scrolling) and two-finger pinch still zooms the
+     universe (pinch isn't in the allowed list, so both touches reach the
+     engine). The engine's pointercancel handler resets a claimed drag. */
+  .cosmos-stage .cosmos-canvas { touch-action: pan-y; }
+
+  .cosmos-hud-tl {
+    top: 8px;
+    left: 8px;
+    right: 56px; /* leave room for the right-side button column */
+    gap: 6px;
+  }
+  .cosmos-hud-tr {
+    top: 8px;
+    right: 8px;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .cosmos-hud-bl { bottom: 8px; left: 8px; right: 8px; }
+
+  /* thumb-sized touch targets */
+  .cosmos-seg-btn { padding: 10px 11px; font-size: 0.7rem; }
+  .cosmos-seg-mini .cosmos-seg-btn { padding: 8px 9px; }
+  .cosmos-hud-btn { width: 40px; height: 40px; }
+  .cosmos-anchor-btn,
+  .cosmos-breadcrumb { height: 36px; }
+
+  /* control rows wrap tight on a narrow canvas */
+  .cosmos-source-row,
+  .cosmos-labels-row { flex-wrap: wrap; gap: 5px; }
+  .cosmos-legend { display: none; }
+  .cosmos-hint { display: none; }
+  .cosmos-labels-eyebrow { display: none; } /* the seg is self-explanatory */
+  .cosmos-sun-chip { font-size: 0.68rem; padding: 8px 11px; }
+
+  .cosmos-social { width: 196px; }
+  .cosmos-social-body { max-height: 190px; }
+  .cosmos-social-head { padding: 10px 12px; }
+  .cosmos-social-row { padding: 8px 7px; }
+
+  /* cinema exits: thumb-sized */
+  .cosmos-cinema-back { padding: 13px 22px; bottom: 16px; }
+  .cosmos-cinema-x { width: 44px; height: 44px; top: 10px; right: 10px; }
+
+  .cosmos-dossier {
+    top: auto;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    padding: 14px;
+    animation-name: cosmosDossierUp;
+  }
+  @keyframes cosmosDossierUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  /* dossier overlaps the bottom-left HUD — hide legend row while open */
+  .cosmos-root:has(.cosmos-dossier) .cosmos-hud-bl { opacity: 0; pointer-events: none; }
+  .cosmos-spark { height: 36px; }
+}
+
+/* ── mobile blur cap (2026-07-13) ──────────────────────────────────────────
+   backdrop-filter over a live WebGL canvas forces a per-frame readback on
+   mobile GPUs — every 14-24px HUD blur was stealing frames from the engine.
+   8px reads the same on a phone-sized panel and composites far cheaper. */
+@media (max-width: 768px) {
+  .cosmos-labels-eyebrow,
+  .cosmos-anchor-btn,
+  .cosmos-breadcrumb,
+  .cosmos-seg,
+  .cosmos-hud-btn,
+  .cosmos-search input,
+  .cosmos-search-results,
+  .cosmos-sun-chip,
+  .cosmos-legend,
+  .cosmos-hover-card,
+  .cosmos-dossier,
+  .cosmos-social,
+  .cosmos-chain-menu,
+  .cosmos-explain,
+  .cosmos-empty,
+  .cosmos-cinema-back,
+  .cosmos-cinema-x {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}

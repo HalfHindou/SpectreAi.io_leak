@@ -1,0 +1,128 @@
+/* ============================================
+   MobileWatchlistDrawer — bottom sheet (same UX
+   pattern as MobileInfoSheet: grabber, slide-up,
+   drag-to-dismiss, backdrop tap close).
+   Prefix: mwd-
+   ============================================ */
+
+.mwd-root {
+  position: fixed;
+  inset: 0;
+  /* Above the global Header (~100), the MobileChartToolbar (~1100)
+     and TV Advanced's internal popovers (~1000). */
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+.mwd-root > * { pointer-events: auto; }
+
+.mwd-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  border: none;
+  cursor: pointer;
+  animation: mwdBackdropIn 0.22s ease both;
+}
+@keyframes mwdBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mwd-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 90vh;
+  /* dvh accounts for the mobile browser toolbar. Leave room for the app header
+     up top so the grabber + toggle sit clearly below it, not jammed against
+     the search bar. */
+  max-height: calc(100dvh - 76px);
+  background: var(--bg-base, #09090b);
+  border-top-left-radius: 22px;
+  border-top-right-radius: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.55);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  animation: mwdSheetIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform;
+}
+@keyframes mwdSheetIn {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* `none`, not `pan-y`: pan-y let the browser read the dismiss drag as a page
+   pull and fire its own pull-to-refresh. JS touch events fire either way. */
+.mwd-grabber-region {
+  flex: 0 0 auto;
+  padding: 10px 0 4px;
+  display: flex;
+  justify-content: center;
+  touch-action: none;
+}
+.mwd-grabber {
+  width: 44px;
+  height: 4px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.mwd-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: rgba(245, 245, 247, 0.7);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.mwd-close:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #f5f5f7;
+}
+
+.mwd-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  /* Don't chain the scroll to the page at either end - overscrolling at the
+     top is what triggers the browser's pull-to-refresh. */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+}
+
+/* The board owns its own padding; the sticky pills must reach the sheet edges
+   so the close button floats over them without a gutter seam. */
+.mwd-body .msc { min-height: 100%; }
+/* Keep the first pill clear of the floating close button. */
+.mwd-body .msc-tabs { padding-right: 46px; }
+
+/* ── Day mode (trading = body.theme-light; .app.app-day-mode is dead here) ── */
+body.theme-light .mwd-backdrop { background: rgba(0, 0, 0, 0.35); }
+body.theme-light .mwd-sheet {
+  background: #ffffff;
+  border-top-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.18);
+}
+body.theme-light .mwd-close {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: rgba(15, 23, 42, 0.7);
+}
+body.theme-light .mwd-close:hover {
+  background: rgba(0, 0, 0, 0.07);
+  color: #0f172a;
+}
+body.theme-light .mwd-grabber { background: rgba(0, 0, 0, 0.18); }

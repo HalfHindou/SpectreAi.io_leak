@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=900">
+  <title>Spectre — Welcome Bar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-void: #09090b; --bg-surface: #111113; --bg-elevated: #18181b;
+      --glass-bg: rgba(9,9,11,0.88); --glass-border: rgba(255,255,255,0.04);
+      --text-primary: #f5f5f7; --text-secondary: rgba(245,245,247,0.6);
+      --text-tertiary: rgba(245,245,247,0.5); --text-muted: rgba(245,245,247,0.35);
+      --bull: #10B981; --bear: #EF4444; --cyan: #06B6D4; --amber: #F59E0B; --violet: #A78BFA;
+      --border-subtle: rgba(255,255,255,0.03); --border-default: rgba(255,255,255,0.04);
+      --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0f;
+      font-family: var(--font-body);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .widget {
+      width: 900px;
+      padding: 20px;
+    }
+
+    /* ── Glass Card ─────────────────────────────────────── */
+    .welcome-bar {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 24px 28px;
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      box-shadow:
+        0 4px 24px rgba(0,0,0,0.12),
+        0 20px 60px rgba(0,0,0,0.18),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+      position: relative;
+      overflow: hidden;
+    }
+    .welcome-bar::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    }
+    .welcome-bar::after {
+      content: '';
+      position: absolute;
+      top: -80px; right: -40px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(167,139,250,0.04) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── Horizontal Layout ──────────────────────────────── */
+    .bar-row {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      min-height: 120px;
+    }
+
+    .bar-section {
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 0 20px;
+      position: relative;
+    }
+    .bar-section:first-child { padding-left: 0; }
+    .bar-section:last-child { padding-right: 0; }
+
+    /* Vertical dividers */
+    .bar-section + .bar-section::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 4px; bottom: 4px;
+      width: 1px;
+      background: linear-gradient(180deg, transparent, rgba(255,255,255,0.06), transparent);
+    }
+
+    /* Section widths */
+    .section-profile   { width: 160px; }
+    .section-movers    { width: 180px; }
+    .section-sentiment { width: 170px; }
+    .section-dominance { width: 210px; }
+    .section-markets   { width: 160px; }
+
+    /* ── Section Labels ─────────────────────────────────── */
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      line-height: 1;
+    }
+
+    /* ── 1. PROFILE ─────────────────────────────────────── */
+    .profile-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .profile-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7C3AED, #A78BFA, #C084FC);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+      box-shadow: 0 2px 12px rgba(167,139,250,0.25);
+    }
+    .profile-info { display: flex; flex-direction: column; gap: 2px; }
+    .profile-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+    .profile-subtitle {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      line-height: 1;
+    }
+    .xp-section { margin-top: auto; }
+    .xp-label {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .xp-bar {
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.06);
+      overflow: hidden;
+    }
+    .xp-fill {
+      width: 68%;
+      height: 100%;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--violet), #C084FC);
+    }
+
+    /* ── 2. TOP MOVERS ──────────────────────────────────── */
+    .movers-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+    .mover-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .mover-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .mover-dot.btc  { background: var(--amber); }
+    .mover-dot.eth  { background: var(--cyan); }
+    .mover-dot.sol  { background: var(--violet); }
+    .mover-symbol {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+      width: 32px;
+      flex-shrink: 0;
+    }
+    .mover-price {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      flex: 1;
+    }
+    .mover-change {
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      flex-shrink: 0;
+    }
+    .mover-change.up   { color: var(--bull); }
+    .mover-change.down { color: var(--bear); }
+
+    /* ── 3. SENTIMENT ───────────────────────────────────── */
+    .sentiment-body {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      flex: 1;
+    }
+    .sentiment-top {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+    .sentiment-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--bull);
+      line-height: 1;
+      letter-spacing: -0.02em;
+      font-family: var(--font-mono);
+    }
+    .sentiment-word {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--bull);
+      line-height: 1;
+    }
+    .sentiment-sublabel {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .sentiment-bar-wrap { width: 100%; margin-top: auto; }
+    .sentiment-bar {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #EF4444 0%, #F59E0B 40%, #10B981 100%);
+      position: relative;
+    }
+    .sentiment-marker {
+      position: absolute;
+      top: -3px;
+      left: 72%;
+      transform: translateX(-50%);
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid var(--bull);
+      box-shadow: 0 0 8px rgba(16,185,129,0.4);
+    }
+
+    /* ── 4. DOMINANCE ───────────────────────────────────── */
+    .dominance-body {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .dom-bar-container { margin-bottom: 10px; margin-top: 2px; }
+    .dom-bar {
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+      background: rgba(255,255,255,0.04);
+    }
+    .dom-segment {
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+    .dom-segment.btc  { background: var(--amber); width: 52.4%; }
+    .dom-segment.eth  { background: var(--cyan);  width: 17.8%; }
+    .dom-segment.sol  { background: var(--bull);   width: 3.2%; }
+    .dom-segment.other { background: rgba(255,255,255,0.12); width: 26.6%; }
+
+    .dom-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+      margin-top: auto;
+    }
+    .dom-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .dom-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dom-dot.btc   { background: var(--amber); }
+    .dom-dot.eth   { background: var(--cyan); }
+    .dom-dot.sol   { background: var(--bull); }
+    .dom-dot.other { background: rgba(255,255,255,0.25); }
+    .dom-text {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      line-height: 1;
+    }
+    .dom-pct {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* ── 5. MARKET STATUS ───────────────────────────────── */
+    .markets-body {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .market-status-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 6px;
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--bull);
+      box-shadow: 0 0 6px rgba(16,185,129,0.5);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .status-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--bull);
+    }
+    .status-closes {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+    .status-closes span {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .market-indices {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: auto;
+    }
+    .index-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .index-icon {
+      width: 20px; height: 20px;
+      border-radius: 5px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .index-icon svg {
+      width: 12px; height: 12px;
+    }
+    .index-name {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      flex: 1;
+    }
+    .index-change {
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+    }
+    .index-change.up   { color: var(--bull); }
+    .index-change.down { color: var(--bear); }
+  </style>
+</head>
+<body>
+  <div class="widget">
+    <div class="welcome-bar">
+      <div class="bar-row">
+
+        <!-- 1. PROFILE -->
+        <div class="bar-section section-profile">
+          <div class="section-label">Profile</div>
+          <div class="profile-row">
+            <div class="profile-avatar">S</div>
+            <div class="profile-info">
+              <div class="profile-name">Sunny</div>
+              <div class="profile-subtitle">Pro Trader</div>
+            </div>
+          </div>
+          <div class="xp-section">
+            <div class="xp-label">
+              <span>XP Level 12</span>
+              <span>68%</span>
+            </div>
+            <div class="xp-bar">
+              <div class="xp-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. TOP 3 MOVERS -->
+        <div class="bar-section section-movers">
+          <div class="section-label">Top 3 Movers</div>
+          <div class="movers-list">
+            <div class="mover-row">
+              <div class="mover-dot btc"></div>
+              <div class="mover-symbol">BTC</div>
+              <div class="mover-price">$97,842</div>
+              <div class="mover-change up">+2.54%</div>
+            </div>
+            <div class="mover-row">
+              <div class="mover-dot eth"></div>
+              <div class="mover-symbol">ETH</div>
+              <div class="mover-price">$3,421</div>
+              <div class="mover-change up">+3.21%</div>
+            </div>
+            <div class="mover-row">
+              <div class="mover-dot sol"></div>
+              <div class="mover-symbol">SOL</div>
+              <div class="mover-price">$196.40</div>
+              <div class="mover-change down">-1.82%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. SENTIMENT -->
+        <div class="bar-section section-sentiment">
+          <div class="section-label">Fear & Greed</div>
+          <div class="sentiment-body">
+            <div class="sentiment-top">
+              <div class="sentiment-value">72</div>
+              <div class="sentiment-word">Greed</div>
+            </div>
+            <div class="sentiment-sublabel">Crypto Market Index</div>
+            <div class="sentiment-bar-wrap">
+              <div class="sentiment-bar">
+                <div class="sentiment-marker"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. DOMINANCE -->
+        <div class="bar-section section-dominance">
+          <div class="section-label">Market Dominance</div>
+          <div class="dominance-body">
+            <div class="dom-bar-container">
+              <div class="dom-bar">
+                <div class="dom-segment btc"></div>
+                <div class="dom-segment eth"></div>
+                <div class="dom-segment sol"></div>
+                <div class="dom-segment other"></div>
+              </div>
+            </div>
+            <div class="dom-legend">
+              <div class="dom-item">
+                <div class="dom-dot btc"></div>
+                <span class="dom-text">BTC</span>
+                <span class="dom-pct">52.4%</span>
+              </div>
+              <div class="dom-item">
+                <div class="dom-dot eth"></div>
+                <span class="dom-text">ETH</span>
+                <span class="dom-pct">17.8%</span>
+              </div>
+              <div class="dom-item">
+                <div class="dom-dot sol"></div>
+                <span class="dom-text">SOL</span>
+                <span class="dom-pct">3.2%</span>
+              </div>
+              <div class="dom-item">
+                <div class="dom-dot other"></div>
+                <span class="dom-text">Others</span>
+                <span class="dom-pct">26.6%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. MARKET STATUS -->
+        <div class="bar-section section-markets">
+          <div class="section-label">US Markets</div>
+          <div class="markets-body">
+            <div class="market-status-row">
+              <div class="status-dot"></div>
+              <div class="status-text">Open</div>
+            </div>
+            <div class="status-closes">Closes in <span>3h 42m</span></div>
+            <div class="market-indices">
+              <div class="index-row">
+                <div class="index-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+                    <polyline points="16 7 22 7 22 13"/>
+                  </svg>
+                </div>
+                <div class="index-name">NASDAQ</div>
+                <div class="index-change up">+0.82%</div>
+              </div>
+              <div class="index-row">
+                <div class="index-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+                    <polyline points="16 7 22 7 22 13"/>
+                  </svg>
+                </div>
+                <div class="index-name">S&P 500</div>
+                <div class="index-change up">+0.45%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /bar-row -->
+    </div><!-- /welcome-bar -->
+  </div><!-- /widget -->
+</body>
+</html>

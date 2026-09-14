@@ -1,0 +1,358 @@
+/* TimeMachine — "if you'd invested back then" vertical timeline.
+   Glass surfaces, warm-white, bull-green gains, bear-red drawdowns. Matches
+   the Spectre design system: no bright gradients, near-invisible borders. */
+
+.tm {
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tm-head { margin-bottom: 16px; }
+
+.tm-head__eyebrow {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  margin-bottom: 8px;
+}
+
+.tm-head__title {
+  font-family: 'SF Pro Display', -apple-system, Inter, sans-serif;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary, #f5f5f7);
+  margin: 0 0 6px;
+  line-height: 1.25;
+}
+
+.tm-head__token {
+  background: linear-gradient(180deg, #f5f5f7, rgba(245, 245, 247, 0.7));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+}
+
+.tm-head__sub {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  margin: 0;
+  max-width: 64ch;
+}
+
+/* ── Hero strip — the juiciest entry ── */
+.tm-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  margin-bottom: 18px;
+  background: linear-gradient(155deg, rgba(16, 185, 129, 0.07) 0%, rgba(255, 255, 255, 0.018) 70%);
+  border: 1px solid rgba(16, 185, 129, 0.16);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.tm-hero__left { display: flex; flex-direction: column; gap: 2px; }
+.tm-hero__kicker {
+  font-size: 12px;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.55));
+}
+.tm-hero__year {
+  font-family: var(--font-mono);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #f5f5f7);
+  line-height: 1;
+}
+
+.tm-hero__arrow {
+  font-size: 22px;
+  color: var(--text-muted, rgba(245, 245, 247, 0.3));
+  flex-shrink: 0;
+}
+
+.tm-hero__right { display: flex; flex-direction: column; gap: 2px; margin-left: auto; text-align: right; }
+.tm-hero__value {
+  font-family: var(--font-mono);
+  font-size: clamp(24px, 5vw, 32px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--bull-bright, #34d399);
+  line-height: 1;
+}
+.tm-hero__mult {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--bull, #10b981);
+}
+
+/* ── Timeline ── */
+.tm-line {
+  position: relative;
+  padding-left: 6px;
+}
+/* the vertical rail */
+.tm-line::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 14px;
+  bottom: 14px;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.12) 12%, rgba(255, 255, 255, 0.12) 88%, transparent);
+}
+
+.tm-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 24px 56px auto 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px 11px 26px;
+  border-radius: 12px;
+  transition: background 200ms ease;
+  animation: tm-row-in 440ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes tm-row-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.tm-row:hover { background: rgba(255, 255, 255, 0.025); }
+
+.tm-row.is-hero {
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.tm-row__node {
+  position: absolute;
+  left: 4px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--bg-surface, #111113);
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  grid-column: 1;
+}
+.tm-row.is-hero .tm-row__node {
+  border-color: var(--bull, #10b981);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.16);
+}
+
+.tm-row__year {
+  grid-column: 2;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #f5f5f7);
+}
+
+.tm-row__entry {
+  grid-column: 3;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.tm-row__entry-label {
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+}
+.tm-row__entry-price {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.6));
+}
+
+.tm-row__spacer { grid-column: 4; }
+
+.tm-row__mult {
+  grid-column: 5;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--bull, #10b981);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.1);
+}
+.tm-row__mult.is-down { color: var(--bear, #ef4444); background: rgba(239, 68, 68, 0.1); }
+
+.tm-row__value {
+  grid-column: 6;
+  min-width: 78px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--bull-bright, #34d399);
+}
+.tm-row__value.is-down { color: var(--bear-bright, #f87171); }
+
+/* ── Skeleton ── */
+.tm-skeleton { display: flex; flex-direction: column; gap: 8px; }
+.tm-skeleton__row {
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.03) 100%);
+  background-size: 200% 100%;
+  animation: tm-shimmer 1.6s infinite;
+}
+@keyframes tm-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ═══ Day mode ═══ */
+.tm--day .tm { border-top-color: rgba(0, 0, 0, 0.07); }
+.tm--day .tm-head__title { color: #0f172a; }
+.tm--day .tm-head__token {
+  background: linear-gradient(180deg, #0f172a, #475569);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.tm--day .tm-head__sub { color: #475569; }
+.tm--day .tm-head__eyebrow { color: #94a3b8; }
+.tm--day .tm-hero {
+  background: linear-gradient(155deg, rgba(5, 150, 105, 0.08) 0%, #ffffff 70%);
+  border-color: rgba(5, 150, 105, 0.2);
+}
+.tm--day .tm-hero__kicker { color: #64748b; }
+.tm--day .tm-hero__year { color: #0f172a; }
+.tm--day .tm-hero__value { color: #059669; }
+.tm--day .tm-hero__mult { color: #059669; }
+.tm--day .tm-line::before { background: linear-gradient(180deg, transparent, rgba(0,0,0,0.12) 12%, rgba(0,0,0,0.12) 88%, transparent); }
+.tm--day .tm-row:hover { background: rgba(0, 0, 0, 0.025); }
+.tm--day .tm-row.is-hero { background: rgba(5, 150, 105, 0.05); box-shadow: inset 0 0 0 1px rgba(5,150,105,0.12); }
+.tm--day .tm-row__node { background: #ffffff; border-color: rgba(0, 0, 0, 0.22); }
+.tm--day .tm-row.is-hero .tm-row__node { border-color: #059669; box-shadow: 0 0 0 3px rgba(5,150,105,0.14); }
+.tm--day .tm-row__year { color: #0f172a; }
+.tm--day .tm-row__entry-label { color: #94a3b8; }
+.tm--day .tm-row__entry-price { color: #475569; }
+.tm--day .tm-row__mult { color: #059669; background: rgba(5,150,105,0.1); }
+.tm--day .tm-row__mult.is-down { color: #dc2626; background: rgba(220,38,38,0.1); }
+.tm--day .tm-row__value { color: #059669; }
+.tm--day .tm-row__value.is-down { color: #dc2626; }
+
+@media (max-width: 540px) {
+  .tm-hero { flex-wrap: wrap; gap: 10px 14px; }
+  .tm-hero__year { font-size: 26px; }
+  .tm-row { grid-template-columns: 22px 44px auto 1fr auto; gap: 8px; padding-left: 24px; }
+  .tm-row__entry { grid-column: 3; }
+  .tm-row__mult { display: none; } /* keep value; drop the pill on narrow screens */
+  .tm-row__value { grid-column: 5; }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Day mode — ancestor-scoped overrides (dual selector)
+   Holds whether the widget carries the `dayMode` prop (root gets
+   `.roi-calculator.day-mode`) or is portaled into `.app.app-day-mode`.
+   Mirrors the `.tm--day` prop-driven block above and additionally
+   covers the muted hero arrow + the skeleton shimmer (white shimmer
+   is invisible on light → flipped to a dark tint). Bull greens/bear
+   reds are deepened (#059669 / #dc2626) so they read on white.
+   ══════════════════════════════════════════════════════════════════ */
+
+.app.app-day-mode .tm,
+.roi-calculator.day-mode .tm { border-top-color: rgba(0, 0, 0, 0.07); }
+.app.app-day-mode .tm-head__title,
+.roi-calculator.day-mode .tm-head__title { color: #0f172a; }
+.app.app-day-mode .tm-head__token,
+.roi-calculator.day-mode .tm-head__token {
+  background: linear-gradient(180deg, #0f172a, #475569);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.app.app-day-mode .tm-head__sub,
+.roi-calculator.day-mode .tm-head__sub { color: #475569; }
+.app.app-day-mode .tm-head__eyebrow,
+.roi-calculator.day-mode .tm-head__eyebrow { color: rgba(15, 23, 42, 0.45); }
+
+/* Hero strip */
+.app.app-day-mode .tm-hero,
+.roi-calculator.day-mode .tm-hero {
+  background: linear-gradient(155deg, rgba(5, 150, 105, 0.08) 0%, #ffffff 70%);
+  border-color: rgba(5, 150, 105, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.app.app-day-mode .tm-hero__kicker,
+.roi-calculator.day-mode .tm-hero__kicker { color: #64748b; }
+.app.app-day-mode .tm-hero__year,
+.roi-calculator.day-mode .tm-hero__year { color: #0f172a; }
+.app.app-day-mode .tm-hero__arrow,
+.roi-calculator.day-mode .tm-hero__arrow { color: rgba(15, 23, 42, 0.35); }
+.app.app-day-mode .tm-hero__value,
+.roi-calculator.day-mode .tm-hero__value { color: #059669; }
+.app.app-day-mode .tm-hero__mult,
+.roi-calculator.day-mode .tm-hero__mult { color: #059669; }
+
+/* Timeline rail + rows */
+.app.app-day-mode .tm-line::before,
+.roi-calculator.day-mode .tm-line::before {
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.12) 12%, rgba(0, 0, 0, 0.12) 88%, transparent);
+}
+.app.app-day-mode .tm-row:hover,
+.roi-calculator.day-mode .tm-row:hover { background: rgba(0, 0, 0, 0.025); }
+.app.app-day-mode .tm-row.is-hero,
+.roi-calculator.day-mode .tm-row.is-hero {
+  background: rgba(5, 150, 105, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(5, 150, 105, 0.12);
+}
+.app.app-day-mode .tm-row__node,
+.roi-calculator.day-mode .tm-row__node {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.22);
+}
+.app.app-day-mode .tm-row.is-hero .tm-row__node,
+.roi-calculator.day-mode .tm-row.is-hero .tm-row__node {
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.14);
+}
+.app.app-day-mode .tm-row__year,
+.roi-calculator.day-mode .tm-row__year { color: #0f172a; }
+.app.app-day-mode .tm-row__entry-label,
+.roi-calculator.day-mode .tm-row__entry-label { color: rgba(15, 23, 42, 0.45); }
+.app.app-day-mode .tm-row__entry-price,
+.roi-calculator.day-mode .tm-row__entry-price { color: #475569; }
+.app.app-day-mode .tm-row__mult,
+.roi-calculator.day-mode .tm-row__mult {
+  color: #059669;
+  background: rgba(5, 150, 105, 0.1);
+}
+.app.app-day-mode .tm-row__mult.is-down,
+.roi-calculator.day-mode .tm-row__mult.is-down {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+}
+.app.app-day-mode .tm-row__value,
+.roi-calculator.day-mode .tm-row__value { color: #059669; }
+.app.app-day-mode .tm-row__value.is-down,
+.roi-calculator.day-mode .tm-row__value.is-down { color: #dc2626; }
+
+/* Skeleton — white shimmer is invisible on light, flip to dark tint */
+.app.app-day-mode .tm-skeleton__row,
+.roi-calculator.day-mode .tm-skeleton__row {
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0.04) 0%, rgba(15, 23, 42, 0.08) 50%, rgba(15, 23, 42, 0.04) 100%);
+  background-size: 200% 100%;
+}

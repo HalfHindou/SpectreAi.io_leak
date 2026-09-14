@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=800">
+  <title>Spectre — Top Coins Discovery Grid</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-void: #09090b; --bg-surface: #111113; --bg-elevated: #18181b;
+      --glass-bg: rgba(9,9,11,0.88); --glass-border: rgba(255,255,255,0.04);
+      --text-primary: #f5f5f7; --text-secondary: rgba(245,245,247,0.6);
+      --text-tertiary: rgba(245,245,247,0.5); --text-muted: rgba(245,245,247,0.35);
+      --bull: #10B981; --bear: #EF4444; --cyan: #06B6D4; --violet: #A78BFA;
+      --border-subtle: rgba(255,255,255,0.03); --border-default: rgba(255,255,255,0.04);
+      --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0f;
+      font-family: var(--font-body);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .widget {
+      width: 800px;
+      padding: 32px;
+    }
+
+    /* ---- Header ---- */
+    .discovery-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .discovery-title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .discovery-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(167,139,250,0.1));
+      border: 1px solid rgba(6,182,212,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+    }
+    .discovery-label {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+
+    /* ---- Filter Pills ---- */
+    .filter-pills {
+      display: flex;
+      gap: 6px;
+    }
+    .pill {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--glass-border);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      letter-spacing: 0.01em;
+      font-family: var(--font-body);
+    }
+    .pill:hover {
+      color: var(--text-secondary);
+      border-color: rgba(255,255,255,0.08);
+    }
+    .pill.active {
+      background: rgba(6,182,212,0.12);
+      border-color: rgba(6,182,212,0.25);
+      color: var(--cyan);
+      font-weight: 600;
+    }
+
+    /* ---- Grid ---- */
+    .coins-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    /* ---- Coin Card ---- */
+    .coin-card {
+      position: relative;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      padding: 20px;
+      height: 180px;
+      backdrop-filter: blur(24px) saturate(180%);
+      box-shadow:
+        0 2px 12px rgba(0,0,0,0.10),
+        0 8px 32px rgba(0,0,0,0.14),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+      cursor: pointer;
+    }
+    .coin-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    }
+    .coin-card:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 4px 20px rgba(0,0,0,0.16),
+        0 12px 48px rgba(0,0,0,0.20),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.08);
+    }
+
+    /* ---- Rank Badge ---- */
+    .rank-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: -0.02em;
+    }
+
+    /* ---- Card Top Row ---- */
+    .card-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-left: 20px;
+    }
+    .token-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+    .token-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .token-symbol {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+    }
+    .token-name {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.02em;
+    }
+
+    /* ---- Card Bottom Row ---- */
+    .card-bottom {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+    .price-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .token-price {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+    }
+    .token-change {
+      font-size: 12px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      letter-spacing: 0.01em;
+    }
+    .token-change.positive { color: var(--bull); }
+    .token-change.negative { color: var(--bear); }
+
+    /* ---- Sparkline ---- */
+    .sparkline-wrap {
+      width: 80px;
+      height: 36px;
+      flex-shrink: 0;
+    }
+    .sparkline-wrap svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+  </style>
+</head>
+<body>
+  <div class="widget">
+
+    <!-- Header -->
+    <div class="discovery-header">
+      <div class="discovery-title-group">
+        <div class="discovery-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 1L10.5 5.5L15 8L10.5 10.5L8 15L5.5 10.5L1 8L5.5 5.5L8 1Z" fill="url(#iconGrad)" opacity="0.9"/>
+            <defs>
+              <linearGradient id="iconGrad" x1="1" y1="1" x2="15" y2="15">
+                <stop stop-color="#06B6D4"/>
+                <stop offset="1" stop-color="#A78BFA"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <span class="discovery-label">Discovery</span>
+      </div>
+      <div class="filter-pills">
+        <button class="pill active">All</button>
+        <button class="pill">Layer 1</button>
+        <button class="pill">DeFi</button>
+        <button class="pill">Meme</button>
+      </div>
+    </div>
+
+    <!-- Grid -->
+    <div class="coins-grid">
+
+      <!-- BTC -->
+      <div class="coin-card">
+        <div class="rank-badge">#1</div>
+        <div class="card-top">
+          <div class="token-avatar" style="background: linear-gradient(135deg, #F7931A, #E8850F); box-shadow: 0 2px 12px rgba(247,147,26,0.3);">B</div>
+          <div class="token-info">
+            <span class="token-symbol">BTC</span>
+            <span class="token-name">Bitcoin</span>
+          </div>
+        </div>
+        <div class="card-bottom">
+          <div class="price-group">
+            <span class="token-price">$97,842</span>
+            <span class="token-change positive">+2.54%</span>
+          </div>
+          <div class="sparkline-wrap">
+            <svg viewBox="0 0 80 36" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="fillBTC" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#10B981" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="#10B981" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <polygon points="0,28 8,26 16,24 24,22 32,25 40,20 48,18 56,16 64,14 72,10 80,8 80,36 0,36" fill="url(#fillBTC)"/>
+              <polyline points="0,28 8,26 16,24 24,22 32,25 40,20 48,18 56,16 64,14 72,10 80,8" fill="none" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- ETH -->
+      <div class="coin-card">
+        <div class="rank-badge">#2</div>
+        <div class="card-top">
+          <div class="token-avatar" style="background: linear-gradient(135deg, #627EEA, #4F6BD6); box-shadow: 0 2px 12px rgba(98,126,234,0.3);">E</div>
+          <div class="token-info">
+            <span class="token-symbol">ETH</span>
+            <span class="token-name">Ethereum</span>
+          </div>
+        </div>
+        <div class="card-bottom">
+          <div class="price-group">
+            <span class="token-price">$3,421</span>
+            <span class="token-change positive">+3.21%</span>
+          </div>
+          <div class="sparkline-wrap">
+            <svg viewBox="0 0 80 36" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="fillETH" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#10B981" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="#10B981" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <polygon points="0,30 8,28 16,26 24,28 32,22 40,20 48,22 56,16 64,12 72,10 80,6 80,36 0,36" fill="url(#fillETH)"/>
+              <polyline points="0,30 8,28 16,26 24,28 32,22 40,20 48,22 56,16 64,12 72,10 80,6" fill="none" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- SOL -->
+      <div class="coin-card">
+        <div class="rank-badge">#3</div>
+        <div class="card-top">
+          <div class="token-avatar" style="background: linear-gradient(135deg, #00FFA3, #00CC82); box-shadow: 0 2px 12px rgba(0,255,163,0.25);">S</div>
+          <div class="token-info">
+            <span class="token-symbol">SOL</span>
+            <span class="token-name">Solana</span>
+          </div>
+        </div>
+        <div class="card-bottom">
+          <div class="price-group">
+            <span class="token-price">$196.40</span>
+            <span class="token-change negative">-1.82%</span>
+          </div>
+          <div class="sparkline-wrap">
+            <svg viewBox="0 0 80 36" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="fillSOL" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#EF4444" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="#EF4444" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <polygon points="0,10 8,12 16,14 24,12 32,16 40,18 48,16 56,20 64,22 72,26 80,24 80,36 0,36" fill="url(#fillSOL)"/>
+              <polyline points="0,10 8,12 16,14 24,12 32,16 40,18 48,16 56,20 64,22 72,26 80,24" fill="none" stroke="#EF4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- BNB -->
+      <div class="coin-card">
+        <div class="rank-badge">#4</div>
+        <div class="card-top">
+          <div class="token-avatar" style="background: linear-gradient(135deg, #F0B90B, #D4A40A); box-shadow: 0 2px 12px rgba(240,185,11,0.3);">B</div>
+          <div class="token-info">
+            <span class="token-symbol">BNB</span>
+            <span class="token-name">BNB Chain</span>
+          </div>
+        </div>
+        <div class="card-bottom">
+          <div class="price-group">
+            <span class="token-price">$683.50</span>
+            <span class="token-change positive">+1.14%</span>
+          </div>
+          <div class="sparkline-wrap">
+            <svg viewBox="0 0 80 36" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="fillBNB" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#10B981" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="#10B981" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <polygon points="0,22 8,24 16,20 24,18 32,20 40,16 48,18 56,14 64,16 72,12 80,14 80,36 0,36" fill="url(#fillBNB)"/>
+              <polyline points="0,22 8,24 16,20 24,18 32,20 40,16 48,18 56,14 64,16 72,12 80,14" fill="none" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- XRP -->
+      <div class="coin-card">
+        <div class="rank-badge">#5</div>
+        <div class="card-top">
+          <div class="token-avatar" style="background: linear-gradient(135deg, #00AAE4, #0092C8); box-shadow: 0 2px 12px rgba(0,170,228,0.3);">X</div>
+          <div class="token-info">
+            <span class="token-symbol">XRP</span>
+            <span class="token-name">Ripple</span>
+          </div>
+        </div>
+        <div class="card-bottom">
+          <div class="price-group">
+            <span class="token-price">$2.45</span>
+            <span class="token-change positive">+5.41%</span>
+          </div>
+          <div class="sparkline-wrap">
+            <svg viewBox="0 0 80 36" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="fillXRP" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#10B981" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="#10B981" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <polygon points="0,32 8,28 16,26 24,24 32,20 40,18 48,14 56,12 64,10 72,6 80,4 80,36 0,36" fill="url(#fillXRP)"/>
+              <polyline points="0,32 8,28 16,26 24,24 32,20 40,18 48,14 56,12 64,10 72,6 80,4" fill="none" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADA -->
+      <div class="coin-card">
+        <div class="rank-badge">#6</div>
+        <div class="card-top">
+          <div class="token-avatar" style="background: linear-gradient(135deg, #0033AD, #002A8E); box-shadow: 0 2px 12px rgba(0,51,173,0.3);">A</div>
+          <div class="token-info">
+            <span class="token-symbol">ADA</span>
+            <span class="token-name">Cardano</span>
+          </div>
+        </div>
+        <div class="card-bottom">
+          <div class="price-group">
+            <span class="token-price">$0.95</span>
+            <span class="token-change negative">-0.52%</span>
+          </div>
+          <div class="sparkline-wrap">
+            <svg viewBox="0 0 80 36" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="fillADA" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#EF4444" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="#EF4444" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <polygon points="0,14 8,16 16,14 24,18 32,16 40,20 48,18 56,22 64,20 72,24 80,22 80,36 0,36" fill="url(#fillADA)"/>
+              <polyline points="0,14 8,16 16,14 24,18 32,16 40,20 48,18 56,22 64,20 72,24 80,22" fill="none" stroke="#EF4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

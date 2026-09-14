@@ -1,0 +1,362 @@
+/* LayoutEditor - scrim + chips + drop slots + footer. Everything lives in a
+   body portal ABOVE the page; the real sections are never transformed. */
+
+.layout-editor {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  pointer-events: none;
+  font-family: var(--font-body);
+}
+
+.layout-editor__scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 4, 6, 0.55);
+  pointer-events: auto;
+  cursor: default;
+}
+
+/* Section outline highlight */
+.layout-editor__outline {
+  position: fixed;
+  border: 1px dashed rgba(245, 245, 247, 0.22);
+  border-radius: 14px;
+  pointer-events: none;
+}
+
+.layout-editor__outline.is-dragging {
+  border-color: color-mix(in srgb, var(--accent, #f5f5f7) 60%, transparent);
+  border-style: solid;
+}
+
+/* Chips */
+.layout-editor__chip {
+  position: fixed;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  background: rgba(18, 18, 20, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: rgba(245, 245, 247, 0.92);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: grab;
+  pointer-events: auto;
+  user-select: none;
+  touch-action: none;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+}
+
+.layout-editor__chip:hover {
+  border-color: color-mix(in srgb, var(--accent, #f5f5f7) 35%, transparent);
+}
+
+.layout-editor__chip.is-dragging {
+  cursor: grabbing;
+  opacity: 0.55;
+}
+
+.layout-editor__chip-zone {
+  font-size: 0.6563rem;
+  color: rgba(245, 245, 247, 0.42);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.layout-editor__chip-hide {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin: -2px -4px -2px 0;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  color: rgba(245, 245, 247, 0.45);
+  cursor: pointer;
+}
+
+.layout-editor__chip-hide:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.9);
+}
+
+/* Drop slots */
+.layout-editor__slot {
+  position: fixed;
+  pointer-events: none;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.layout-editor__slot--line {
+  border-radius: 3px;
+  background: rgba(245, 245, 247, 0.1);
+}
+
+.layout-editor__slot--rail,
+.layout-editor__slot--band {
+  border: 1px dashed rgba(245, 245, 247, 0.25);
+  background: rgba(245, 245, 247, 0.04);
+}
+
+/* Whole-section swap target - a faint outline over the hovered section that
+   fills with accent when it is the active drop (see .is-active below). The
+   "Swap with X" label rides on top. */
+.layout-editor__slot--swap {
+  border: 1.5px dashed rgba(245, 245, 247, 0.18);
+  background: rgba(245, 245, 247, 0.02);
+  align-items: flex-start;
+  padding-top: 44px;
+}
+
+.layout-editor__slot.is-active {
+  background: color-mix(in srgb, var(--accent, #f5f5f7) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent, #f5f5f7) 65%, transparent);
+  color: rgba(245, 245, 247, 0.95);
+}
+
+.layout-editor__slot--line.is-active {
+  background: color-mix(in srgb, var(--accent, #f5f5f7) 75%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent, #f5f5f7) 40%, transparent);
+}
+
+/* Ghost card following the pointer */
+.layout-editor__ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding: 6px 12px;
+  background: rgba(24, 24, 27, 0.98);
+  border: 1px solid color-mix(in srgb, var(--accent, #f5f5f7) 45%, transparent);
+  border-radius: 10px;
+  color: rgba(245, 245, 247, 0.95);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+}
+
+/* Footer bar */
+.layout-editor__bar {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  background: rgba(14, 14, 16, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  pointer-events: auto;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+  max-width: min(92vw, 980px);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.layout-editor__bar-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.95);
+  white-space: nowrap;
+}
+
+.layout-editor__bar-hint {
+  font-size: 0.75rem;
+  color: rgba(245, 245, 247, 0.45);
+  white-space: nowrap;
+}
+
+.layout-editor__bar-presets {
+  display: flex;
+  gap: 6px;
+}
+
+.layout-editor__bar-preset {
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  color: rgba(245, 245, 247, 0.75);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background-color 100ms ease, color 100ms ease;
+}
+
+.layout-editor__bar-preset:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 1);
+}
+
+.layout-editor__bar-hidden {
+  display: flex;
+  gap: 6px;
+}
+
+.layout-editor__bar-restore {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  color: rgba(245, 245, 247, 0.55);
+  font-size: 0.71875rem;
+  cursor: pointer;
+}
+
+.layout-editor__bar-restore:hover {
+  color: rgba(245, 245, 247, 0.95);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+.layout-editor__bar-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: transparent;
+  border: none;
+  color: rgba(245, 245, 247, 0.5);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.layout-editor__bar-reset:hover { color: rgba(245, 245, 247, 0.9); }
+
+.layout-editor__bar-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  background: var(--accent, #f5f5f7);
+  border: none;
+  border-radius: 999px;
+  color: #0a0a0c;
+  font-size: 0.78125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.layout-editor__bar-done:hover { filter: brightness(1.08); }
+
+/* Day mode */
+body.theme-light .layout-editor__scrim { background: rgba(15, 23, 42, 0.28); }
+body.theme-light .layout-editor__chip,
+body.theme-light .layout-editor__ghost,
+body.theme-light .layout-editor__bar {
+  background: rgba(255, 255, 255, 0.99);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #0f172a;
+}
+body.theme-light .layout-editor__chip-zone { color: rgba(15, 23, 42, 0.45); }
+body.theme-light .layout-editor__bar-title { color: #0f172a; }
+body.theme-light .layout-editor__bar-hint { color: rgba(15, 23, 42, 0.5); }
+body.theme-light .layout-editor__bar-preset {
+  background: rgba(17, 17, 19, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: rgba(15, 23, 42, 0.75);
+}
+body.theme-light .layout-editor__bar-preset:hover { color: #0f172a; }
+body.theme-light .layout-editor__bar-restore { border-color: rgba(0, 0, 0, 0.2); color: rgba(15, 23, 42, 0.55); }
+body.theme-light .layout-editor__bar-reset { color: rgba(15, 23, 42, 0.5); }
+body.theme-light .layout-editor__bar-done { background: #0f172a; color: #fff; }
+body.theme-light .layout-editor__outline { border-color: rgba(15, 23, 42, 0.25); }
+body.theme-light .layout-editor__slot--line { background: rgba(15, 23, 42, 0.12); }
+body.theme-light .layout-editor__slot--rail,
+body.theme-light .layout-editor__slot--band {
+  border-color: rgba(15, 23, 42, 0.28);
+  background: rgba(15, 23, 42, 0.05);
+  color: rgba(15, 23, 42, 0.6);
+}
+
+
+/* ---- Draggable sub-part handles (grab a rail block, drop between siblings) --- */
+.layout-editor__part-handle {
+  position: fixed;
+  z-index: 100002;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  pointer-events: auto; /* anchored to each block's top-left, inside the panel */
+}
+.layout-editor__part-handle.is-dragging { opacity: 0.35; }
+
+.layout-editor__part-grip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 9px 0 6px;
+  background: rgba(20, 20, 24, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 7px;
+  color: rgba(245, 245, 247, 0.9);
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  cursor: grab;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  touch-action: none;
+  transition: background-color 100ms ease, border-color 100ms ease;
+}
+.layout-editor__part-grip:hover { background: rgba(30, 30, 36, 0.98); border-color: rgba(255, 255, 255, 0.24); }
+.layout-editor__part-grip:active { cursor: grabbing; }
+.layout-editor__part-grip > svg { color: rgba(245, 245, 247, 0.5); flex: 0 0 auto; }
+
+.layout-editor__part-eye {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: rgba(20, 20, 24, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 7px;
+  color: rgba(245, 245, 247, 0.6);
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  transition: background-color 100ms ease, color 100ms ease;
+}
+.layout-editor__part-eye:hover { background: rgba(30, 30, 36, 0.98); color: rgba(245, 245, 247, 1); }
+
+/* Faint outline of each sibling part during a part drag (drop targets). */
+.layout-editor__part-outline {
+  position: fixed;
+  z-index: 100000;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  pointer-events: none;
+}
+.layout-editor__part-outline.is-dragging {
+  border-color: color-mix(in srgb, var(--accent, #f5f5f7) 55%, transparent);
+  background: color-mix(in srgb, var(--accent, #f5f5f7) 5%, transparent);
+}
+
+body.theme-light .layout-editor__part-grip,
+body.theme-light .layout-editor__part-eye {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.14);
+  color: rgba(15, 23, 42, 0.9);
+}
+body.theme-light .layout-editor__part-grip > svg { color: rgba(15, 23, 42, 0.5); }

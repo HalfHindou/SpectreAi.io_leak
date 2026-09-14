@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Spectre AI Design System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+      
+      @font-face {
+        font-family: 'Nunito Sans';
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url('./sb-common-assets/nunito-sans-regular.woff2') format('woff2');
+      }
+
+      @font-face {
+        font-family: 'Nunito Sans';
+        font-style: italic;
+        font-weight: 400;
+        font-display: swap;
+        src: url('./sb-common-assets/nunito-sans-italic.woff2') format('woff2');
+      }
+
+      @font-face {
+        font-family: 'Nunito Sans';
+        font-style: normal;
+        font-weight: 700;
+        font-display: swap;
+        src: url('./sb-common-assets/nunito-sans-bold.woff2') format('woff2');
+      }
+
+      @font-face {
+        font-family: 'Nunito Sans';
+        font-style: italic;
+        font-weight: 700;
+        font-display: swap;
+        src: url('./sb-common-assets/nunito-sans-bold-italic.woff2') format('woff2');
+      }
+
+      /* Auth Gate Styles */
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      .auth-gate {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0a0a0f;
+        z-index: 99999;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+
+      .auth-gate.hidden {
+        display: none !important;
+      }
+
+      .auth-background {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      .auth-gradient {
+        position: absolute;
+        width: 600px;
+        height: 600px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+        filter: blur(60px);
+        animation: pulse 4s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+        50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+      }
+
+      .auth-card {
+        position: relative;
+        width: 100%;
+        max-width: 400px;
+        padding: 48px;
+        background: #12121a;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7), 0 0 100px rgba(139, 92, 246, 0.1);
+        text-align: center;
+      }
+
+      .auth-logo {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 80px;
+        margin-bottom: 24px;
+        background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+        border-radius: 20px;
+        font-size: 40px;
+        box-shadow: 0 0 40px rgba(139, 92, 246, 0.3);
+      }
+
+      .auth-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #f4f4f5;
+        margin-bottom: 8px;
+      }
+
+      .auth-subtitle {
+        font-size: 14px;
+        color: #71717a;
+        margin-bottom: 32px;
+      }
+
+      .auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .auth-input-wrapper {
+        position: relative;
+      }
+
+      .auth-input {
+        width: 100%;
+        height: 48px;
+        padding: 0 16px;
+        background: #1a1a24;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        font-family: inherit;
+        font-size: 16px;
+        color: #f4f4f5;
+        text-align: center;
+        transition: all 0.2s ease;
+      }
+
+      .auth-input::placeholder {
+        color: #52525b;
+      }
+
+      .auth-input:focus {
+        outline: none;
+        border-color: #8B5CF6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+      }
+
+      .auth-input.error {
+        border-color: #EF4444;
+        animation: shake 0.4s ease;
+      }
+
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-8px); }
+        40%, 80% { transform: translateX(8px); }
+      }
+
+      .auth-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 48px;
+        padding: 0 24px;
+        background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+        border: none;
+        border-radius: 12px;
+        font-family: inherit;
+        font-size: 16px;
+        font-weight: 600;
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+      }
+
+      .auth-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 30px rgba(139, 92, 246, 0.4);
+      }
+
+      .auth-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .auth-footer {
+        margin-top: 24px;
+        font-size: 12px;
+        color: #52525b;
+      }
+
+      #storybook-root[hidden] {
+        display: none !important;
+      }
+    </style>
+    
+    <!-- Inline script to handle auth before body renders -->
+    <script>
+      (function() {
+        var AUTH_KEY = 'spectre-storybook-auth';
+        var isAuthed = localStorage.getItem(AUTH_KEY) === 'true';
+        if (!isAuthed) {
+          // Add style to hide Storybook if not authed
+          var style = document.createElement('style');
+          style.id = 'auth-blocker';
+          style.textContent = '#root { display: none !important; }';
+          document.head.appendChild(style);
+        } else {
+          // Add style to hide auth gate if authed
+          var style = document.createElement('style');
+          style.id = 'auth-bypass';
+          style.textContent = '.auth-gate { display: none !important; }';
+          document.head.appendChild(style);
+        }
+      })();
+    </script>
+
+    <link href="./sb-manager/runtime.js" rel="modulepreload" />
+    <link href="./sb-addons/storybook-core-core-server-presets-0/common-manager-bundle.js" rel="modulepreload" />
+    <link href="./sb-addons/links-1/manager-bundle.js" rel="modulepreload" />
+    <link href="./sb-addons/essentials-controls-2/manager-bundle.js" rel="modulepreload" />
+    <link href="./sb-addons/essentials-actions-3/manager-bundle.js" rel="modulepreload" />
+    <link href="./sb-addons/essentials-docs-4/manager-bundle.js" rel="modulepreload" />
+    <link href="./sb-addons/essentials-backgrounds-5/manager-bundle.js" rel="modulepreload" />
+    <link href="./sb-addons/essentials-viewport-6/manager-bundle.js" rel="modulepreload" />
+    <link href="./sb-addons/essentials-toolbars-7/manager-bundle.js" rel="modulepreload" />
+    <link href="./sb-addons/essentials-measure-8/manager-bundle.js" rel="modulepreload" />
+    <link href="./sb-addons/essentials-outline-9/manager-bundle.js" rel="modulepreload" />
+    <link href="./sb-addons/interactions-10/manager-bundle.js" rel="modulepreload" />
+    <link href="./sb-addons/a11y-11/manager-bundle.js" rel="modulepreload" />
+    <link href="./sb-addons/themes-12/manager-bundle.js" rel="modulepreload" />
+    <link href="./sb-addons/storybook-13/manager-bundle.js" rel="modulepreload" />
+  </head>
+  <body>
+    <!-- Auth Gate -->
+    <div class="auth-gate" id="authGate">
+      <div class="auth-background">
+        <div class="auth-gradient"></div>
+      </div>
+      <div class="auth-card">
+        <div class="auth-logo">📚</div>
+        <h1 class="auth-title">Design System</h1>
+        <p class="auth-subtitle">Developer Access Only</p>
+        <form class="auth-form" id="authForm">
+          <div class="auth-input-wrapper">
+            <input 
+              type="password" 
+              class="auth-input" 
+              id="authPassword" 
+              placeholder="Enter team password"
+              autocomplete="off"
+            >
+          </div>
+          <button type="submit" class="auth-btn">
+            Access Storybook
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </form>
+        <p class="auth-footer">Contact your team lead for access</p>
+      </div>
+    </div>
+
+    <!-- Storybook Content -->
+    <div id="root"></div>
+
+    <script>
+      window['FEATURES'] = {
+        "argTypeTargetsV7": true,
+        "legacyDecoratorFileOrder": false,
+        "disallowImplicitActionsInRenderV8": true
+      };
+      window['REFS'] = {};
+      window['LOGLEVEL'] = "info";
+      window['DOCS_OPTIONS'] = {
+        "defaultName": "Documentation",
+        "autodocs": "tag"
+      };
+      window['CONFIG_TYPE'] = "PRODUCTION";
+      window['TAGS_OPTIONS'] = {
+        "dev-only": { "excludeFromDocsStories": true },
+        "docs-only": { "excludeFromSidebar": true },
+        "test-only": { "excludeFromSidebar": true, "excludeFromDocsStories": true }
+      };
+      window['STORYBOOK_RENDERER'] = "react";
+      window['STORYBOOK_BUILDER'] = "@storybook/builder-vite";
+      window['STORYBOOK_FRAMEWORK'] = "@storybook/react-vite";
+    </script>
+
+    <script type="module">
+      import './sb-manager/globals-runtime.js';
+      import './sb-addons/storybook-core-core-server-presets-0/common-manager-bundle.js';
+      import './sb-addons/links-1/manager-bundle.js';
+      import './sb-addons/essentials-controls-2/manager-bundle.js';
+      import './sb-addons/essentials-actions-3/manager-bundle.js';
+      import './sb-addons/essentials-docs-4/manager-bundle.js';
+      import './sb-addons/essentials-backgrounds-5/manager-bundle.js';
+      import './sb-addons/essentials-viewport-6/manager-bundle.js';
+      import './sb-addons/essentials-toolbars-7/manager-bundle.js';
+      import './sb-addons/essentials-measure-8/manager-bundle.js';
+      import './sb-addons/essentials-outline-9/manager-bundle.js';
+      import './sb-addons/interactions-10/manager-bundle.js';
+      import './sb-addons/a11y-11/manager-bundle.js';
+      import './sb-addons/themes-12/manager-bundle.js';
+      import './sb-addons/storybook-13/manager-bundle.js';
+      import './sb-manager/runtime.js';
+    </script>
+
+    <script>
+      // Handle form submission
+      document.getElementById('authForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var input = document.getElementById('authPassword');
+        var password = input.value;
+        
+        if (password === 'KasAS53D@DH6H4') {
+          localStorage.setItem('spectre-storybook-auth', 'true');
+          // Remove the blocker and add the bypass
+          var blocker = document.getElementById('auth-blocker');
+          if (blocker) blocker.remove();
+          var style = document.createElement('style');
+          style.id = 'auth-bypass';
+          style.textContent = '.auth-gate { display: none !important; }';
+          document.head.appendChild(style);
+          // Also hide via class
+          document.getElementById('authGate').style.display = 'none';
+        } else {
+          input.classList.add('error');
+          input.value = '';
+          input.placeholder = 'Incorrect password';
+          setTimeout(function() {
+            input.classList.remove('error');
+            input.placeholder = 'Enter team password';
+          }, 1500);
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=960">
+  <title>Spectre — Token Banner Widget</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-void: #09090b; --bg-surface: #111113; --bg-elevated: #18181b;
+      --glass-bg: rgba(9,9,11,0.88); --glass-border: rgba(255,255,255,0.04);
+      --text-primary: #f5f5f7; --text-secondary: rgba(245,245,247,0.6);
+      --text-tertiary: rgba(245,245,247,0.5); --text-muted: rgba(245,245,247,0.35);
+      --bull: #10B981; --bear: #EF4444; --cyan: #06B6D4; --violet: #A78BFA;
+      --border-subtle: rgba(255,255,255,0.03); --border-default: rgba(255,255,255,0.04);
+      --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0a0f; font-family: var(--font-body); color: var(--text-primary); -webkit-font-smoothing: antialiased; }
+    .widget { width: 900px; padding: 32px; }
+
+    /* ── Glass Card ─────────────────────────────────────── */
+    .token-banner {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 28px 32px 20px;
+      backdrop-filter: blur(24px) saturate(180%);
+      box-shadow:
+        0 4px 24px rgba(0,0,0,0.12),
+        0 20px 60px rgba(0,0,0,0.18),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+      position: relative;
+      overflow: hidden;
+    }
+    .token-banner::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    }
+    /* faint ambient glow behind the card */
+    .token-banner::after {
+      content: '';
+      position: absolute;
+      top: -60px; right: -40px;
+      width: 260px; height: 180px;
+      background: radial-gradient(ellipse, rgba(247,147,26,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── Top Row: Identity / Content / Price ────────────── */
+    .banner-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 28px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── LEFT: Identity ─────────────────────────────────── */
+    .banner-identity {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      min-width: 110px;
+    }
+    .token-avatar {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #F7931A 0%, #E8820A 100%);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 0 3px rgba(247,147,26,0.15), 0 4px 16px rgba(247,147,26,0.2);
+      font-size: 18px; font-weight: 800; color: #fff;
+      letter-spacing: -0.02em;
+      position: relative;
+    }
+    .token-avatar svg {
+      width: 24px; height: 24px; fill: #fff;
+    }
+    .token-symbol {
+      font-size: 18px; font-weight: 700; color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+    .token-name {
+      font-size: 12px; font-weight: 500; color: var(--text-secondary);
+      margin-top: -4px;
+    }
+    .identity-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    .watchlist-heart {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .watchlist-heart:hover {
+      background: rgba(239,68,68,0.1);
+      border-color: rgba(239,68,68,0.2);
+    }
+    .watchlist-heart svg {
+      width: 14px; height: 14px;
+      color: var(--bear);
+      fill: var(--bear);
+    }
+    .smart-badges {
+      display: flex;
+      gap: 6px;
+    }
+    .badge {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      cursor: default;
+      position: relative;
+    }
+    .badge svg {
+      width: 13px; height: 13px;
+    }
+    .badge-verified {
+      background: rgba(6,182,212,0.1);
+      border: 1px solid rgba(6,182,212,0.18);
+    }
+    .badge-verified svg { color: var(--cyan); }
+    .badge-trending {
+      background: rgba(247,147,26,0.1);
+      border: 1px solid rgba(247,147,26,0.18);
+    }
+    .badge-trending svg { color: #F7931A; }
+    .badge-whale {
+      background: rgba(167,139,250,0.1);
+      border: 1px solid rgba(167,139,250,0.18);
+    }
+    .badge-whale svg { color: var(--violet); }
+
+    /* ── CENTER: Social + Description ───────────────────── */
+    .banner-center {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-top: 2px;
+    }
+    .social-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .social-icon {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .social-icon:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.1);
+    }
+    .social-icon svg {
+      width: 14px; height: 14px;
+      color: var(--text-secondary);
+    }
+    .social-icon:hover svg {
+      color: var(--text-primary);
+    }
+    .token-description {
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      letter-spacing: 0.005em;
+      max-width: 420px;
+    }
+
+    /* ── RIGHT: Price + Stats ───────────────────────────── */
+    .banner-price {
+      flex-shrink: 0;
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+      min-width: 200px;
+    }
+    .price-live {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.025em;
+      font-family: var(--font-body);
+      line-height: 1;
+    }
+    .price-change {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--bull);
+    }
+    .price-change .arrow {
+      display: inline-flex;
+      align-items: center;
+    }
+    .price-change .arrow svg {
+      width: 12px; height: 12px;
+    }
+    .stat-boxes {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .stat-box {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 10px 16px;
+      text-align: center;
+      min-width: 100px;
+    }
+    .stat-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .stat-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      letter-spacing: -0.02em;
+    }
+
+    /* ── Timeframe Pills (top-right) ────────────────────── */
+    .timeframe-pills {
+      position: absolute;
+      top: 28px; right: 32px;
+      display: flex;
+      gap: 2px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 3px;
+      z-index: 2;
+    }
+    .tf-pill {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 8px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      background: none;
+      font-family: var(--font-mono);
+      letter-spacing: 0.01em;
+    }
+    .tf-pill:hover {
+      color: var(--text-secondary);
+      background: rgba(255,255,255,0.04);
+    }
+    .tf-pill.active {
+      color: var(--text-primary);
+      background: rgba(255,255,255,0.08);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+
+    /* ── Bottom: Contract Row ───────────────────────────── */
+    .contract-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-subtle);
+      position: relative;
+      z-index: 1;
+    }
+    .contract-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .contract-address {
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 6px 12px;
+      letter-spacing: 0.02em;
+    }
+    .contract-action {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .contract-action:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.1);
+    }
+    .contract-action svg {
+      width: 13px; height: 13px;
+      color: var(--text-muted);
+    }
+    .contract-action:hover svg {
+      color: var(--text-secondary);
+    }
+    .contract-network {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+    .contract-network .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--bull);
+      box-shadow: 0 0 6px rgba(16,185,129,0.4);
+    }
+  </style>
+</head>
+<body>
+<div class="widget">
+  <div class="token-banner">
+
+    <!-- Timeframe Pills -->
+    <div class="timeframe-pills">
+      <button class="tf-pill">1h</button>
+      <button class="tf-pill">4h</button>
+      <button class="tf-pill">12h</button>
+      <button class="tf-pill active">24h</button>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="banner-top">
+
+      <!-- LEFT: Token Identity -->
+      <div class="banner-identity">
+        <div class="token-avatar">
+          <!-- Bitcoin "B" symbol -->
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14.24 10.56C14.24 9.44 13.44 8.96 12 8.96H10.08V12.16H12C13.44 12.16 14.24 11.68 14.24 10.56ZM15.36 14.08C15.36 12.88 14.48 12.32 12.8 12.32H10.08V15.84H12.8C14.48 15.84 15.36 15.28 15.36 14.08ZM17.76 14.24C17.76 16.48 16 17.52 12.88 17.52H10.08V19.2H8.16V17.52H6.24V15.84H8.16V8.96H6.24V7.28H8.16V5.6H10.08V7.28H12.88C15.68 7.28 17.28 8.16 17.28 10.16C17.28 11.36 16.64 12.16 15.6 12.56C16.96 12.88 17.76 13.6 17.76 14.24Z"/>
+          </svg>
+        </div>
+        <span class="token-symbol">BTC</span>
+        <span class="token-name">Bitcoin</span>
+        <div class="identity-actions">
+          <!-- Watchlist Heart -->
+          <div class="watchlist-heart">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+          </div>
+          <!-- Smart Badges -->
+          <div class="smart-badges">
+            <!-- Verified -->
+            <div class="badge badge-verified" title="Verified">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+            </div>
+            <!-- Trending -->
+            <div class="badge badge-trending" title="Trending">
+              <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 23c-1.1 0-1.99-.89-1.99-1.99h3.98C13.99 22.11 13.1 23 12 23zm-4-4V12c0-2.76 1.12-5.02 3.5-5.82V5.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v.68C16.88 6.98 18 9.24 18 12v7H8zm5.71-14.96C13.14 3.39 12 2.5 12 2.5s-1.14.89-1.71 1.54C9.7 4.73 9.5 5.35 9.5 6c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5c0-.65-.2-1.27-.79-1.96z"/>
+              </svg>
+            </div>
+            <!-- Whale -->
+            <div class="badge badge-whale" title="Whale Activity">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12c0 4 3.5 7 8 7h4c4.5 0 8-3 8-7s-2-6-5-7c0 0-1.5 2-5 2S7 5 7 5c-3 1-5 3-5 7z"/>
+                <circle cx="7.5" cy="11.5" r="1"/>
+                <path d="M21 12c0-2-1-3-1-3"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CENTER: Social + Description -->
+      <div class="banner-center">
+        <!-- Social Icons -->
+        <div class="social-row">
+          <!-- X / Twitter -->
+          <div class="social-icon" title="X (Twitter)">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+          </div>
+          <!-- Website -->
+          <div class="social-icon" title="Website">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          </div>
+          <!-- Telegram -->
+          <div class="social-icon" title="Telegram">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0h-.056zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+            </svg>
+          </div>
+          <!-- Discord -->
+          <div class="social-icon" title="Discord">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+            </svg>
+          </div>
+        </div>
+        <!-- Description -->
+        <p class="token-description">
+          The original cryptocurrency and largest by market capitalization. Bitcoin is a decentralized digital currency that enables peer-to-peer transactions without intermediaries.
+        </p>
+      </div>
+
+      <!-- RIGHT: Price + Stats -->
+      <div class="banner-price">
+        <div class="price-live">$97,842.50</div>
+        <div class="price-change">
+          <span class="arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="18 15 12 9 6 15"/>
+            </svg>
+          </span>
+          +$2,415.30 (+2.54%)
+        </div>
+        <div class="stat-boxes">
+          <div class="stat-box">
+            <div class="stat-label">Market Cap</div>
+            <div class="stat-value">$1.92T</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">24h Volume</div>
+            <div class="stat-value">$48.2B</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Contract Address Row -->
+    <div class="contract-row">
+      <span class="contract-label">Contract</span>
+      <span class="contract-address">0x0000...0000</span>
+      <!-- Copy -->
+      <div class="contract-action" title="Copy address">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+      </div>
+      <!-- Etherscan -->
+      <div class="contract-action" title="View on Etherscan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15 3 21 3 21 9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+      </div>
+      <div class="contract-network">
+        <span class="dot"></span>
+        Ethereum Mainnet
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,628 @@
+/**
+ * WeekView Styles
+ * 7-column Mon-Sun layout with stacked event cards per day
+ * Spectre Premium Recipe: gradient bg, multi-layered shadow, shine sweep,
+ * bell-curve dividers, 450/600 font-weights.
+ */
+
+.week-view {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.week-view__grid {
+  display: grid;
+  /* minmax(0, …) not 1fr: a bare 1fr track is minmax(auto, 1fr) and refuses to
+     shrink below its content, so one long card title (or the "All day" label
+     next to a day count) inflated its column and pushed Sunday out of the
+     panel into a horizontal scroll. */
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px;
+  /* The panel is ~930px wide on a 1600px desktop once the intel rail takes its
+     share, so this floor must stay under that or the desktop grid scrolls and
+     loses Sunday. Narrow columns are handled by the card itself instead: the
+     top row wraps rather than clipping the clock or the tier dots. */
+  min-width: 700px;
+  background: var(--border-subtle);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+/* Compact — the Command Center's short scroll pane (see MonthView). */
+.week-view--compact .week-view__column { min-height: 210px; }
+.week-view--compact .week-view__day-header { padding: 7px 6px; }
+.week-view--compact .week-view__events { padding: 5px; gap: 5px; }
+.week-view--compact .week-view__event-card { padding: 6px 7px; border-radius: 9px; }
+.week-view--compact .week-view__event-name { font-size: 10px; }
+
+/* Day column */
+.week-view__column {
+  display: flex;
+  flex-direction: column;
+  /* Sized container so the cards inside can drop the tier WORD when a column
+     gets narrow (7 columns beside the intel rail on a 1440-wide laptop) and
+     keep it when there's room. Truncating it to "C." was worse than either. */
+  container-type: inline-size;
+  position: relative;
+  background: var(--bg-surface);
+  min-height: 280px;
+  transition: background var(--duration-fast) var(--ease-out);
+  animation: ec-blur-entrance 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Staggered entrance for week columns */
+.week-view__column:nth-child(1) { animation-delay: 0ms; }
+.week-view__column:nth-child(2) { animation-delay: 40ms; }
+.week-view__column:nth-child(3) { animation-delay: 80ms; }
+.week-view__column:nth-child(4) { animation-delay: 120ms; }
+.week-view__column:nth-child(5) { animation-delay: 160ms; }
+.week-view__column:nth-child(6) { animation-delay: 200ms; }
+.week-view__column:nth-child(7) { animation-delay: 240ms; }
+
+/* TODAY — the one lifted column. It reads as the near surface: brighter glass
+   and a full inner ring, NOT a rule drawn across the top. A 2px bar states
+   "today" in the language of a debug outline. */
+.week-view__column--today {
+  background:
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.085) 0%,
+      rgba(255, 255, 255, 0.03) 42%,
+      rgba(255, 255, 255, 0.014) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.week-view__column--weekend {
+  opacity: 0.62;
+}
+
+/* PAST — faded with INK, not with opacity on the container. The old
+   `opacity: 0.3` dimmed the printed result too, which is the only reason to
+   look at a past day at all. */
+.week-view__column--past {
+  background: var(--cal-past-surface);
+}
+
+.week-view__column--past .week-view__event-name {
+  color: var(--cal-past-ink);
+}
+
+.week-view__column--past .week-view__event-time,
+.week-view__column--past .week-view__day-count,
+.week-view__column--past .week-view__empty-text {
+  color: var(--cal-past-ink-dim);
+}
+
+.week-view__column--past .impact-badge__dot {
+  opacity: var(--cal-past-dot);
+}
+
+.week-view__column--past .impact-badge__label {
+  opacity: 0.55;
+}
+
+.week-view__column--past .week-view__day-label {
+  text-decoration: line-through;
+  text-decoration-color: rgba(255, 255, 255, 0.2);
+  text-decoration-thickness: 1px;
+}
+
+.week-view__column--past.week-view__column--weekend {
+  opacity: 0.25;
+}
+
+/* Day header — bell-curve divider via ::after */
+.week-view__day-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background var(--duration-base) var(--ease-out);
+  position: relative;
+}
+
+/* Bell-curve gradient divider replacing border-bottom */
+.week-view__day-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.04) 15%, rgba(255, 255, 255, 0.06) 50%, rgba(255, 255, 255, 0.04) 85%, transparent 100%);
+}
+
+.week-view__day-header:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.week-view__day-label {
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.week-view__day-header--today .week-view__day-label {
+  color: var(--text-primary);
+}
+
+/* Per-day total. The column can only fit MAX_VISIBLE_EVENTS cards, so the
+   count is what tells the reader a busy day is busy — without it a 26-event
+   Friday looked identical to a 4-event Tuesday. */
+.week-view__day-header .cal-today-chip {
+  flex-shrink: 0;
+}
+
+/* In a narrow column the header can't hold the date, the TODAY chip and the
+   count. TODAY wins — it's the label the eye is hunting for. */
+@container (max-width: 176px) {
+  .week-view__day-header--today .week-view__day-count {
+    display: none;
+  }
+}
+
+.week-view__day-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 5px;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  font-variant-numeric: tabular-nums;
+}
+
+.week-view__day-header--today .week-view__day-count {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.week-view__today-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 2px;
+  background: rgba(245,245,247,0.6);
+  border-radius: 1px;
+  box-shadow: 0 0 8px rgba(255,255,255,0.12);
+  z-index: 1;
+}
+
+/* Events stack */
+.week-view__events {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 6px;
+}
+
+.week-view__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.week-view__empty-text {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 450;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+/* Released print, shown inside the week card. */
+.week-view__event-result {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-top: 1px;
+  min-width: 0;
+}
+
+.week-view__event-result .cal-result {
+  font-size: 11px;
+}
+
+.week-view__event-vs {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--cal-past-ink-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* A released card keeps its result legible even inside a past column. */
+.week-view__column--past .week-view__event-card--released .cal-result {
+  opacity: 1;
+}
+
+@container (max-width: 150px) {
+  .week-view__event-vs { display: none; }
+}
+
+/* Event card — Spectre premium treatment */
+.week-view__event-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 9px;
+  background:
+    linear-gradient(158deg,
+      rgba(var(--pro-ink, 255, 255, 255), 0.05) 0%,
+      rgba(var(--pro-ink, 255, 255, 255), 0.016) 48%,
+      rgba(var(--pro-ink, 255, 255, 255), 0.008) 100%);
+  border: 1px solid rgba(var(--pro-ink, 255, 255, 255), 0.05);
+  border-radius: 11px;
+  cursor: pointer;
+  text-align: left;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 8px 22px rgba(0, 0, 0, 0.2);
+  transition: border-color var(--duration-base) var(--ease-out),
+              background var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out),
+              transform var(--duration-base) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* ── Tier light, same material as the month board ───────────────────────── */
+.week-view__event-card::after {
+  content: '';
+  position: absolute;
+  top: -70%;
+  right: -32%;
+  width: 82%;
+  height: 190%;
+  border-radius: 50%;
+  filter: blur(13px);
+  opacity: 0;
+  pointer-events: none;
+  /* Under the content, above the card's own background (see MonthView). */
+  z-index: -1;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.week-view__event-card--critical::after {
+  opacity: 1;
+  background: radial-gradient(circle at 62% 40%, rgba(239, 68, 68, 0.5) 0%, rgba(239, 68, 68, 0.14) 44%, transparent 74%);
+}
+
+.week-view__event-card--high::after {
+  opacity: 1;
+  background: radial-gradient(circle at 62% 40%, rgba(249, 115, 22, 0.4) 0%, rgba(249, 115, 22, 0.1) 46%, transparent 74%);
+}
+
+.week-view__event-card--medium::after {
+  opacity: 1;
+  background: radial-gradient(circle at 62% 40%, rgba(245, 158, 11, 0.22) 0%, rgba(245, 158, 11, 0.05) 48%, transparent 74%);
+}
+
+.week-view__event-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(var(--pro-ink, 255, 255, 255), 0.11);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 2px 4px rgba(0, 0, 0, 0.34),
+    0 14px 30px rgba(0, 0, 0, 0.28);
+}
+
+/* The next critical print — the one card on the week that breathes. */
+.week-view__event-card--next {
+  animation: week-next-breathe 4.5s ease-in-out infinite;
+}
+
+@keyframes week-next-breathe {
+  0%, 100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.045),
+      0 1px 2px rgba(0, 0, 0, 0.3),
+      0 8px 22px rgba(0, 0, 0, 0.2),
+      0 0 0 0 rgba(239, 68, 68, 0);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      0 1px 2px rgba(0, 0, 0, 0.3),
+      0 10px 26px rgba(0, 0, 0, 0.24),
+      0 0 22px 1px rgba(239, 68, 68, 0.24);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .week-view__event-card--next { animation: none; }
+}
+
+/* Shine sweep for event cards */
+.week-view__event-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.03) 45%, transparent 50%);
+  opacity: 0;
+  transition: opacity 300ms ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.week-view__event-card:hover::before {
+  opacity: 1;
+}
+
+.week-view__event-card:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.025) 40%, rgba(255, 255, 255, 0.012) 100%);
+  border-color: rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16), 0 12px 40px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* Critical — subtle red tint, no colored border */
+.week-view__event-card--critical {
+  background:
+    linear-gradient(158deg,
+      rgba(239, 68, 68, 0.11) 0%,
+      rgba(239, 68, 68, 0.035) 46%,
+      rgba(var(--pro-ink, 255, 255, 255), 0.01) 100%);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.week-view__event-card--critical .week-view__event-name {
+  color: var(--text-primary);
+  font-weight: 650;
+}
+
+.week-view__event-card--critical:hover {
+  border-color: rgba(239, 68, 68, 0.34);
+  background:
+    linear-gradient(158deg,
+      rgba(239, 68, 68, 0.15) 0%,
+      rgba(239, 68, 68, 0.05) 46%,
+      rgba(var(--pro-ink, 255, 255, 255), 0.015) 100%);
+}
+
+.week-view__event-card--high {
+  border-color: rgba(249, 115, 22, 0.12);
+}
+
+.week-view__event-card--high:hover {
+  border-color: rgba(249, 115, 22, 0.24);
+}
+
+.week-view__event-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  /* Wrap instead of clip: in a narrow column the clock drops to its own line,
+     which beats rendering "2:3" or a CRITICAL badge with two of its four dots
+     cut off. */
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 2;
+}
+
+/* In a 7-across column the tier badge is what yields, not the clock: a clipped
+   "2:3" is a wrong number, while a clipped tier label still reads off the dots
+   and the card's own colour. */
+.week-view__event-top .impact-badge {
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
+}
+
+/* The dots are the tier — they never get clipped, only the word does. */
+.week-view__event-top .impact-badge__dots {
+  flex-shrink: 0;
+}
+
+.week-view__event-top .impact-badge__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@container (max-width: 168px) {
+  .week-view__event-top .impact-badge__label {
+    display: none;
+  }
+}
+
+.week-view__event-time {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 450;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.week-view__event-name {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 450;
+  color: var(--text-primary);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  position: relative;
+  z-index: 2;
+}
+
+/* Overflow badge */
+.week-view__overflow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  background: none;
+  border: 1px dashed rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 450;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  transition: all var(--duration-base) var(--ease-out);
+}
+
+.week-view__overflow:hover {
+  color: var(--text-secondary);
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* =============================================
+   Day Mode Overrides — Full Coverage
+   ============================================= */
+.app-day-mode .week-view__grid {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.app-day-mode .week-view__column {
+  background: #ffffff;
+}
+
+.app-day-mode .week-view__column--today {
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.04) 0%, rgba(59, 130, 246, 0.01) 100%);
+}
+
+.app-day-mode .week-view__column--weekend {
+  opacity: 0.6;
+}
+
+.app-day-mode .week-view__column--past {
+  opacity: 0.3;
+}
+
+.app-day-mode .week-view__column--past .week-view__day-label {
+  text-decoration-color: rgba(0, 0, 0, 0.15);
+}
+
+.app-day-mode .week-view__column--past.week-view__column--weekend {
+  opacity: 0.25;
+}
+
+.app-day-mode .week-view__day-header {
+  /* Bell-curve divider handled by ::after */
+}
+
+.app-day-mode .week-view__day-header::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.04) 15%, rgba(0, 0, 0, 0.06) 50%, rgba(0, 0, 0, 0.04) 85%, transparent 100%);
+}
+
+.app-day-mode .week-view__day-header:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.app-day-mode .week-view__day-label {
+  color: #334155;
+}
+
+.app-day-mode .week-view__day-header--today .week-view__day-label {
+  color: #0f172a;
+}
+
+.app-day-mode .week-view__today-indicator {
+  background: #3B82F6;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.25);
+}
+
+.app-day-mode .week-view__empty-text {
+  color: #94a3b8;
+}
+
+.app-day-mode .week-view__event-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.88) 100%);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.app-day-mode .week-view__event-card::before {
+  background: linear-gradient(105deg, transparent 40%, rgba(0, 0, 0, 0.015) 45%, transparent 50%);
+}
+
+.app-day-mode .week-view__event-card:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.92) 100%);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.app-day-mode .week-view__event-card--critical {
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.04) 0%, rgba(239, 68, 68, 0.01) 100%);
+}
+
+.app-day-mode .week-view__event-card--critical:hover {
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%);
+}
+
+.app-day-mode .week-view__event-time {
+  color: #94a3b8;
+}
+
+.app-day-mode .week-view__event-name {
+  color: #0f172a;
+}
+
+.app-day-mode .week-view__overflow {
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #94a3b8;
+}
+
+.app-day-mode .week-view__overflow:hover {
+  color: #334155;
+  border-color: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* Responsive — horizontal scroll on narrow viewports */
+@media (max-width: 768px) {
+  .week-view__grid {
+    /* 600px over 7 columns is 86px each — too tight for a card to say anything.
+       The grid scrolls sideways on a phone anyway; 812px keeps every column
+       readable at ~116px. */
+    min-width: 812px;
+  }
+
+  .week-view__column {
+    min-height: 220px;
+  }
+
+  .week-view__day-label {
+    font-size: 11px;
+  }
+
+  .week-view__event-card {
+    padding: 6px;
+  }
+
+  .week-view__event-name {
+    font-size: 10px;
+  }
+}

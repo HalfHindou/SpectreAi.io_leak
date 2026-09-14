@@ -1,0 +1,570 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   MobileDiscoverySection — Mobile wrapper for Discovery (tab bar + chips)
+   Glass container, horizontal scroll tabs, animated indicator, filter chips.
+   Mobile-only: hidden at >=769px.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Outer container ── */
+.mds {
+  position: relative;
+  background: transparent;
+  border-radius: var(--m-card-radius-lg, 14px);
+  overflow-x: hidden;  /* allow vertical content to flow */
+}
+
+@keyframes mdsEnter {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Top edge highlight — removed for clean fintech look */
+.mds::before {
+  display: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Header Expand Button (now inside tab bar row)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.mds-header-expand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm, 8px);
+  color: rgba(245, 245, 247, 0.75);
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mds-header-expand:active {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5f5f7;
+  transform: scale(0.92);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Tab Bar
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.mds-bar-wrapper {
+  position: relative;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.mds-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+}
+
+.mds-bar-row > .mds-header-expand {
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.mds-bar-row .mds-watchlist-star {
+  flex-shrink: 0;
+  margin-left: 6px;
+}
+
+.mds-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 38px;
+  padding: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y; /* NOT pan-x alone: that permits ONLY horizontal
+     panning from a touch starting here, so a vertical drag on this strip scrolls
+     NOTHING. Measured 2026-08-04: a drag from the market-pulse ticker or the
+     Command Center tab row moved the page 0px — the founder's "i cant scroll at
+     times", since these full-bleed bands are exactly where a thumb lands. With
+     both axes allowed the browser still locks to one after the first movement, so
+     the strip keeps scrolling sideways. */
+  flex: 1 1 0;
+  min-width: 0;
+
+  /* Hide scrollbar - all browsers */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mds-bar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Individual tab button ── */
+.mds-tab {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 10px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+
+  /* Text styling */
+  font-family: var(--font-body);
+  font-size: var(--m-text-base);
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.7);
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.mds-tab:active {
+  transform: scale(0.97);
+}
+
+.mds-tab.active {
+  color: #f5f5f7;
+  font-weight: 600;
+}
+
+/* ── Active indicator line - spring ── */
+.mds-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(245, 245, 247, 0.6), var(--text-primary, #f5f5f7), rgba(245, 245, 247, 0.6));
+  border-radius: 1px 1px 0 0;
+  transition: transform 0.45s var(--spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)),
+              width 0.35s var(--spring-gentle, cubic-bezier(0.16, 1, 0.3, 1));
+  pointer-events: none;
+  z-index: 1;
+  box-shadow: 0 0 8px rgba(245, 245, 247, 0.12);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Category Filter Chips
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.mds-chips-wrapper {
+  position: relative;
+}
+
+/* Gradient fade on right edge — hints at scrollable content */
+.mds-chips-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 24px;
+  background: linear-gradient(to right, transparent, var(--bg-base, #09090b));
+  pointer-events: none;
+  z-index: 1;
+}
+
+.mds-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--m-xs) var(--m-sm);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mds-chips::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Individual chip — CMC-style filter pills ── */
+.mds-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: var(--radius-lg);
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
+  background: transparent;
+  color: rgba(245, 245, 247, 0.7);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.35s var(--spring-snappy, cubic-bezier(0.16, 1, 0.3, 1));
+  line-height: 1;
+}
+
+.mds-chip:active {
+  transform: scale(0.93);
+}
+
+.mds-chip.active {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary, #f5f5f7);
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.03), inset 0 0.5px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Watchlist Star Toggle
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.mds-watchlist-star {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: rgba(245, 245, 247, 0.5);
+  -webkit-tap-highlight-color: transparent;
+  transition: all 150ms ease;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.mds-watchlist-star:active {
+  transform: scale(0.9);
+}
+
+.mds-watchlist-star.active {
+  color: #F59E0B;
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.3));
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Watchlist Panel
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.mds-watchlist-panel {
+  padding: var(--m-sm, 8px) 0 0;
+}
+
+/* Search bar */
+.mds-watchlist-search-wrap {
+  position: relative;
+  padding: 0 var(--m-md, 12px) var(--m-sm, 8px);
+}
+
+.mds-watchlist-search-icon {
+  position: absolute;
+  left: calc(var(--m-md, 12px) + 10px);
+  top: 50%;
+  transform: translateY(calc(-50% - 4px));
+  color: rgba(245, 245, 247, 0.35);
+  display: flex;
+  pointer-events: none;
+}
+
+.mds-watchlist-search {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px 0 34px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--m-card-radius, 10px);
+  color: var(--text-primary, #f5f5f7);
+  font-family: var(--font-body);
+  font-size: 13px;
+  outline: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  transition: border-color 150ms ease;
+}
+
+.mds-watchlist-search::placeholder {
+  color: rgba(245, 245, 247, 0.35);
+}
+
+.mds-watchlist-search:focus {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Empty state */
+.mds-watchlist-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 10px;
+}
+
+.mds-watchlist-empty-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.5);
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 150ms ease;
+  margin-bottom: 4px;
+}
+
+.mds-watchlist-empty-add:active {
+  transform: scale(0.92);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.mds-watchlist-empty-text {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.35);
+  margin: 0;
+  text-align: center;
+}
+
+.mds-watchlist-empty-hint {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.25);
+  margin: 0;
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Content Area
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.mds-content {
+  position: relative;
+  min-height: 120px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Narrow phones — tighter padding */
+@media (max-width: 374px) {
+  .mds-header {
+    padding: 10px 10px 0;
+  }
+
+  .mds-bar {
+    padding: 0 6px;
+  }
+
+  .mds-tab {
+    padding: 0 10px;
+    font-size: var(--m-text-sm);
+  }
+
+  .mds-chips {
+    gap: 6px;
+    padding: var(--m-xs) var(--m-sm);
+  }
+
+  .mds-chip {
+    padding: 6px 12px;
+    font-size: var(--m-text-sm);
+    min-height: 32px;
+  }
+}
+
+/* Wider phones — more breathing room */
+@media (min-width: 430px) {
+  .mds-tab {
+    padding: 0 var(--m-lg);
+  }
+
+  .mds-chips {
+    gap: 10px;
+  }
+}
+
+/* Hide on desktop — this component is mobile-only */
+@media (min-width: 769px) {
+  .mds {
+    display: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Focus — keyboard accessibility
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.mds-tab:focus-visible {
+  outline: 2px solid var(--accent, #f5f5f7);
+  outline-offset: -2px;
+  border-radius: var(--radius-xs, 4px);
+}
+
+.mds-header-expand:focus-visible {
+  outline: 2px solid var(--accent, #f5f5f7);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm, 8px);
+}
+
+.mds-chip:focus-visible {
+  outline: 2px solid var(--accent, #f5f5f7);
+  outline-offset: 1px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Day Mode
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Container */
+.app.app-day-mode .mds,
+.mds.mds--day {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.app.app-day-mode .mds::before,
+.mds.mds--day::before {
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.04), transparent);
+}
+
+/* Header */
+.app.app-day-mode .mds-header-icon,
+.mds.mds--day .mds-header-icon {
+  color: rgba(17, 17, 19, 0.4);
+}
+
+.app.app-day-mode .mds-header-title,
+.mds.mds--day .mds-header-title {
+  color: #0f172a;
+}
+
+.app.app-day-mode .mds-header-expand,
+.mds.mds--day .mds-header-expand {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: rgba(17, 17, 19, 0.4);
+}
+
+.app.app-day-mode .mds-header-expand:active,
+.mds.mds--day .mds-header-expand:active {
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(17, 17, 19, 0.7);
+}
+
+/* Tab bar border */
+.app.app-day-mode .mds-bar-wrapper,
+.mds.mds--day .mds-bar-wrapper {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+/* Tabs */
+.app.app-day-mode .mds-tab,
+.mds.mds--day .mds-tab {
+  color: #64748b;
+}
+
+.app.app-day-mode .mds-tab.active,
+.mds.mds--day .mds-tab.active {
+  color: #0f172a;
+}
+
+/* Indicator */
+.app.app-day-mode .mds-indicator,
+.mds.mds--day .mds-indicator {
+  background: #0f172a;
+}
+
+/* Chips wrapper border */
+.app.app-day-mode .mds-chips-wrapper,
+.mds.mds--day .mds-chips-wrapper {
+  border-bottom-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Chips scroll fade — day mode */
+.app.app-day-mode .mds-chips-wrapper::after,
+.mds.mds--day .mds-chips-wrapper::after {
+  background: linear-gradient(to right, transparent, #f8f9fa);
+}
+
+/* Chips */
+.app.app-day-mode .mds-chip,
+.mds.mds--day .mds-chip {
+  color: #64748b;
+  border-color: rgba(0, 0, 0, 0.08);
+  background: linear-gradient(168deg, #ffffff 0%, #f1f5f9 100%);
+  box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.04);
+}
+
+.app.app-day-mode .mds-chip.active,
+.mds.mds--day .mds-chip.active {
+  background: linear-gradient(168deg, #f8fafc 0%, #e2e8f0 100%);
+  border-color: rgba(15, 23, 42, 0.15);
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 0.5px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* Watchlist star */
+.app.app-day-mode .mds-watchlist-star,
+.mds.mds--day .mds-watchlist-star {
+  color: #94a3b8;
+}
+
+.app.app-day-mode .mds-watchlist-star.active,
+.mds.mds--day .mds-watchlist-star.active {
+  color: #F59E0B;
+}
+
+/* Watchlist search */
+.app.app-day-mode .mds-watchlist-search,
+.mds.mds--day .mds-watchlist-search {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #0f172a;
+}
+
+.app.app-day-mode .mds-watchlist-search::placeholder,
+.mds.mds--day .mds-watchlist-search::placeholder {
+  color: #94a3b8;
+}
+
+.app.app-day-mode .mds-watchlist-search-icon,
+.mds.mds--day .mds-watchlist-search-icon {
+  color: #94a3b8;
+}
+
+/* Watchlist empty state */
+.app.app-day-mode .mds-watchlist-empty-add,
+.mds.mds--day .mds-watchlist-empty-add {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #64748b;
+}
+
+.app.app-day-mode .mds-watchlist-empty-text,
+.mds.mds--day .mds-watchlist-empty-text {
+  color: #94a3b8;
+}
+
+.app.app-day-mode .mds-watchlist-empty-hint,
+.mds.mds--day .mds-watchlist-empty-hint {
+  color: #94a3b8;
+}

@@ -1,0 +1,258 @@
+/*
+ * GuidedTour - reusable spotlight tour overlay.
+ * The spotlight is a transparent frame with a 9999px box-shadow that dims the
+ * rest of the page; the tooltip explains the framed zone.
+ */
+.gtour {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.gtour__backdrop {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  pointer-events: auto;
+}
+.gtour__backdrop--full { background: rgba(0, 0, 0, 0.66); }
+
+.gtour__spotlight {
+  position: fixed;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.66);
+  border: 1px solid rgba(245, 245, 247, 0.4);
+  border-radius: 14px;
+  pointer-events: none;
+  z-index: 1;
+  transition:
+    top 0.16s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    left 0.16s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    width 0.16s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    height 0.16s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.gtour__tip {
+  position: fixed;
+  z-index: 2;
+  width: 328px;
+  max-width: calc(100vw - 32px);
+  transform: translateX(-50%);
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: linear-gradient(168deg, rgba(20, 20, 22, 0.99) 0%, rgba(13, 13, 15, 0.99) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  pointer-events: auto;
+}
+.gtour__tip--center { width: 366px; }
+
+.gtour__step {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+}
+.gtour__step--eyebrow { color: rgba(245, 245, 247, 0.85); }
+.gtour__title {
+  margin: 7px 0 6px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary, #f5f5f7);
+}
+.gtour__desc {
+  margin: 0 0 15px;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.62));
+}
+
+.gtour__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.gtour__skip {
+  padding: 7px 4px;
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted, rgba(245, 245, 247, 0.4));
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.gtour__skip:hover { color: var(--text-secondary, rgba(245, 245, 247, 0.7)); }
+.gtour__nav { display: flex; align-items: center; gap: 8px; }
+
+/* -- Length picker (short vs full) ------------------------------------------ */
+.gtour__choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 2px;
+}
+.gtour__choice {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: var(--text-primary, #f5f5f7);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.gtour__choice:hover { background: rgba(255, 255, 255, 0.09); border-color: rgba(255, 255, 255, 0.16); transform: translateY(-1px); }
+.gtour__choice--primary { background: #f5f5f7; border-color: #f5f5f7; color: #09090b; }
+.gtour__choice--primary:hover { background: #ffffff; }
+.gtour__choice-label { font-size: 0.85rem; font-weight: 600; }
+.gtour__choice-hint { font-size: 0.72rem; font-weight: 500; opacity: 0.55; white-space: nowrap; }
+.gtour__skip--center { align-self: center; margin-top: 2px; }
+
+.gtour--day .gtour__choice {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.1);
+  color: #0f172a;
+}
+.gtour--day .gtour__choice:hover { background: rgba(15, 23, 42, 0.07); }
+.gtour--day .gtour__choice--primary { background: #0f172a; border-color: #0f172a; color: #ffffff; }
+.gtour--day .gtour__choice--primary:hover { background: #1e293b; }
+
+.gtour__dots { display: inline-flex; gap: 5px; margin-right: 4px; }
+.gtour__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(245, 245, 247, 0.22);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.gtour__dot--on { background: rgba(245, 245, 247, 0.9); transform: scale(1.15); }
+
+.gtour__btn {
+  padding: 8px 16px;
+  border-radius: 9px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.gtour__btn--back {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary, rgba(245, 245, 247, 0.7));
+}
+.gtour__btn--back:hover { background: rgba(255, 255, 255, 0.09); }
+.gtour__btn--next {
+  background: #f5f5f7;
+  border: 1px solid #f5f5f7;
+  color: #09090b;
+}
+.gtour__btn--next:hover { transform: translateY(-1px); }
+
+/* day mode */
+.gtour--day .gtour__backdrop--full { background: rgba(15, 23, 42, 0.45); }
+.gtour--day .gtour__spotlight {
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.42);
+  border-color: rgba(15, 23, 42, 0.32);
+}
+.gtour--day .gtour__tip {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.2);
+}
+.gtour--day .gtour__step { color: #64748b; }
+.gtour--day .gtour__step--eyebrow { color: #0f172a; }
+.gtour--day .gtour__title { color: #0f172a; }
+.gtour--day .gtour__desc { color: #475569; }
+.gtour--day .gtour__skip { color: #94a3b8; }
+.gtour--day .gtour__skip:hover { color: #0f172a; }
+.gtour--day .gtour__dot { background: rgba(15, 23, 42, 0.2); }
+.gtour--day .gtour__dot--on { background: #0f172a; }
+.gtour--day .gtour__btn--back {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.1);
+  color: #334155;
+}
+.gtour--day .gtour__btn--next {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gtour__spotlight { transition: none; }
+}
+
+/* ── Tour launch button (shared) ───────────────────────────────
+   A slim ghost pill with a "?" glyph. `--pulse` draws a one-shot
+   attention ring until the user has opened the tour once. */
+.gtour-launch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary, rgba(245, 245, 247, 0.66));
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.gtour-launch:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: var(--text-primary, #f5f5f7);
+  transform: translateY(-1px);
+}
+.gtour-launch__glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.gtour-launch__label { display: inline-block; }
+
+/* One-shot attention pulse, only while the user hasn't taken the tour yet. */
+.gtour-launch--pulse {
+  border-color: rgba(245, 245, 247, 0.28);
+  animation: gtourLaunchPulse 2.4s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) 3;
+}
+@keyframes gtourLaunchPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(245, 245, 247, 0.28); }
+  60%  { box-shadow: 0 0 0 7px rgba(245, 245, 247, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 245, 247, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gtour-launch--pulse { animation: none; }
+}
+
+.app.app-day-mode .gtour-launch {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #475569;
+}
+.app.app-day-mode .gtour-launch:hover {
+  background: rgba(15, 23, 42, 0.08);
+  border-color: rgba(15, 23, 42, 0.2);
+  color: #0f172a;
+}
+.app.app-day-mode .gtour-launch--pulse { border-color: rgba(15, 23, 42, 0.28); }

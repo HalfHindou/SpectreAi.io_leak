@@ -1,0 +1,87 @@
+/**
+ * GlassPanel.css — canonical card surface for Obsidian & Lime.
+ */
+
+.glass-panel {
+  position: relative;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-md);
+  /* Top-edge inner highlight = the light-catching machined-glass edge */
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    var(--shadow-2);
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+  isolation: isolate;
+}
+
+/* Elevation knobs — adjust shadow strength only */
+.glass-panel--e1 { box-shadow: inset 0 1px 0 var(--glass-highlight), var(--shadow-1); }
+.glass-panel--e2 { box-shadow: inset 0 1px 0 var(--glass-highlight), var(--shadow-2); }
+.glass-panel--e3 { box-shadow: inset 0 1px 0 var(--glass-highlight), var(--shadow-3); }
+
+/* Variants ----------------------------------------------------------- */
+
+.glass-panel--default:hover {
+  border-color: var(--glass-border-lit);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--shadow-3);
+  transform: translateY(-1px);
+}
+
+/* Featured — gradient-lime border via mask trick.
+   ::before paints a 1px lime gradient ring outside the panel using a
+   composite mask so only the border ring is colored, not the interior. */
+.glass-panel--featured {
+  border-radius: var(--r-lg);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--shadow-3);
+}
+.glass-panel--featured::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg,
+    var(--accent-glow) 0%,
+    color-mix(in srgb, var(--accent) 18%, transparent) 30%,
+    rgba(255, 255, 255, 0.08) 60%,
+    transparent 100%);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+.glass-panel--featured:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    var(--shadow-3),
+    0 0 32px var(--accent-glow);
+}
+
+/* Inset — for nested sub-cards (RightPanel sub-frames inside RightPanel) */
+.glass-panel--inset {
+  border-radius: var(--r-sm);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--shadow-1);
+}
+
+/* Reduced motion / day mode ---------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .glass-panel:hover { transform: none !important; }
+}
+.app[data-reduced-motion="true"] .glass-panel:hover { transform: none !important; }
+
+body.theme-light .glass-panel {
+  background: rgba(0, 0, 0, 0.025);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.04);
+}

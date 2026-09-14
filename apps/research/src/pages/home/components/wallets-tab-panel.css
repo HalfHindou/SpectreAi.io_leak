@@ -1,0 +1,557 @@
+/* ═══════════════════════════════════════════════════════════════
+   Wallets tab — whale radar ribbon · smart-money flows · whale tape
+   · flow stack (CEX / ETF / stables) · entity strip
+   ═══════════════════════════════════════════════════════════════ */
+
+.wal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+}
+
+.wal .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.wal .pos { color: #30d158; }
+.wal .neg { color: #ff453a; }
+
+/* ── Ribbon ── */
+.wal-ribbon {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.012) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.wal-ribbon-left,
+.wal-ribbon-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.wal-ribbon-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f5f5f7;
+  white-space: nowrap;
+}
+
+.wal-ribbon-chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #8e8e93;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
+  animation: walPulse 2s ease-in-out infinite;
+}
+
+.wal-ribbon.inflow  .wal-ribbon-chip-dot { background: #30d158; box-shadow: 0 0 8px rgba(48, 209, 88, 0.5); }
+.wal-ribbon.outflow .wal-ribbon-chip-dot { background: #ff453a; box-shadow: 0 0 8px rgba(255, 69, 58, 0.5); }
+
+@keyframes walPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.85); }
+}
+
+.wal-ribbon-stat {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #f5f5f7;
+}
+
+.wal-ribbon-sub {
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.45);
+  white-space: nowrap;
+}
+
+.wal-ribbon-mini {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.75);
+  white-space: nowrap;
+}
+
+.wal-ribbon-mini b {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: rgba(245, 245, 247, 0.45);
+}
+
+.wal-ribbon-stable.pos .mono { color: #30d158; }
+.wal-ribbon-stable.neg .mono { color: #ff453a; }
+
+/* ── Cards ── */
+.wal-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 16px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.wal-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+}
+
+.wal-card-title-wrap { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.wal-card-title {
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: #f5f5f7;
+}
+
+.wal-card-sub {
+  font-size: 10.5px;
+  color: rgba(245, 245, 247, 0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wal-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #30d158;
+  box-shadow: 0 0 8px rgba(48, 209, 88, 0.6);
+  animation: walPulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+/* ── Main grid ── */
+.wal-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 12px;
+  min-height: 0;
+}
+
+/* ── Smart money table ── */
+.wal-sm-table { display: flex; flex-direction: column; padding: 6px 6px 8px; }
+
+.wal-sm-cols,
+.wal-sm-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(30px, 0.55fr) 84px 72px 56px 64px;
+  align-items: center;
+  gap: 8px;
+}
+
+.wal-sm-cols {
+  padding: 4px 8px 6px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.35);
+}
+
+.wal-sm-cols .r { text-align: right; }
+
+.wal-sm-row {
+  padding: 7px 8px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  text-align: left;
+  cursor: default;
+  transition: background 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.wal-sm-row.clickable { cursor: pointer; }
+.wal-sm-row.clickable:hover { background: rgba(255, 255, 255, 0.035); }
+
+.wal-sm-ident { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+
+.wal-sm-logo {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.wal-sm-logo--fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.7);
+}
+
+.wal-sm-sym {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: #f5f5f7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wal-sm-chain {
+  font-size: 8.5px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(245, 245, 247, 0.5);
+  flex-shrink: 0;
+}
+
+.wal-sm-flowbar {
+  height: 4px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.wal-sm-flowbar-fill { display: block; height: 100%; border-radius: inherit; }
+.wal-sm-flowbar-fill.pos { background: linear-gradient(90deg, rgba(48, 209, 88, 0.35), #30d158); }
+.wal-sm-flowbar-fill.neg { background: linear-gradient(90deg, rgba(255, 69, 58, 0.35), #ff453a); }
+
+.wal-sm-net { font-size: 12px; font-weight: 650; text-align: right; white-space: nowrap; }
+.wal-sm-7d { font-size: 10.5px; text-align: right; color: rgba(245, 245, 247, 0.45); white-space: nowrap; }
+.wal-sm-7d.pos { color: rgba(48, 209, 88, 0.75); }
+.wal-sm-7d.neg { color: rgba(255, 69, 58, 0.75); }
+.wal-sm-traders { font-size: 11px; text-align: right; color: rgba(245, 245, 247, 0.6); }
+.wal-sm-mcap { font-size: 11px; text-align: right; color: rgba(245, 245, 247, 0.45); }
+
+/* segment toggle */
+.wal-seg {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.wal-seg-btn {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.5);
+  cursor: pointer;
+  transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.wal-seg-btn.active {
+  background: rgba(255, 255, 255, 0.09);
+  color: #f5f5f7;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ── Whale tape ── */
+.wal-tape {
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  max-height: 396px;
+  overflow-y: auto;
+  }
+
+.wal-tape-row {
+  display: grid;
+  grid-template-columns: 30px 74px minmax(0, 1fr) 42px 86px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.wal-tape-row:hover { background: rgba(255, 255, 255, 0.035); }
+
+.wal-tape-time { font-size: 10px; color: rgba(245, 245, 247, 0.35); }
+
+.wal-tape-tag {
+  display: inline-flex;
+  justify-content: center;
+  padding: 2px 5px;
+  border-radius: 5px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.wal-tape-tag--out  { background: rgba(48, 209, 88, 0.12); color: #30d158; }
+.wal-tape-tag--in   { background: rgba(255, 69, 58, 0.12); color: #ff453a; }
+.wal-tape-tag--mint { background: rgba(48, 209, 88, 0.12); color: #30d158; }
+.wal-tape-tag--burn { background: rgba(255, 159, 10, 0.14); color: #ff9f0a; }
+.wal-tape-tag--move { background: rgba(255, 255, 255, 0.06); color: rgba(245, 245, 247, 0.55); }
+
+.wal-tape-path {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.75);
+}
+
+.wal-tape-entity { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46%; }
+.wal-tape-arrow { color: rgba(245, 245, 247, 0.3); flex-shrink: 0; }
+
+.wal-tape-asset {
+  font-size: 10px;
+  font-weight: 650;
+  text-align: center;
+  padding: 2px 0;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(245, 245, 247, 0.65);
+}
+
+/* Value cell: dollars lead, token quantity sits under them. */
+.wal-tape-val { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; min-width: 0; }
+.wal-tape-usd { font-size: 11.5px; font-weight: 650; line-height: 1.2; text-align: right; color: #f5f5f7; }
+.wal-tape-qty {
+  font-size: 9.5px;
+  line-height: 1.2;
+  color: rgba(245, 245, 247, 0.34);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Unresolved counterparty — short + mono so it reads as an address. */
+.wal-party--addr {
+  font-family: var(--font-mono);
+  font-size: 0.94em;
+  letter-spacing: -0.01em;
+  color: rgba(245, 245, 247, 0.45);
+}
+
+/* ── Flow stack ── */
+.wal-flowstack {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.wal-flowlist { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; }
+
+.wal-flowline {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) 76px;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 4px;
+}
+
+.wal-flowline--minor { opacity: 0.75; }
+.wal-flowline--total { border-top: 1px solid rgba(255, 255, 255, 0.04); margin-top: 3px; padding-top: 8px; }
+
+.wal-flowline-label {
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  color: rgba(245, 245, 247, 0.6);
+}
+
+.wal-flowline-issuer {
+  font-size: 10px;
+  color: rgba(245, 245, 247, 0.35);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wal-flowline-bars {
+  height: 4px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.045);
+  overflow: hidden;
+}
+
+.wal-flowline-in { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, rgba(255, 69, 58, 0.4), #ff453a); }
+.wal-flowline-in.pos-bg { background: linear-gradient(90deg, rgba(48, 209, 88, 0.4), #30d158); }
+.wal-flowline-in.neg-bg { background: linear-gradient(90deg, rgba(255, 69, 58, 0.4), #ff453a); }
+
+.wal-flowline-net { font-size: 11.5px; font-weight: 650; text-align: right; white-space: nowrap; }
+
+.wal-flownote {
+  margin: 0;
+  padding: 8px 14px 12px;
+  font-size: 10px;
+  line-height: 1.45;
+  color: rgba(245, 245, 247, 0.38);
+}
+
+.wal-flownote b { color: rgba(245, 245, 247, 0.65); font-weight: 600; }
+.wal-outlier { color: #ff9f0a; }
+
+/* ── Entities strip ── */
+.wal-entities {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 2px 2px 6px;
+}
+
+.wal-entities-label {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.35);
+  padding-left: 2px;
+}
+
+.wal-entities-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.wal-entities-row::-webkit-scrollbar { display: none; }
+
+.wal-entity-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 11px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.wal-entity-name { font-size: 11px; font-weight: 600; color: rgba(245, 245, 247, 0.8); }
+.wal-entity-vol { font-size: 10.5px; color: rgba(245, 245, 247, 0.5); }
+.wal-entity-dir { font-size: 9px; font-weight: 700; letter-spacing: 0.03em; }
+.wal-entity-dir.in { color: #30d158; }
+.wal-entity-dir.out { color: #ff453a; }
+
+/* ── Empty / loading ── */
+.wal-empty-sm { padding: 22px 16px; }
+.wal-empty-sm p { margin: 0; font-size: 11.5px; color: rgba(245, 245, 247, 0.4); }
+
+.wal-loading { display: flex; flex-direction: column; gap: 10px; padding: 8px 2px; }
+
+.wal-loading-row {
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ═══ Day mode ═══ */
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-ribbon,
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-card {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+}
+
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-ribbon-chip { background: rgba(15, 23, 42, 0.04); border-color: rgba(15, 23, 42, 0.08); color: #0f172a; }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-ribbon-stat,
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-card-title,
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-sm-sym,
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-tape-usd { color: #0f172a; }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-tape-qty,
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-party--addr { color: #94a3b8; }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-ribbon-sub,
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-card-sub,
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-flownote { color: #64748b; }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-ribbon-mini { background: rgba(15, 23, 42, 0.03); border-color: rgba(15, 23, 42, 0.06); color: #475569; }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-ribbon-mini b { color: #94a3b8; }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-card-head { border-bottom-color: rgba(15, 23, 42, 0.06); }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-sm-cols { color: #94a3b8; }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-sm-chain { background: rgba(15, 23, 42, 0.05); color: #64748b; }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-sm-flowbar,
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-flowline-bars { background: rgba(15, 23, 42, 0.06); }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-sm-row.clickable:hover,
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-tape-row:hover { background: rgba(15, 23, 42, 0.04); }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-sm-traders,
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-sm-mcap,
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-tape-path,
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-flowline-label { color: #475569; }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-tape-time { color: #94a3b8; }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-tape-asset { background: rgba(15, 23, 42, 0.05); color: #475569; }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-tape-tag--move { background: rgba(15, 23, 42, 0.06); color: #64748b; }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-seg { background: rgba(15, 23, 42, 0.04); border-color: rgba(15, 23, 42, 0.05); }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-seg-btn { color: #64748b; }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-seg-btn.active { background: #ffffff; color: #0f172a; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12); }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-entity-chip { background: rgba(15, 23, 42, 0.03); border-color: rgba(15, 23, 42, 0.07); }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-entity-name { color: #0f172a; }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-entity-vol { color: #64748b; }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-entities-label { color: #94a3b8; }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-empty-sm p { color: #64748b; }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-loading-row { background: rgba(15, 23, 42, 0.05); }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal .pos { color: #059669; }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal .neg { color: #dc2626; }
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-flowline--total { border-top-color: rgba(15, 23, 42, 0.06); }
+
+/* ═══ Mobile ═══ */
+@media (max-width: 860px) {
+  .wal-grid { grid-template-columns: minmax(0, 1fr); }
+  .wal-flowstack { grid-template-columns: minmax(0, 1fr); }
+
+  .wal-ribbon { flex-wrap: wrap; row-gap: 8px; padding: 10px 12px; }
+  .wal-ribbon-stat { font-size: 16px; }
+
+  .wal-sm-cols,
+  .wal-sm-row { grid-template-columns: minmax(0, 1.3fr) 76px 60px 52px; }
+  .wal-sm-flowbar, .wal-sm-cols span:nth-child(2) { display: none; }
+  .wal-sm-7d, .wal-sm-cols span:nth-child(4) { display: none; }
+
+  .wal-tape { max-height: 320px; }
+  .wal-tape-row { grid-template-columns: 26px 66px minmax(0, 1fr) 78px; }
+  .wal-tape-asset { display: none; }
+}
+
+/* `.wal-flownote` got its day counterpart; the <b> inside it overrides the
+   colour and did not, so every exchange name in the flow note was invisible on
+   white (measured 08-03). Darker than the note around it, since it is a <b>. */
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-flownote b { color: #334155; }
+
+:is(.app.app-day-mode, .cc-fullview-overlay.day-mode) .wal-flowline-issuer { color: #64748b; }

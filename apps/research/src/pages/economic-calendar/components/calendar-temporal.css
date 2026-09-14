@@ -1,0 +1,170 @@
+/**
+ * Calendar temporal language — one vocabulary for every calendar surface
+ * (the /economic-calendar page, the Command Center panel, and any view that
+ * reuses DayView / WeekView / MonthView).
+ *
+ * Three states, and they must never be confusable:
+ *
+ *   PAST     quiet chrome, LOUD result. Faded used to mean opacity: 0.3 on the
+ *            whole cell, which dimmed the one thing a past event is for — the
+ *            print. Fading is now done with INK, so the actual value can stay
+ *            at full strength and carry the beat/miss colour.
+ *   TODAY    the only accented state on the grid. Warm-white edge + wash, per
+ *            the app's "no purple in chrome" rule. It should be findable from
+ *            across the room.
+ *   AHEAD    neutral and bright. Impact colour does the ranking here; nothing
+ *            else competes with today.
+ *
+ * Beat / miss / in-line is a SEPARATE axis from the tier dots — green and red
+ * on a value always mean "against forecast", never "importance".
+ */
+
+:root {
+  /* Past — ink-level fade, never a blanket opacity on a container that holds
+     a number the reader came for. */
+  --cal-past-ink: rgba(245, 245, 247, 0.5);
+  --cal-past-ink-dim: rgba(245, 245, 247, 0.32);
+  --cal-past-dot: 0.4;
+  --cal-past-surface: rgba(255, 255, 255, 0.008);
+
+  /* Today — warm-white accent, the app's only chrome accent. */
+  --cal-today-edge: rgba(245, 245, 247, 0.55);
+  --cal-today-wash: linear-gradient(180deg, rgba(245, 245, 247, 0.055) 0%, rgba(245, 245, 247, 0.012) 100%);
+  --cal-today-ring: inset 0 0 0 1px rgba(245, 245, 247, 0.1);
+
+  /* Ahead — plain, bright, unmodified. Declared so a surface can state the
+     intent rather than leaving it implicit. */
+  --cal-ahead-ink: var(--text-primary);
+  --cal-ahead-meta: var(--text-muted);
+
+  /* Result vs forecast. */
+  --cal-beat: var(--bull);
+  --cal-miss: var(--bear);
+  --cal-inline: rgba(245, 245, 247, 0.62);
+}
+
+/* Day mode — same roles, light-surface values. */
+.app-day-mode {
+  --cal-past-ink: #94a3b8;
+  --cal-past-ink-dim: #b3bfcd;
+  --cal-past-dot: 0.45;
+  --cal-past-surface: rgba(15, 23, 42, 0.015);
+
+  --cal-today-edge: rgba(15, 23, 42, 0.45);
+  --cal-today-wash: linear-gradient(180deg, rgba(15, 23, 42, 0.05) 0%, rgba(15, 23, 42, 0.012) 100%);
+  --cal-today-ring: inset 0 0 0 1px rgba(15, 23, 42, 0.1);
+
+  --cal-ahead-ink: #0f172a;
+  --cal-ahead-meta: #64748b;
+  --cal-inline: #475569;
+}
+
+/* ── Shared result chip ───────────────────────────────────────────────────
+   The printed number, tinted against its forecast. Used by the week cards and
+   anywhere else a released value needs to read at a glance. */
+.cal-result {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--cal-inline);
+}
+
+.cal-result--beat { color: var(--cal-beat); }
+.cal-result--miss { color: var(--cal-miss); }
+
+/* ── Shared TODAY marker ─────────────────────────────────────────────────── */
+.cal-today-chip {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  background: rgba(245, 245, 247, 0.1);
+  border-radius: 4px;
+  padding: 2px 5px;
+  line-height: 1;
+}
+
+.app-day-mode .cal-today-chip {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.08);
+}
+
+/* ── Legend ───────────────────────────────────────────────────────────────
+   States the language in one line so the colours aren't a private joke
+   between the code and the designer. */
+.cal-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 2px 2px;
+}
+
+/* Each key is a small glass chip, so the legend reads as part of the board's
+   material instead of a line of loose caption text under it. */
+.cal-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  padding: 5px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--pro-ink, 255, 255, 255), 0.045);
+  background: linear-gradient(160deg, rgba(var(--pro-ink, 255, 255, 255), 0.04) 0%, rgba(var(--pro-ink, 255, 255, 255), 0.012) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: color var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out);
+}
+
+.cal-legend__item:hover {
+  color: var(--text-secondary);
+  border-color: rgba(var(--pro-ink, 255, 255, 255), 0.1);
+}
+
+.app-day-mode .cal-legend__item {
+  border-color: rgba(15, 23, 42, 0.07);
+  background: linear-gradient(160deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.cal-legend__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cal-legend__dot--critical { background: #ef4444; }
+.cal-legend__dot--high { background: #f97316; }
+.cal-legend__dot--medium { background: #f59e0b; }
+.cal-legend__dot--past { background: var(--cal-past-ink-dim); }
+
+.cal-legend__swatch {
+  width: 14px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  background: var(--cal-today-wash);
+  box-shadow: var(--cal-today-ring);
+  border-top: 1.5px solid var(--cal-today-edge);
+}
+
+.cal-legend__sep {
+  width: 1px;
+  height: 10px;
+  background: var(--border-default);
+}
+
+@media (max-width: 640px) {
+  .cal-legend { gap: 10px; }
+  .cal-legend__sep { display: none; }
+}

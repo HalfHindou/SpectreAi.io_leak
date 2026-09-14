@@ -1,0 +1,370 @@
+/**
+ * Brain Awareness Grid v2 — heavy glassmorphism per design-system D.
+ *
+ *   backdrop-filter: blur(20px) saturate(170%);
+ *   gradient surface 0.05 → 0.02 white;
+ *   inner-light highlight (top 1px white@0.04);
+ *   layered shadows;
+ *   tabular-num delta columns.
+ *
+ * Zero emojis. Text-only domain labels.
+ */
+
+.baw-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 32px 0 24px;
+}
+
+.baw-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 4px;
+}
+
+.baw-section-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.baw-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-tertiary, rgba(245,245,247,0.5));
+}
+
+.baw-section-title {
+  font-size: 1.625rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--text-primary, #f5f5f7);
+  margin: 0;
+  font-family: var(--font-display);
+}
+
+.baw-section-sub {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, rgba(245,245,247,0.6));
+  margin: 0;
+  max-width: 620px;
+  line-height: 1.55;
+}
+
+/* ── Grid ─────────────────────────────────────────────────────────────────── */
+
+.baw-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(296px, 1fr));
+  gap: 12px;
+}
+
+/* ── Glass card ───────────────────────────────────────────────────────────── */
+
+.baw-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  backdrop-filter: blur(20px) saturate(170%);
+  -webkit-backdrop-filter: blur(20px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  padding: 14px 16px;
+  min-height: 148px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.2);
+  transition:
+    border-color 250ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 250ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.baw-card::before {
+  /* Top-edge inner highlight — separates the card from the void. */
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    transparent 35%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.baw-card:hover {
+  border-color: rgba(255, 255, 255, 0.07);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+/* ── Card header ─────────────────────────────────────────────────────────── */
+
+.baw-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.baw-card-label {
+  flex: 1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary, rgba(245,245,247,0.6));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 250ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+/* ── Hierarchy tiers ──────────────────────────────────────────────────────── */
+.baw-card--hot {
+  border-color: rgba(255, 255, 255, 0.09);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 0 26px rgba(255, 255, 255, 0.03),
+    0 6px 20px rgba(0, 0, 0, 0.34),
+    0 2px 6px rgba(0, 0, 0, 0.22);
+}
+.baw-card--hot .baw-card-label { color: var(--text-primary, #f5f5f7); }
+.baw-card--quiet { opacity: 0.9; }
+.baw-card--quiet .baw-card-label { color: var(--text-muted, rgba(245, 245, 247, 0.35)); }
+
+/* collapsed-empty tail chip */
+.baw-quiet-tail {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px;
+  padding: 12px 16px; border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.baw-quiet-n { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; color: var(--text-tertiary, rgba(245, 245, 247, 0.5)); }
+.baw-quiet-list { font-size: 0.75rem; color: var(--text-muted, rgba(245, 245, 247, 0.35)); }
+
+.baw-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.baw-card-age {
+  font-size: 0.625rem;
+  color: var(--text-muted, rgba(245,245,247,0.35));
+  font-variant-numeric: tabular-nums;
+}
+
+.baw-card-count {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-tertiary, rgba(245,245,247,0.5));
+  background: rgba(255, 255, 255, 0.04);
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-variant-numeric: tabular-nums;
+  min-width: 24px;
+  text-align: center;
+}
+
+/* ── Body + rows ─────────────────────────────────────────────────────────── */
+
+.baw-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.baw-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 0.8125rem;
+  min-width: 0;
+}
+
+.baw-row-label {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text-primary, #f5f5f7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.baw-row-extra {
+  font-size: 0.75rem;
+  color: var(--text-secondary, rgba(245,245,247,0.6));
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.baw-row-delta {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  white-space: nowrap;
+  min-width: 58px;
+  text-align: right;
+}
+
+.baw-row-delta.baw-pos { color: var(--bull, #10B981); }
+.baw-row-delta.baw-neg { color: var(--bear, #EF4444); }
+
+.baw-row--news .baw-news-title {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: normal;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+}
+
+.baw-row--raw .baw-row-label {
+  font-family: var(--font-mono, ui-monospace);
+  font-size: 0.6875rem;
+  color: var(--text-tertiary, rgba(245,245,247,0.5));
+}
+
+.baw-empty {
+  font-size: 0.75rem;
+  color: var(--text-muted, rgba(245,245,247,0.35));
+  padding: 6px 0;
+  letter-spacing: 0.01em;
+}
+
+/* ── Skeleton ─────────────────────────────────────────────────────────────── */
+
+.baw-card--skeleton .baw-skel-line {
+  height: 12px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  border-radius: 4px;
+  animation: baw-shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes baw-shimmer {
+  0%, 100% { background-position: 200% 0; }
+  50%      { background-position: -200% 0; }
+}
+
+/* ── Day mode ─────────────────────────────────────────────────────────────── */
+
+.app.app-day-mode .baw-card {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(248, 249, 250, 0.85) 100%
+  );
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.app.app-day-mode .baw-card::before {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.6) 0%,
+    transparent 40%
+  );
+}
+
+.app.app-day-mode .baw-card:hover {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.app.app-day-mode .baw-card-head {
+  border-bottom-color: rgba(0, 0, 0, 0.04);
+}
+
+.app.app-day-mode .baw-card-label,
+.app.app-day-mode .baw-row-extra,
+.app.app-day-mode .baw-empty,
+.app.app-day-mode .baw-card-age {
+  color: #64748b;
+}
+
+.app.app-day-mode .baw-card-count {
+  background: rgba(0, 0, 0, 0.04);
+  color: #475569;
+}
+
+.app.app-day-mode .baw-row-label {
+  color: #0f172a;
+}
+
+.app.app-day-mode .baw-card--hot { border-color: rgba(0, 0, 0, 0.1); }
+.app.app-day-mode .baw-card--hot .baw-card-label { color: #0f172a; }
+.app.app-day-mode .baw-card--quiet .baw-card-label { color: #94a3b8; }
+.app.app-day-mode .baw-quiet-tail { background: rgba(0, 0, 0, 0.02); border-color: rgba(0, 0, 0, 0.05); }
+.app.app-day-mode .baw-quiet-n { color: #475569; }
+.app.app-day-mode .baw-quiet-list { color: #94a3b8; }
+
+/* ── Mobile ───────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .baw-section {
+    padding: 20px 0 16px;
+    gap: 14px;
+  }
+  .baw-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .baw-section-title {
+    font-size: 1.25rem;
+  }
+  .baw-section-sub {
+    font-size: 0.75rem;
+  }
+  .baw-card {
+    /* Mobile blur budget per mobile-design-system.md K — never above 12px */
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    min-height: 124px;
+    padding: 12px 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .baw-card { transition: none; }
+  .baw-card--skeleton .baw-skel-line { animation: none; }
+}

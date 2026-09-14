@@ -1,0 +1,475 @@
+/* Why Mode (/why) — "what is moving the market right now, and who did it".
+ *
+ * Prefix: wy-. Dark is the base; every rule that sets a colour has an
+ * .app.app-day-mode counterpart in why-page.day-mode.css, and every narrow
+ * viewport rule lives in why-page.mobile.css.
+ *
+ * SURFACE. This page used to paint its panels from a navy ramp
+ * (rgba(32,36,50) → rgba(9,12,20)), which is a different material from the
+ * rest of the app: Spectre is warm-black with white glass, and hue in the
+ * chrome is exactly the thing the founder rejects on sight. Every plane here
+ * is now neutral white-on-black glass — a translucent white gradient plus a
+ * specular top-light — and the only colour left on the page carries market
+ * meaning (bull / bear / the gold that means "this is the driver").
+ *
+ * TEXT RAMP. Local, and the floor is 0.46. The app's --text-muted (0.35) reads
+ * as grey-on-black at 10-11px, which is most of the type on a timeline.
+ *
+ * LAYOUT. Above the fold is full-bleed (verdict, the landed headline, the desk
+ * note, the chapter strip). Below it the page splits: the event stream takes
+ * the main column, the session evidence (48h gauge, annotated map, exhaustion
+ * watch) takes a fixed rail. One narrow column on a 1512px screen was the
+ * page reading like a phone layout that had been stretched.
+ */
+
+.wy-page {
+  /* text ramp */
+  --wy-t1: #f5f5f7;
+  --wy-t2: rgba(245, 245, 247, 0.82);
+  --wy-t3: rgba(245, 245, 247, 0.62);
+  --wy-t4: rgba(245, 245, 247, 0.46);
+
+  /* market semantics — the design-system bull/bear channel, nothing bespoke */
+  --wy-bull: #34d399;
+  --wy-bear: #f87171;
+  --wy-gold: #f59e0b;
+  --wy-gold-ink: #f5c265;
+
+  /* glass planes — this IS the app's .glass-card, taken whole off /fear-greed
+     (`.fg-metric-card`, measured) rather than approximated: the same gradient,
+     the same 0.04 hairline, the same 16px radius, the same blur+saturate, the
+     same --shadow-lg. Two earlier passes here matched the gradient but kept a
+     private shadow and dropped the backdrop-filter, and that is what still
+     read as "not our colour": saturate(1.8) is what lifts the near-black page
+     THROUGH the panel, and --shadow-lg is a wide soft halo, not the tight dark
+     drop I had. Nothing on this page invents a surface any more.
+     🪤 The filter belongs to CARDS only. .wy-ev is up to 300 rows in one
+     scroller, and a per-row backdrop-filter over a scrolling list is the
+     measured jank engine (performance-smoothness-plan.md) — rows take the
+     same gradient and hairline with no filter, which is visually identical
+     against this page and free. */
+  --wy-pane: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.016) 100%);
+  --wy-pane-soft: linear-gradient(135deg, rgba(255, 255, 255, 0.028) 0%, rgba(255, 255, 255, 0.01) 100%);
+  --wy-edge: rgba(255, 255, 255, 0.06);
+  --wy-edge-soft: rgba(255, 255, 255, 0.04);
+  --wy-glass: blur(24px) saturate(1.8);
+  --wy-lift: var(--shadow-lg);
+  --wy-lift-sm: var(--shadow-inner), var(--shadow-md);
+
+  max-width: 1480px; margin: 0 auto;
+  padding: var(--sp-6) var(--sp-6) var(--sp-16);
+  display: flex; flex-direction: column; gap: var(--sp-5);
+  font-family: var(--font-display);
+  color: var(--wy-t1);
+  /* clip, not hidden — `hidden` would make this the scroll container and kill
+     the sticky day labels. Backstop only; the real overflow fixes are below. */
+  min-width: 0; overflow-x: clip;
+}
+/* grid/flex children default to min-width:auto, so one long word (a wire
+   headline, a $ figure) widens the track instead of wrapping */
+.wy-hero-main, .wy-hero-chips, .wy-chip, .wy-rev-test > div, .wy-ev-body,
+.wy-main, .wy-rail { min-width: 0; }
+.wy-verdict-sub, .wy-ev-text, .wy-rev-verdict, .wy-rev-detail, .wy-sub { overflow-wrap: anywhere; }
+
+/* ---------- masthead ---------- */
+
+.wy-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--sp-6); flex-wrap: wrap; }
+.wy-head-lead { max-width: 66ch; }
+.wy-kicker {
+  display: block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--wy-t4); margin-bottom: var(--sp-2);
+}
+.wy-title {
+  font-family: var(--font-display);
+  font-size: clamp(30px, 3.6vw, 46px); font-weight: 700;
+  letter-spacing: -0.035em; line-height: 1.02; margin: 0; color: var(--wy-t1);
+}
+.wy-sub { margin: var(--sp-3) 0 0; font-size: 15px; line-height: 1.62; color: var(--wy-t2); }
+.wy-live {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  padding: 8px 14px; border-radius: var(--radius-full);
+  font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--wy-bull); border: 1px solid rgba(52, 211, 153, 0.3); background: rgba(52, 211, 153, 0.08);
+}
+.wy-live i { width: 7px; height: 7px; border-radius: 50%; background: var(--wy-bull); box-shadow: 0 0 9px rgba(52, 211, 153, 0.85); }
+.wy-live.warm { color: var(--wy-gold-ink); border-color: rgba(245, 158, 11, 0.3); background: rgba(245, 158, 11, 0.08); }
+.wy-live.warm i { background: var(--wy-gold); box-shadow: 0 0 9px rgba(245, 158, 11, 0.7); animation: wypulse 1.4s infinite; }
+@keyframes wypulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.35 } }
+
+/* ---------- verdict hero ---------- */
+
+.wy-hero {
+  display: grid; grid-template-columns: minmax(0, 1.24fr) minmax(0, 0.76fr); gap: var(--sp-8);
+  padding: var(--sp-8) var(--sp-8) calc(var(--sp-8) - 2px);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--wy-edge);
+  /* the band glow is the ONLY tint on this surface — it is the verdict's own
+     colour, washed in from the top-left, not a decorative gradient */
+  background:
+    radial-gradient(620px 220px at 10% -10%, var(--glow), transparent 64%),
+    var(--wy-pane);
+  box-shadow: var(--wy-lift);
+  position: relative; overflow: hidden;
+  backdrop-filter: var(--wy-glass); -webkit-backdrop-filter: var(--wy-glass);
+}
+/* the specular edge is most of what reads as GLASS rather than a dark box */
+.wy-hero::before {
+  content: ''; position: absolute; inset: 0 0 auto; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14) 20%, rgba(255, 255, 255, 0.14) 80%, transparent);
+}
+.wy-eyebrow { font-size: 10.5px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--wy-t4); }
+.wy-verdict-word {
+  font-size: clamp(30px, 3.2vw, 44px); font-weight: 700; letter-spacing: -0.035em;
+  line-height: 1.03; margin: var(--sp-3) 0 var(--sp-3); color: var(--band);
+}
+.wy-verdict-sub { font-size: 15.5px; line-height: 1.62; color: var(--wy-t2); margin: 0 0 var(--sp-4); max-width: 52ch; }
+.wy-session { display: flex; align-items: center; gap: var(--sp-2); font-size: 12.5px; font-weight: 550; color: var(--wy-t3); }
+.wy-session-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(245, 245, 247, 0.34); }
+.wy-session-dot.open { background: var(--wy-bull); box-shadow: 0 0 8px rgba(52, 211, 153, 0.75); }
+/* imminent open: gold + the same pulse the scheduled-event strip uses —
+   a session about to start is a countdown, not a state */
+.wy-session-dot.soon { background: var(--wy-gold); box-shadow: 0 0 8px rgba(245, 158, 11, 0.7); animation: wyFedPulse 1.6s ease-in-out infinite; }
+.wy-session-ts { color: var(--wy-t4); }
+
+/* the scheduled-event countdown — gold glass, WHEN and nothing else. A
+   scheduled event has no outcome until it prints; this strip must never
+   carry one. */
+.wy-fed {
+  display: inline-flex; align-items: center; gap: var(--sp-3);
+  margin-top: var(--sp-3); padding: 8px 15px 8px 12px; border-radius: var(--radius-full);
+  background: linear-gradient(120deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.04) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 236, 185, 0.16);
+}
+.wy-fed-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--wy-gold); flex: none; }
+.wy-fed--hot .wy-fed-dot, .wy-fed--now .wy-fed-dot { animation: wyFedPulse 1.6s ease-in-out infinite; }
+.wy-fed-name { font-size: 12.5px; font-weight: 650; color: var(--wy-t1); }
+.wy-fed-count { font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--wy-gold-ink); }
+.wy-fed--now .wy-fed-count { color: #ffab8a; }
+.wy-fed-at { font-size: 11px; font-weight: 550; color: var(--wy-t4); font-variant-numeric: tabular-nums; }
+@keyframes wyFedPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.45); }
+  50% { opacity: 0.6; box-shadow: 0 0 0 5px rgba(245, 158, 11, 0); }
+}
+
+/* tape chips */
+.wy-hero-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); align-content: start; }
+.wy-chip {
+  display: flex; flex-direction: column; gap: 2px; padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-md); border: 1px solid var(--wy-edge-soft);
+  background: var(--wy-pane-soft); box-shadow: var(--wy-lift-sm);
+}
+.wy-chip-k { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--wy-t4); }
+.wy-chip-v { font-size: 17px; font-weight: 680; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.wy-chip-v.up { color: var(--wy-bull); } .wy-chip-v.down { color: var(--wy-bear); } .wy-chip-v.neu { color: var(--wy-t1); }
+.wy-chip-s { font-size: 11.5px; font-weight: 550; color: var(--wy-t4); font-variant-numeric: tabular-nums; }
+
+/* ---------- shared section header ---------- */
+
+.wy-map-title { font-size: 10.5px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--wy-t4); }
+
+/* ---------- just landed: the freshest KEY headline, pinned under the hero ---------- */
+
+.wy-landed {
+  padding: var(--sp-4) var(--sp-6); border-radius: var(--radius-lg);
+  background: linear-gradient(130deg, rgba(245, 158, 11, 0.16) 0%, rgba(245, 158, 11, 0.05) 60%, rgba(245, 158, 11, 0.02) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 236, 185, 0.18), 0 16px 38px -26px rgba(0, 0, 0, 0.8);
+  backdrop-filter: var(--wy-glass); -webkit-backdrop-filter: var(--wy-glass);
+}
+.wy-landed-tag { display: inline-flex; align-items: center; gap: var(--sp-2); font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: var(--wy-gold-ink); }
+.wy-landed-tag i { width: 7px; height: 7px; border-radius: 50%; background: var(--wy-gold); animation: wyFedPulse 1.6s ease-in-out infinite; }
+.wy-landed-text { margin: var(--sp-2) 0 0; font-size: 17px; font-weight: 620; line-height: 1.45; letter-spacing: -0.02em; color: var(--wy-t1); overflow-wrap: anywhere; }
+
+/* ---------- the desk note (interpretive layer) ---------- */
+
+.wy-note {
+  padding: var(--sp-5) var(--sp-6); border-radius: var(--radius-lg);
+  border: 1px solid var(--wy-edge-soft); background: var(--wy-pane); box-shadow: var(--wy-lift);
+  backdrop-filter: var(--wy-glass); -webkit-backdrop-filter: var(--wy-glass);
+}
+.wy-note-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-3); flex-wrap: wrap; }
+.wy-note-tag { font-size: 11px; font-weight: 550; color: var(--wy-t4); }
+.wy-note-p { margin: 0 0 var(--sp-3); font-size: 15px; line-height: 1.68; color: var(--wy-t2); max-width: 82ch; }
+.wy-note-p:last-child { margin-bottom: 0; }
+/* the resolved driver — the box's deterministic answer, labeled, above the prose */
+.wy-note-driver {
+  display: flex; align-items: baseline; gap: var(--sp-3); flex-wrap: wrap;
+  margin: 0 0 var(--sp-4); padding: var(--sp-3) var(--sp-3);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(245, 158, 11, 0.22); background: rgba(245, 158, 11, 0.055);
+}
+.wy-note-driver--none { border-color: var(--wy-edge-soft); background: rgba(255, 255, 255, 0.028); }
+.wy-note-driver-k { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--wy-gold); flex: 0 0 auto; }
+.wy-note-driver--none .wy-note-driver-k { color: var(--wy-t4); }
+.wy-note-driver-t { font-size: 13.5px; font-weight: 550; line-height: 1.5; color: var(--wy-t1); overflow-wrap: anywhere; }
+.wy-note-driver-s { font-size: 11px; font-weight: 550; color: var(--wy-t4); white-space: nowrap; }
+
+/* ---------- chapters — the night in one breath ---------- */
+
+.wy-chapters { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.wy-ch {
+  font-size: 12px; font-weight: 550; color: var(--wy-t2); padding: 7px 13px;
+  border-radius: var(--radius-full); border: 1px solid var(--wy-edge-soft);
+  background: var(--wy-pane-soft); font-variant-numeric: tabular-nums;
+}
+.wy-ch--hot { color: var(--wy-gold-ink); border-color: rgba(245, 158, 11, 0.36); background: rgba(245, 158, 11, 0.09); }
+.wy-ch-arrow { color: var(--wy-t4); font-size: 12px; }
+
+/* ---------- the split: event stream + session evidence ---------- */
+
+.wy-grid { display: grid; grid-template-columns: minmax(0, 1fr) 384px; gap: var(--sp-5); align-items: start; }
+.wy-main { display: flex; flex-direction: column; gap: var(--sp-3); }
+/* NOT sticky. The rail runs taller than a viewport on a live session, and a
+   sticky box taller than the screen pins its top and makes its own bottom
+   unreachable — the reversal tests would never scroll into view. */
+.wy-rail { display: flex; flex-direction: column; gap: var(--sp-4); }
+.wy-rail .wtg { margin: 0; }
+
+/* ---------- controls ---------- */
+
+.wy-controls { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-2); flex-wrap: wrap; }
+.wy-lanes, .wy-windows { display: flex; gap: 6px; flex-wrap: wrap; }
+.wy-pill {
+  padding: 7px 14px; border-radius: var(--radius-full);
+  font-family: inherit; font-size: 12.5px; font-weight: 600; letter-spacing: 0.01em;
+  color: var(--wy-t3); border: 1px solid var(--wy-edge-soft); background: rgba(255, 255, 255, 0.03);
+  cursor: pointer; transition: color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+}
+.wy-pill:hover { color: var(--wy-t1); border-color: rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.06); }
+/* active is WHITE, never a hue — the app's tab language (design-system §A) */
+.wy-pill.on { color: #09090b; background: var(--wy-t1); border-color: var(--wy-t1); }
+/* A disabled lane pill must read as unavailable, not as merely unselected. */
+.wy-pill:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ---------- timeline ---------- */
+
+.wy-timeline { display: flex; flex-direction: column; gap: 6px; }
+.wy-day { display: flex; flex-direction: column; gap: 6px; }
+.wy-day-label {
+  position: sticky; top: 8px; z-index: 2; align-self: flex-start;
+  padding: 6px 13px; margin: var(--sp-2) 0 2px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--wy-t3); border-radius: var(--radius-full);
+  border: 1px solid var(--wy-edge-soft); background: rgba(12, 12, 14, 0.82);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+}
+.wy-ev {
+  display: grid; grid-template-columns: 50px 18px minmax(0, 1fr); gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4); align-items: start;
+  border-radius: var(--radius-md); border: 1px solid var(--wy-edge-soft);
+  background: var(--wy-pane);
+  box-shadow: var(--wy-lift-sm);
+  transition: border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+}
+.wy-ev:hover { border-color: rgba(255, 255, 255, 0.08); background: linear-gradient(135deg, rgba(255, 255, 255, 0.042) 0%, rgba(255, 255, 255, 0.016) 100%); }
+.wy-ev--hot { background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%); border-color: rgba(255, 255, 255, 0.07); }
+.wy-ev-time { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--wy-t4); padding-top: 3px; }
+.wy-ev-rail { display: flex; justify-content: center; padding-top: 5px; }
+.wy-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(245, 245, 247, 0.3); }
+.wy-dot--bull { background: var(--wy-bull); }
+.wy-dot--bear { background: var(--wy-bear); }
+.wy-dot--culprit { background: var(--wy-gold); }
+.wy-dot--hot { box-shadow: 0 0 8px currentColor; }
+.wy-ev-body { min-width: 0; }
+.wy-ev-tags { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: 3px; flex-wrap: wrap; }
+/* uppercased in CSS, not in the data: LANE_META covers the four gated lanes,
+   and anything else (a `risk` row) falls back to its raw lane key — which
+   rendered lowercase next to four uppercase siblings */
+.wy-ev-lane { font-size: 9.5px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--wy-t4); }
+.wy-ev-asset { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 1.5px 7px; border-radius: var(--radius-full); border: 1px solid var(--wy-edge); color: var(--wy-t3); }
+.wy-ev-imp { font-size: 10px; font-weight: 600; color: var(--wy-t4); font-variant-numeric: tabular-nums; }
+.wy-ev-bf { font-size: 9.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(245, 158, 11, 0.72); border: 1px solid rgba(245, 158, 11, 0.26); padding: 1px 6px; border-radius: var(--radius-full); }
+.wy-ev-text { font-size: 14px; line-height: 1.5; color: var(--wy-t2); }
+.wy-ev--hot .wy-ev-text { color: var(--wy-t1); font-weight: 550; }
+
+/* culprit rows */
+.wy-ev--culprit { background: linear-gradient(135deg, rgba(245, 158, 11, 0.09) 0%, rgba(245, 158, 11, 0.028) 100%); border-color: rgba(245, 158, 11, 0.2); }
+.wy-ev--culprit .wy-ev-text { color: var(--wy-t1); font-weight: 550; }
+.wy-ev-culprit-chip { font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; color: var(--wy-gold-ink); border: 1px solid rgba(245, 158, 11, 0.38); background: rgba(245, 158, 11, 0.1); padding: 1px 7px; border-radius: var(--radius-full); }
+
+/* ---------- stale band ----------
+   the feed has gone silent; gold, not red: a quiet tape is not an error, but
+   it is not "live" either */
+.wy-stale {
+  display: flex; align-items: flex-start; gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4); border-radius: var(--radius-md);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: linear-gradient(130deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.035) 100%);
+  font-size: 13px; line-height: 1.55; color: var(--wy-t2);
+}
+.wy-stale b { color: var(--wy-gold-ink); font-weight: 680; }
+.wy-stale-dot { flex: none; width: 7px; height: 7px; margin-top: 6px; border-radius: 50%; background: var(--wy-gold); animation: wyFedPulse 1.6s ease-in-out infinite; }
+
+/* ---------- progressive reveal ----------
+   the cap only ever hides OLD rows */
+.wy-more {
+  display: block; width: 100%; margin: var(--sp-2) 0 0; padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-md); border: 1px solid var(--wy-edge-soft);
+  background: rgba(255, 255, 255, 0.03); color: var(--wy-t3);
+  font-family: inherit; font-size: 12.5px; font-weight: 600;
+  font-variant-numeric: tabular-nums; cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+}
+.wy-more:hover { color: var(--wy-t1); border-color: rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.06); }
+.wy-more-note { margin: var(--sp-3) 2px 0; font-size: 11.5px; line-height: 1.55; color: var(--wy-t4); }
+
+/* ---------- quiet state — the honest empty ---------- */
+
+.wy-quiet {
+  padding: var(--sp-12) var(--sp-8); text-align: center;
+  border-radius: var(--radius-lg); border: 1px solid var(--wy-edge-soft);
+  background: var(--wy-pane); box-shadow: var(--wy-lift);
+  backdrop-filter: var(--wy-glass); -webkit-backdrop-filter: var(--wy-glass);
+}
+.wy-quiet-word { font-size: 24px; font-weight: 700; letter-spacing: -0.025em; margin-bottom: var(--sp-2); }
+.wy-quiet p { font-size: 14px; color: var(--wy-t3); max-width: 52ch; margin: 0 auto; line-height: 1.62; }
+
+.wy-foot { margin-top: var(--sp-2); font-size: 11.5px; line-height: 1.6; color: var(--wy-t4); }
+
+/* ---------- bars missing ----------
+   say so where the map and reversal watch would have been, instead of letting
+   three panels silently vanish */
+.wy-nobars {
+  padding: var(--sp-5) var(--sp-5); border-radius: var(--radius-lg);
+  border: 1px dashed rgba(255, 255, 255, 0.13);
+  background: var(--wy-pane-soft);
+  backdrop-filter: var(--wy-glass); -webkit-backdrop-filter: var(--wy-glass);
+}
+.wy-nobars-head { font-size: 10.5px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--wy-t3); margin-bottom: var(--sp-2); }
+.wy-nobars p { margin: 0 0 var(--sp-4); font-size: 13.5px; line-height: 1.6; color: var(--wy-t3); }
+.wy-nobars-retry {
+  padding: 8px 16px; border-radius: var(--radius-full); cursor: pointer;
+  font-family: inherit; font-size: 12.5px; font-weight: 600;
+  color: var(--wy-t2); border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.05);
+  transition: color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+}
+.wy-nobars-retry:hover { color: var(--wy-t1); border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.09); }
+
+/* ---------- the session, annotated ---------- */
+
+.wy-panel {
+  padding: var(--sp-4) var(--sp-5); border-radius: var(--radius-lg);
+  border: 1px solid var(--wy-edge-soft); background: var(--wy-pane); box-shadow: var(--wy-lift);
+  backdrop-filter: var(--wy-glass); -webkit-backdrop-filter: var(--wy-glass);
+}
+.wy-map {
+  padding: var(--sp-4) var(--sp-5) var(--sp-2); border-radius: var(--radius-lg);
+  border: 1px solid var(--wy-edge-soft); background: var(--wy-pane); box-shadow: var(--wy-lift);
+  backdrop-filter: var(--wy-glass); -webkit-backdrop-filter: var(--wy-glass);
+}
+.wy-map-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-2); flex-wrap: wrap; }
+.wy-map-legend { font-size: 10.5px; font-weight: 550; color: var(--wy-t4); display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; }
+.wy-map-legend > span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.wy-map-legend i { display: inline-block; width: 8px; height: 8px; flex: none; }
+.wy-map-legend .lg-flag { background: var(--wy-gold); clip-path: polygon(0 0, 100% 30%, 0 60%); }
+.wy-map-legend .lg-long { background: var(--wy-bear); clip-path: polygon(50% 100%, 0 0, 100% 0); }
+.wy-map-legend .lg-short { background: var(--wy-bull); clip-path: polygon(50% 0, 0 100%, 100% 100%); }
+.wy-map-canvas { width: 100%; min-width: 0; }
+.wy-map canvas { display: block; max-width: 100%; }
+
+/* ---------- exhaustion watch ---------- */
+
+.wy-rev {
+  padding: var(--sp-5) var(--sp-5); border-radius: var(--radius-lg);
+  border: 1px solid var(--wy-edge-soft); background: var(--wy-pane); box-shadow: var(--wy-lift);
+  backdrop-filter: var(--wy-glass); -webkit-backdrop-filter: var(--wy-glass);
+}
+.wy-rev-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-2); flex-wrap: wrap; }
+.wy-rev-score { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; padding: 4px 12px; border-radius: var(--radius-full); border: 1px solid var(--wy-edge-soft); white-space: nowrap; }
+.wy-rev-score.up { color: var(--wy-bull); border-color: rgba(52, 211, 153, 0.32); background: rgba(52, 211, 153, 0.08); }
+.wy-rev-score.mid { color: var(--wy-t1); background: rgba(255, 255, 255, 0.04); }
+.wy-rev-score.down { color: var(--wy-bear); border-color: rgba(248, 113, 113, 0.3); background: rgba(248, 113, 113, 0.07); }
+/* the measured receipt under the verdict — a claim carries its evidence */
+.wy-rev-ev { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin: 0 0 var(--sp-4); }
+.wy-rev-ev-k { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--wy-t4); }
+.wy-rev-ev-v { font-size: 13px; font-weight: 680; font-variant-numeric: tabular-nums; color: var(--wy-t1); }
+.wy-rev-ev-n { font-size: 10.5px; font-weight: 550; color: var(--wy-t4); }
+.wy-rev-verdict { margin: 0 0 var(--sp-4); font-size: 14.5px; line-height: 1.6; color: var(--wy-t2); max-width: 78ch; }
+.wy-rev-tests { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--sp-2); }
+.wy-rev-test {
+  display: flex; gap: var(--sp-3); align-items: flex-start; padding: var(--sp-3);
+  border-radius: var(--radius-md); border: 1px solid var(--wy-edge-soft); background: rgba(255, 255, 255, 0.022);
+}
+.wy-rev-test i { flex: none; width: 7px; height: 7px; border-radius: 50%; margin-top: 4px; background: rgba(245, 245, 247, 0.22); }
+.wy-rev-test.ok i { background: var(--wy-bull); box-shadow: 0 0 7px rgba(52, 211, 153, 0.6); }
+.wy-rev-name { font-size: 12px; font-weight: 620; color: var(--wy-t2); }
+.wy-rev-test.ok .wy-rev-name { color: var(--wy-t1); }
+.wy-rev-detail { font-size: 11.5px; color: var(--wy-t4); line-height: 1.45; font-variant-numeric: tabular-nums; }
+/* The lean arrow. The badge said "5/5 · SPENT" and nothing on the panel said
+   which way that pointed, so the reader had to derive direction from two
+   percentages and a hit rate (founder: "show arrow up or down next if youre
+   predicting"). It inherits the badge's colour, so it reads as part of the
+   verdict rather than as a second, competing signal. */
+.wy-rev-arrow { margin-left: 6px; font-size: 15px; font-weight: 700; line-height: 1; }
+
+/* ---------- day cards (the 30D window) ─────────────────────────────────────
+   A different SHAPE from the event rows above, not a longer list of them.
+   An event row is built to be read minutes after it happened — clock first,
+   lane chip, direction dot. A day card is read days later, when the time of a
+   headline matters far less than what the day DID and who said it, so the
+   emphasis moves to the move and the source. */
+
+.wy-daycards { display: flex; flex-direction: column; gap: var(--sp-3); }
+.wy-daycards-load { height: 220px; border-radius: var(--radius-lg); background: rgba(255, 255, 255, 0.03); }
+
+.wy-daycard {
+  padding: var(--sp-5) var(--sp-5); border-radius: var(--radius-lg);
+  border: 1px solid var(--wy-edge-soft); background: var(--wy-pane); box-shadow: var(--wy-lift);
+  backdrop-filter: var(--wy-glass); -webkit-backdrop-filter: var(--wy-glass);
+}
+
+.wy-dc-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; }
+.wy-dc-when { display: flex; align-items: baseline; gap: var(--sp-3); flex-wrap: wrap; }
+.wy-dc-date { font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--wy-t4); }
+.wy-dc-move { display: inline-flex; align-items: baseline; gap: 7px; font-variant-numeric: tabular-nums; }
+.wy-dc-move b { font-size: 16px; font-weight: 680; color: var(--wy-t1); }
+.wy-dc-move i { font-style: normal; font-size: 13px; font-weight: 650; }
+.wy-dc-move.up i { color: var(--wy-bull); }
+.wy-dc-move.down i { color: var(--wy-bear); }
+/* A missing close is a data gap, not a flat tape — it must not read as 0.00%. */
+.wy-dc-move--none { font-size: 12px; color: var(--wy-t4); font-style: italic; }
+.wy-dc-count { font-size: 11px; font-weight: 550; color: var(--wy-t4); font-variant-numeric: tabular-nums; }
+
+.wy-dc-headline { margin: var(--sp-3) 0 0; font-size: 17px; line-height: 1.38; font-weight: 650; letter-spacing: -0.02em; color: var(--wy-t1); max-width: 62ch; }
+
+.wy-dc-facts { list-style: none; margin: var(--sp-4) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-3); }
+.wy-dc-fact { padding-left: var(--sp-3); border-left: 2px solid rgba(255, 255, 255, 0.07); }
+/* Lane identity stays TYPE-led — the only colour that means anything here is
+   the wire spine, because a headline is the one row a reader may want to trace
+   back to a source. */
+.wy-dc-fact--news { border-left-color: rgba(245, 245, 247, 0.22); }
+.wy-dc-fact-text { font-size: 14px; line-height: 1.5; color: var(--wy-t2); max-width: 76ch; }
+.wy-dc-fact-why { margin-top: 3px; font-size: 12.5px; line-height: 1.5; color: var(--wy-t4); max-width: 76ch; }
+.wy-dc-fact-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.wy-dc-lane { font-size: 9.5px; font-weight: 700; letter-spacing: 0.16em; color: var(--wy-t4); }
+.wy-dc-src { font-size: 10.5px; font-weight: 600; color: var(--wy-t3); background: rgba(255, 255, 255, 0.05); border: 1px solid var(--wy-edge-soft); padding: 1px 8px; border-radius: var(--radius-full); }
+/* Corroboration is the only badge that earns emphasis — it is a claim about
+   evidence, and it renders only at 2+ (see the route's dedupe). */
+.wy-dc-corrob { font-size: 10.5px; font-weight: 680; color: var(--wy-t1); background: rgba(255, 255, 255, 0.09); border: 1px solid rgba(255, 255, 255, 0.12); padding: 1px 8px; border-radius: var(--radius-full); }
+.wy-dc-asset { font-size: 10px; font-weight: 680; letter-spacing: 0.04em; color: var(--wy-t4); border: 1px solid var(--wy-edge-soft); padding: 1px 6px; border-radius: var(--radius-xs); }
+.wy-dc-bf { font-size: 10px; font-weight: 550; color: var(--wy-t4); font-style: italic; }
+.wy-dc-link { font-size: 10.5px; font-weight: 600; color: var(--wy-t4); text-decoration: none; }
+.wy-dc-link:hover { color: var(--wy-t1); }
+
+/* ---------- laptop: the rail narrows before it drops ---------- */
+
+@media (max-width: 1280px) {
+  .wy-grid { grid-template-columns: minmax(0, 1fr) 330px; }
+}
+
+/* Below this the rail cannot hold a legible session map, so the page becomes
+   one column — and the evidence moves ABOVE the stream, which is the reading
+   order the single-column page always had. */
+@media (max-width: 1080px) {
+  .wy-grid { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
+  .wy-rail { order: -1; }
+  .wy-hero { grid-template-columns: minmax(0, 1fr); gap: var(--sp-5); }
+  .wy-hero-chips { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wy-live.warm i, .wy-fed--hot .wy-fed-dot, .wy-fed--now .wy-fed-dot,
+  .wy-session-dot.soon, .wy-landed-tag i, .wy-stale-dot { animation: none; }
+}

@@ -1,0 +1,2833 @@
+/* ================================================================
+   XFullView - Project X Intelligence Dashboard
+   Apple Glass - clean system sans (NOT the Geist/JetBrains mono face).
+   All classes prefixed with .xfv- to avoid global collisions.
+   ================================================================ */
+
+/* The screener inherits the research "AI Screener" voice: a clean sans face
+   with round zeros, not the mono face (whose slashed/dotted zeros read as
+   "terminal AI slop"). Scope the --font-mono override to the screener roots
+   so the rest of the trading app keeps mono where it's wanted (price ladders
+   etc.). tabular-nums keeps numeric columns aligned without a monospace. */
+.xdc,
+.xfv-overlay {
+  --font-mono: 'Inter', 'Geist', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ----------------------------------------------------------------
+   Overlay + backdrop
+---------------------------------------------------------------- */
+.xfv-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+  animation: xfv-overlay-in 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.xfv-backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(56, 189, 248, 0.04), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(16, 185, 129, 0.025), transparent 60%),
+    rgba(6, 6, 10, 0.94);
+  backdrop-filter: blur(28px) saturate(170%);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  z-index: 0;
+}
+
+/* CRT scanlines + subtle terminal grid — very low opacity, never distracting */
+.xfv-backdrop::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+  background-size: 48px 48px, 48px 48px;
+  mix-blend-mode: screen;
+  opacity: 0.6;
+}
+
+.xfv-backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 2px,
+    rgba(255, 255, 255, 0.008) 2px,
+    rgba(255, 255, 255, 0.008) 3px
+  );
+  mix-blend-mode: overlay;
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .xfv-backdrop {
+    background: rgba(6, 6, 9, 0.97);
+  }
+}
+
+@keyframes xfv-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ----------------------------------------------------------------
+   Header
+---------------------------------------------------------------- */
+.xfv-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 28px;
+  background:
+    linear-gradient(180deg, rgba(11, 11, 14, 0.92), rgba(7, 7, 10, 0.86));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 1px 0 rgba(0, 0, 0, 0.4),
+    0 24px 60px -32px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  flex-shrink: 0;
+  animation: xfv-slide-down 360ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Terminal accent bar — thin glowing line at the very top of the header */
+.xfv-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(56, 189, 248, 0.3) 25%,
+    rgba(16, 185, 129, 0.45) 50%,
+    rgba(56, 189, 248, 0.3) 75%,
+    transparent 100%
+  );
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+}
+
+@keyframes xfv-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.xfv-header-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.xfv-header-mark {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  color: rgba(245, 245, 247, 0.85);
+  flex-shrink: 0;
+}
+
+.xfv-header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.xfv-header-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.xfv-header-symbol {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: rgba(245, 245, 247, 0.98);
+  white-space: nowrap;
+}
+
+.xfv-header-name {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.65);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.xfv-header-handle {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.65);
+  white-space: nowrap;
+}
+
+.xfv-header-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(245, 245, 247, 0.60);
+}
+
+.xfv-header-cgid {
+  padding: 1px 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 3px;
+  text-transform: lowercase;
+  letter-spacing: 0;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.xfv-live-dot {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow:
+    0 0 12px rgba(16, 185, 129, 0.7),
+    0 0 4px rgba(16, 185, 129, 0.9),
+    inset 0 0 2px rgba(255, 255, 255, 0.5);
+  animation: xfv-pulse 1.8s ease-in-out infinite;
+}
+
+.xfv-live-dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  animation: xfv-ring 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@keyframes xfv-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow:
+      0 0 12px rgba(16, 185, 129, 0.7),
+      0 0 4px rgba(16, 185, 129, 0.9),
+      inset 0 0 2px rgba(255, 255, 255, 0.5);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.88);
+    box-shadow:
+      0 0 18px rgba(16, 185, 129, 0.9),
+      0 0 6px rgba(16, 185, 129, 1),
+      inset 0 0 2px rgba(255, 255, 255, 0.5);
+  }
+}
+
+@keyframes xfv-ring {
+  0% {
+    transform: scale(0.85);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.xfv-close {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  color: rgba(245, 245, 247, 0.7);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.xfv-close:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(245, 245, 247, 0.95);
+  transform: translateY(-1px);
+}
+
+.xfv-close-hint {
+  padding: 1px 5px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+}
+
+/* ----------------------------------------------------------------
+   Content layout — Bloomberg-style 3-row grid
+---------------------------------------------------------------- */
+.xfv-content {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 18px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.xfv-content::-webkit-scrollbar {
+  width: 6px;
+}
+.xfv-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.xfv-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+}
+.xfv-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.xfv-row {
+  width: 100%;
+}
+
+.xfv-row-hero {
+  flex-shrink: 0;
+}
+
+/* Row 2 — Main grid: [KOL + Peers rail] | [Live Feed] | [Timeline + Alpha rail].
+   The feed owns the center at a comfortable reading width while the insight
+   panels fill the flanks (was: a lone 760px centered feed with empty sides).
+   Rails are sticky so they stay in view while the page scrolls the feed. */
+.xfv-row-main {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 2fr) minmax(280px, 0.9fr);
+  gap: 16px;
+  align-items: start;
+  flex-shrink: 0;
+}
+
+.xfv-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  position: sticky;
+  top: 0;
+}
+
+/* Rail panels scroll internally instead of ballooning the rail. */
+.xfv-rail .xfv-panel {
+  max-height: min(46vh, 480px);
+}
+
+/* Readable measure for tweet content inside the wider feed column — the
+   row itself stays full-width so the hover band + separator span the card. */
+.xfv-feed-col .xfv-tweet-card > * {
+  max-width: 82ch;
+}
+
+.xfv-feed-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  /* Fill the viewport below the hero without spilling into an awkward cut —
+     the feed card scrolls internally past this height. */
+  height: clamp(620px, calc(100vh - 180px), 1200px);
+}
+
+.xfv-feed-col > .xfv-feed-card {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0; /* allow internal scroll when content overflows */
+}
+
+/* One-screen terminal (desktop): no page scroll — the compact hero sits on
+   top and the main grid absorbs the remaining viewport. Rails split their
+   height between both panels; everything scrolls internally. */
+@media (min-width: 1281px) {
+  .xfv-content {
+    overflow: hidden;
+    padding: 14px 24px 16px;
+    gap: 12px;
+  }
+  .xfv-row-main {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .xfv-rail {
+    position: static;
+    height: 100%;
+    min-height: 0;
+  }
+  .xfv-rail .xfv-panel {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: none;
+  }
+  .xfv-feed-col {
+    height: 100%;
+    min-height: 0;
+  }
+  .xfv-footer {
+    display: none;
+  }
+
+  /* Compact hero — give the screen to the rails + feed */
+  .xfv-hero-card-body {
+    padding: 14px 24px;
+    gap: 24px;
+  }
+  .xfv-hero-avatar-lg {
+    width: 64px;
+    height: 64px;
+  }
+  .xfv-hero-name {
+    font-size: 22px;
+  }
+  .xfv-hero-id {
+    gap: 5px;
+  }
+  .xfv-hero-bio {
+    margin: 2px 0;
+    font-size: 13px;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: normal;
+  }
+  .xfv-hero-actions {
+    margin-top: 6px;
+  }
+  .xfv-hero-follow-btn,
+  .xfv-hero-profile-btn {
+    padding: 6px 14px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 1400px) {
+  .xfv-row-main {
+    grid-template-columns: minmax(250px, 310px) minmax(0, 1fr) minmax(250px, 310px);
+  }
+}
+
+/* Narrow: rails collapse to 2-up strips and the FEED LEADS — a tweet tap
+   opened this hub, so the stream is what the user came for. */
+@media (max-width: 1280px) {
+  .xfv-row-main {
+    display: flex;
+    flex-direction: column;
+  }
+  .xfv-rail {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .xfv-feed-col {
+    order: -1;
+    height: auto;
+  }
+  .xfv-feed-col > .xfv-feed-card {
+    height: clamp(620px, 70vh, 880px);
+  }
+}
+
+/* ----------------------------------------------------------------
+   Mobile (≤820px) — touch-native hub
+---------------------------------------------------------------- */
+@media (max-width: 820px) {
+  .xfv-rail {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .xfv-header {
+    padding: calc(10px + env(safe-area-inset-top)) 12px 10px;
+    gap: 10px;
+  }
+  .xfv-header-name {
+    display: none; /* symbol + handle carry the identity on a phone */
+  }
+  .xfv-close-hint {
+    display: none; /* ESC means nothing on touch */
+  }
+  .xfv-close {
+    padding: 10px 12px;
+  }
+
+  .xfv-content {
+    padding: 10px 10px calc(18px + env(safe-area-inset-bottom));
+    gap: 10px;
+  }
+
+  .xfv-row-main {
+    gap: 10px;
+  }
+  .xfv-feed-col > .xfv-feed-card {
+    height: clamp(480px, 68vh, 760px);
+  }
+
+  /* Hero: compact identity card */
+  .xfv-hero-card-body {
+    padding: 14px;
+    gap: 14px;
+  }
+  .xfv-hero-profile {
+    gap: 12px;
+  }
+  .xfv-hero-avatar-lg {
+    width: 52px;
+    height: 52px;
+  }
+  .xfv-hero-name {
+    font-size: 19px;
+  }
+  .xfv-hero-bio {
+    margin: 2px 0;
+    font-size: 12.5px;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: normal;
+  }
+  .xfv-hero-counts {
+    gap: 12px 14px;
+    flex-wrap: wrap;
+  }
+  .xfv-hero-count-num {
+    font-size: 14px;
+  }
+  .xfv-hero-actions {
+    margin-top: 8px;
+  }
+  .xfv-hero-follow-btn,
+  .xfv-hero-profile-btn {
+    padding: 7px 14px;
+    font-size: 12px;
+  }
+  .xfv-metric-tile {
+    padding: 9px 10px;
+  }
+
+  /* Feed chrome: pills scroll sideways, the view toggle stays pinned.
+     (.xfv-feed-card qualifier beats the later base rule's flex-wrap: wrap.) */
+  .xfv-feed-card .xfv-feed-segments-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    align-items: center;
+  }
+  .xfv-feed-card .xfv-feed-segments-row::-webkit-scrollbar {
+    display: none;
+  }
+  .xfv-feed-viewtoggle {
+    position: sticky;
+    right: 0;
+    background: rgba(14, 14, 17, 0.92);
+  }
+  .xfv-tweet-card {
+    padding: 10px 12px;
+  }
+  .xfv-tweet-media {
+    margin-left: 0;
+  }
+
+  /* Cosmos previewer on a phone */
+  .xfv-feed-cosmos {
+    padding: 8px;
+  }
+  .xfv-cosmos {
+    min-height: 300px;
+  }
+  .xfv-cosmos-hint {
+    font-size: 9.5px;
+    padding: 0 12px;
+  }
+
+  /* Full-view live feed overlay */
+  .xfv-fv-container {
+    padding: 0 12px;
+  }
+}
+
+/* ----------------------------------------------------------------
+   Reusable panel primitive
+---------------------------------------------------------------- */
+.xfv-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.035) 0%,
+    rgba(255, 255, 255, 0.012) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  min-width: 0;
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .xfv-panel {
+    background: rgba(15, 15, 18, 0.92);
+  }
+}
+
+.xfv-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+}
+
+.xfv-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.xfv-panel-title svg {
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.xfv-panel-meta {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: 0.04em;
+}
+
+/* Tooltip anchors - any element with [data-xfv-tip] becomes a hover target
+   for the global portal mounted by useXfvTooltip(). The actual bubble is a
+   single fixed-position div on document.body (.xfv-tooltip-portal), so it
+   escapes panel-body overflow clipping. The .xfv-tip class only adds the
+   help cursor; .xfv-tip--inline adds flex layout for chips that pair text
+   with a "?" glyph. */
+.xfv-tip {
+  cursor: help;
+}
+.xfv-tip--inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.xfv-tip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(245, 245, 247, 0.65);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: border-color 140ms ease-out, color 140ms ease-out;
+}
+.xfv-tip:hover .xfv-tip-icon {
+  border-color: rgba(255, 255, 255, 0.32);
+  color: rgba(245, 245, 247, 0.78);
+}
+
+/* Portal - single fixed-position bubble on document.body. Hidden by default
+   (display: none) so it doesn't intercept layout. useXfvTooltip toggles
+   .xfv-tooltip-portal--visible on hover and writes inline left/top. */
+.xfv-tooltip-portal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: none;
+  min-width: 160px;
+  max-width: 260px;
+  padding: 8px 11px;
+  background: var(--ob-surface-3, rgba(18, 18, 22, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 0.5px 0 rgba(255, 255, 255, 0.05);
+  color: rgba(245, 245, 247, 0.88);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: center;
+  white-space: normal;
+  pointer-events: none;
+  z-index: 2147483646;
+  animation: xfvTooltipFadeIn 140ms ease-out;
+}
+.xfv-tooltip-portal--visible {
+  display: block;
+}
+@keyframes xfvTooltipFadeIn {
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.xfv-panel-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 12px 16px;
+  min-height: 0;
+}
+
+.xfv-panel-body::-webkit-scrollbar {
+  width: 4px;
+}
+.xfv-panel-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.xfv-panel-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+}
+
+/* ================================================================
+   PROJECT HERO CARD
+   Wall Street Terminal meets Apple Premium.
+   Banner background, large avatar, bio, follow CTA, metrics grid.
+   ================================================================ */
+.xfv-hero-card {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.012) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(28px) saturate(130%);
+  -webkit-backdrop-filter: blur(28px) saturate(130%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 24px 80px rgba(0, 0, 0, 0.5),
+    0 8px 24px rgba(0, 0, 0, 0.35);
+  isolation: isolate;
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .xfv-hero-card {
+    background: rgba(15, 15, 18, 0.94);
+  }
+}
+
+/* Banner background */
+.xfv-hero-banner {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.xfv-hero-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.18;
+  filter: saturate(115%) blur(2px);
+  transform: scale(1.05);
+}
+
+.xfv-hero-banner-fade {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at top right, rgba(255, 255, 255, 0.04), transparent 60%),
+    linear-gradient(180deg, rgba(9, 9, 11, 0.45) 0%, rgba(9, 9, 11, 0.92) 70%, rgba(9, 9, 11, 0.96) 100%);
+}
+
+/* Body grid */
+.xfv-hero-card-body {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.95fr);
+  gap: 32px;
+  padding: 28px 32px;
+}
+
+@media (max-width: 1280px) {
+  .xfv-hero-card-body {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 24px;
+  }
+}
+
+/* LEFT — profile identity */
+.xfv-hero-profile {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.xfv-hero-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.xfv-hero-avatar-lg {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.xfv-hero-verified {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 22px;
+  height: 22px;
+  background: #1d9bf0;
+  border: 2px solid rgba(9, 9, 11, 0.95);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.xfv-hero-id {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.xfv-hero-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: rgba(245, 245, 247, 0.98);
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.xfv-hero-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.xfv-hero-handle-lg {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: -0.01em;
+}
+
+.xfv-hero-cashtag {
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.85);
+  letter-spacing: 0;
+}
+
+.xfv-hero-chain {
+  padding: 2px 8px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.xfv-hero-bio {
+  margin: 4px 0 4px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(245, 245, 247, 0.78);
+  max-width: 56ch;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.xfv-hero-counts {
+  display: flex;
+  align-items: baseline;
+  gap: 22px;
+  margin-top: 4px;
+}
+
+.xfv-hero-count {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.xfv-hero-count-num {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.95);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.xfv-hero-count--accent .xfv-hero-count-num {
+  color: rgba(245, 245, 247, 1);
+}
+
+.xfv-hero-count-label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.65);
+  text-transform: lowercase;
+}
+
+.xfv-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.xfv-hero-follow-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  background: linear-gradient(180deg, rgba(245, 245, 247, 1) 0%, rgba(225, 225, 230, 1) 100%);
+  border: none;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: #09090b;
+  text-decoration: none;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  transition: all 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.xfv-hero-follow-btn:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.xfv-hero-follow-btn:active {
+  transform: translateY(0);
+}
+
+.xfv-hero-profile-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.85);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.xfv-hero-profile-btn:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(245, 245, 247, 1);
+  transform: translateY(-1px);
+}
+
+.xfv-hero-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.xfv-hero-tag {
+  padding: 3px 9px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* RIGHT — metrics grid + alpha pills */
+.xfv-hero-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.xfv-hero-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.xfv-metric-tile {
+  background: var(--ob-surface-2, rgba(13, 13, 16, 0.92));
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  transition: background 200ms ease;
+}
+
+.xfv-metric-tile:hover {
+  background: var(--ob-surface-3, rgba(20, 20, 24, 0.95));
+}
+
+.xfv-metric-tile-label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.60);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.xfv-metric-tile-value {
+  font-family: var(--font-body);
+  font-size: 19px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.98);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+
+.xfv-metric-tile-sub {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.60);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.xfv-metric-tile--live .xfv-metric-tile-value {
+  color: rgba(245, 245, 247, 1);
+}
+.xfv-metric-tile--hot .xfv-metric-tile-value {
+  color: rgba(245, 245, 247, 0.98);
+}
+.xfv-metric-tile--warm .xfv-metric-tile-value {
+  color: #34d399;
+}
+.xfv-metric-tile--muted .xfv-metric-tile-value {
+  color: rgba(245, 245, 247, 0.55);
+}
+
+/* Alpha pills strip - terminal column with hairline severity bars */
+.xfv-hero-alpha {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.xfv-hero-alpha-label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.xfv-hero-alpha-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+}
+
+.xfv-hero-alpha-pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.7);
+  transition: color 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.xfv-hero-alpha-pill:hover {
+  color: rgba(245, 245, 247, 0.95);
+}
+
+.xfv-hero-alpha-pill-label {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: inherit;
+}
+
+.xfv-hero-alpha-pill-value {
+  padding-left: 0;
+  margin-left: 0;
+  border-left: 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgba(245, 245, 247, 0.92);
+}
+
+/* No severity rail - the inline pills separate by gap alone, label + value
+   carry the meaning. Rails read as an agentic dashboard. */
+
+/* ----------------------------------------------------------------
+   MetricGauge (SVG arc)
+---------------------------------------------------------------- */
+.xfv-gauge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.xfv-gauge svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 64px;
+}
+
+.xfv-gauge-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.xfv-gauge-fill {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.xfv-gauge-fill--hot {
+  stroke: #34d399;
+}
+.xfv-gauge-fill--warm {
+  stroke: #fbbf24;
+}
+.xfv-gauge-fill--cool {
+  stroke: #f87171;
+}
+.xfv-gauge-fill--neutral {
+  stroke: rgba(245, 245, 247, 0.5);
+}
+
+/* ================================================================
+   LIVE FEED — the cinematic terminal hero of the dashboard
+   ================================================================ */
+.xfv-feed-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  /* Tone-following glass: same 85% opacity + blur, but the fill is the
+     ladder surface, so skins re-tone the whole feed column (was a fixed
+     near-black that crushed any theme behind it). */
+  background: color-mix(in srgb, var(--ob-surface-3, #15171A) 85%, transparent);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 32px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Header — title + segment pills */
+.xfv-feed-header {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 22px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+  background: transparent;
+  overflow: hidden;
+}
+
+/* Single hairline accent at top - subtle white, no color */
+.xfv-feed-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+}
+
+.xfv-feed-header::after {
+  display: none;
+}
+
+.xfv-feed-title-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.xfv-feed-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.xfv-feed-live-dot {
+  position: relative;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+  animation: xfv-pulse 1.8s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.xfv-feed-live-dot::after {
+  display: none;
+}
+
+.xfv-feed-title-text {
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.78);
+  text-shadow: none;
+}
+
+.xfv-feed-title-cashtag {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.95);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  text-shadow: none;
+  letter-spacing: 0.02em;
+}
+
+.xfv-feed-meta {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.55);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.xfv-feed-meta-clock {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: rgba(245, 245, 247, 0.62);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  box-shadow: none;
+}
+
+.xfv-feed-meta-tz {
+  font-size: 7.5px;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: 0.16em;
+  margin-left: 1px;
+}
+
+.xfv-feed-meta-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(16, 185, 129, 0.62);
+  letter-spacing: 0.16em;
+}
+
+.xfv-feed-meta-status-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+  animation: xfv-pulse 1.8s ease-in-out infinite;
+}
+
+/* Segment pills - terminal tabs with hairline bottom-rule active marker */
+.xfv-feed-segments-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  flex-wrap: wrap;
+  margin: 0 -12px;
+}
+
+.xfv-feed-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px 9px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  font-family: var(--font-body);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  transition: color 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.xfv-feed-pill:hover {
+  background: transparent;
+  color: rgba(245, 245, 247, 0.7);
+}
+
+.xfv-feed-pill--active {
+  background: transparent;
+  color: rgba(245, 245, 247, 0.95);
+  box-shadow: none;
+}
+
+.xfv-feed-pill--active::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: -1px;
+  height: 1px;
+  /* Live accent channel - the feed's active segment carries the skin */
+  background: var(--accent, rgba(245, 245, 247, 0.65));
+  box-shadow: 0 0 8px var(--accent-glow, rgba(245, 245, 247, 0.25));
+}
+
+.xfv-feed-pill--active:hover {
+  background: transparent;
+  color: rgba(245, 245, 247, 0.98);
+}
+
+.xfv-feed-pill-label {
+  white-space: nowrap;
+}
+
+.xfv-feed-pill-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14px;
+  height: 13px;
+  padding: 0 3px;
+  background: transparent;
+  border-radius: 0;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: 0;
+}
+
+.xfv-feed-pill:hover .xfv-feed-pill-count {
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.xfv-feed-pill--active .xfv-feed-pill-count {
+  background: transparent;
+  color: rgba(245, 245, 247, 0.78);
+}
+
+/* Scrollable tweet stream — single vertical column.
+   Tweets are clickable rows (selection wires the right Intel Pane). */
+/* Feed | Cosmos view switch — right end of the segments row */
+.xfv-feed-viewtoggle {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.xfv-feed-viewtoggle-btn {
+  padding: 3px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.xfv-feed-viewtoggle-btn:hover {
+  color: rgba(245, 245, 247, 0.85);
+}
+
+.xfv-feed-viewtoggle-btn.is-active {
+  background: rgba(245, 245, 247, 0.12);
+  color: rgba(245, 245, 247, 0.95);
+}
+
+/* Cosmos body — the KOL universe fills the card */
+.xfv-feed-cosmos {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 10px 12px 12px;
+  display: flex;
+}
+
+.xfv-cosmos {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 340px;
+  border-radius: 14px;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 100% at 50% 0%, rgba(255, 255, 255, 0.02), transparent 70%),
+    linear-gradient(180deg, rgba(6, 6, 8, 0.6), rgba(6, 6, 8, 0.2));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Absolutely positioned so the canvas's pixel size can NEVER feed back into
+   the wrap's layout (a content-sized wrap + ResizeObserver = growth loop). */
+.xfv-cosmos-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.xfv-cosmos-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8px;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: rgba(245, 245, 247, 0.35);
+  pointer-events: none;
+}
+
+.xfv-feed-empty--soft span {
+  color: rgba(245, 245, 247, 0.45);
+}
+
+.xfv-feed-stream {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 8px 0 22px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.xfv-feed-stream::-webkit-scrollbar {
+  width: 6px;
+}
+.xfv-feed-stream::-webkit-scrollbar-track {
+  background: transparent;
+}
+.xfv-feed-stream::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+}
+.xfv-feed-stream::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.xfv-feed-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.60);
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+@keyframes xfv-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ----------------------------------------------------------------
+   Tweet card — terminal-style row separator (1-col vertical stream).
+   Click to select; the selected tweet drives the right Intel Pane.
+   Bloomberg ticker feel: tight density, hairline borders, no glow,
+   no transform lifts, no blue chrome.
+---------------------------------------------------------------- */
+.xfv-tweet-card {
+  position: relative;
+  padding: 12px 18px 12px 16px;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+  border-left: 2px solid transparent;
+  background: transparent;
+  transition:
+    background 200ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-left-color 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: xfv-fade-up 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+}
+
+.xfv-tweet-card:hover {
+  background: rgba(255, 255, 255, 0.018);
+}
+
+/* Project tweet variant - drop the blue bg, use a warm-white left mark
+   instead. Spectre's chrome is warm-white only; blue here violates the rule. */
+.xfv-tweet-card--project {
+  background: transparent;
+  border-left-color: rgba(245, 245, 247, 0.50);
+}
+
+.xfv-tweet-card--project:hover {
+  background: rgba(255, 255, 255, 0.025);
+  border-left-color: rgba(245, 245, 247, 0.55);
+}
+
+
+/* Parent context (project replying to someone) */
+.xfv-tweet-parent {
+  margin: 0 0 10px;
+  padding: 7px 11px;
+  background: rgba(255, 255, 255, 0.018);
+  border-left: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0 4px 4px 0;
+}
+
+.xfv-tweet-parent-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.60);
+  margin-bottom: 3px;
+}
+
+.xfv-tweet-parent-label svg {
+  opacity: 0.5;
+}
+
+.xfv-tweet-parent-body {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.xfv-tweet-parent-handle {
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.7);
+  flex-shrink: 0;
+}
+
+.xfv-tweet-parent-text {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: rgba(245, 245, 247, 0.65);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Header */
+.xfv-tweet-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.xfv-tweet-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.xfv-tweet-byline {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.xfv-tweet-author-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.xfv-tweet-author {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: rgba(245, 245, 247, 0.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.xfv-tweet-handle {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.60);
+  white-space: nowrap;
+}
+
+.xfv-tweet-badge {
+  padding: 1px 7px;
+  border-radius: 3px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.xfv-tweet-badge--project {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.78);
+}
+
+.xfv-tweet-badge--rt {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: rgba(245, 245, 247, 0.65);
+}
+
+.xfv-tweet-time {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.55);
+  margin-top: 1px;
+}
+
+.xfv-tweet-link {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: rgba(245, 245, 247, 0.60);
+  background: transparent;
+  border: 1px solid transparent;
+  text-decoration: none;
+  transition: all 180ms ease;
+}
+
+.xfv-tweet-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.95);
+}
+
+/* Body */
+.xfv-tweet-body {
+  margin: 0 0 10px;
+  padding-left: 42px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.86);
+  word-break: break-word;
+  white-space: pre-wrap;
+  font-weight: 400;
+  letter-spacing: -0.003em;
+}
+
+/* Inline media (photos + video thumbnails) — fills the column under
+   the tweet body, offset to align with the avatar's right edge.
+   No transform lift on hover - this is a feed row, not a card. */
+.xfv-tweet-media {
+  position: relative;
+  margin: 0 0 10px 42px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.015);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  transition: border-color 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.xfv-tweet-media:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.xfv-tweet-media-img {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Subtle inner gradient hint to separate image from card */
+.xfv-tweet-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.18) 100%);
+}
+
+/* Video play overlay — terminal-flavored, glowing center button */
+.xfv-tweet-media-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--ob-surface-1, #09090B) 78%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(245, 245, 247, 0.98);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    0 0 0 4px rgba(255, 255, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.xfv-tweet-media-play svg {
+  margin-left: 3px; /* optical-center the play triangle */
+}
+
+.xfv-tweet-media:hover .xfv-tweet-media-play {
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.5),
+    0 0 0 5px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Footer */
+.xfv-tweet-footer {
+  padding-left: 42px;
+}
+
+.xfv-tweet-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.xfv-tweet-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
+  transition: color 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.xfv-tweet-stat:hover {
+  color: rgba(245, 245, 247, 0.85);
+}
+
+.xfv-tweet-stat svg {
+  opacity: 0.65;
+}
+
+.xfv-tweet-stat-value {
+  font-weight: 600;
+}
+
+/* Project replies attached to non-project tweet — warm-white not blue */
+.xfv-tweet-replies-context {
+  margin: 10px 0 0 42px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.025);
+  border-left: 2px solid rgba(245, 245, 247, 0.22);
+  border-radius: 0 6px 6px 0;
+}
+
+.xfv-tweet-replies-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.65);
+  margin-bottom: 5px;
+}
+
+.xfv-tweet-replies-label svg {
+  opacity: 0.65;
+}
+
+.xfv-tweet-reply-snippet {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: rgba(245, 245, 247, 0.62);
+  padding: 3px 0;
+}
+
+.xfv-tweet-reply-snippet + .xfv-tweet-reply-snippet {
+  border-top: 1px dashed rgba(255, 255, 255, 0.06);
+  margin-top: 3px;
+  padding-top: 5px;
+}
+
+/* Skeleton stream */
+.xfv-feed-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.xfv-feed-skeleton-row {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.xfv-feed-skeleton-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.xfv-feed-skeleton-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+/* ----------------------------------------------------------------
+   KOL leaderboard
+---------------------------------------------------------------- */
+.xfv-kol-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.xfv-kol-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.022) 0%, rgba(255, 255, 255, 0.008) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  transition: background 200ms ease, border-color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+}
+
+/* No left accent rail - it read as off-brand "coloring" on hover. The row's
+   own bg lift + border is the hover cue. */
+.xfv-kol-row::before { content: none; }
+
+.xfv-kol-row:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.018) 100%);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.xfv-kol-rank {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.55);
+  width: 14px;
+  flex-shrink: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.xfv-kol-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+}
+
+.xfv-kol-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+  display: block;
+}
+
+.xfv-kol-row:hover .xfv-kol-avatar {
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.32);
+}
+
+.xfv-kol-self-badge {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #f5f5f7;
+  border: 1.5px solid #09090b;
+  color: #09090b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+}
+
+.xfv-kol-info {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.xfv-kol-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.xfv-kol-name {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.95);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.xfv-kol-handle {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.xfv-kol-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.65);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.xfv-kol-stat {
+  cursor: help;
+  transition: color 150ms ease;
+}
+.xfv-kol-row:hover .xfv-kol-stat {
+  color: rgba(245, 245, 247, 0.6);
+}
+
+.xfv-kol-stat-sep {
+  color: rgba(245, 245, 247, 0.50);
+}
+
+.xfv-kol-chip {
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+  cursor: help;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.xfv-kol-row:hover .xfv-kol-chip {
+  transform: scale(1.04);
+}
+
+.xfv-kol-chip--high {
+  color: #34d399;
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.16), rgba(52, 211, 153, 0.06));
+  border: 1px solid rgba(52, 211, 153, 0.28);
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.12);
+}
+
+.xfv-kol-chip--mid {
+  color: #fbbf24;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.12), rgba(251, 191, 36, 0.04));
+  border: 1px solid rgba(251, 191, 36, 0.22);
+}
+
+.xfv-kol-chip--low {
+  color: rgba(245, 245, 247, 0.65);
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ----------------------------------------------------------------
+   Narrative + peers panel
+---------------------------------------------------------------- */
+.xfv-narrative-chip-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.xfv-narrative-chip {
+  padding: 5px 11px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: rgba(245, 245, 247, 0.82);
+  text-transform: uppercase;
+}
+
+.xfv-narrative-meta {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.60);
+}
+
+.xfv-peers-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.xfv-peer-row {
+  display: grid;
+  grid-template-columns: 18px 22px minmax(0, 1fr) 60px 50px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  transition: all 150ms ease;
+}
+
+.xfv-peer-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Header row — column labels above the peer rows. Reuses .xfv-peer-row's
+   grid template so columns line up exactly. */
+.xfv-peer-row--header {
+  background: transparent;
+  border: none;
+  padding: 4px 8px 2px;
+}
+
+.xfv-peer-row--header:hover {
+  background: transparent;
+  border: none;
+}
+
+.xfv-peer-row--header .xfv-peer-rank,
+.xfv-peer-row--header .xfv-peer-name,
+.xfv-peer-row--header .xfv-peer-mentions,
+.xfv-peer-row--header .xfv-peer-momentum {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.xfv-peer-logo--header {
+  background: transparent;
+}
+
+.xfv-peer-rank {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.60);
+  text-align: right;
+}
+
+.xfv-peer-logo {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  object-fit: cover;
+}
+
+.xfv-peer-name {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.xfv-peer-mentions {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.55);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.xfv-peer-momentum {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.xfv-peer-momentum--up { color: #34d399; }
+.xfv-peer-momentum--flat { color: rgba(245, 245, 247, 0.65); }
+.xfv-peer-momentum--down { color: #f87171; }
+
+/* ----------------------------------------------------------------
+   Mention timeline panel
+---------------------------------------------------------------- */
+.xfv-timeline-chart {
+  width: 100%;
+  height: 180px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.xfv-timeline-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: 0.04em;
+}
+
+/* ----------------------------------------------------------------
+   Alpha signal card
+---------------------------------------------------------------- */
+.xfv-signal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.xfv-signal {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 16px 12px 13px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+  border-left: 2px solid transparent;
+  border-radius: 0;
+  animation: xfv-fade-up 360ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background 220ms cubic-bezier(0.16, 1, 0.3, 1), border-left-color 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.xfv-signal:last-child { border-bottom: 0; }
+
+.xfv-signal:hover {
+  background: rgba(255, 255, 255, 0.018);
+}
+
+/* No left rail at all - even a neutral rail reads as an agentic dashboard.
+   The leading icon carries severity; rows separate by the bottom hairline. */
+.xfv-signal--hot,
+.xfv-signal--warm,
+.xfv-signal--cool,
+.xfv-signal--info { border-left-color: transparent; }
+
+/* Flat icon at the row leading edge - opacity-driven, NO box */
+.xfv-signal-icon-flat {
+  width: 14px;
+  height: 14px;
+  display: block;
+  align-self: center;
+  color: rgba(245, 245, 247, 0.60);
+  transition: color 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.xfv-signal--hot  .xfv-signal-icon-flat { color: rgba(245, 158, 11, 0.85); }
+.xfv-signal--warm .xfv-signal-icon-flat { color: rgba(52, 211, 153, 0.85); }
+.xfv-signal--cool .xfv-signal-icon-flat { color: rgba(248, 113, 113, 0.85); }
+.xfv-signal--info .xfv-signal-icon-flat { color: rgba(245, 245, 247, 0.60); }
+.xfv-signal:hover .xfv-signal-icon-flat { color: rgba(245, 245, 247, 0.95); }
+.xfv-signal--hot:hover  .xfv-signal-icon-flat { color: #fbbf24; }
+.xfv-signal--warm:hover .xfv-signal-icon-flat { color: #34d399; }
+.xfv-signal--cool:hover .xfv-signal-icon-flat { color: #f87171; }
+.xfv-signal--info:hover .xfv-signal-icon-flat { color: rgba(245, 245, 247, 0.95); }
+
+.xfv-signal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+/* Label = mono UPPERCASE small (RightPanel stat-label pattern) */
+.xfv-signal-label {
+  font-family: var(--font-body);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.55);
+  white-space: normal;
+}
+
+/* Hint = the readable description - body font, muted */
+.xfv-signal-hint {
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(245, 245, 247, 0.60);
+  letter-spacing: -0.005em;
+}
+
+/* Value = mono large, mostly white. Severity color reserved for hover. */
+.xfv-signal-value {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgba(245, 245, 247, 0.88);
+  white-space: nowrap;
+  align-self: center;
+  letter-spacing: -0.01em;
+  transition: color 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.xfv-signal--hot:hover  .xfv-signal-value { color: #fbbf24; }
+.xfv-signal--warm:hover .xfv-signal-value { color: #34d399; }
+.xfv-signal--cool:hover .xfv-signal-value { color: #f87171; }
+
+/* ----------------------------------------------------------------
+   Category chatter mini
+---------------------------------------------------------------- */
+.xfv-cat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.xfv-cat-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 50px 36px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.015);
+  border-radius: 5px;
+  font-family: var(--font-body);
+  font-size: 12px;
+}
+
+.xfv-cat-name {
+  color: rgba(245, 245, 247, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.xfv-cat-bar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.xfv-cat-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(52, 211, 153, 0.85), rgba(245, 245, 247, 0.7));
+  border-radius: 2px;
+  transition: width 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.xfv-cat-value {
+  text-align: right;
+  color: rgba(245, 245, 247, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ----------------------------------------------------------------
+   Empty / loading / error states
+---------------------------------------------------------------- */
+.xfv-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px 16px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: rgba(245, 245, 247, 0.55);
+  text-align: center;
+}
+
+.xfv-empty svg {
+  opacity: 0.4;
+}
+
+.xfv-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(248, 113, 113, 0.04);
+  border: 1px solid rgba(248, 113, 113, 0.15);
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: #f87171;
+}
+
+.xfv-skeleton {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: xfv-shimmer 1.6s infinite;
+  border-radius: 4px;
+}
+
+@keyframes xfv-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* ----------------------------------------------------------------
+   Footer
+---------------------------------------------------------------- */
+.xfv-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 0 4px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: rgba(245, 245, 247, 0.55);
+  text-transform: uppercase;
+}
+
+
+/* ----------------------------------------------------------------
+   Full-view button in feed header
+---------------------------------------------------------------- */
+.xfv-feed-fullview-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  transition: background 180ms ease-out, color 180ms ease-out;
+}
+.xfv-feed-fullview-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.85);
+}
+
+/* ----------------------------------------------------------------
+   Live Feed Full View overlay
+---------------------------------------------------------------- */
+.xfv-fv-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999999;
+  display: flex;
+  flex-direction: column;
+  background: color-mix(in srgb, var(--ob-surface-1, #09090B) 92%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: xfv-fv-in 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes xfv-fv-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.xfv-fv-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 680px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Header */
+.xfv-fv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+}
+.xfv-fv-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.xfv-fv-title {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: rgba(245, 245, 247, 0.95);
+}
+.xfv-fv-cashtag {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.65);
+}
+.xfv-fv-count {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: 0.04em;
+}
+.xfv-fv-header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.xfv-fv-clock {
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  font-variant-numeric: tabular-nums;
+}
+.xfv-fv-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 245, 247, 0.65);
+  cursor: pointer;
+  transition: background 180ms ease-out, color 180ms ease-out;
+}
+.xfv-fv-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.9);
+}
+
+/* Segments row */
+.xfv-fv-segments {
+  display: flex;
+  gap: 2px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+  flex-shrink: 0;
+}
+
+/* Scrollable stream */
+.xfv-fv-stream {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  padding: 8px 0;
+}
+.xfv-fv-stream::-webkit-scrollbar { width: 3px; }
+.xfv-fv-stream::-webkit-scrollbar-track { background: transparent; }
+.xfv-fv-stream::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.06); border-radius: 9999px; }
+
+/* Full-view tweet card */
+.xfv-fv-tweet {
+  padding: 20px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+  border-left: 2px solid transparent;
+  transition: background 200ms ease-out, border-left-color 200ms ease-out;
+}
+.xfv-fv-tweet:last-child { border-bottom: 0; }
+.xfv-fv-tweet:hover {
+  background: rgba(255, 255, 255, 0.015);
+}
+.xfv-fv-tweet--project {
+  border-left-color: rgba(245, 245, 247, 0.50);
+}
+.xfv-fv-tweet--project:hover {
+  border-left-color: rgba(245, 245, 247, 0.55);
+}
+
+/* Selected tweet - persistent highlight, slightly bigger */
+.xfv-fv-tweet--selected {
+  background: rgba(255, 255, 255, 0.03);
+  border-left-color: rgba(245, 245, 247, 0.50);
+}
+.xfv-fv-tweet--selected .xfv-fv-tweet-author {
+  font-size: 15px;
+}
+.xfv-fv-tweet--selected .xfv-fv-tweet-body {
+  font-size: 15.5px;
+}
+.xfv-fv-tweet--selected .xfv-fv-tweet-avatar {
+  width: 44px;
+  height: 44px;
+}
+
+/* Full-view tweet header */
+.xfv-fv-tweet-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.xfv-fv-tweet-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+.xfv-fv-tweet-author {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.95);
+  letter-spacing: -0.005em;
+}
+
+/* Full-view tweet body - larger text for readability */
+.xfv-fv-tweet-body {
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: rgba(245, 245, 247, 0.88);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0 0 12px 52px;
+  letter-spacing: -0.005em;
+}
+
+/* Full-view tweet stats */
+.xfv-fv-tweet-stats {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding-left: 52px;
+}
+
+/* Footer */
+.xfv-fv-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0;
+  flex-shrink: 0;
+  font-family: var(--font-body);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: rgba(245, 245, 247, 0.55);
+  text-transform: uppercase;
+  border-top: 1px solid rgba(255, 255, 255, 0.035);
+}
+
+
+/* ----------------------------------------------------------------
+   Stagger entrance
+---------------------------------------------------------------- */
+.xfv-row-hero     { animation: xfv-fade-up 420ms cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay:  80ms; }
+.xfv-row-feed     { animation: xfv-fade-up 460ms cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 180ms; }
+.xfv-row-insights { animation: xfv-fade-up 460ms cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 280ms; }
+.xfv-row-insights > *:nth-child(1) { animation: xfv-fade-up 480ms cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 320ms; }
+.xfv-row-insights > *:nth-child(2) { animation: xfv-fade-up 480ms cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 360ms; }
+.xfv-row-insights > *:nth-child(3) { animation: xfv-fade-up 480ms cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 400ms; }
+.xfv-row-insights > *:nth-child(4) { animation: xfv-fade-up 480ms cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 440ms; }
+
+/* ------------------------------------------------------------------------
+   Rug WARNING badge (full-view hero) — the loudest tag. Red + warning glyph.
+   Red is the one bright hue the design system allows here (bear/danger).
+------------------------------------------------------------------------- */
+.xfv-hero-rug {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px 2px 8px;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: rgba(239, 68, 68, 0.16);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+.xfv-hero-rug svg { flex: 0 0 auto; }
+.xfv-hero-rug--high {
+  background: rgba(239, 68, 68, 0.22);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.55);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
+}

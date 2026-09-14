@@ -1,0 +1,84 @@
+/* ============================================
+   MobileViewNav — bottom view-switcher tab bar.
+   Prefix: mvn-. Docks at the very bottom; the
+   Buy/Sell bar (.mbn) sits just above it.
+   ============================================ */
+
+.mvn {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: stretch;
+  padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px));
+  background: color-mix(in srgb, var(--ob-surface-1) 97%, transparent);
+  /* KEEP THIS BLUR - it is load-bearing, despite the alpha suggesting it isn't.
+     Tried removing it (2026-07-30) on the reasoning that `--ob-surface-1` is
+     #08090A and this bar computes to alpha 0.969, so only 3.1% of the backdrop
+     shows through. Screenshot A/B on prod, with the transaction feed scrolled
+     underneath, killed that idea: without the blur the row text reads straight
+     through the bar ("$0.3534", "0xa7...0556") like a rendering bug. 3% of
+     high-contrast glyphs preserves their STRUCTURE, and the eye catches
+     structure far more readily than the luminance delta implies. Alpha
+     arithmetic is not enough - A/B it against high-contrast content. */
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-top: 1px solid var(--glass-border);
+  z-index: 101;
+}
+
+.mvn-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 48px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px 2px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  color: var(--text-3);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.mvn-tab:active { background: var(--glass-fill); }
+
+.mvn-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.mvn-tab--active { color: var(--text-1); }
+
+/* Watchlist exit shortcut — hairline divider separates it from the views. */
+.mvn-tab--watchlist { position: relative; }
+.mvn-tab--watchlist::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 22%;
+  bottom: 22%;
+  width: 1px;
+  background: var(--glass-border);
+}
+
+/* Trade tab — accent-tinted so the primary action reads apart from the
+   passive view switches. */
+.mvn-tab--trade { color: var(--accent); }
+.mvn-tab--trade:active { background: var(--accent-wash, rgba(255,255,255,0.06)); }
+
+/* ── Day mode (trading uses body.theme-light) ── */
+body.theme-light .mvn {
+  background: rgba(255, 255, 255, 0.97);
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+body.theme-light .mvn-tab { color: #64748b; }
+body.theme-light .mvn-tab--active { color: #0f172a; }
+body.theme-light .mvn-tab:active { background: rgba(15, 23, 42, 0.05); }

@@ -1,0 +1,441 @@
+/* LITE Intel Desk — structural only.
+
+   Colour deliberately leans on currentColor and neutral rgba so the shared Lite
+   shells (.lite-panel, .lite-view-head, .lite-tf-btn) keep carrying the look
+   modes: paper stays dark ink on white, glass stays legible over a photograph,
+   daylight dims itself. Hard-coded colours here would break all three. */
+
+/* ── Today card ── */
+.lid-card-count {
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+  opacity: 0.62;
+}
+.lid-quiet {
+  margin: 6px 0 0;
+  font-size: 0.8125rem;
+  opacity: 0.6;
+}
+
+/* ── Signal rows (shared by card + feed) ── */
+.lid-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.lid-row {
+  appearance: none;
+  width: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid rgba(128, 128, 128, 0.16);
+  /* 38px is the app-wide --touch-min; these rows are the primary tap target. */
+  min-height: 38px;
+  padding: 11px 2px;
+  transition: background 140ms ease;
+}
+.lid-list > li:first-child .lid-row { border-top: 0; }
+.lid-row:hover { background: rgba(128, 128, 128, 0.09); }
+
+.lid-row-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.lid-row-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.lid-row-detail {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  opacity: 0.66;
+  /* Two lines is a preview; the destination carries the rest. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.lid-row-meta { font-size: 0.6875rem; opacity: 0.5; }
+
+/* Unread marker: a dot, not a coloured row — the feed is read left-to-right and
+   a tinted background on half the rows turns the list into stripes. */
+.lid-row-dot {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.75;
+}
+.lid-row--unread .lid-row-title { font-weight: 600; }
+
+/* ── Subpage ── */
+.lid-head-stats { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.lid-stat { font-size: 0.75rem; opacity: 0.7; }
+.lid-stat b { font-size: 0.9375rem; font-weight: 600; opacity: 1; }
+
+/* The desk brief ships its own card chrome; this only owns the gap under it. */
+.lid-brief { margin-bottom: 16px; }
+
+.lid-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.lid-search {
+  flex: 1 1 240px;
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 0.875rem;
+  color: inherit;
+  background: rgba(128, 128, 128, 0.12);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  border-radius: 999px;
+}
+.lid-search::placeholder { color: currentColor; opacity: 0.45; }
+.lid-search:focus { outline: none; border-color: rgba(128, 128, 128, 0.42); }
+/* WebKit's own clear glyph inside a type=search field is an OS grey that
+   ignores the desk's ink - see the same reset on .lite-sector-search. */
+.lid-search::-webkit-search-cancel-button,
+.lid-search::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.lid-lanes {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 14px;
+  scrollbar-width: none;
+}
+.lid-lanes::-webkit-scrollbar { display: none; }
+.lid-lane {
+  appearance: none;
+  cursor: pointer;
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: 0.75rem;
+  color: inherit;
+  min-height: 38px;
+  padding: 0 13px;
+  background: rgba(128, 128, 128, 0.12);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  opacity: 0.72;
+  transition: opacity 140ms ease, background 140ms ease;
+}
+.lid-lane:hover { opacity: 1; }
+.lid-lane.active {
+  opacity: 1;
+  background: rgba(128, 128, 128, 0.24);
+  border-color: rgba(128, 128, 128, 0.3);
+}
+.lid-lane-n { opacity: 0.6; margin-left: 5px; }
+
+.lid-feed { padding-top: 4px; }
+.lid-empty { padding: 34px 10px; text-align: center; }
+.lid-empty-title { margin: 0 0 6px; font-size: 0.9375rem; font-weight: 600; }
+.lid-empty-text { margin: 0; font-size: 0.8125rem; opacity: 0.6; }
+
+@media (max-width: 768px) {
+  .lid-controls { gap: 10px; }
+  .lid-search { flex-basis: 100%; }
+  .lid-row-title { font-size: 0.84375rem; }
+}
+
+/* ── The desk brief inside Lite's light looks ──
+   DeskBriefCard was written for PRO, where light means `.app.app-day-mode`.
+   Lite's paper / daylight looks do NOT set that class (they carry
+   .lite-root--paper / --onlight / --daylight), so the card's own day-mode block
+   never fires and it would render its dark glass + warm-white ink straight onto
+   a white sheet. Mirror the values it already uses for day mode, keyed off
+   Lite's roots. Dark Lite looks fall through to the card's defaults.
+
+   🪤 Scoped to the ROOT + the card, deliberately NOT to a host panel. The first
+   version keyed every rule to `.lid-brief` (the Intel Desk subpage), so when the
+   brief also became a Today panel (.lid-briefcard) the whole block stopped
+   applying and the landing rendered white-on-white — the same bug reported
+   twice, one scope apart. Anything that mounts a DeskBriefCard anywhere inside
+   Lite is covered by this now, including hosts that do not exist yet. */
+.lite-root--paper .dbrief,
+.lite-root--daylight .dbrief {
+  background: rgba(15, 23, 42, 0.028);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+.lite-root--paper .dbrief-tabs,
+.lite-root--daylight .dbrief-tabs {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+/* 🪤 The first pass overrode the tab BACKGROUNDS and forgot their text colour.
+   .dbrief-tab is var(--text-tertiary) and .is-active is var(--text-primary) —
+   both warm-white — so on a paper sheet the Today / This week / Big picture
+   pills and the "7h ago" stamp rendered white-on-white and read as missing
+   controls. Background is not the only thing a light look has to invert. */
+.lite-root--paper .dbrief-tab,
+.lite-root--daylight .dbrief-tab { color: rgba(15, 23, 42, 0.55); }
+.lite-root--paper .dbrief-tab:hover,
+.lite-root--daylight .dbrief-tab:hover { color: rgba(15, 23, 42, 0.78); }
+.lite-root--paper .dbrief-tab.is-active,
+.lite-root--daylight .dbrief-tab.is-active {
+  background: rgba(15, 23, 42, 0.08);
+  color: #0f172a;
+}
+.lite-root--paper .dbrief-when,
+.lite-root--daylight .dbrief-when { color: rgba(15, 23, 42, 0.5); }
+.lite-root--paper .dbrief-when--stale,
+.lite-root--daylight .dbrief-when--stale { color: #b45309; }
+.lite-root--paper .dbrief-body p,
+.lite-root--daylight .dbrief-body p { color: rgba(15, 23, 42, 0.68); }
+/* !important matches the card's own day-mode rule — .dbrief-lede sets its
+   colour with !important, so a plain override loses to it. */
+.lite-root--paper .dbrief-lede,
+.lite-root--daylight .dbrief-lede { color: rgba(15, 23, 42, 0.88) !important; }
+.lite-root--paper .dbrief-asset,
+.lite-root--daylight .dbrief-asset { color: #0f172a; }
+.lite-root--paper .dbrief-num,
+.lite-root--daylight .dbrief-num { color: rgba(15, 23, 42, 0.85); }
+.lite-root--paper .dbrief-title,
+.lite-root--daylight .dbrief-title,
+.lite-root--paper .dbrief-eyebrow,
+.lite-root--daylight .dbrief-eyebrow,
+.lite-root--paper .dbrief-more,
+.lite-root--daylight .dbrief-more { color: #0f172a; }
+.lite-root--paper .dbrief-foot,
+.lite-root--daylight .dbrief-foot { color: rgba(15, 23, 42, 0.45); }
+
+/* ── The desk brief as a Today panel ──
+   DeskBriefCard ships its own glass card because on the Intel Desk it stands
+   alone. Inside a .lite-panel that is a card within a card — two borders, two
+   backgrounds, doubled padding. Strip its chrome here and let the Lite panel
+   be the card; the brief keeps only its type. */
+.lid-briefcard .dbrief {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  margin-bottom: 0;
+}
+/* The panel head already says "Desk brief", so the card's own eyebrow is a
+   second label saying the same thing. */
+.lid-briefcard .dbrief-eyebrow { display: none; }
+.lid-briefcard .dbrief-title { margin-top: 0; }
+/* Long-form prose in a full-width panel needs a measure, or the lede runs to
+   130ch. The Intel Desk page sets this on the card itself; here the panel is
+   wider than the card ever is there. */
+.lid-briefcard .dbrief-body { max-width: 78ch; }
+
+@media (min-width: 1080px) {
+  /* Same treatment the Market Summary tab gets in PRO: a full-width lede over
+     two columns, so a wide panel reads as an editorial note instead of one
+     long ribbon of text. */
+  .lid-briefcard .dbrief-body {
+    max-width: none;
+    column-count: 2;
+    column-gap: 44px;
+  }
+  .lid-briefcard .dbrief-lede {
+    column-span: all;
+    max-width: 88ch;
+  }
+}
+
+/* ══ Subpage redesign (2026-09-05) ═══════════════════════════════════════
+   Head with stat chips, brief + pulse rail, one control row, rows that show
+   lane / asset / severity. Glass + paper skins side by side. */
+.lite-view.lite-lid { max-width: 1060px; gap: 18px; }
+
+.lid-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.lid-head-text { min-width: 0; }
+.lid-head-stats { gap: 8px; }
+.lid-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  opacity: 1;
+}
+.lid-stat b { font-size: 0.95rem; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.lid-markall { padding: 8px 14px; font-size: 0.76rem; }
+
+/* Brief + rail */
+.lid-top { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; align-items: start; }
+.lid-top .lid-brief { margin-bottom: 0; min-width: 0; }
+.lid-top .lid-brief .dbrief { margin-bottom: 0; }
+.lid-rail { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.lid-rail-panel { padding: 20px 22px; }
+.lid-rail-panel .lite-eyebrow { margin-bottom: 12px; }
+.lid-eyebrow-note { margin-left: 6px; opacity: 0.6; letter-spacing: 0.06em; }
+
+.lid-pulse, .lid-flagged, .lid-hot { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.lid-pulse-row, .lid-flagged-row, .lid-hot-row {
+  appearance: none;
+  width: 100%;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  padding: 8px 0;
+}
+.lid-pulse-row { display: grid; grid-template-columns: 112px minmax(0, 1fr) 24px; align-items: center; gap: 10px; }
+.lid-pulse-row.active .lid-pulse-name { font-weight: 700; }
+.lid-pulse-name { display: flex; align-items: center; gap: 7px; font-size: 0.78rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lid-pulse-name b, .lid-lane-dot, .lid-hot-row span b { display: inline-block; width: 6px; height: 6px; border-radius: 50%; flex: 0 0 auto; }
+.lid-pulse-bar { display: block; height: 5px; border-radius: 999px; overflow: hidden; }
+.lid-pulse-bar i { display: block; height: 100%; border-radius: inherit; opacity: 0.85; }
+.lid-pulse-row em { font-style: normal; font-size: 0.74rem; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+
+.lid-flagged-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.lid-flagged-row em { font-style: normal; font-size: 0.72rem; white-space: nowrap; }
+.lid-asset {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 3px 8px 3px 4px;
+  border-radius: 999px;
+}
+.lid-asset img, .lid-asset b { width: 15px; height: 15px; border-radius: 50%; object-fit: cover; display: inline-flex; align-items: center; justify-content: center; font-size: 0.56rem; }
+.lid-asset--lg { font-size: 0.84rem; padding: 0; background: none !important; letter-spacing: 0; gap: 9px; }
+.lid-asset--lg img, .lid-asset--lg b { width: 24px; height: 24px; font-size: 0.66rem; }
+
+.lid-hot-row { display: flex; flex-direction: column; gap: 5px; }
+.lid-hot-row strong { font-size: 0.88rem; font-weight: 600; line-height: 1.32; letter-spacing: -0.01em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lid-hot-row span { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; }
+
+/* One control row */
+.lid-controls { justify-content: space-between; margin-bottom: 0; }
+.lid-lanes { flex: 1 1 380px; min-width: 0; margin-bottom: 0; padding-bottom: 0; }
+.lid-controls-right .lite-tf-toggle { flex: 0 0 auto; }
+.lid-lane { display: inline-flex; align-items: center; gap: 7px; }
+.lid-controls-right { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+.lid-controls-right .lid-search { flex: 0 1 230px; min-width: 150px; }
+
+/* Feed rows */
+.lid-feed { padding: 6px 26px 10px; }
+.lid-group + .lid-group { margin-top: 8px; }
+.lid-group-label { display: flex; align-items: baseline; gap: 8px; margin: 14px 0 2px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.lid-group-label span { font-weight: 600; opacity: 0.55; letter-spacing: 0; }
+.lid-frow {
+  appearance: none;
+  width: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  padding: 15px 0;
+  transition: transform 0.16s ease;
+}
+.lid-frow:hover { transform: translateX(2px); }
+.lid-frow-mark { flex: 0 0 auto; width: 7px; height: 7px; margin-top: 7px; border-radius: 50%; background: transparent; }
+.lid-frow--unread .lid-frow-mark { background: currentColor; box-shadow: 0 0 8px currentColor; }
+.lid-frow-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
+.lid-frow-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.lid-lane-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-style: normal;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+  padding: 5px 8px;
+  border-radius: 999px;
+}
+.lid-lane-tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--ln); box-shadow: 0 0 8px var(--ln); }
+.lid-sev { font-style: normal; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; line-height: 1; padding: 5px 8px; border-radius: 999px; }
+.lid-sev--critical { color: #fff; background: #ef4444; }
+.lid-sev--high { color: #1d1d1f; background: #f5b400; }
+.lid-dir { font-style: normal; font-size: 0.6rem; }
+.lid-dir.up { color: #34d399; }
+.lid-dir.down { color: #f87171; }
+.lid-frow-title {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  line-height: 1.32;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.lid-frow--unread .lid-frow-title { font-weight: 700; }
+.lid-frow-detail { font-size: 0.84rem; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lid-frow-meta { font-size: 0.72rem; }
+
+/* Glass skin */
+.lite-root--glass .lid-stat { color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); }
+.lite-root--glass .lid-stat b { color: #fff; }
+.lite-root--glass .lid-stat--live b { color: #6ee7a8; }
+.lite-root--glass .lid-pulse-name, .lite-root--glass .lid-flagged-row .lid-asset--lg, .lite-root--glass .lid-hot-row strong, .lite-root--glass .lid-frow-title, .lite-root--glass .lid-group-label { color: rgba(255, 255, 255, 0.94); }
+.lite-root--glass .lid-frow:hover .lid-frow-title, .lite-root--glass .lid-hot-row:hover strong { color: #fff; }
+.lite-root--glass .lid-pulse-row em, .lite-root--glass .lid-flagged-row em, .lite-root--glass .lid-hot-row span, .lite-root--glass .lid-frow-detail, .lite-root--glass .lid-frow-meta, .lite-root--glass .lid-quiet { color: rgba(255, 255, 255, 0.6); opacity: 1; }
+.lite-root--glass .lid-pulse-bar { background: rgba(255, 255, 255, 0.1); }
+.lite-root--glass .lid-lane-tag, .lite-root--glass .lid-asset { color: rgba(255, 255, 255, 0.82); background: rgba(255, 255, 255, 0.09); }
+.lite-root--glass .lid-asset b { background: rgba(255, 255, 255, 0.14); color: #fff; }
+.lite-root--glass .lid-list--feed > li + li, .lite-root--glass .lid-pulse li + li, .lite-root--glass .lid-flagged li + li, .lite-root--glass .lid-hot li + li { border-top: 1px solid rgba(255, 255, 255, 0.09); }
+.lite-root--glass .lid-list--feed .lid-frow { border-top: 0; }
+.lite-root--glass .lid-frow:hover { background: transparent; }
+.lite-root--glass .lid-frow--unread .lid-frow-mark { color: #fff; }
+
+/* Paper skin */
+.lite-root--paper .lid-stat { color: #6e6e73; background: #ffffff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 6px 16px rgba(0, 0, 0, 0.05); }
+.lite-root--paper .lid-stat b { color: #1d1d1f; }
+.lite-root--paper .lid-stat--live b { color: #037b3e; }
+.lite-root--paper .lid-pulse-name, .lite-root--paper .lid-flagged-row .lid-asset--lg, .lite-root--paper .lid-hot-row strong, .lite-root--paper .lid-frow-title, .lite-root--paper .lid-group-label { color: #1d1d1f; }
+.lite-root--paper .lid-frow:hover .lid-frow-title, .lite-root--paper .lid-hot-row:hover strong { color: #0066cc; }
+.lite-root--paper .lid-pulse-row em, .lite-root--paper .lid-flagged-row em, .lite-root--paper .lid-hot-row span, .lite-root--paper .lid-frow-detail, .lite-root--paper .lid-frow-meta, .lite-root--paper .lid-quiet { color: #6e6e73; opacity: 1; }
+.lite-root--paper .lid-pulse-bar { background: rgba(0, 0, 0, 0.07); }
+.lite-root--paper .lid-lane-tag, .lite-root--paper .lid-asset { color: #3a3a3c; background: #f0f0f4; }
+.lite-root--paper .lid-lane-tag::before { box-shadow: none; }
+.lite-root--paper .lid-asset b { background: #e5e5ea; color: #1d1d1f; }
+.lite-root--paper .lid-list--feed > li + li, .lite-root--paper .lid-pulse li + li, .lite-root--paper .lid-flagged li + li, .lite-root--paper .lid-hot li + li { border-top: 1px solid rgba(0, 0, 0, 0.07); }
+.lite-root--paper .lid-list--feed .lid-frow { border-top: 0; }
+.lite-root--paper .lid-frow:hover { background: transparent; }
+.lite-root--paper .lid-frow--unread .lid-frow-mark { color: #1d1d1f; box-shadow: none; }
+.lite-root--paper .lid-dir.up { color: #037b3e; }
+.lite-root--paper .lid-dir.down { color: #d70015; }
+
+@media (max-width: 900px) {
+  .lid-top { grid-template-columns: 1fr; }
+  .lid-rail { flex-direction: row; flex-wrap: wrap; }
+  .lid-rail-panel { flex: 1 1 260px; }
+}
+@media (max-width: 768px) {
+  .lite-view.lite-lid { gap: 12px; }
+  .lid-head { align-items: flex-start; }
+  .lid-rail { flex-direction: column; }
+  .lid-controls-right { width: 100%; }
+  .lid-controls-right .lid-search { flex: 1 1 auto; }
+  .lid-feed { padding: 4px 16px 8px; }
+  .lid-frow { padding: 12px 0; }
+  .lid-frow-title { font-size: 0.92rem; }
+}

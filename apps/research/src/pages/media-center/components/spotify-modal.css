@@ -1,0 +1,582 @@
+/* Spotify inline dock — a floating bottom player (not a blocking modal) */
+.mcx-spdock {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9000;
+  width: min(720px, calc(100vw - 120px));
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(18, 18, 20, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  animation: mcx-spdock-in 0.3s var(--ease-out) both;
+  display: flex;
+  flex-direction: column;
+}
+@keyframes mcx-spdock-in { from { opacity: 0; transform: translate(-50%, 24px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+/* AI Summary panel, expands above the player */
+.mcx-spdock-syn {
+  max-height: 46vh;
+  overflow-y: auto;
+  padding: 14px 14px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  animation: mcx-spdock-syn-in 0.25s var(--ease-out) both;
+}
+@keyframes mcx-spdock-syn-in { from { opacity: 0; } to { opacity: 1; } }
+.mcx-spdock-syn .mcx-syn { background: transparent; border: 0; padding: 0; }
+.mcx-spdock-syn::-webkit-scrollbar { width: 4px; }
+.mcx-spdock-syn::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 4px; }
+
+/* Player row: embed + side actions */
+.mcx-spdock-player { display: flex; align-items: stretch; }
+.mcx-spdock-frame {
+  display: block;
+  flex: 1 1 auto;
+  width: 100%;
+  height: 152px;
+  border: 0;
+  background: #121212;
+}
+.mcx-spdock-actions {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.25);
+}
+.mcx-spdock-syntoggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 11px; border-radius: var(--radius-full);
+  background: var(--accent-muted); border: 1px solid var(--border-accent);
+  color: var(--text-primary); font-size: 0.75rem; font-weight: 600; white-space: nowrap;
+  cursor: pointer; transition: all 0.2s var(--ease-out);
+}
+.mcx-spdock-syntoggle:hover { background: rgba(255, 255, 255, 0.12); }
+.mcx-spdock-syntoggle.is-open { background: rgba(255, 255, 255, 0.14); }
+.mcx-spdock-syntoggle svg { color: var(--text-secondary); }
+
+.mcx-spdock-close {
+  align-self: flex-end;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+.mcx-spdock-close:hover { background: rgba(0, 0, 0, 0.75); color: #fff; transform: translateY(-1px); }
+
+.mcx-spdock.day-mode { background: rgba(255, 255, 255, 0.92); border-color: rgba(0, 0, 0, 0.08); }
+.mcx-spdock.day-mode .mcx-spdock-actions { background: rgba(0, 0, 0, 0.04); }
+.mcx-spdock.day-mode .mcx-spdock-syn { border-bottom-color: rgba(0, 0, 0, 0.08); }
+.mcx-spdock.day-mode .mcx-spdock-close { background: #f1f5f9; border-color: rgba(0,0,0,0.1); color: #475569; }
+
+@media (max-width: 768px) {
+  /* Sit above the fixed mobile bottom nav, full width with a small inset. */
+  .mcx-spdock {
+    width: calc(100vw - 16px);
+    bottom: calc(var(--m-bottom-nav-h, 76px) + env(safe-area-inset-bottom, 0px) + 8px);
+  }
+  .mcx-spdock-syn { max-height: 50vh; }
+
+  /* The side action column gets crushed off-screen on a phone. Stack it:
+     embed on top (full width), AI Summary + close as a row beneath. */
+  .mcx-spdock-player { flex-direction: column; }
+  .mcx-spdock-frame { width: 100%; }
+  .mcx-spdock-actions {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+  }
+  .mcx-spdock-close { align-self: auto; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Fullscreen — the SAME floater, expanded.
+   Keyed to a modifier on the dock root (not a separate component) so the
+   <iframe> is never re-parented and playback never restarts. See the note at
+   the top of spotify-modal.jsx.
+   ══════════════════════════════════════════════════════════════ */
+
+.mcx-spdock.is-full {
+  /* A MINI fullscreen: an expanded floating panel, not a page takeover. The
+     Media Center stays visible around it — that is the whole point of expanding
+     the floater rather than replacing the screen with it.
+     Centred with inset+margin rather than a transform, because a transformed
+     ancestor becomes the containing block for fixed descendants and would trap
+     anything that needs to escape the card. */
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(1040px, 94vw);
+  height: -moz-fit-content;
+  height: fit-content;
+  max-height: 88vh;
+  /* `inset: 0` + `margin: auto` is what centres this on BOTH axes. The dock's
+     own `bottom: 22px; left: 50%; translateX(-50%)` must be fully reset or the
+     panel pins to an edge — re-declaring top/bottom here is exactly how it
+     ended up glued to the top of the viewport. */
+  transform: none;
+  z-index: 9600;
+
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-strong);
+  background: rgba(14, 14, 17, 0.88);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  box-shadow:
+    0 40px 120px rgba(0, 0, 0, 0.62),
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+  grid-template-rows: auto auto auto;
+  grid-template-areas:
+    "top  top"
+    "id   rail"
+    "play rail";
+  gap: var(--sp-3) var(--sp-4);
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  animation: mcx-spfull-in 0.3s var(--ease-out) both;
+}
+
+@keyframes mcx-spfull-in {
+  from { opacity: 0; transform: scale(0.985); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Cover art as the room's light source — one static paint, never animated. */
+.mcx-spdock-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+
+.mcx-spdock-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(70px) saturate(150%);
+  transform: scale(1.3);
+  opacity: 0.3;
+}
+
+.mcx-spdock-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(110% 80% at 15% 0%, rgba(9, 9, 11, 0.35) 0%, rgba(9, 9, 11, 0.86) 65%),
+    linear-gradient(180deg, rgba(9, 9, 11, 0.6) 0%, rgba(9, 9, 11, 0.9) 100%);
+}
+
+/* ── Top bar ── */
+
+.mcx-spdock-top {
+  grid-area: top;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: 0 0 2px;
+}
+
+/* A real, labelled control — an icon-only 28px square reads as an afterthought
+   on a full-screen surface and is a poor touch target. */
+.mcx-spdock-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out);
+}
+
+.mcx-spdock-back:hover { background: rgba(255, 255, 255, 0.13); transform: translateY(-1px); }
+
+.mcx-spdock-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.mcx-spdock-xl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-default);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.mcx-spdock-xl:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.12); }
+
+/* ── Show identity ── */
+
+.mcx-spdock-id {
+  grid-area: id;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  /* The rail spans this row and the player's, so this row is stretched by the
+     rail's height. End-aligning keeps the identity sitting directly on top of
+     the player instead of floating in the middle of the gap. */
+  align-self: end;
+}
+
+.mcx-spdock-cover {
+  width: 112px;
+  height: 112px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+}
+
+.mcx-spdock-idmeta { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+.mcx-spdock-host {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.mcx-spdock-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 2.2vw, 1.75rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.mcx-spdock-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+
+.mcx-spdock-pill {
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-default);
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+}
+
+.mcx-spdock-latest {
+  margin: 4px 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── The player row, expanded ──
+   Same iframe, same 585x152 box: the embed picks its internal layout from the
+   frame WIDTH and does not grow back to fill a taller box after a resize, so a
+   bigger frame just adds white inside the embed. */
+.mcx-spdock.is-full .mcx-spdock-player {
+  grid-area: play;
+  position: relative;
+  z-index: 1;
+  align-self: start;
+  width: min(585px, 100%);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+}
+
+.mcx-spdock.is-full .mcx-spdock-actions { display: none; }
+
+/* ── Rail ── */
+
+.mcx-spdock-rail {
+  grid-area: rail;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-height: 0;
+  /* Capped so the rail scrolls inside the panel instead of stretching the panel
+     down the viewport and re-introducing the empty space. */
+  max-height: min(400px, 52vh);
+  overflow-y: auto;
+  padding-right: 2px;
+  /* The rail scrolls inside the panel; without this the AI card just stops
+     mid-sentence at the panel edge and reads as clipped rather than scrollable. */
+  -webkit-mask-image: linear-gradient(180deg, #000 0, #000 calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0, #000 calc(100% - 28px), transparent 100%);
+}
+
+.mcx-spdock-synfull .mcx-syn {
+  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+}
+
+.mcx-spdock-more { display: flex; flex-direction: column; gap: var(--sp-2); }
+
+.mcx-spdock-morehead {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.mcx-spdock-morelist { display: flex; flex-direction: column; gap: 2px; }
+
+.mcx-spdock-morerow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 7px 8px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.mcx-spdock-morerow:hover { background: rgba(255, 255, 255, 0.06); }
+
+.mcx-spdock-moreart {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  background: var(--bg-elevated);
+}
+
+.mcx-spdock-moreart img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.mcx-spdock-moreph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.mcx-spdock-morebody { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+
+.mcx-spdock-morename {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mcx-spdock-moremeta {
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Dock: expand control ── */
+
+.mcx-spdock-btnrow { display: flex; align-items: center; gap: 6px; align-self: flex-end; }
+
+.mcx-spdock-expand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+
+.mcx-spdock-expand:hover { background: rgba(0, 0, 0, 0.75); color: #fff; transform: translateY(-1px); }
+.mcx-spdock.day-mode .mcx-spdock-expand { background: #f1f5f9; border-color: rgba(0,0,0,0.1); color: #475569; }
+
+/* ── Day mode ── */
+
+.mcx-spdock.is-full.day-mode { background: #f5f5f7; }
+.mcx-spdock.is-full.day-mode .mcx-spdock-bg img { opacity: 0.2; }
+
+.mcx-spdock.is-full.day-mode .mcx-spdock-scrim {
+  background:
+    radial-gradient(110% 70% at 18% 0%, rgba(255, 255, 255, 0.68) 0%, rgba(245, 245, 247, 0.94) 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.84) 0%, rgba(245, 245, 247, 0.98) 100%);
+}
+
+.mcx-spdock.is-full.day-mode .mcx-spdock-name,
+.mcx-spdock.is-full.day-mode .mcx-spdock-morename { color: #0f172a; }
+
+/* #94a3b8 is 2.56:1 on white — meaningful text sits at #475569 / #64748b. */
+.mcx-spdock.is-full.day-mode .mcx-spdock-host,
+.mcx-spdock.is-full.day-mode .mcx-spdock-pill,
+.mcx-spdock.is-full.day-mode .mcx-spdock-moremeta,
+.mcx-spdock.is-full.day-mode .mcx-spdock-latest { color: #475569; }
+
+.mcx-spdock.is-full.day-mode .mcx-spdock-brand,
+.mcx-spdock.is-full.day-mode .mcx-spdock-morehead { color: #64748b; }
+
+.mcx-spdock.is-full.day-mode .mcx-spdock-pill,
+.mcx-spdock.is-full.day-mode .mcx-spdock-back,
+.mcx-spdock.is-full.day-mode .mcx-spdock-xl {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+.mcx-spdock.is-full.day-mode .mcx-spdock-back,
+.mcx-spdock.is-full.day-mode .mcx-spdock-xl { color: #0f172a; }
+.mcx-spdock.is-full.day-mode .mcx-spdock-back:hover,
+.mcx-spdock.is-full.day-mode .mcx-spdock-xl:hover { background: rgba(15, 23, 42, 0.1); }
+.mcx-spdock.is-full.day-mode .mcx-spdock-morerow:hover { background: rgba(15, 23, 42, 0.05); }
+
+/* ── Mobile ── */
+
+@media (max-width: 900px) {
+  .mcx-spdock.is-full {
+    width: calc(100vw - 20px);
+    max-height: 86vh;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "top" "id" "play" "rail";
+    grid-template-rows: auto auto auto auto;
+    gap: var(--sp-3);
+    padding: var(--sp-3);
+    overflow-y: auto;
+  }
+  .mcx-spdock-rail { max-height: none; overflow: visible; -webkit-mask-image: none; mask-image: none; }
+  .mcx-spdock-id { align-self: auto; }
+  .mcx-spdock.is-full .mcx-spdock-player { width: 100%; }
+  .mcx-spdock-rail { overflow: visible; }
+}
+
+@media (max-width: 768px) {
+  .mcx-spdock-top { padding: var(--sp-3) 0; }
+  .mcx-spdock-back { height: 38px; padding: 0 13px; font-size: 0.78125rem; }
+  .mcx-spdock-xl { width: 38px; height: 38px; }
+  .mcx-spdock-brand { display: none; }
+  .mcx-spdock-cover { width: 76px; height: 76px; }
+  .mcx-spdock-name { font-size: 1.0625rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mcx-spdock.is-full { animation: none; }
+}
+
+/* ── Rail tabs (Episodes · AI · Shows) ──────────────────────
+   Episodes is the default because a Spotify embed only exposes the LATEST
+   episode — reaching a show's back catalogue is the thing the panel exists
+   for, and burying it under the AI card is how it stayed unreachable. */
+
+.mcx-spdock-railtabs {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+  padding-bottom: var(--sp-2);
+}
+
+.mcx-spdock-railtab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out);
+}
+
+.mcx-spdock-railtab:hover { color: var(--text-secondary); }
+.mcx-spdock-railtab.is-active { color: var(--text-primary); background: rgba(255, 255, 255, 0.09); }
+
+.mcx-spdock-railcount {
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 0.625rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.mcx-spdock-eps { display: flex; flex-direction: column; gap: var(--sp-2); min-height: 0; }
+
+.mcx-spdock-epnote {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+}
+
+.mcx-spdock-epskel { display: flex; flex-direction: column; gap: 4px; }
+
+.mcx-spdock-epskel > span {
+  height: 56px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* An episode row wraps to two lines, unlike the show rows */
+.mcx-spdock-eps .mcx-spdock-morename {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.35;
+}
+
+.mcx-spdock-eps .mcx-spdock-moreart { width: 46px; height: 46px; }
+
+.mcx-spdock.is-full.day-mode .mcx-spdock-railtab { color: #64748b; }
+.mcx-spdock.is-full.day-mode .mcx-spdock-railtab.is-active { color: #0f172a; background: rgba(15, 23, 42, 0.08); }
+.mcx-spdock.is-full.day-mode .mcx-spdock-railcount { background: rgba(15, 23, 42, 0.12); color: #475569; }
+.mcx-spdock.is-full.day-mode .mcx-spdock-epnote { color: #64748b; }
+.mcx-spdock.is-full.day-mode .mcx-spdock-epskel > span { background: rgba(15, 23, 42, 0.05); }

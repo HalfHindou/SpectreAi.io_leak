@@ -1,0 +1,100 @@
+/**
+ * SwipeableRow - swipe-to-reveal actions.
+ *
+ * The rail's rendered width is the contract: the JS MEASURES it and snaps the
+ * row exactly onto its edge, so changing a width here needs no JS change (the
+ * old hardcoded 72px vs a 64px rail is what left a grey band mid-row).
+ */
+
+.swipeable-row {
+  position: relative;
+  overflow: hidden;
+  /* Vertical stays a page scroll; the component locks the axis itself. */
+  touch-action: pan-y;
+}
+
+.swipeable-row-content {
+  position: relative;
+  z-index: 1;
+  /* Opaque, or the rail colours read through the row. `inherit` resolves to
+     transparent wherever the host forgot to paint a background. */
+  background: var(--bg-void, #09090b);
+  will-change: transform;
+  /* A swipe was selecting the market-cap text and leaving a highlight behind
+     it — half a gesture and half a text selection, which is most of what read
+     as "not fluent". */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.swipeable-row.dragging .swipeable-row-content { cursor: grabbing; }
+
+/* ── Rails ──
+   Only the side being pulled open is painted. Revealing both at once (the old
+   `.dragging` rule) lit up Unpin AND Delete on every swipe. */
+.swipeable-row-actions {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: stretch;
+  z-index: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+.swipeable-row[data-swipe='left'] .swipeable-row-actions-left,
+.swipeable-row[data-swipe='right'] .swipeable-row-actions-right {
+  opacity: 1;
+}
+.swipeable-row.revealed[data-swipe='left'] .swipeable-row-actions-left,
+.swipeable-row.revealed[data-swipe='right'] .swipeable-row-actions-right {
+  pointer-events: auto;
+}
+
+.swipeable-row-actions-left { left: 0; }
+.swipeable-row-actions-right { right: 0; }
+
+/* ── Action button ──
+   Flat colour blocks read as a system alert sheet. These are tinted glass over
+   the action's own hue, which keeps the row feeling like one surface. */
+.swipeable-row-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 72px;
+  padding: 10px 14px;
+  border: none;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 60%),
+    var(--swa-color, #3b82f6);
+  transition: filter 150ms ease, transform 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+.swipeable-row-action:active { filter: brightness(1.12); transform: scale(0.97); }
+
+.swipeable-row-action-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  opacity: 0.95;
+}
+.swipeable-row-action-icon svg { width: 18px; height: 18px; }
+.swipeable-row-action-label { white-space: nowrap; }
+
+/* Desktop: no swipe surface at all. */
+@media (min-width: 769px) {
+  .swipeable-row-actions { display: none; }
+  .swipeable-row-content { transform: none !important; }
+}

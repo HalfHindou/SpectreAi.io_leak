@@ -1,0 +1,381 @@
+/* ── AssetDetailPanel — right drawer / mobile sheet ── */
+.ta-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(9, 9, 11, 0.48);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  display: flex;
+  justify-content: flex-end;
+  animation: ta-drawer-fade var(--duration-base) var(--ease-out);
+}
+
+@keyframes ta-drawer-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ta-drawer {
+  width: min(560px, 40vw);
+  min-width: 420px;
+  max-width: 560px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-xl);
+  animation: ta-drawer-slide 320ms var(--ease-out);
+  overflow: hidden;
+}
+
+@keyframes ta-drawer-slide {
+  from { transform: translateX(24px); opacity: 0.8; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.ta-drawer-drag-handle { display: none; }
+
+.ta-drawer-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.ta-drawer-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+}
+
+.ta-drawer-header-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+
+.ta-drawer-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+}
+
+.ta-drawer-issuer {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* Header meta row: issuer · symbol · N networks */
+.ta-drawer-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+}
+.ta-drawer-meta-item {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  position: relative;
+}
+.ta-drawer-meta-item + .ta-drawer-meta-item::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: 50%;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transform: translateY(-50%);
+}
+.ta-drawer-meta-sym {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+.app.app-day-mode .ta-drawer-meta-item { color: #475569; }
+.app.app-day-mode .ta-drawer-meta-item + .ta-drawer-meta-item::before { background: rgba(0, 0, 0, 0.3); }
+.app.app-day-mode .ta-drawer-meta-sym { color: rgba(0, 0, 0, 0.5); }
+
+.ta-drawer-close {
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--duration-fast) var(--ease-out);
+  flex-shrink: 0;
+}
+.ta-drawer-close:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+.ta-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* The body is a fixed-height flex column (flex:1 inside the 100%-height drawer)
+   that scrolls. Its children must NOT flex-shrink: with the default shrink:1,
+   a tall child (the AI card, which also has min-height:160px) gets compressed
+   below its content instead of letting the body scroll, and because the card is
+   overflow:visible its "What changed" list spilled out and overlapped the
+   Market Data section below. Pinning shrink to 0 keeps natural heights + scroll. */
+.ta-drawer-body > * { flex-shrink: 0; }
+
+/* The AI card (.ta-ai) uses backdrop-filter for its glass look on the page
+   tabs. Inside this opaque drawer there's nothing translucent behind it to
+   blur, and a backdrop-filter inside an overflow-y:auto scroll container hits
+   Chrome's scroll-ghosting bug — the long article smears over the sections
+   below it on scroll (that was the "overlapping text" in the drawer). Drop the
+   filter here and use a fully opaque elevated surface. */
+.ta-drawer-body .ta-ai {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--bg-elevated);
+}
+.app.app-day-mode .ta-drawer-body .ta-ai {
+  background: #f8fafc;
+}
+
+/* Section (details/summary) */
+.ta-drawer-section {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.015);
+  overflow: hidden;
+}
+
+.ta-drawer-section-head {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px var(--sp-3);
+  cursor: pointer;
+  min-height: 16px;
+}
+.ta-drawer-section-head::-webkit-details-marker { display: none; }
+
+.ta-drawer-section-title {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.ta-drawer-section-chevron {
+  color: var(--text-muted);
+  transition: transform var(--duration-base) var(--ease-out);
+}
+.ta-drawer-section[open] .ta-drawer-section-chevron { transform: rotate(180deg); }
+
+.ta-drawer-section-body {
+  padding: var(--sp-3);
+  padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* Row */
+.ta-drawer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: 6px 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.03);
+  font-size: 0.8125rem;
+}
+.ta-drawer-row:last-child { border-bottom: none; }
+.ta-drawer-row-label { color: var(--text-muted); font-size: 0.75rem; }
+.ta-drawer-row-value { color: var(--text-primary); font-weight: 500; text-align: right; max-width: 60%; word-break: break-word; }
+
+.ta-drawer-addr { font-size: 0.6875rem; color: var(--text-secondary); }
+
+/* Pills row */
+.ta-drawer-pills {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sp-2);
+}
+.ta-drawer-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-3);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+.ta-drawer-pill-label {
+  font-family: var(--font-body);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.ta-drawer-pill-value {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+/* Chain bars */
+.ta-drawer-chains { display: flex; flex-direction: column; gap: 4px; margin-top: var(--sp-2); }
+.ta-drawer-chain {
+  display: grid;
+  grid-template-columns: 80px 1fr auto auto;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 4px 0;
+  font-size: 0.75rem;
+}
+.ta-drawer-chain-name { color: var(--text-secondary); }
+.ta-drawer-chain-track { height: 6px; background: rgba(255, 255, 255, 0.03); border-radius: 3px; overflow: hidden; }
+.ta-drawer-chain-fill { height: 100%; border-radius: 3px; transition: width var(--duration-slow) var(--ease-out); }
+.ta-drawer-chain-val { font-family: var(--font-mono); color: var(--text-primary); font-size: 0.75rem; }
+.ta-drawer-chain-pct { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.6875rem; min-width: 44px; text-align: right; }
+
+.ta-drawer-desc { margin: 0; font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6; }
+
+.ta-drawer-footer { display: flex; gap: var(--sp-2); flex-wrap: wrap; margin-top: var(--sp-2); }
+.ta-drawer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.ta-drawer-link:hover { color: var(--text-primary); border-color: var(--border-strong); }
+
+.ta-drawer-loading { display: flex; flex-direction: column; gap: var(--sp-3); }
+.ta-drawer-skel { height: 20px; width: 100%; border-radius: var(--radius-xs); background: rgba(255, 255, 255, 0.04); }
+
+.ta-drawer-error {
+  padding: var(--sp-4);
+  border: 1px solid var(--bear-muted);
+  background: rgba(239, 68, 68, 0.04);
+  border-radius: var(--radius-md);
+  color: var(--bear);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8125rem;
+}
+.ta-drawer-error-detail { color: var(--text-muted); font-family: var(--font-mono); font-size: 0.6875rem; }
+
+/* Day mode */
+.app.app-day-mode .ta-drawer { background: #ffffff; border-left-color: rgba(0, 0, 0, 0.08); }
+.app.app-day-mode .ta-drawer-overlay { background: rgba(15, 23, 42, 0.3); }
+.app.app-day-mode .ta-drawer-header { border-bottom-color: rgba(0, 0, 0, 0.06); }
+.app.app-day-mode .ta-drawer-logo { background: rgba(0, 0, 0, 0.04); }
+.app.app-day-mode .ta-drawer-name { color: #0F172A; }
+.app.app-day-mode .ta-drawer-issuer { color: #64748B; }
+.app.app-day-mode .ta-drawer-row { border-bottom-color: rgba(0, 0, 0, 0.05); }
+.app.app-day-mode .ta-drawer-row-label { color: rgba(0, 0, 0, 0.5); }
+.app.app-day-mode .ta-drawer-row-value { color: #0F172A; }
+.app.app-day-mode .ta-drawer-addr { color: #475569; }
+.app.app-day-mode .ta-drawer-section { background: #f8fafc; border-color: rgba(0, 0, 0, 0.05); }
+.app.app-day-mode .ta-drawer-section-title { color: rgba(0, 0, 0, 0.5); }
+.app.app-day-mode .ta-drawer-section-chevron { color: rgba(0, 0, 0, 0.4); }
+.app.app-day-mode .ta-drawer-pill { background: #ffffff; border-color: rgba(0, 0, 0, 0.05); }
+.app.app-day-mode .ta-drawer-pill-label { color: rgba(0, 0, 0, 0.45); }
+.app.app-day-mode .ta-drawer-pill-value { color: #0F172A; }
+.app.app-day-mode .ta-drawer-close {
+  background: #f3f4f6;
+  border-color: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.5);
+}
+.app.app-day-mode .ta-drawer-close:hover {
+  color: #0F172A;
+  background: rgba(0, 0, 0, 0.08);
+}
+.app.app-day-mode .ta-drawer-chain-name { color: #475569; }
+.app.app-day-mode .ta-drawer-chain-track { background: rgba(0, 0, 0, 0.06); }
+.app.app-day-mode .ta-drawer-chain-val { color: #0F172A; }
+.app.app-day-mode .ta-drawer-chain-pct { color: rgba(0, 0, 0, 0.45); }
+.app.app-day-mode .ta-drawer-desc { color: #334155; }
+.app.app-day-mode .ta-drawer-link {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #334155;
+}
+.app.app-day-mode .ta-drawer-link:hover {
+  color: #0F172A;
+  border-color: rgba(0, 0, 0, 0.14);
+  background: rgba(0, 0, 0, 0.04);
+}
+.app.app-day-mode .ta-drawer-skel { background: rgba(0, 0, 0, 0.06); }
+.app.app-day-mode .ta-drawer-error {
+  background: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.18);
+}
+.app.app-day-mode .ta-drawer-error-detail { color: rgba(0, 0, 0, 0.5); }
+.app.app-day-mode .ta-drawer-drag-handle { background: rgba(0, 0, 0, 0.18); }
+
+/* Mobile: full-screen sheet with drag handle */
+@media (max-width: 768px) {
+  .ta-drawer-overlay { align-items: flex-end; }
+  .ta-drawer {
+    width: 100vw;
+    min-width: unset;
+    max-width: 100vw;
+    max-height: 92vh;
+    height: 92vh;
+    border-left: none;
+    border-top-left-radius: var(--radius-xl);
+    border-top-right-radius: var(--radius-xl);
+    animation: ta-drawer-slideup 320ms var(--ease-out);
+  }
+  @keyframes ta-drawer-slideup {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .ta-drawer-drag-handle {
+    display: block;
+    width: 44px;
+    height: 4px;
+    margin: 8px auto 0;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .ta-drawer-pills { grid-template-columns: 1fr 1fr; }
+}

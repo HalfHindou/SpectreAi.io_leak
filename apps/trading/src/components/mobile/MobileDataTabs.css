@@ -1,0 +1,391 @@
+/* ============================================
+   MobileDataTabs — wraps the desktop DataTabs.
+   Prefix: mdt-
+
+   Reuses desktop DataTabs (transactions / holders /
+   analytics) and tunes density for phones. Tokens
+   from styles/design-tokens.css throughout — no
+   hardcoded hex/rgba.
+   ============================================ */
+
+.mdt {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: transparent;
+  border-top: 1px solid var(--glass-border);
+}
+
+/* Outer DataTabs root — no border radius / shadow on mobile. */
+.mdt .data-tabs,
+.mdt .data-tabs.data-tabs--i7 {
+  border-radius: 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  height: auto !important;
+}
+
+/* Tab strip — single row, no wrap. Actions cluster on the right. */
+.mdt .tabs-nav {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  padding: 8px 10px;
+  gap: 6px;
+  border-bottom: 1px solid var(--glass-border);
+}
+.mdt .tabs-scroll {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 20px), transparent 100%);
+  mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 20px), transparent 100%);
+}
+.mdt .tabs-scroll::-webkit-scrollbar { display: none; }
+.mdt .tab-item {
+  padding: 6px 12px !important;
+  font-size: 12.5px !important;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  /* Beat the global touch 44px button floor — dense GMGN tabs. */
+  min-height: 32px !important;
+  min-width: 0 !important;
+}
+.mdt .tab-item__icon {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+/* Right-side toolbar — keep only the refresh button. */
+.mdt .tabs-actions {
+  display: flex !important;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+.mdt .tx-actions-divider,
+.mdt .tx-density-toggle,
+.mdt .tx-density-toggle--inline,
+.mdt .tx-tab-underglow {
+  display: none !important;
+}
+.mdt .tx-icon-btn.refresh-btn {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+}
+
+/* Active tab — GMGN flat style: bold white text + underline, no pill. */
+.mdt .tab-item {
+  position: relative;
+  background: transparent !important;
+  border-radius: 0 !important;
+  color: var(--text-3) !important;
+  font-weight: 500 !important;
+}
+.mdt .tab-item.is-active,
+.mdt .tab-item[aria-selected="true"] {
+  background: transparent !important;
+  border-radius: 0 !important;
+  color: var(--text-1) !important;
+  font-weight: 700 !important;
+}
+.mdt .tab-item.is-active::after,
+.mdt .tab-item[aria-selected="true"]::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -8px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--text-1);
+}
+body.theme-light .mdt .tab-item { color: #64748b !important; }
+body.theme-light .mdt .tab-item.is-active,
+body.theme-light .mdt .tab-item[aria-selected="true"] { color: #0f172a !important; }
+body.theme-light .mdt .tab-item.is-active::after,
+body.theme-light .mdt .tab-item[aria-selected="true"]::after { background: #0f172a; }
+
+/* Transactions block — capped scrollbox (Vector/GMGN pattern). The old
+   "expand all 50 rows inline" approach made the page a ~4000px scroll
+   with the trades list in the middle; now the list scrolls INSIDE a
+   fixed-height box and the page stays compact. */
+.mdt :where(.data-tabs-content, .dt-content, .transactions-body, .tab-content),
+.mdt .tabs-content {
+  max-height: none !important;
+  overflow-y: visible !important;
+  overflow-x: visible !important;
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+/* The table wrapper is the scrollbox: vertical scroll capped at 420px,
+   horizontal scroll so all 7 columns stay reachable. The sticky thead
+   below keeps column names visible while scrolling rows. */
+.mdt .table-wrapper {
+  max-height: 420px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Keep the header row visible while the rows scroll under it. */
+.mdt table.data-table thead th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 2;
+  background: var(--ob-surface-1) !important;
+}
+body.theme-light .mdt table.data-table thead th {
+  background: #ffffff !important;
+}
+
+/* Show ALL 7 columns on mobile (Age | Type | Price | Amount | ETH | USD |
+   Maker). The table keeps its 720px min-width (set on .data-table) so on a
+   narrow phone it overflows the wrapper and scrolls horizontally instead of
+   dropping columns. Column widths come from the base .data-table rules. */
+.mdt table.data-table {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+.mdt table.data-table > thead,
+.mdt table.data-table > tbody {
+  display: table-row-group;
+  width: 100%;
+}
+
+/* Force every column visible — beats any narrower @media hide in DataTabs.css. */
+.mdt table.data-table thead th,
+.mdt table.data-table tbody tr > td {
+  display: table-cell !important;
+}
+.mdt table.data-table col.col-amount,
+.mdt table.data-table col.col-native,
+.mdt table.data-table col.col-maker {
+  display: table-column !important;
+}
+
+/* Right-align the numeric columns (Price, Amount, ETH, USD). */
+.mdt table.data-table thead th:nth-child(3),
+.mdt table.data-table thead th:nth-child(4),
+.mdt table.data-table thead th:nth-child(5),
+.mdt table.data-table thead th:nth-child(6),
+.mdt table.data-table tbody tr > td:nth-child(3),
+.mdt table.data-table tbody tr > td:nth-child(4),
+.mdt table.data-table tbody tr > td:nth-child(5),
+.mdt table.data-table tbody tr > td:nth-child(6) {
+  text-align: right !important;
+}
+
+/* Strip secondary header toggle labels on mobile. */
+.mdt table.data-table thead .date-age-toggle .toggle-separator,
+.mdt table.data-table thead .date-age-toggle .toggle-option:not(.active) {
+  display: none !important;
+}
+
+/* Hide header filter dropdowns — hard to use on touch. */
+.mdt table.data-table thead .filter-dropdown-wrapper,
+.mdt table.data-table thead .filter-btn {
+  display: none !important;
+}
+
+/* GMGN density: 13px rows, tight padding, flat black rows. */
+.mdt table.data-table th,
+.mdt table.data-table td {
+  padding: 11px 10px !important;
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+.mdt table.data-table th {
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  font-size: 10.5px !important;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-3) !important;
+  border-bottom: 1px solid var(--glass-border) !important;
+  font-family: var(--font-display);
+}
+.mdt table.data-table tbody tr {
+  min-height: 40px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+/* GMGN rows are FLAT black — colored text is the only signal. Kill the
+   desktop per-side row tint + the inset edge stripe. */
+.mdt table.data-table tbody tr.buy,
+.mdt table.data-table tbody tr.sell {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Hide the secondary column suffix labels on mobile (/MCAP, /%). */
+.mdt table.data-table thead .col-secondary,
+.mdt table.data-table thead .col-suffix {
+  display: none !important;
+}
+
+/* The TYPE cell only renders the badge — any extra inline content
+   (whitespace, hidden tooltip text, etc.) was producing a phantom "…"
+   after SELL rows where the cell's text-overflow ellipsis kicked in. */
+.mdt .cell-type {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+}
+.mdt .cell-type > *:not(.type-badge) {
+  display: none !important;
+}
+
+/* TYPE column — GMGN style: plain colored TEXT, no badge chrome. */
+.mdt .type-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  font-family: var(--font-num-chip) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: capitalize !important;
+  line-height: 1.2 !important;
+  min-width: 0 !important;
+}
+.mdt .type-badge.buy { color: var(--up) !important; }
+.mdt .type-badge.sell { color: var(--down) !important; }
+
+/* Table floor on mobile — denser 13px font needs less room than the old
+   14.5px; the wrapper scrolls horizontally past it. */
+.mdt table.data-table { min-width: 780px !important; }
+
+/* Column widths tuned for the phone font so nothing truncates — "11h ago"
+   needs room, ETH values are the longest. (ETH still ellipsizes gracefully on
+   the rare very-long value.) Overrides the @container tier widths. */
+.mdt table.data-table col.col-age    { width: 12% !important; }
+.mdt table.data-table col.col-type   { width: 10% !important; }
+.mdt table.data-table col.col-price  { width: 13% !important; }
+.mdt table.data-table col.col-amount { width: 12% !important; }
+.mdt table.data-table col.col-native { width: 16% !important; }
+.mdt table.data-table col.col-usd    { width: 13% !important; }
+.mdt table.data-table col.col-maker  { width: 24% !important; }
+
+/* MAKER header right-aligned to sit over its right-aligned addresses. */
+.mdt table.data-table thead th:nth-child(7) { text-align: right !important; }
+.mdt table.data-table thead th:nth-child(7) .th-content { justify-content: flex-end !important; }
+
+/* ── MAKER column on touch ──────────────────────────────────────────────
+   No hover on a phone, and the maker cell is tappable - tapping it opens
+   MobileMakerSheet (copy / explorer / filter). The inline action icons are
+   therefore redundant and only crowd the narrow column, so they're hidden and
+   that width holds the maker identification LABEL + all-time tx-COUNT instead
+   (desktop parity). The cell packs right: [label] [count] [address]. */
+.mdt .cell-maker-inner {
+  justify-content: flex-end !important;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+}
+/* maker PnL stays a hover-tooltip extra on phones. */
+.mdt .cell-maker .maker-pnl {
+  display: none !important;
+}
+/* Show the maker identification LABEL (NEW/DCA/…) + the tx-COUNT on mobile too
+   (desktop parity — user request). They render before the address in the cell. */
+.mdt .cell-maker .maker-type-badge { display: inline-flex !important; }
+.mdt .cell-maker .maker-tx-count { display: inline-flex !important; }
+/* Address + actions never shrink into each other - if the column is ever too
+   narrow they overflow the cell (which clips) instead of overlapping. */
+.mdt .maker-address,
+.mdt .maker-actions {
+  flex: 0 0 auto !important;
+}
+.mdt .maker-address {
+  font-size: 13px !important;
+  min-width: 0 !important;
+  margin-right: 0 !important;          /* flush right - actions live in a tap sheet now */
+  color: var(--text-2, rgba(245, 245, 247, 0.72)) !important;
+}
+/* Inline per-row actions move to the tap sheet on mobile (tap the cell opens
+   MobileMakerSheet) - hide them so the freed width holds the label + tx-count. */
+.mdt .maker-actions {
+  display: none !important;
+}
+/* Clean ghost icons - no heavy pill chrome (3 filled boxes per row across 50
+   rows read as noise). 30px tap area, readable (not disabled-looking) icon,
+   subtle hover/press fill; active filter takes the accent. */
+.mdt .maker-action-btn {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 7px !important;
+  background: transparent !important;
+  border: none !important;
+  color: rgba(245, 245, 247, 0.62) !important;
+}
+.mdt .maker-action-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+.mdt .maker-action-btn:active {
+  background: var(--glass-fill, rgba(255, 255, 255, 0.07)) !important;
+  color: #f5f5f7 !important;
+}
+.mdt .maker-action-btn.filter-btn-icon.active {
+  color: var(--accent, #f5f5f7) !important;
+}
+
+/* Day mode */
+body.theme-light .mdt {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+body.theme-light .mdt .maker-action-btn {
+  color: rgba(15, 23, 42, 0.55) !important;
+}
+body.theme-light .mdt .maker-action-btn:active {
+  background: rgba(0, 0, 0, 0.05) !important;
+  color: rgba(15, 23, 42, 0.9) !important;
+}
+
+/* ── FIX: transactions table invisible on mobile ───────────────────────────
+   Confirmed via live computed styles: the .table-wrapper was 3015px tall (all
+   50 rows present) but its parent .tabs-content computed to height:0, and
+   .data-tabs (overflow-y:hidden) clipped the overflow — so the list was in the
+   DOM yet invisible. The desktop .data-tabs is a flex COLUMN whose .tabs-content
+   is held open by min-height: calc(100vh …); on mobile we zero that min-height
+   (so the page isn't one-viewport tall), which let the .tabs-content flex child
+   SHRINK to 0. Desktop never hits this (the min-height keeps it open) — which is
+   why laptop was fine and only phones broke.
+   Fix: lay .data-tabs out as a normal BLOCK on mobile (no flex-shrink) and never
+   clip, so the nav + content stack at their natural auto heights. Scoped under
+   .mtp (the mobile page root) so it wins regardless of the prod CSS bundle order. */
+.mtp .mdt .data-tabs,
+.mtp .mdt .data-tabs.data-tabs--i7 {
+  display: block !important;
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+}
+.mtp .mdt .tabs-content {
+  flex: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}

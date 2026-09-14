@@ -1,0 +1,723 @@
+/* ── MarketThesis — AI Analysis glass card ── */
+
+.mt-card {
+  position: relative;
+  background:
+    radial-gradient(ellipse at 10% 0%, rgba(255, 255, 255, 0.035) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0.006) 100%);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 14px;
+  padding: 22px 24px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 1px 8px rgba(0,0,0,0.10),
+    0 8px 32px rgba(0,0,0,0.14),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mt-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,0.10);
+  box-shadow:
+    0 4px 16px rgba(0,0,0,0.16),
+    0 12px 40px rgba(0,0,0,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.07);
+}
+
+/* Shine sweep on hover */
+.mt-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.03) 45%, transparent 50%);
+  opacity: 0;
+  transition: opacity 300ms ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.mt-card:hover::after {
+  opacity: 1;
+}
+
+.mt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.045);
+}
+
+.mt-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mt-label {
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-primary, #f5f5f7);
+}
+
+/* Live status dot — small pulse to signal the card is on a refresh loop,
+   not a frozen one-shot generation. Pulse is gentle (no neon). */
+.mt-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--bull, #10B981);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.55);
+  position: relative;
+  cursor: help;
+  animation: mt-live-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes mt-live-pulse {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.85); }
+}
+
+.app.app-day-mode .mt-live-dot,
+.day-mode .mt-live-dot {
+  background: #059669;
+  box-shadow: 0 0 6px rgba(5, 150, 105, 0.45);
+}
+
+.mt-updated {
+  font-family: var(--font-num, 'Inter', sans-serif);
+  font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
+  color: var(--text-muted, rgba(255,255,255,0.4));
+}
+
+/* ── Sections ── */
+
+.mt-section {
+  margin-bottom: 18px;
+}
+
+.mt-section:last-child {
+  margin-bottom: 0;
+}
+
+.mt-section-label {
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.55));
+}
+
+.mt-bull-label {
+  color: var(--bull, #10B981);
+}
+
+.mt-bull-label::before {
+  content: '\25B2';
+  font-size: 9px;
+}
+
+.mt-bear-label {
+  color: var(--bear, #EF4444);
+}
+
+.mt-bear-label::before {
+  content: '\25BC';
+  font-size: 9px;
+}
+
+.mt-body {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.65;
+  color: var(--text-secondary, rgba(255,255,255,0.78));
+  margin: 0;
+}
+
+.mt-body + .mt-body {
+  margin-top: 8px;
+}
+
+/* ── Dividers between sections ── */
+
+.mt-bull,
+.mt-bear {
+  padding-top: 8px;
+  border-top: none;
+  position: relative;
+}
+
+.mt-bull::before,
+.mt-bear::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 15%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.04) 85%, transparent 100%);
+}
+
+/* No ambient green/red corner tint — the ▲/▼ labels carry the direction and a
+   coloured wash bleeding out of the left edge read as decoration, not signal. */
+.mt-bull { border-radius: 0 0 0 6px; }
+.mt-bear { border-radius: 0 0 6px 0; }
+
+/* ── Cursor ── */
+
+.mt-cursor {
+  font-family: var(--font-num, 'Inter', sans-serif);
+  font-variant-numeric: tabular-nums;
+  font-style: normal;
+  font-weight: 300;
+  color: var(--accent, #a78bfa);
+  margin-left: 1px;
+}
+
+.mt-cursor-blink {
+  animation: mt-blink 600ms step-end infinite;
+}
+
+@keyframes mt-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ── Loading shimmer ── */
+
+.mt-loading .mt-shimmer-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mt-shimmer-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 0%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: mt-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes mt-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Day mode ── */
+
+.app.app-day-mode .mt-card,
+.day-mode .mt-card {
+  background:
+    radial-gradient(ellipse at 10% 0%, rgba(0, 0, 0, 0.02) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.90) 100%);
+  border-color: rgba(0,0,0,0.05);
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.04),
+    0 4px 12px rgba(0,0,0,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.app.app-day-mode .mt-card:hover,
+.day-mode .mt-card:hover {
+  border-color: rgba(0,0,0,0.10);
+  box-shadow:
+    0 2px 8px rgba(0,0,0,0.06),
+    0 8px 24px rgba(0,0,0,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.9);
+}
+
+.app.app-day-mode .mt-card::after,
+.day-mode .mt-card::after {
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.5) 45%, transparent 50%);
+}
+
+.app.app-day-mode .mt-label,
+.day-mode .mt-label {
+  color: rgba(0,0,0,0.55);
+}
+
+.app.app-day-mode .mt-updated,
+.day-mode .mt-updated {
+  color: rgba(0,0,0,0.4);
+}
+
+.app.app-day-mode .mt-body,
+.day-mode .mt-body {
+  color: rgba(0,0,0,0.65);
+}
+
+.app.app-day-mode .mt-bull::before,
+.app.app-day-mode .mt-bear::before,
+.day-mode .mt-bull::before,
+.day-mode .mt-bear::before {
+  background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.04) 15%, rgba(0,0,0,0.06) 50%, rgba(0,0,0,0.04) 85%, transparent 100%);
+}
+
+
+.app.app-day-mode .mt-shimmer-line,
+.day-mode .mt-shimmer-line {
+  background: linear-gradient(
+    90deg,
+    rgba(0,0,0,0.04) 0%,
+    rgba(0,0,0,0.08) 50%,
+    rgba(0,0,0,0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: mt-shimmer 1.5s ease-in-out infinite;
+}
+
+/* ── Editorial lead sentence (Playfair pull quote) ────────────────
+   Used ONLY on the first sentence of READ — a single line that sets the
+   tone. Earlier rounds also italicized the first sentence of THESIS but
+   that broke up the reading flow when the thesis ran 5+ sentences, so we
+   reserve the editorial treatment for the one-line readout. */
+
+.mt-section--read .mt-body.mt-editorial {
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--text-primary, #f5f5f7);
+  margin-bottom: 0;
+  letter-spacing: -0.012em;
+}
+
+/* For THESIS, drop the italic pull-quote and render a uniform body block
+   so 4-6 sentences read like a single thought, not a quote + tail. */
+.mt-section--thesis .mt-body.mt-editorial {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-style: normal;
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.65;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.78));
+  margin-bottom: 8px;
+  letter-spacing: 0;
+}
+
+/* ── Bull / bear case row — side-by-side on desktop ──────────────
+   Plain bordered blocks. The 2px left-accent rail and the corner wash that
+   used to sit here were removed — an accent stripe down the left of every
+   block is the tell of a generated layout, and the section labels (▲ BULL /
+   ▼ BEAR, tinted) already carry the direction. Each scenario sits on its own
+   row with a numbered circle (1)(2)(3). */
+
+.mt-cases {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.mt-cases > .mt-bull,
+.mt-cases > .mt-bear {
+  margin: 0;
+  padding: 14px 16px 16px;
+  border-radius: 12px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.014);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Override the original top-divider rules from earlier in this file — the
+   grid layout supersedes that single-column treatment. */
+.mt-cases > .mt-bull::before,
+.mt-cases > .mt-bear::before {
+  display: none;
+}
+
+/* ── Cross-Asset — TradFi rotation narrative ──────────────────────
+   Same plain block as the bull/bear pair (no left rail, no corner wash).
+   Body stays in the normal sans body font (italic + serif at 13.5px was
+   hard to read over 3 sentences). */
+
+.mt-section--cross {
+  margin-top: 2px;
+  padding: 14px 16px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.014);
+  margin-bottom: 18px;
+}
+
+.mt-cross-label {
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.55));
+}
+
+.mt-cross-label::before {
+  content: '\21C4';
+  font-size: 12px;
+  margin-right: 2px;
+}
+
+/* ── Bull / Bear scenario list — numbered playbook ────────────────
+   CSS counter renders a circled number (1)(2)(3) before each
+   scenario. Tinted to the side's accent so a glance tells you which
+   playbook you're reading. */
+
+.mt-case-list {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  counter-reset: mt-scenario;
+}
+
+.mt-case-list li {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.82));
+  padding-left: 28px;
+  position: relative;
+  counter-increment: mt-scenario;
+}
+
+.mt-case-list li::before {
+  content: counter(mt-scenario);
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-family: var(--font-mono, 'Inter', sans-serif);
+  font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0;
+}
+
+.mt-bull .mt-case-list li::before {
+  background: rgba(16, 185, 129, 0.16);
+  color: rgba(52, 211, 153, 1);
+  box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.35);
+}
+
+.mt-bear .mt-case-list li::before {
+  background: rgba(239, 68, 68, 0.16);
+  color: rgba(248, 113, 113, 1);
+  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.35);
+}
+
+/* ── Mean Reversion ───────────────────────────────────────────────
+   Same plain block as the rest of the playbook family. */
+
+.mt-meanrev {
+  margin-top: 2px;
+  padding: 14px 16px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.014);
+  margin-bottom: 18px;
+}
+
+.mt-meanrev-label {
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.55));
+}
+
+.mt-meanrev-label::before {
+  content: '\21BB';
+  font-size: 12px;
+  margin-right: 2px;
+}
+
+/* ── Watchlist — pill chips, scannable ────────────────────────────
+   On desktop these flow as a horizontal chip row. On mobile they
+   wrap two-per-line. Removes the inherited bullet (·) from the
+   earlier list treatment. */
+
+.mt-section--watch {
+  margin-bottom: 18px;
+}
+
+.mt-watchlist {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mt-watchlist li {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.78));
+  padding: 7px 14px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+}
+
+.mt-watchlist li::before {
+  content: none;
+}
+
+/* ── Header right cluster — timestamp + refresh ── */
+
+.mt-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mt-refresh {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mt-refresh:hover {
+  color: var(--text-primary, #f5f5f7);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+  transform: rotate(45deg);
+}
+
+.mt-refresh:active {
+  transform: rotate(180deg);
+}
+
+/* ── Footer — Spectre Brain · POV · medium conviction ── */
+
+.mt-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 14px;
+  margin-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.045);
+  font-family: var(--font-display, var(--font-body, 'Inter', sans-serif));
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted, rgba(245, 245, 247, 0.45));
+}
+
+.mt-footer-brand {
+  color: var(--text-secondary, rgba(245, 245, 247, 0.65));
+}
+
+.mt-footer-sep {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.mt-footer-pov {
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  letter-spacing: 0.08em;
+}
+
+.mt-footer-conv {
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+}
+
+.mt-footer-conv--low { color: rgba(239, 68, 68, 0.85); }
+.mt-footer-conv--medium { color: rgba(245, 158, 11, 0.85); }
+.mt-footer-conv--high { color: rgba(16, 185, 129, 0.85); }
+
+/* ── Fade-in stagger when sections arrive ── */
+
+.mt-card:not(.mt-card--loading) .mt-section,
+.mt-card:not(.mt-card--loading) .mt-cases,
+.mt-card:not(.mt-card--loading) .mt-meanrev,
+.mt-card:not(.mt-card--loading) .mt-footer {
+  animation: mt-fade-in 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.mt-card:not(.mt-card--loading) .mt-section--read { animation-delay: 0ms; }
+.mt-card:not(.mt-card--loading) .mt-section--thesis { animation-delay: 60ms; }
+.mt-card:not(.mt-card--loading) .mt-section--cross { animation-delay: 120ms; }
+.mt-card:not(.mt-card--loading) .mt-cases { animation-delay: 180ms; }
+.mt-card:not(.mt-card--loading) .mt-meanrev { animation-delay: 240ms; }
+.mt-card:not(.mt-card--loading) .mt-section--watch { animation-delay: 300ms; }
+.mt-card:not(.mt-card--loading) .mt-footer { animation-delay: 360ms; }
+
+@keyframes mt-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Day mode counterparts for the new sections ── */
+
+.app.app-day-mode .mt-cases > .mt-bull,
+.day-mode .mt-cases > .mt-bull,
+.app.app-day-mode .mt-cases > .mt-bear,
+.day-mode .mt-cases > .mt-bear,
+.app.app-day-mode .mt-meanrev,
+.day-mode .mt-meanrev {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.app.app-day-mode .mt-meanrev-label,
+.day-mode .mt-meanrev-label {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.app.app-day-mode .mt-section--cross,
+.day-mode .mt-section--cross {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.app.app-day-mode .mt-cross-label,
+.day-mode .mt-cross-label {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.app.app-day-mode .mt-section--cross .mt-body,
+.day-mode .mt-section--cross .mt-body {
+  color: rgba(0, 0, 0, 0.72);
+}
+
+.app.app-day-mode .mt-case-list li,
+.day-mode .mt-case-list li {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.app.app-day-mode .mt-body.mt-editorial,
+.day-mode .mt-body.mt-editorial {
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.app.app-day-mode .mt-watchlist li,
+.day-mode .mt-watchlist li {
+  color: rgba(0, 0, 0, 0.72);
+  background: rgba(0, 0, 0, 0.035);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.app.app-day-mode .mt-bull .mt-case-list li::before,
+.day-mode .mt-bull .mt-case-list li::before {
+  background: rgba(16, 185, 129, 0.12);
+  color: rgba(5, 150, 105, 1);
+  box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.4);
+}
+
+.app.app-day-mode .mt-bear .mt-case-list li::before,
+.day-mode .mt-bear .mt-case-list li::before {
+  background: rgba(239, 68, 68, 0.12);
+  color: rgba(220, 38, 38, 1);
+  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.4);
+}
+
+.app.app-day-mode .mt-case-list li,
+.day-mode .mt-case-list li {
+  color: rgba(0, 0, 0, 0.78);
+}
+
+.app.app-day-mode .mt-footer,
+.day-mode .mt-footer {
+  border-top-color: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.app.app-day-mode .mt-footer-brand,
+.day-mode .mt-footer-brand {
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.app.app-day-mode .mt-footer-sep,
+.day-mode .mt-footer-sep {
+  color: rgba(0, 0, 0, 0.2);
+}
+
+.app.app-day-mode .mt-refresh,
+.day-mode .mt-refresh {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.app.app-day-mode .mt-refresh:hover,
+.day-mode .mt-refresh:hover {
+  color: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 720px) {
+  .mt-cases {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .mt-card {
+    padding: 18px 18px;
+  }
+  .mt-section {
+    margin-bottom: 16px;
+  }
+  .mt-body {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .mt-section--read .mt-body.mt-editorial {
+    font-size: 17px;
+    line-height: 1.45;
+  }
+  .mt-section--thesis .mt-body.mt-editorial {
+    font-size: 13px;
+  }
+  .mt-cases > .mt-bull,
+  .mt-cases > .mt-bear,
+  .mt-meanrev,
+  .mt-section--cross {
+    padding: 12px 14px 14px;
+  }
+  .mt-case-list li {
+    font-size: 12.5px;
+    padding-left: 26px;
+  }
+  .mt-case-list li::before {
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
+  }
+  .mt-watchlist li {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+}

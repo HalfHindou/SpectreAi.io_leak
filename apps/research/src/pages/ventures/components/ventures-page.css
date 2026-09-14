@@ -1,0 +1,3906 @@
+/* ══════════════════════════════════════════════════════════════
+   VenturesPage.css — Apple Cinematic Redesign
+   SF Pro Display + glassmorphism + layered shadows + subtle motion
+   Night mode (default) + Day mode + Cinema mode + Responsive
+   ══════════════════════════════════════════════════════════════ */
+
+/* ═══ ANIMATIONS ═══ */
+@keyframes venturesCardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes venturesRingPulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.08); opacity: 0.3; }
+}
+
+@keyframes venturesShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ═══ BASE LAYOUT ═══ */
+.ventures-page {
+  overflow-y: auto;
+  overflow-x: hidden;
+  color: #f5f5f7;
+  padding: 32px 0 40px;
+  position: relative;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255, 255, 255, 0.02) 0%, transparent 70%),
+    #09090b;
+}
+
+/* Noise texture overlay for depth */
+.ventures-page-noise {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+.ventures-page > *:not(.ventures-page-noise) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ═══ CONTAINER ═══ */
+/* Fill the viewport edge-to-edge (page-layout already clears the nav). A high
+   cap only engages on very large ultra-wide displays. */
+.ventures-container {
+  max-width: 2560px;
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+/* ═══ PAGE HEADER ═══ */
+.ventures-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 36px;
+}
+
+.ventures-hero-label {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  margin-bottom: 12px;
+}
+
+.ventures-title {
+  font-family: 'SF Pro Display', -apple-system, 'Inter', system-ui, sans-serif;
+  font-size: clamp(42px, 6vw, 56px);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  margin: 0;
+  line-height: 1.05;
+  color: #f5f5f7;
+}
+
+.ventures-subtitle {
+  font-family: 'SF Pro Display', -apple-system, 'Inter', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 10px 0 0;
+  letter-spacing: -0.01em;
+}
+
+/* Mode toggle (Deal Flow | Smart Money) */
+.ventures-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.ventures-mode-toggle {
+  display: inline-flex;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.ventures-mode-btn {
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: rgba(245, 245, 247, 0.55);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: var(--font-body);
+}
+
+.ventures-mode-btn:hover {
+  color: var(--text-primary);
+}
+
+.ventures-mode-btn--active {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Search */
+.ventures-search-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 280px;
+}
+
+.ventures-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(245, 245, 247, 0.4);
+  stroke-width: 2;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ventures-search {
+  width: 100%;
+  height: 42px;
+  padding: 0 38px 0 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(16, 16, 20, 0.78);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  color: #f5f5f7;
+  font-size: 13px;
+  font-family: 'SF Pro Display', -apple-system, 'Inter', system-ui, sans-serif;
+  outline: none;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.ventures-search::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.ventures-search:focus {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(16, 16, 20, 0.88);
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.ventures-search-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s ease;
+}
+
+.ventures-search-clear:hover {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ═══ AGGREGATE STATS BAR ═══ */
+.ventures-stats-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 40px;
+  padding: 16px 28px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0.01) 100%);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.ventures-stat-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0 24px;
+}
+
+.ventures-stat-item-value {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: -0.02em;
+}
+
+.ventures-stat-item-value.ventures-stat-positive {
+  color: #34d399;
+}
+
+.ventures-stat-item-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.ventures-stats-sep {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+/* ═══ SECTION HEADERS ═══ */
+.ventures-section-title {
+  font-family: 'SF Pro Display', -apple-system, 'Inter', system-ui, sans-serif;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  margin: 0;
+  color: #f5f5f7;
+  line-height: 1.15;
+}
+
+.ventures-section-subtitle {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.5);
+  letter-spacing: -0.01em;
+  margin: 6px 0 0;
+  line-height: 1.45;
+}
+
+/* ═══ DIVIDER ═══ */
+.ventures-section-divider {
+  width: 100%;
+  height: 1px;
+  margin: 32px 0 24px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+}
+
+/* ═══ FEATURED HERO ═══ */
+.ventures-hero-section {
+  margin-bottom: 40px;
+}
+
+.ventures-hero-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 0 4px;
+}
+
+.ventures-hero-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.ventures-nav-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ventures-nav-btn:hover {
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.ventures-nav-btn:active {
+  transform: scale(0.94);
+}
+
+.ventures-hero-scroll {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding: 8px 0 16px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.ventures-hero-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* ═══ FEATURED CARD ═══ */
+.ventures-featured-card {
+  position: relative;
+  flex: 0 0 380px;
+  min-height: 340px;
+  scroll-snap-align: start;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  animation: venturesCardFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: calc(var(--card-index, 0) * 0.08s);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* Top edge light */
+.ventures-featured-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  opacity: 0;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1;
+}
+
+/* Hover glow */
+.ventures-featured-card::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  left: -20%;
+  right: -20%;
+  height: 60%;
+  background: radial-gradient(ellipse at center, rgba(var(--brand-rgb, 255, 255, 255), 0.04), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ventures-featured-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 16px 48px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.ventures-featured-card:hover::before {
+  opacity: 1;
+}
+
+.ventures-featured-card:hover::after {
+  opacity: 1;
+}
+
+.ventures-featured-card:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.2);
+  outline-offset: 2px;
+}
+
+.ventures-featured-reason {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.35);
+  margin-bottom: 18px;
+}
+
+.ventures-featured-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.ventures-featured-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ventures-featured-tagline {
+  font-size: 0.875rem;
+  color: rgba(245, 245, 247, 0.6);
+  line-height: 1.55;
+  margin: 0 0 16px;
+  letter-spacing: -0.01em;
+}
+
+.ventures-featured-pills {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.ventures-featured-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ventures-featured-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.ventures-featured-cta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: -0.01em;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ventures-featured-cta svg {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ventures-featured-card:hover .ventures-featured-cta {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.ventures-featured-card:hover .ventures-featured-cta svg {
+  transform: translateX(3px);
+}
+
+/* ═══ DEAL FLOW GRID ═══ */
+.ventures-dealflow {
+  margin-top: 8px;
+}
+
+.ventures-dealflow-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  gap: 16px;
+}
+
+.ventures-filters {
+  display: flex;
+  gap: 8px;
+}
+
+/* ═══ CUSTOM DROPDOWN ═══ */
+.vd-dropdown {
+  position: relative;
+}
+
+.vd-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  color: rgba(245, 245, 247, 0.65);
+  font-size: 0.8125rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  white-space: nowrap;
+}
+
+.vd-dropdown-trigger:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(245, 245, 247, 0.9);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+.vd-dropdown--open .vd-dropdown-trigger {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  color: #f5f5f7;
+}
+
+.vd-dropdown-label {
+  pointer-events: none;
+}
+
+.vd-dropdown-chevron {
+  flex-shrink: 0;
+  opacity: 0.4;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vd-dropdown--open .vd-dropdown-chevron {
+  transform: rotate(180deg);
+  opacity: 0.7;
+}
+
+.vd-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 100%;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(20, 20, 24, 0.95);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  z-index: 100;
+  animation: vdMenuIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Cap the popover height so a long list (e.g. all YC batches back to 2005)
+     scrolls inside the menu instead of running off the viewport. */
+  max-height: min(320px, 60vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.vd-dropdown-menu::-webkit-scrollbar { width: 4px; }
+.vd-dropdown-menu::-webkit-scrollbar-track { background: transparent; }
+.vd-dropdown-menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+}
+.vd-dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+@keyframes vdMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.vd-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+  font-family: 'SF Pro Display', -apple-system, 'Inter', system-ui, sans-serif;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.vd-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #f5f5f7;
+}
+
+.vd-dropdown-item--active {
+  color: #f5f5f7;
+  font-weight: 500;
+}
+
+.vd-dropdown-item--active svg {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.ventures-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+/* ═══ GRID CARD ═══ */
+.ventures-deal-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 18px;
+  padding: 22px;
+  cursor: pointer;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: venturesCardFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: calc(var(--card-index, 0) * 0.08s);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* Top edge light */
+.ventures-deal-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  opacity: 0;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1;
+}
+
+/* Hover glow */
+.ventures-deal-card::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  left: -20%;
+  right: -20%;
+  height: 60%;
+  background: radial-gradient(ellipse at center, rgba(var(--brand-rgb, 255, 255, 255), 0.04), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ventures-deal-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 16px 48px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.ventures-deal-card:hover::before {
+  opacity: 1;
+}
+
+.ventures-deal-card:hover::after {
+  opacity: 1;
+}
+
+.ventures-deal-card:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.2);
+  outline-offset: 2px;
+}
+
+/* Card content — z-index above glow pseudo-elements */
+.ventures-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 2;
+}
+
+.ventures-card-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ventures-card-tagline,
+.ventures-card-pills,
+.ventures-card-metrics,
+.ventures-card-footer,
+.ventures-featured-top,
+.ventures-featured-tagline,
+.ventures-featured-pills,
+.ventures-featured-metrics,
+.ventures-featured-cta,
+.ventures-featured-reason {
+  position: relative;
+  z-index: 2;
+}
+
+.ventures-card-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 0 0 rgba(var(--brand-rgb, 255, 255, 255), 0);
+}
+
+.ventures-deal-card:hover .ventures-card-logo,
+.ventures-featured-card:hover .ventures-card-logo {
+  border-color: rgba(var(--brand-rgb, 255, 255, 255), 0.15);
+  box-shadow: 0 0 12px rgba(var(--brand-rgb, 255, 255, 255), 0.08);
+}
+
+.ventures-card-logo--lg {
+  width: 48px;
+  height: 48px;
+}
+
+.ventures-logo-wrap {
+  flex-shrink: 0;
+}
+
+.ventures-card-logo--fallback {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.app.app-day-mode .ventures-card-logo--fallback {
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.ventures-card-name {
+  font-family: 'SF Pro Display', -apple-system, 'Inter', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: -0.02em;
+}
+
+.ventures-card-ticker {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 2px;
+}
+
+.ventures-card-tagline {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.5;
+  margin: 0 0 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  letter-spacing: -0.01em;
+}
+
+.ventures-card-pills {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+/* Stage Badge */
+.ventures-stage-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  background: rgba(var(--stage-rgb, 156, 163, 175), 0.08);
+  border: 1px solid rgba(var(--stage-rgb, 156, 163, 175), 0.1);
+  color: rgb(var(--stage-rgb, 156, 163, 175));
+  white-space: nowrap;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+/* Category Pill */
+.ventures-category-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  background: rgba(var(--cat-rgb, 156, 163, 175), 0.08);
+  border: 1px solid rgba(var(--cat-rgb, 156, 163, 175), 0.08);
+  color: rgba(var(--cat-rgb, 156, 163, 175), 0.85);
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+/* Spectre editorial override pill — "SPECTRE PICK" in the detail panel header,
+   used when an asset's score/grade is manually lifted by SPECTRE_OVERRIDES. */
+.ventures-spectre-pick {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(245, 158, 11, 0.04) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: help;
+}
+
+.ventures-panel-tagline {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.55);
+  max-width: 52ch;
+}
+
+/* Card Metrics */
+.ventures-card-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  flex: 1;
+}
+
+.ventures-metric-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ventures-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ventures-metric-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.35);
+}
+
+.ventures-metric-value {
+  font-size: 0.875rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.95);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.ventures-metric-value.positive {
+  color: #34d399;
+}
+
+.ventures-metric-value.negative {
+  color: #f87171;
+}
+
+/* Dev Activity Bar */
+.ventures-dev-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ventures-dev-bar {
+  width: 60px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.ventures-dev-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.35);
+  transition: width 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ventures-dev-bar-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Card Footer */
+.ventures-card-footer {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ventures-card-score-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ventures-score-text {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.ventures-score-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.ventures-smart-money-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ventures-smart-money-hint svg {
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* ═══ EMPTY STATE ═══ */
+.ventures-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  color: rgba(255, 255, 255, 0.25);
+  gap: 16px;
+  animation: venturesCardFadeIn 0.5s ease;
+}
+
+.ventures-empty svg {
+  opacity: 0.3;
+}
+
+.ventures-empty p {
+  font-size: 15px;
+  margin: 0;
+  font-family: 'SF Pro Display', -apple-system, 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.ventures-empty-reset {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ventures-empty-reset:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #f5f5f7;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DETAIL PANEL (Slide-over)
+   ══════════════════════════════════════════════════════════════ */
+
+.ventures-panel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  transition: all 350ms cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.ventures-panel-backdrop.open {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  pointer-events: auto;
+}
+
+.ventures-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 520px;
+  height: 100vh;
+  background: rgba(16, 16, 20, 0.95);
+  backdrop-filter: blur(60px) saturate(200%);
+  -webkit-backdrop-filter: blur(60px) saturate(200%);
+  border-left: 1px solid rgba(255, 255, 255, 0.04);
+  transform: translateX(100%);
+  transition: transform 350ms cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  z-index: 1001;
+  overflow: hidden;
+  box-shadow:
+    -20px 0 80px rgba(0, 0, 0, 0.4),
+    -1px 0 0 rgba(255, 255, 255, 0.04);
+}
+
+.ventures-panel.open {
+  transform: translateX(0);
+}
+
+.ventures-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 28px 28px 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.015) 0%, transparent 100%);
+}
+
+.ventures-panel-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ventures-panel-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ventures-panel-name {
+  font-family: 'SF Pro Display', -apple-system, 'Inter', system-ui, sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: #f5f5f7;
+  margin: 0;
+}
+
+.ventures-panel-sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.ventures-panel-ticker {
+  font-size: 13px;
+  font-family: var(--font-mono);
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.ventures-panel-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.ventures-panel-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #f5f5f7;
+  transform: rotate(90deg);
+}
+
+.ventures-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px 28px;
+}
+
+.ventures-panel-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.ventures-panel-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ventures-panel-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+}
+
+/* Panel Sections */
+.ventures-panel-section {
+  margin-bottom: 32px;
+}
+
+.ventures-panel-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  margin: 0 0 16px;
+}
+
+/* Score Hero */
+.ventures-score-hero {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+/* Sub-scores */
+.ventures-subscores {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ventures-subscore-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ventures-subscore-label {
+  width: 100px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+  letter-spacing: -0.01em;
+}
+
+.ventures-subscore-bar-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ventures-subscore-bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.ventures-subscore-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ventures-subscore-val {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  width: 28px;
+  text-align: right;
+}
+
+/* Quick Stats */
+.ventures-quick-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.ventures-stat-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+.ventures-stat-cell:hover {
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.ventures-stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.ventures-stat-value {
+  font-size: 14px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.ventures-stat-value.positive { color: #34d399; }
+.ventures-stat-value.negative { color: #f87171; }
+
+/* AI Brief */
+.ventures-ai-brief {
+  position: relative;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+.ventures-ai-brief-glow {
+  display: none;
+}
+
+.ventures-ai-brief p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.ventures-ai-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.2);
+  letter-spacing: 0.3px;
+}
+
+/* Team */
+.ventures-team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.ventures-team-member {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ventures-team-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+}
+
+.ventures-team-avatar svg {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.ventures-team-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #f5f5f7;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ventures-anon-tag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.35);
+  font-weight: 500;
+}
+
+.ventures-team-role {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 1px;
+}
+
+/* Backers */
+.ventures-backers {
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ventures-backers-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: rgba(255, 255, 255, 0.25);
+  display: block;
+  margin-bottom: 10px;
+}
+
+.ventures-backers-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.ventures-backer-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.ventures-total-raised {
+  display: block;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.3);
+  margin-top: 8px;
+}
+
+/* Tokenomics */
+.ventures-tokenomics {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ventures-alloc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ventures-alloc-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 110px;
+  flex-shrink: 0;
+}
+
+.ventures-alloc-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ventures-alloc-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.ventures-alloc-bar-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ventures-alloc-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.ventures-alloc-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 500ms ease;
+}
+
+.ventures-alloc-pct {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: rgba(255, 255, 255, 0.4);
+  width: 36px;
+  text-align: right;
+}
+
+/* Smart Money Signals */
+.ventures-signals {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ventures-signal-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.ventures-signal-row svg {
+  color: rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+
+.ventures-signal-text {
+  color: rgba(255, 255, 255, 0.5);
+  flex: 1;
+}
+
+.ventures-signal-date {
+  color: rgba(255, 255, 255, 0.2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* Competitive Landscape */
+.ventures-competitors {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.ventures-comp-header {
+  display: grid;
+  grid-template-columns: 1fr 80px 50px;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.ventures-comp-row {
+  display: grid;
+  grid-template-columns: 1fr 80px 50px;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.ventures-comp-row--current {
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+/* Panel Footer */
+.ventures-panel-footer {
+  display: flex;
+  gap: 10px;
+  padding: 16px 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+}
+
+.ventures-action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'SF Pro Display', -apple-system, 'Inter', system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border: none;
+}
+
+.ventures-action-btn--primary {
+  background: rgba(255, 255, 255, 0.9);
+  color: #09090b;
+}
+
+.ventures-action-btn--primary:hover {
+  background: var(--text-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
+}
+
+.ventures-action-btn--secondary {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.ventures-action-btn--secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #f5f5f7;
+}
+
+.ventures-action-btn--secondary.active {
+  color: #f5f5f7;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DAY MODE
+   ══════════════════════════════════════════════════════════════ */
+
+.ventures-page.day-mode {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0, 0, 0, 0.015) 0%, transparent 70%),
+    #f5f5f7;
+  color: #1d1d1f;
+}
+
+.ventures-page.day-mode .ventures-page-noise {
+  opacity: 0.15;
+}
+
+/* Day mode stats bar */
+.ventures-page.day-mode .ventures-stats-bar {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.02);
+}
+
+.ventures-page.day-mode .ventures-stat-item-value {
+  color: #1d1d1f;
+}
+
+.ventures-page.day-mode .ventures-stat-item-value.ventures-stat-positive {
+  color: #059669;
+}
+
+.ventures-page.day-mode .ventures-stat-item-label {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.ventures-page.day-mode .ventures-stats-sep {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.ventures-page.day-mode .ventures-hero-label {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.ventures-page.day-mode .ventures-title {
+  color: #1d1d1f;
+}
+
+.ventures-page.day-mode .ventures-subtitle {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.ventures-page.day-mode .ventures-section-title {
+  color: #1d1d1f;
+}
+
+.ventures-page.day-mode .ventures-section-subtitle {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.ventures-page.day-mode .ventures-section-divider {
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.08), transparent);
+}
+
+.ventures-page.day-mode .ventures-search {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #1d1d1f;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.ventures-page.day-mode .ventures-search::placeholder {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+.ventures-page.day-mode .ventures-search:focus {
+  border-color: rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.ventures-page.day-mode .ventures-search-icon {
+  color: rgba(15, 23, 42, 0.5);
+}
+
+.ventures-page.day-mode .ventures-search-clear {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+.ventures-page.day-mode .ventures-nav-btn {
+  border-color: rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+  color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.ventures-page.day-mode .ventures-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.95);
+  color: #1d1d1f;
+}
+
+/* Day mode cards */
+.ventures-page.day-mode .ventures-deal-card,
+.ventures-page.day-mode .ventures-featured-card {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(20px);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.02);
+}
+
+.ventures-page.day-mode .ventures-deal-card::before,
+.ventures-page.day-mode .ventures-featured-card::before {
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.06), transparent);
+}
+
+.ventures-page.day-mode .ventures-deal-card::after,
+.ventures-page.day-mode .ventures-featured-card::after {
+  background: radial-gradient(ellipse at center, rgba(var(--brand-rgb, 0, 0, 0), 0.03), transparent 70%);
+}
+
+.ventures-page.day-mode .ventures-deal-card:hover,
+.ventures-page.day-mode .ventures-featured-card:hover {
+  border-color: rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    0 8px 32px rgba(0, 0, 0, 0.06);
+}
+
+.ventures-page.day-mode .ventures-deal-card:hover .ventures-card-logo,
+.ventures-page.day-mode .ventures-featured-card:hover .ventures-card-logo {
+  border-color: rgba(var(--brand-rgb, 0, 0, 0), 0.12);
+  box-shadow: 0 0 12px rgba(var(--brand-rgb, 0, 0, 0), 0.06);
+}
+
+.ventures-page.day-mode .ventures-card-name {
+  color: #1d1d1f;
+}
+
+.ventures-page.day-mode .ventures-card-ticker {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.ventures-page.day-mode .ventures-card-tagline,
+.ventures-page.day-mode .ventures-featured-tagline {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.ventures-page.day-mode .ventures-featured-reason {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.ventures-page.day-mode .ventures-card-logo {
+  border-color: rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.ventures-page.day-mode .ventures-metric-label {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.ventures-page.day-mode .ventures-metric-value {
+  color: #1d1d1f;
+}
+
+.ventures-page.day-mode .ventures-card-metrics,
+.ventures-page.day-mode .ventures-featured-metrics {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+.ventures-page.day-mode .ventures-card-footer {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+.ventures-page.day-mode .ventures-score-text,
+.ventures-page.day-mode .ventures-smart-money-hint {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.ventures-page.day-mode .ventures-smart-money-hint svg {
+  color: rgba(0, 0, 0, 0.2);
+}
+
+.ventures-page.day-mode .ventures-score-badge {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.ventures-page.day-mode .ventures-dev-bar {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.ventures-page.day-mode .ventures-dev-bar-fill {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.ventures-page.day-mode .ventures-dev-bar-label {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.ventures-page.day-mode .ventures-featured-cta {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.ventures-page.day-mode .ventures-featured-card:hover .ventures-featured-cta {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+/* Day mode dropdown */
+.ventures-page.day-mode .vd-dropdown-trigger {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.ventures-page.day-mode .vd-dropdown-trigger:hover {
+  border-color: rgba(0, 0, 0, 0.15);
+  color: #1d1d1f;
+}
+
+.ventures-page.day-mode .vd-dropdown--open .vd-dropdown-trigger {
+  border-color: rgba(0, 0, 0, 0.18);
+  background: rgba(255, 255, 255, 0.95);
+  color: #1d1d1f;
+}
+
+.ventures-page.day-mode .vd-dropdown-menu {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.ventures-page.day-mode .vd-dropdown-item {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.ventures-page.day-mode .vd-dropdown-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #1d1d1f;
+}
+
+.ventures-page.day-mode .vd-dropdown-item--active {
+  color: #1d1d1f;
+}
+
+.ventures-page.day-mode .vd-dropdown-item--active svg {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+/* Day mode empty */
+.ventures-page.day-mode .ventures-empty {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+.ventures-page.day-mode .ventures-empty-reset {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+}
+
+.ventures-page.day-mode .ventures-empty-reset:hover {
+  background: rgba(255, 255, 255, 0.95);
+  color: #1d1d1f;
+}
+
+/* Day mode detail panel */
+.ventures-panel.day-mode {
+  background: rgba(245, 245, 247, 0.95);
+  backdrop-filter: blur(40px);
+  border-left-color: rgba(0, 0, 0, 0.06);
+  box-shadow: -20px 0 80px rgba(0, 0, 0, 0.1);
+}
+
+.ventures-panel.day-mode .ventures-panel-name {
+  color: #1d1d1f;
+}
+
+.ventures-panel.day-mode .ventures-panel-ticker {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.ventures-panel.day-mode .ventures-panel-header {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.ventures-panel.day-mode .ventures-panel-logo {
+  border-color: rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.ventures-panel.day-mode .ventures-panel-close {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.ventures-panel.day-mode .ventures-panel-close:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #1d1d1f;
+}
+
+.ventures-panel.day-mode .ventures-panel-section-title {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.ventures-panel.day-mode .ventures-subscore-label {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.ventures-panel.day-mode .ventures-subscore-bar {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.ventures-panel.day-mode .ventures-stat-cell {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.05);
+}
+
+.ventures-panel.day-mode .ventures-stat-label {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.ventures-panel.day-mode .ventures-stat-value {
+  color: #1d1d1f;
+}
+
+.ventures-panel.day-mode .ventures-ai-brief {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.05);
+}
+
+.ventures-panel.day-mode .ventures-ai-brief p {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.ventures-panel.day-mode .ventures-ai-label {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+.ventures-panel.day-mode .ventures-team-avatar {
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.ventures-panel.day-mode .ventures-team-name {
+  color: #1d1d1f;
+}
+
+.ventures-panel.day-mode .ventures-team-role {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.ventures-panel.day-mode .ventures-anon-tag {
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.ventures-panel.day-mode .ventures-backers {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+.ventures-panel.day-mode .ventures-backers-label {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.ventures-panel.day-mode .ventures-backer-pill {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.ventures-panel.day-mode .ventures-total-raised {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.ventures-panel.day-mode .ventures-alloc-label {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.ventures-panel.day-mode .ventures-alloc-bar {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.ventures-panel.day-mode .ventures-alloc-pct {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.ventures-panel.day-mode .ventures-signal-row svg {
+  color: rgba(0, 0, 0, 0.2);
+}
+
+.ventures-panel.day-mode .ventures-signal-text {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.ventures-panel.day-mode .ventures-signal-date {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+.ventures-panel.day-mode .ventures-competitors {
+  border-color: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.01);
+}
+
+.ventures-panel.day-mode .ventures-comp-header {
+  background: rgba(0, 0, 0, 0.02);
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.ventures-panel.day-mode .ventures-comp-row {
+  color: rgba(0, 0, 0, 0.5);
+  border-top-color: rgba(0, 0, 0, 0.05);
+}
+
+.ventures-panel.day-mode .ventures-comp-row--current {
+  background: rgba(0, 0, 0, 0.03);
+  color: #1d1d1f;
+}
+
+.ventures-panel.day-mode .ventures-panel-footer {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+.ventures-panel.day-mode .ventures-action-btn--primary {
+  background: #1d1d1f;
+  color: #f5f5f7;
+}
+
+.ventures-panel.day-mode .ventures-action-btn--primary:hover {
+  background: #000000;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.ventures-panel.day-mode .ventures-action-btn--secondary {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.ventures-panel.day-mode .ventures-action-btn--secondary:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #1d1d1f;
+}
+
+.ventures-panel.day-mode .ventures-panel-body::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CINEMA MODE ENHANCEMENTS
+   ══════════════════════════════════════════════════════════════ */
+
+.cinema-mode .ventures-page {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255, 255, 255, 0.015) 0%, transparent 70%),
+    #050507;
+}
+
+.cinema-mode .ventures-stats-bar {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.008) 100%);
+  border-color: rgba(255, 255, 255, 0.03);
+}
+
+.cinema-mode .ventures-deal-card,
+.cinema-mode .ventures-featured-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border-color: rgba(255, 255, 255, 0.03);
+}
+
+.cinema-mode .ventures-deal-card:hover,
+.cinema-mode .ventures-featured-card:hover {
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 16px 48px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.cinema-mode .ventures-panel {
+  background: rgba(10, 10, 14, 0.98);
+}
+
+.cinema-mode .vd-dropdown-trigger {
+  background: rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.03);
+}
+
+.cinema-mode .vd-dropdown-menu {
+  background: rgba(10, 10, 14, 0.98);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.cinema-mode .ventures-search {
+  background: rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.03);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE - TABLET
+   ══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1200px) {
+  .ventures-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 1100px) {
+  .ventures-container {
+    padding: 0 24px;
+  }
+
+  /* Stack the page header so title + mode toggle + search don't fight for the same row.
+     Search input becomes full-width and stops getting clipped on the right edge. */
+  .ventures-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .ventures-header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .ventures-search-wrap {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  /* Keep the left padding clearance for the magnifier icon even when the wrap
+     stretches to full width — without this the icon overlaps the placeholder. */
+  .ventures-search {
+    padding-left: 42px !important;
+    padding-right: 38px !important;
+  }
+
+  /* Stats bar: stop centering and clipping. Let it wrap/scroll horizontally
+     so the LIVE/CACHED pill stays anchored on the left. */
+  .ventures-stats-bar {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px 4px;
+    padding: 12px 16px;
+  }
+
+  .ventures-stat-item {
+    padding: 0 14px;
+  }
+
+  .ventures-stat-item-value {
+    font-size: 16px;
+  }
+
+  .ventures-dealflow-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ventures-filters {
+    flex-wrap: wrap;
+  }
+
+  .ventures-panel {
+    width: 440px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE - MOBILE
+   ══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .ventures-page {
+    padding-top: calc(60px + 16px);
+    padding-bottom: 100px;
+  }
+
+  .ventures-container {
+    padding: 0 16px;
+  }
+
+  .ventures-title {
+    font-size: clamp(32px, 8vw, 42px);
+  }
+
+  .ventures-subtitle {
+    font-size: 14px;
+  }
+
+  .ventures-stats-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px 16px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 32px;
+  }
+
+  .ventures-stat-item {
+    padding: 4px 12px;
+    gap: 6px;
+  }
+
+  .ventures-stat-item-value {
+    font-size: 15px;
+  }
+
+  .ventures-stat-item-label {
+    font-size: 10px;
+  }
+
+  .ventures-stats-sep {
+    display: none;
+  }
+
+  .ventures-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .ventures-featured-card {
+    flex: 0 0 300px;
+    min-height: auto;
+    padding: 20px;
+  }
+
+  .ventures-deal-card {
+    padding: 18px;
+  }
+
+  .ventures-deal-card:hover {
+    transform: translateY(-1px);
+  }
+
+  .ventures-hero-scroll {
+    gap: 12px;
+  }
+
+  .ventures-filters {
+    width: 100%;
+  }
+
+  .vd-dropdown {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .vd-dropdown-trigger {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .vd-dropdown-menu {
+    min-width: 160px;
+  }
+
+  /* Full-width panel on mobile */
+  .ventures-panel {
+    width: 100vw;
+  }
+
+  .ventures-panel-header {
+    padding: 18px 20px 16px;
+  }
+
+  .ventures-panel-body {
+    padding: 20px;
+  }
+
+  .ventures-panel-footer {
+    padding: 14px 20px;
+    flex-direction: column;
+  }
+
+  .ventures-quick-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ventures-comp-header,
+  .ventures-comp-row {
+    grid-template-columns: 1fr 70px 40px;
+    font-size: 11px;
+    padding: 8px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ventures-featured-card {
+    flex: 0 0 calc(100vw - 48px);
+  }
+
+  .ventures-featured-metrics {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   REDUCED MOTION
+   ══════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .ventures-deal-card,
+  .ventures-featured-card {
+    animation: none;
+  }
+
+  .ventures-deal-card:hover,
+  .ventures-featured-card:hover {
+    transform: none;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MARKET PULSE — "What's Moving" section
+   Two-column live feed of institutional upgrades + downgrades.
+   ══════════════════════════════════════════════════════════════ */
+
+.ven-pulse {
+  margin: 24px 0 8px;
+  padding: 24px 28px;
+  background:
+    radial-gradient(ellipse 140% 60% at 0% 0%, rgba(16, 185, 129, 0.04) 0%, transparent 55%),
+    radial-gradient(ellipse 140% 60% at 100% 100%, rgba(239, 68, 68, 0.03) 0%, transparent 55%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.008) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 18px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 8px 32px rgba(0, 0, 0, 0.22);
+}
+
+.ven-pulse-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.ven-pulse-eyebrow {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #f5f5f7;
+}
+
+.ven-pulse-sub {
+  font-size: 0.75rem;
+  color: rgba(245, 245, 247, 0.5);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ven-pulse-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.ven-pulse-col {
+  position: relative;
+}
+
+.ven-pulse-col-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ven-pulse-col-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ven-pulse-col--bull .ven-pulse-col-dot {
+  background: #10B981;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+  animation: ven-pulse-breathe 2.4s ease-in-out infinite;
+}
+
+.ven-pulse-col--bear .ven-pulse-col-dot {
+  background: #EF4444;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes ven-pulse-breathe {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.92); }
+}
+
+.ven-pulse-col-title {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.ven-pulse-col-count {
+  margin-left: auto;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgba(245, 245, 247, 0.4);
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 9999px;
+}
+
+.ven-pulse-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ven-pulse-item {
+  display: grid;
+  grid-template-columns: 22px 60px auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 180ms ease;
+}
+
+.ven-pulse-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ven-pulse-rank {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.25);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.ven-pulse-sym {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+}
+
+.ven-pulse-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.45);
+}
+
+.ven-pulse-from {
+  opacity: 0.7;
+}
+
+.ven-pulse-to {
+  color: #f5f5f7;
+}
+
+.ven-pulse-empty {
+  padding: 24px 12px;
+  text-align: center;
+  color: rgba(245, 245, 247, 0.35);
+  font-size: 0.8125rem;
+  font-style: italic;
+}
+
+/* Pulse skeleton */
+.ven-pulse-list--skeleton .ven-pulse-item {
+  cursor: default;
+}
+.ven-skel {
+  height: 12px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: ven-shimmer 1.6s infinite;
+}
+.ven-skel--rank  { width: 18px; }
+.ven-skel--sym   { width: 48px; }
+.ven-skel--grade { width: 24px; }
+.ven-skel--arrow { width: 60px; }
+.ven-skel--delta { width: 40px; }
+
+@keyframes ven-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   GRADE BADGE (pill) + DELTA + SIGNALS
+   Shared atoms used by Market Pulse, list view, and cards.
+   ══════════════════════════════════════════════════════════════ */
+
+.ven-grade-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  padding: 2px 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  border-radius: var(--radius-sm);
+  border: 1px solid;
+  font-variant-numeric: tabular-nums;
+}
+
+.ven-grade-badge--sm {
+  min-width: 22px;
+  padding: 1px 6px;
+  font-size: 0.6875rem;
+}
+
+.ven-grade-badge--lg {
+  min-width: 36px;
+  padding: 4px 12px;
+  font-size: 0.875rem;
+}
+
+.ven-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.ven-delta--up {
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.22);
+}
+
+.ven-delta--down {
+  color: #EF4444;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+}
+
+.ven-delta--flat {
+  color: rgba(245, 245, 247, 0.3);
+  background: transparent;
+  font-weight: 400;
+  padding: 3px 6px;
+}
+
+.ven-signals-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+.ven-signal-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  padding: 1px 5px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  transition: all 150ms ease;
+}
+
+.ven-signal-chip--on {
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.ven-signal-chip--off {
+  color: rgba(245, 245, 247, 0.2);
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.04);
+}
+
+.ven-signals-empty {
+  color: rgba(245, 245, 247, 0.2);
+  font-size: 0.75rem;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   VIEW TOGGLE (Grid / List)
+   ══════════════════════════════════════════════════════════════ */
+
+.ven-view-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  margin-right: 8px;
+}
+
+.ven-view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  color: rgba(245, 245, 247, 0.45);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ven-view-btn:hover {
+  color: rgba(245, 245, 247, 0.8);
+}
+
+.ven-view-btn--active {
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DENSE LIST VIEW (table-like Bloomberg row layout)
+   ══════════════════════════════════════════════════════════════ */
+
+.ven-list-view {
+  width: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0.005) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* 10 columns: rank sym sector grade score delta tier mcap signals arrow */
+.ven-list-head,
+.ven-list-row {
+  display: grid;
+  grid-template-columns:
+    50px           /* rank */
+    minmax(160px, 1.2fr) /* sym */
+    minmax(120px, 1fr)   /* sector */
+    70px           /* grade */
+    minmax(100px, 1fr)   /* score bar */
+    70px           /* delta */
+    minmax(100px, 0.8fr) /* tier */
+    100px          /* mcap */
+    minmax(130px, auto)  /* signals */
+    28px;          /* arrow */
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+}
+
+.ven-list-head {
+  padding-top: 16px;
+  padding-bottom: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.4);
+}
+
+.ven-list-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: background 180ms ease, transform 180ms ease;
+}
+
+.ven-list-row:last-child {
+  border-bottom: none;
+}
+
+.ven-list-row:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.ven-list-row:focus-visible {
+  outline: 2px solid rgba(245, 245, 247, 0.4);
+  outline-offset: -2px;
+}
+
+.ven-list-cell {
+  min-width: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.8125rem;
+}
+
+.ven-list-cell--rank {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgba(245, 245, 247, 0.35);
+  text-align: left;
+}
+
+.ven-list-cell--sym {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ven-list-logo,
+.ven-list-logo-fallback {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ven-list-logo-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: rgba(245, 245, 247, 0.6);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.ven-list-sym-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.ven-list-sym-ticker {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+}
+
+.ven-list-sym-name {
+  font-size: 0.6875rem;
+  color: rgba(245, 245, 247, 0.45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ven-list-cell--sector {
+  font-size: 0.75rem;
+  color: rgba(245, 245, 247, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ven-list-cell--grade {
+  text-align: left;
+}
+
+.ven-list-cell--score {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ven-list-score {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 22px;
+}
+
+.ven-list-score-bar {
+  flex: 1;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+  overflow: hidden;
+  max-width: 90px;
+}
+
+.ven-list-score-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ven-list-cell--delta { text-align: left; }
+
+.ven-list-cell--tier { text-align: left; }
+
+.ven-tier-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.ven-tier-pill--institutional {
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+.ven-tier-pill--emerging {
+  color: #8B5CF6;
+  background: rgba(139, 92, 246, 0.08);
+  border-color: rgba(139, 92, 246, 0.2);
+}
+.ven-tier-pill--speculative {
+  color: #F59E0B;
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+.ven-tier-pill--unqualified {
+  color: rgba(239, 68, 68, 0.85);
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.ven-list-cell--mcap {
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #f5f5f7;
+  text-align: right;
+}
+
+.ven-list-cell--signals {
+  justify-self: end;
+}
+
+.ven-list-cell--arrow {
+  color: rgba(245, 245, 247, 0.3);
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.ven-list-row:hover .ven-list-cell--arrow {
+  color: rgba(245, 245, 247, 0.8);
+  transform: translateX(2px);
+}
+
+/* List view collapses on narrow screens to essentials */
+@media (max-width: 1100px) {
+  .ven-list-head,
+  .ven-list-row {
+    grid-template-columns:
+      40px
+      minmax(140px, 1.5fr)
+      60px
+      minmax(80px, 1fr)
+      60px
+      90px
+      24px;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+  .ven-list-cell--sector,
+  .ven-list-cell--tier,
+  .ven-list-cell--signals {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .ven-list-head,
+  .ven-list-row {
+    grid-template-columns:
+      30px
+      minmax(120px, 1.5fr)
+      50px
+      60px
+      80px
+      20px;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  .ven-list-cell--score .ven-list-score-bar {
+    display: none;
+  }
+}
+
+/* Day mode */
+.ventures-page.day-mode .ven-pulse {
+  background:
+    radial-gradient(ellipse 140% 60% at 0% 0%, rgba(16, 185, 129, 0.06) 0%, transparent 55%),
+    radial-gradient(ellipse 140% 60% at 100% 100%, rgba(239, 68, 68, 0.04) 0%, transparent 55%),
+    #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 8px 28px rgba(15, 23, 42, 0.06);
+}
+
+.ventures-page.day-mode .ven-pulse-eyebrow { color: #0f172a; }
+.ventures-page.day-mode .ven-pulse-sub { color: #64748b; }
+.ventures-page.day-mode .ven-pulse-col-title { color: #475569; }
+.ventures-page.day-mode .ven-pulse-col-head { border-bottom-color: rgba(15, 23, 42, 0.08); }
+.ventures-page.day-mode .ven-pulse-col-count {
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.05);
+}
+.ventures-page.day-mode .ven-pulse-rank { color: #94a3b8; }
+.ventures-page.day-mode .ven-pulse-sym { color: #0f172a; }
+.ventures-page.day-mode .ven-pulse-arrow { color: #64748b; }
+.ventures-page.day-mode .ven-pulse-to { color: #0f172a; }
+.ventures-page.day-mode .ven-pulse-item:hover { background: rgba(15, 23, 42, 0.03); }
+
+.ventures-page.day-mode .ven-list-view {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
+}
+.ventures-page.day-mode .ven-list-head {
+  background: #f8f9fa;
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+  color: #64748b;
+}
+.ventures-page.day-mode .ven-list-row { border-bottom-color: rgba(15, 23, 42, 0.05); }
+.ventures-page.day-mode .ven-list-row:hover { background: rgba(15, 23, 42, 0.025); }
+.ventures-page.day-mode .ven-list-cell--rank { color: #94a3b8; }
+.ventures-page.day-mode .ven-list-sym-ticker { color: #0f172a; }
+.ventures-page.day-mode .ven-list-sym-name { color: #64748b; }
+.ventures-page.day-mode .ven-list-cell--sector { color: #475569; }
+.ventures-page.day-mode .ven-list-cell--mcap { color: #0f172a; }
+.ventures-page.day-mode .ven-list-cell--arrow { color: #94a3b8; }
+
+.ventures-page.day-mode .ven-view-toggle {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
+}
+.ventures-page.day-mode .ven-view-btn { color: #64748b; }
+.ventures-page.day-mode .ven-view-btn:hover { color: #0f172a; }
+.ventures-page.day-mode .ven-view-btn--active {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.05);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LIVE / CACHED DATA PILL (stats bar indicator)
+   ══════════════════════════════════════════════════════════════ */
+
+.ventures-data-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 8px;
+  margin-right: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.ventures-data-pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.ventures-data-pill--live {
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.22);
+}
+
+.ventures-data-pill--live .ventures-data-pill-dot {
+  background: #10B981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  animation: ventures-pulse 2s ease-in-out infinite;
+}
+
+.ventures-data-pill--mock {
+  color: rgba(245, 245, 247, 0.4);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.ventures-data-pill--mock .ventures-data-pill-dot {
+  background: rgba(245, 245, 247, 0.3);
+}
+
+@keyframes ventures-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* Day mode */
+.ventures-page.day-mode .ventures-data-pill--live {
+  color: #047857;
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.28);
+}
+.ventures-page.day-mode .ventures-data-pill--live .ventures-data-pill-dot {
+  background: #047857;
+}
+.ventures-page.day-mode .ventures-data-pill--mock {
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   THREE-TAB NAVIGATION (Institutional / Growth / Discovery)
+   Sits between featured-hero and dealflow section. Glass pill row
+   that filters the deal flow below without disturbing existing
+   stage/category/sort dropdowns.
+   ══════════════════════════════════════════════════════════════ */
+
+.ventures-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 32px 0 20px;
+  padding: 6px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.012) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 16px rgba(0, 0, 0, 0.2);
+  width: fit-content;
+  max-width: 100%;
+}
+
+.ventures-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: rgba(245, 245, 247, 0.55);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  transition: all 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.ventures-tab:hover {
+  color: rgba(245, 245, 247, 0.85);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ventures-tab--active {
+  color: #f5f5f7;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border-color: rgba(255, 255, 255, 0.09);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    0 0 16px rgba(255, 255, 255, 0.04);
+}
+
+/* Per-tab color accents when active — subtle 1.5px underline + matching glow */
+.ventures-tab--active::after {
+  content: '';
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 4px;
+  height: 1.5px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.55;
+  transition: opacity 220ms ease;
+}
+
+.ventures-tab[data-variant="institutional"].ventures-tab--active {
+  color: #10B981;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, rgba(16, 185, 129, 0.04) 100%);
+  border-color: rgba(16, 185, 129, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(16, 185, 129, 0.18),
+    0 2px 10px rgba(0, 0, 0, 0.22),
+    0 0 18px rgba(16, 185, 129, 0.2);
+}
+
+.ventures-tab[data-variant="growth"].ventures-tab--active {
+  color: #f5f5f7;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 2px 10px rgba(0, 0, 0, 0.22),
+    0 0 18px rgba(255, 255, 255, 0.2);
+}
+
+.ventures-tab[data-variant="discovery"].ventures-tab--active {
+  color: #F59E0B;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.14) 0%, rgba(245, 158, 11, 0.04) 100%);
+  border-color: rgba(245, 158, 11, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(245, 158, 11, 0.18),
+    0 2px 10px rgba(0, 0, 0, 0.22),
+    0 0 18px rgba(245, 158, 11, 0.2);
+}
+
+.ventures-tab-label {
+  font-weight: 500;
+}
+
+.ventures-tab--active .ventures-tab-label {
+  font-weight: 600;
+}
+
+.ventures-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgba(245, 245, 247, 0.45);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+}
+
+.ventures-tab--active .ventures-tab-count {
+  color: rgba(245, 245, 247, 0.85);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Day mode */
+.ventures-page.day-mode .ventures-tabs {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.03);
+}
+
+.ventures-page.day-mode .ventures-tab {
+  color: #64748b;
+}
+
+.ventures-page.day-mode .ventures-tab:hover {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.03);
+}
+
+.ventures-page.day-mode .ventures-tab--active {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.ventures-page.day-mode .ventures-tab-count {
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.05);
+}
+
+.ventures-page.day-mode .ventures-tab--active .ventures-tab-count {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.1);
+}
+
+/* Small screens: let the tab row scroll horizontally */
+@media (max-width: 768px) {
+  .ventures-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    width: 100%;
+    margin: 20px 0 16px;
+  }
+  .ventures-tabs::-webkit-scrollbar { display: none; }
+  .ventures-tab {
+    flex: 0 0 auto;
+    padding: 9px 14px;
+    font-size: 0.8125rem;
+  }
+}
+
+/* Tabs moved up — tighter spacing so they sit right under the stats bar */
+.ventures-tabs--sticky {
+  margin: 20px 0 14px;
+}
+
+/* Compact dealflow header — no hero title dominance, tight filter row */
+.ventures-dealflow-header--compact {
+  margin-top: 20px;
+  margin-bottom: 12px;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.ventures-dealflow-header--compact .ventures-section-title {
+  font-size: 1.25rem;
+  letter-spacing: -0.015em;
+  margin-bottom: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MARKET PULSE STRIP — compact ticker-tape replacing the 2-col block
+   ══════════════════════════════════════════════════════════════ */
+
+.ven-pulse-strip {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 18px 0 8px;
+  padding: 10px 16px;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.04) 0%, rgba(255, 255, 255, 0.015) 40%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.ven-pulse-strip-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.65);
+  padding-right: 14px;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ven-pulse-strip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+  animation: ven-pulse-breathe 2.4s ease-in-out infinite;
+}
+
+.ven-pulse-strip-track {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.ven-pulse-strip-track::-webkit-scrollbar { display: none; }
+
+.ven-pulse-strip-skel {
+  flex: 0 0 auto;
+  width: 120px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.07) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: ven-shimmer 1.6s infinite;
+}
+
+.ven-pulse-pill {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 5px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ven-pulse-pill:hover {
+  transform: translateY(-1px);
+}
+
+.ven-pulse-pill--up {
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.ven-pulse-pill--up:hover {
+  background: rgba(16, 185, 129, 0.14);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.ven-pulse-pill--down {
+  color: #EF4444;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.ven-pulse-pill-sym {
+  color: #f5f5f7;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.ven-pulse-pill-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  opacity: 0.7;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.ven-pulse-pill-to {
+  color: currentColor;
+  opacity: 1;
+}
+
+.ven-pulse-pill-delta {
+  font-variant-numeric: tabular-nums;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DENSE DEAL FLOW TABLE — Bloomberg row layout
+   Columns: # | Project | Score | Grade | Dims | MCap | 24h | 7d | 30d | Vol | Smart | →
+   ══════════════════════════════════════════════════════════════ */
+
+.ven-table {
+  width: 100%;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.012) 100%),
+    rgba(9, 9, 11, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: var(--radius-xl);
+  overflow-x: auto;
+  overflow-y: hidden;
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 10px 32px rgba(0, 0, 0, 0.32);
+  -webkit-overflow-scrolling: touch;
+}
+
+.ven-table::-webkit-scrollbar { height: 6px; }
+.ven-table::-webkit-scrollbar-track { background: transparent; }
+.ven-table::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 3px; }
+.ven-table::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.16); }
+
+/* Grid rows keep their full column widths and let the parent scroll horizontally
+   when the viewport is too narrow to show all 12 columns at once. */
+.ven-table-head,
+.ven-table-body .ven-row {
+  min-width: 1180px;
+}
+
+.ven-table-head,
+.ven-row {
+  display: grid;
+  /* 12 columns */
+  grid-template-columns:
+    44px                              /* rank */
+    minmax(220px, 1.5fr)              /* project */
+    62px                              /* score gauge */
+    56px                              /* grade */
+    minmax(110px, 0.9fr)              /* dimensions */
+    90px                              /* mcap */
+    64px                              /* 24h */
+    64px                              /* 7d */
+    64px                              /* 30d */
+    80px                              /* volume */
+    minmax(120px, 1fr)                /* smart money */
+    28px;                             /* action arrow */
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+}
+
+.ven-table-head {
+  padding-top: 13px;
+  padding-bottom: 13px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.ven-table-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.ven-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.025);
+  cursor: pointer;
+  transition: background 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.ven-row:last-child {
+  border-bottom: none;
+}
+
+.ven-row:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.015));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.ven-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: rgb(var(--row-rgb, 156, 163, 175));
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.ven-row:hover::before {
+  opacity: 0.6;
+}
+
+.ven-row:focus-visible {
+  outline: 2px solid rgba(245, 245, 247, 0.4);
+  outline-offset: -2px;
+}
+
+.ven-row-cell {
+  min-width: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ven-row-cell--rank {
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.3);
+  text-align: right;
+  padding-right: 4px;
+}
+
+.ven-row-cell--project {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ven-row-logo {
+  border-radius: 50%;
+  flex-shrink: 0;
+  object-fit: cover;
+}
+
+.ven-row-logo--fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.ven-row-project-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.ven-row-project-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ven-row-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ven-row-ticker {
+  font-size: 0.75rem;
+  color: rgba(245, 245, 247, 0.45);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.ven-row-cat-pill {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 1px 8px;
+  border-radius: 4px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgb(var(--cat-rgb));
+  background: rgba(var(--cat-rgb), 0.08);
+  border: 1px solid rgba(var(--cat-rgb), 0.2);
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ven-row-cell--score {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ven-row-gauge-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.ven-row-cell--grade {
+  text-align: left;
+}
+
+.ven-row-cell--dims {
+  min-width: 0;
+}
+
+.ven-row-dims {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ven-row-dim {
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  align-items: center;
+  gap: 6px;
+}
+
+.ven-row-dim-label {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.4);
+  letter-spacing: 0.04em;
+  text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+}
+
+.ven-row-dim-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.ven-row-dim-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ven-row-dim-empty,
+.ven-row-dim-val {
+  color: rgba(245, 245, 247, 0.2);
+  font-size: 0.75rem;
+}
+
+.ven-row-cell--mcap,
+.ven-row-cell--vol {
+  color: #f5f5f7;
+  font-weight: 600;
+  text-align: right;
+}
+
+.ven-row-cell--ch {
+  text-align: right;
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+
+.ven-row-cell--ch-up {
+  color: #10B981;
+}
+
+.ven-row-cell--ch-down {
+  color: #EF4444;
+}
+
+.ven-row-cell--smart {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.ven-smart-line {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.65);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.ven-smart-line--bull {
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.ven-smart-line--bear {
+  color: #EF4444;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.ven-row-cell--action {
+  color: rgba(245, 245, 247, 0.25);
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.ven-row:hover .ven-row-cell--action {
+  color: rgba(245, 245, 247, 0.8);
+  transform: translateX(2px);
+}
+
+/* Table responsive: progressively drop columns */
+@media (max-width: 1280px) {
+  .ven-table-head,
+  .ven-row {
+    grid-template-columns:
+      40px
+      minmax(200px, 1.6fr)
+      58px
+      56px
+      minmax(100px, 0.9fr)
+      84px
+      60px
+      60px
+      74px
+      minmax(110px, 1fr)
+      24px;
+    gap: 12px;
+    padding: 11px 14px;
+  }
+  /* drop 30d column (it's the 9th) */
+  .ven-table-head > .ven-row-cell:nth-child(9),
+  .ven-row > .ven-row-cell:nth-child(9) {
+    display: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  .ven-table-head,
+  .ven-row {
+    grid-template-columns:
+      34px
+      minmax(180px, 1.5fr)
+      54px
+      52px
+      88px
+      60px
+      60px
+      72px
+      20px;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+  /* drop dimensions (5th), volume (9th→now missing), smart money */
+  .ven-table-head > .ven-row-cell:nth-child(5),
+  .ven-row > .ven-row-cell:nth-child(5),
+  .ven-table-head > .ven-row-cell:nth-child(8),
+  .ven-row > .ven-row-cell:nth-child(8),
+  .ven-table-head > .ven-row-cell:nth-child(9),
+  .ven-row > .ven-row-cell:nth-child(9),
+  .ven-table-head > .ven-row-cell:nth-child(10),
+  .ven-row > .ven-row-cell:nth-child(10),
+  .ven-table-head > .ven-row-cell:nth-child(11),
+  .ven-row > .ven-row-cell:nth-child(11) {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .ven-table-head,
+  .ven-row {
+    grid-template-columns:
+      30px
+      minmax(120px, 1.4fr)
+      46px
+      42px
+      72px
+      16px;
+    gap: 8px;
+    padding: 10px 10px;
+  }
+  /* Mobile shows: rank, project, score, grade, mcap, arrow */
+  .ven-table-head > .ven-row-cell:nth-child(n+5):nth-child(-n+11),
+  .ven-row > .ven-row-cell:nth-child(n+5):nth-child(-n+11) {
+    display: none;
+  }
+  /* Move MCap to the position we've kept */
+  .ven-row-cell--mcap { display: inline-flex !important; }
+}
+
+/* Day mode table */
+.ventures-page.day-mode .ven-table {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+.ventures-page.day-mode .ven-table-head {
+  background: #f8f9fa;
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+  color: #64748b;
+}
+.ventures-page.day-mode .ven-row {
+  border-bottom-color: rgba(15, 23, 42, 0.05);
+}
+.ventures-page.day-mode .ven-row:hover { background: rgba(15, 23, 42, 0.025); }
+.ventures-page.day-mode .ven-row-cell--rank { color: #94a3b8; }
+.ventures-page.day-mode .ven-row-name { color: #0f172a; }
+.ventures-page.day-mode .ven-row-ticker { color: #64748b; }
+.ventures-page.day-mode .ven-row-dim-track { background: rgba(15, 23, 42, 0.08); }
+.ventures-page.day-mode .ven-row-dim-label { color: #94a3b8; }
+.ventures-page.day-mode .ven-row-cell--mcap,
+.ventures-page.day-mode .ven-row-cell--vol { color: #0f172a; }
+.ventures-page.day-mode .ven-row-cell--action { color: #94a3b8; }
+.ventures-page.day-mode .ven-smart-line {
+  color: #475569;
+  background: #f8f9fa;
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+.ventures-page.day-mode .ven-pulse-strip {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.05) 0%, #ffffff 40%);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+.ventures-page.day-mode .ven-pulse-strip-label {
+  color: #0f172a;
+  border-right-color: rgba(15, 23, 42, 0.08);
+}
+.ventures-page.day-mode .ven-pulse-pill-sym { color: #0f172a; }
+.ventures-page.day-mode .ven-pulse-pill--up {
+  color: #047857;
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+.ventures-page.day-mode .ven-pulse-pill--down {
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.22);
+}
+.ventures-page.day-mode .ven-pulse-pill-delta {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+/* ── honesty marks ──────────────────────────────────────────────────────
+   Two states the page could not previously express: a scoring feed that is
+   stale, and one that is not answering at all. Both used to render as an
+   ordinary quiet week. */
+
+.ventures-scores-asof {
+  margin: var(--sp-3) 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.55));
+}
+
+.ven-pulse-strip--degraded {
+  align-items: center;
+  gap: var(--sp-3);
+}
+.ven-pulse-strip--degraded .ven-pulse-strip-dot {
+  background: rgba(251, 191, 36, 0.9);
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.16);
+  animation: none;
+}
+.ven-pulse-strip-note {
+  font-size: 12px;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.55));
+  line-height: 1.5;
+}

@@ -1,0 +1,475 @@
+{
+  "buildCommand": "if [ \"$VERCEL_ENV\" = \"production\" ]; then npm run build:prerender; else npm run build; fi",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "regions": ["fra1"],
+  "functions": {
+    "api/media-api.js": {
+      "maxDuration": 30
+    },
+    "api/stocks.js": {
+      "maxDuration": 30,
+      "includeFiles": "../../packages/server/lib/earnings-report-core.js"
+    },
+    "api/rwa-review.js": {
+      "maxDuration": 45
+    },
+    "api/rwa-analysis.js": {
+      "maxDuration": 45
+    },
+    "api/vitals.js": {
+      "maxDuration": 60,
+      "includeFiles": "../../packages/server/lib/{vitals-core,vitals-registry,lz4-decode,vitals-analysis,llm-gateway}.js"
+    },
+    "api/intel-api.js": {
+      "includeFiles": "api/_data/intelligence-data.json",
+      "maxDuration": 30
+    },
+    "api/market-api.js": {
+      "maxDuration": 30
+    },
+    "api/social-api.js": {
+      "maxDuration": 30
+    },
+    "api/data-api.js": {
+      "includeFiles": "{api/_data/intelligence-data.json,../../apps/research/src/pages/ventures/components/hub71-crypto-seed.json,../../packages/server/lib/private-markets-core.js}"
+    },
+    "api/codex.js": {
+      "includeFiles": "../../packages/server/lib/{token-registry,codex-metrics-kv}.js"
+    },
+    "api/codex-usage.js": {
+      "includeFiles": "../../packages/server/lib/codex-metrics-kv.js"
+    },
+    "api/trade-api.js": {
+      "includeFiles": "../../packages/server/lib/{token-registry,codex-metrics-kv}.js"
+    },
+    "api/token-resolve.js": {
+      "includeFiles": "../../packages/server/lib/{token-registry,codex-metrics-kv}.js"
+    }
+  },
+  "crons": [
+    { "path": "/api/cron/refresh-cg-platform-map", "schedule": "0 6 * * *" },
+    { "path": "/api/cron/refresh-cg-snapshot", "schedule": "*/3 * * * *" },
+    { "path": "/api/cron/refresh-token-snapshot", "schedule": "*/3 * * * *" },
+    { "path": "/api/cron/warm-showcase", "schedule": "*/30 * * * *" },
+    { "path": "/api/cron/warm-cache", "schedule": "*/5 * * * *" },
+    { "path": "/api/social-api?fn=kol&route=sync", "schedule": "*/10 * * * *" },
+    { "path": "/api/vitals?fn=bundle&tier=core", "schedule": "*/10 * * * *" },
+    { "path": "/api/vitals?fn=bundle&tier=full", "schedule": "*/15 * * * *" }
+  ],
+  "redirects": [
+    { "source": "/lp", "destination": "https://spectreai.io/lp", "permanent": true },
+    { "source": "/lp/:path*", "destination": "https://spectreai.io/lp/:path*", "permanent": true }
+  ],
+  "rewrites": [
+    { "source": "/ingest/static/(.*)", "destination": "https://us-assets.i.posthog.com/static/$1" },
+    { "source": "/ingest/(.*)",        "destination": "https://us.i.posthog.com/$1" },
+    { "source": "/api/x-bubbles/:asset", "destination": "/api/social-api?fn=x-bubbles&route=token&asset=:asset" },
+    { "source": "/api/x-bubbles", "destination": "/api/social-api?fn=x-bubbles&route=leaderboard" },
+    { "source": "/api/social/mindshare/heatmap", "destination": "/api/social-api?fn=mindshare-heatmap" },
+    { "source": "/api/social/mentions/:asset", "destination": "/api/social-api?fn=xdash&route=mentions&asset=:asset" },
+    { "source": "/api/you/events/health", "destination": "/api/you-api?fn=events&path=health" },
+    { "source": "/api/you/events", "destination": "/api/you-api?fn=events" },
+    { "source": "/api/you/compose", "destination": "/api/you-api?fn=compose" },
+    { "source": "/api/onchain/:route(.*)", "destination": "/api/trade-api?fn=onchain&route=:route" },
+    { "source": "/api/tradingview/udf/:route", "destination": "/api/trade-api?fn=tradingview-udf&route=:route" },
+    { "source": "/api/tradingview/symbol", "destination": "/api/trade-api?fn=tradingview-symbol" },
+    { "source": "/api/tradingview/search", "destination": "/api/trade-api?fn=tradingview-search" },
+    { "source": "/api/bars", "destination": "/api/trade-api?fn=bars" },
+    { "source": "/api/tokens/trending", "destination": "/api/codex?action=trending" },
+    { "source": "/api/token/details", "destination": "/api/data-api?fn=extended-proxy&route=scanner-token" },
+    { "source": "/api/token/details-batch", "destination": "/api/codex?action=details-batch" },
+    { "source": "/api/news/history", "destination": "/api/news-api?fn=news-history" },
+    { "source": "/api/news/brief", "destination": "/api/news-api?fn=news-brief" },
+    { "source": "/api/calendar/event-brief", "destination": "/api/intel-api?fn=calendar-api&route=event-brief" },
+    { "source": "/api/brain/:path", "destination": "/api/market-api?fn=brain&path=:path" },
+    { "source": "/api/brain", "destination": "/api/market-api?fn=brain" },
+    { "source": "/api/swap/:action(.*)", "destination": "/api/trade-api?fn=swap&action=:action" },
+    { "source": "/api/swap", "destination": "/api/trade-api?fn=swap" },
+    { "source": "/api/project/crawl", "destination": "/api/trade-api?fn=project-crawl" },
+    { "source": "/api/fear-greed/:path(.*)", "destination": "/api/market-api?fn=fear-greed&path=:path" },
+    { "source": "/api/coingecko/heatmap", "destination": "/api/market-api?fn=heatmap" },
+    { "source": "/api/coingecko/:cgpath(.*)", "destination": "/api/cg-proxy?cgpath=:cgpath" },
+    { "source": "/api/stocks/candles", "destination": "/api/stocks?route=candles" },
+    { "source": "/api/stocks/quotes", "destination": "/api/stocks?route=quotes" },
+    { "source": "/api/stocks/quote/:sym", "destination": "/api/stocks?route=quote&sym=:sym" },
+    { "source": "/api/stocks/search", "destination": "/api/stocks?route=search" },
+    { "source": "/api/stocks/fundamentals/:sym", "destination": "/api/stocks?route=fundamentals&sym=:sym" },
+    { "source": "/api/stocks/insiders/:sym", "destination": "/api/stocks?route=insiders&sym=:sym" },
+    { "source": "/api/stocks/news/:sym", "destination": "/api/stocks?route=news&sym=:sym" },
+    { "source": "/api/stocks/reported/:sym", "destination": "/api/stocks?route=reported&sym=:sym" },
+    { "source": "/api/stocks/analysts/:sym", "destination": "/api/stocks?route=analysts&sym=:sym" },
+    { "source": "/api/stocks/earnings", "destination": "/api/stocks?route=earnings" },
+    { "source": "/api/stocks/movers", "destination": "/api/stocks?route=movers" },
+    { "source": "/api/stocks/indices", "destination": "/api/stocks?route=indices" },
+    { "source": "/api/market/sectors/snapshot", "destination": "/api/market-api?fn=sector-snapshot" },
+    { "source": "/api/market/sectors/top-movers", "destination": "/api/market-api?fn=market-intel&route=sectors-top-movers" },
+    { "source": "/api/market/sectors/ai-analysis", "destination": "/api/market-api?fn=market-intel&route=sectors-ai-analysis" },
+    { "source": "/api/market/liquidations", "destination": "/api/data-api?fn=extended-proxy&route=market-liquidations" },
+    { "source": "/api/market/stats", "destination": "/api/data-api?fn=extended-proxy&route=market-stats" },
+    { "source": "/api/market/dominance-history", "destination": "/api/data-api?fn=extended-proxy&route=dominance-history" },
+    { "source": "/api/market/:route", "destination": "/api/market-api?fn=market-intel&route=:route" },
+    { "source": "/api/polymarket/events", "destination": "/api/market-api?fn=polymarket&route=events" },
+    { "source": "/api/polymarket/event/:slug", "destination": "/api/market-api?fn=polymarket&route=event&slug=:slug" },
+    { "source": "/api/polymarket/event-bundle/:slug", "destination": "/api/market-api?fn=polymarket&route=event-bundle&slug=:slug" },
+    { "source": "/api/polymarket/prices-history", "destination": "/api/market-api?fn=polymarket&route=prices-history" },
+    { "source": "/api/polymarket/analysis", "destination": "/api/market-api?fn=polymarket&route=analysis" },
+    { "source": "/api/polymarket/orderbook", "destination": "/api/market-api?fn=polymarket&route=orderbook" },
+    { "source": "/api/polymarket/trades", "destination": "/api/market-api?fn=polymarket&route=trades" },
+    { "source": "/api/kalshi/events", "destination": "/api/market-api?fn=kalshi&route=events" },
+    { "source": "/api/kalshi/event/:ticker", "destination": "/api/market-api?fn=kalshi&route=event&ticker=:ticker" },
+    { "source": "/api/charts/liq-heatmap", "destination": "/api/market-api?fn=charts-proxy&route=liq-heatmap" },
+    { "source": "/api/charts/liq-map", "destination": "/api/market-api?fn=charts-proxy&route=liq-map" },
+    { "source": "/api/charts/exchange-list", "destination": "/api/market-api?fn=charts-proxy&route=exchange-list" },
+    { "source": "/api/charts/liq-prints", "destination": "/api/market-api?fn=charts-proxy&route=liq-prints" },
+    { "source": "/api/seasonality", "destination": "/api/market-api?fn=seasonality" },
+    { "source": "/api/crossasset", "destination": "/api/market-api?fn=crossasset" },
+    { "source": "/api/equity-options", "destination": "/api/market-api?fn=equity-options" },
+    { "source": "/api/token-flow", "destination": "/api/market-api?fn=token-flow" },
+    { "source": "/api/sector/lines", "destination": "/api/market-api?fn=sector-lines" },
+    { "source": "/api/news/rss", "destination": "/api/news-api?fn=news-rss" },
+    { "source": "/api/welcome/x-tweets", "destination": "/api/welcome-tweets" },
+    { "source": "/api/news", "destination": "/api/news-api?fn=news" },
+    { "source": "/api/cryptopanic", "destination": "/api/news-api?fn=cryptopanic" },
+    { "source": "/api/brief/:route", "destination": "/api/intel-api?fn=brief-api&route=:route" },
+    { "source": "/api/intelligence/breaking", "destination": "/api/intel-api?fn=intelligence-api&route=breaking" },
+    { "source": "/api/intelligence/news", "destination": "/api/intel-api?fn=intelligence-api&route=news" },
+    { "source": "/api/intelligence/featured", "destination": "/api/intel-api?fn=intelligence-api&route=featured" },
+    { "source": "/api/intelligence/activity", "destination": "/api/intel-api?fn=intelligence-api&route=activity" },
+    { "source": "/api/intelligence/stats", "destination": "/api/intel-api?fn=intelligence-api&route=stats" },
+    { "source": "/api/intelligence/daily/latest", "destination": "/api/intel-api?fn=intelligence-api&route=daily-latest" },
+    { "source": "/api/intelligence/:type/:slug", "destination": "/api/intel-api?fn=intelligence-api&route=article&type=:type&slug=:slug" },
+    { "source": "/api/intelligence/:type", "destination": "/api/intel-api?fn=intelligence-api&route=type&type=:type" },
+    { "source": "/api/intelligence", "destination": "/api/intel-api?fn=intelligence-api" },
+    { "source": "/api/dossier-proxy", "destination": "/api/intel-api?fn=dossier-proxy" },
+    { "source": "/api/dossier/health", "destination": "/api/intel-api?fn=dossier-api&route=health" },
+    { "source": "/api/dossier/search", "destination": "/api/intel-api?fn=dossier-api&route=search" },
+    { "source": "/api/dossier/signals", "destination": "/api/intel-api?fn=dossier-api&route=signals" },
+    { "source": "/api/dossier/_brain/annotations", "destination": "/api/intel-api?fn=dossier-api&route=annotations" },
+    { "source": "/api/dossier/:chain/:ca/market/series", "destination": "/api/intel-api?fn=dossier-api&route=series&chain=:chain&ca=:ca" },
+    { "source": "/api/dossier/:chain/:ca/market/candles", "destination": "/api/intel-api?fn=dossier-api&route=candles&chain=:chain&ca=:ca" },
+    { "source": "/api/dossier/:chain/:ca/pools", "destination": "/api/intel-api?fn=dossier-api&route=pools&chain=:chain&ca=:ca" },
+    { "source": "/api/dossier/:chain/:ca/bubblemaps", "destination": "/api/intel-api?fn=dossier-api&route=bubblemaps&chain=:chain&ca=:ca" },
+    { "source": "/api/dossier/:chain/:ca/safety/check", "destination": "/api/intel-api?fn=dossier-api&route=noop" },
+    { "source": "/api/dossier/:chain/:ca/socials/refresh", "destination": "/api/intel-api?fn=dossier-api&route=noop" },
+    { "source": "/api/dossier/:chain/:ca/flows/refresh", "destination": "/api/intel-api?fn=dossier-api&route=noop" },
+    { "source": "/api/dossier/:chain/:ca/lore/generate", "destination": "/api/intel-api?fn=dossier-api&route=noop" },
+    { "source": "/api/dossier/:chain/:ca", "destination": "/api/intel-api?fn=dossier-api&route=lookup&chain=:chain&ca=:ca" },
+    { "source": "/api/detective/:path", "destination": "/api/intel-api?fn=detective-proxy&path=:path" },
+    { "source": "/api/calendar/bundle", "destination": "/api/intel-api?fn=calendar-api&route=bundle" },
+    { "source": "/api/calendar/economic", "destination": "/api/intel-api?fn=calendar-api&route=economic" },
+    { "source": "/api/calendar/reaction", "destination": "/api/intel-api?fn=calendar-api&route=reaction" },
+    { "source": "/api/calendar/analysis", "destination": "/api/intel-api?fn=calendar-api&route=analysis" },
+    { "source": "/api/calendar/themes", "destination": "/api/intel-api?fn=calendar-api&route=themes" },
+    { "source": "/api/calendar/verdict", "destination": "/api/intel-api?fn=calendar-api&route=verdict" },
+    { "source": "/api/calendar/history", "destination": "/api/intel-api?fn=calendar-api&route=history" },
+    { "source": "/api/calendar/event/:id", "destination": "/api/intel-api?fn=calendar-api&route=event&id=:id" },
+    { "source": "/api/rss/daily", "destination": "/api/news-api?fn=rss-feed&type=daily" },
+    { "source": "/api/rss/crypto", "destination": "/api/news-api?fn=rss-feed&type=crypto" },
+    { "source": "/api/rss/stocks", "destination": "/api/news-api?fn=rss-feed&type=stocks" },
+    { "source": "/api/rss/news", "destination": "/api/news-api?fn=rss-feed&type=news" },
+    { "source": "/api/rss", "destination": "/api/news-api?fn=rss-feed" },
+    { "source": "/api/notifications/stream", "destination": "/api/account-api?fn=notifications-api&route=stream" },
+    { "source": "/api/notifications/mark-read", "destination": "/api/account-api?fn=notifications-api&route=mark-read" },
+    { "source": "/api/notifications", "destination": "/api/account-api?fn=notifications-api" },
+    { "source": "/api/search/trending", "destination": "/api/market-api?fn=search-api&route=trending" },
+    { "source": "/api/search/tokens", "destination": "/api/market-api?fn=search-api&route=tokens" },
+    { "source": "/api/search/whisper", "destination": "/api/market-api?fn=search-api&route=whisper" },
+    { "source": "/api/search", "destination": "/api/market-api?fn=search-api" },
+    { "source": "/api/voice/speak", "destination": "/api/media-api?fn=voice-speak" },
+    { "source": "/api/insight", "destination": "/api/intel-api?fn=insight-api" },
+    { "source": "/api/sentiment-read", "destination": "/api/intel-api?fn=sentiment-read" },
+    { "source": "/api/brain-desk", "destination": "/api/intel-api?fn=brain-desk" },
+    { "source": "/api/crowd-stance", "destination": "/api/intel-api?fn=crowd-stance" },
+    { "source": "/api/project-dossier", "destination": "/api/intel-api?fn=project-dossier" },
+    { "source": "/api/insights/rss", "destination": "/api/intel-api?fn=insight-api&route=rss" },
+    { "source": "/api/media/youtube/:type", "destination": "/api/media-api?fn=media&source=youtube&type=:type" },
+    { "source": "/api/media/twitch/:type", "destination": "/api/media-api?fn=media&source=twitch&type=:type" },
+    { "source": "/api/media/podcasts/:type", "destination": "/api/media-api?fn=media&source=podcasts&type=:type" },
+    { "source": "/api/media/spotify/:type", "destination": "/api/media-api?fn=media&source=spotify&type=:type" },
+    { "source": "/api/media/ai/:type", "destination": "/api/media-api?fn=media&source=ai&type=:type" },
+    { "source": "/api/media/feed/:type", "destination": "/api/media-api?fn=media&source=feed&type=:type" },
+    { "source": "/api/media/channels/:source", "destination": "/api/media-api?fn=media&source=channels&type=:source" },
+    { "source": "/api/media/channels", "destination": "/api/media-api?fn=media&source=channels&type=all" },
+    { "source": "/api/ventures/intel", "destination": "/api/ventures-intel" },
+    { "source": "/api/tweets/official", "destination": "/api/tweets-official" },
+    { "source": "/api/tweets/search", "destination": "/api/tweets-search" },
+    { "source": "/api/tweets", "destination": "/api/media-api?fn=tweets" },
+    { "source": "/api/user/:route(.*)", "destination": "/api/account-api?fn=user&route=:route" },
+    { "source": "/api/user", "destination": "/api/account-api?fn=user" },
+    { "source": "/api/admin/:route(.*)", "destination": "/api/account-api?fn=admin&route=:route" },
+    { "source": "/api/admin", "destination": "/api/account-api?fn=admin" },
+    { "source": "/api/referral/:path(.*)", "destination": "/api/account-api?fn=referral&path=:path" },
+    { "source": "/api/referral", "destination": "/api/account-api?fn=referral" },
+    { "source": "/api/fee-config", "destination": "/api/account-api?fn=fee-config" },
+    { "source": "/api/derivatives/:exchange/:path(.*)", "destination": "/api/data-api?fn=derivatives-proxy&route=derivatives&exchange=:exchange&path=:path" },
+    { "source": "/api/deriv-agg", "destination": "/api/data-api?fn=derivatives-proxy&route=deriv-agg" },
+    { "source": "/api/coinglass/coins-markets", "destination": "/api/data-api?fn=derivatives-proxy&route=coinglass&sub=coins-markets" },
+    { "source": "/api/coinglass/total-oi", "destination": "/api/data-api?fn=derivatives-proxy&route=coinglass&sub=total-oi" },
+    { "source": "/api/coinglass/total-liquidations", "destination": "/api/data-api?fn=derivatives-proxy&route=coinglass&sub=total-liquidations" },
+    { "source": "/api/dexscreener-pair/:chain/:address", "destination": "/api/data-api?fn=dexscreener-proxy&route=pair&chain=:chain&address=:address" },
+    { "source": "/api/dexscreener-watchlist/:id", "destination": "/api/data-api?fn=dexscreener-proxy&route=watchlist&id=:id" },
+    { "source": "/api/xdash/admin/overview", "destination": "/api/social-api?fn=xdash&route=admin-overview" },
+    { "source": "/api/xdash/intel/domain-rotations", "destination": "/api/social-api?fn=xdash&route=intel-domain-rotations" },
+    { "source": "/api/xdash/intel/token/:cgId", "destination": "/api/social-api?fn=xdash&route=intel-token&cgId=:cgId" },
+    { "source": "/api/xdash/intel/author/:authorId", "destination": "/api/social-api?fn=xdash&route=intel-author&authorId=:authorId" },
+    { "source": "/api/xdash/new-tokens", "destination": "/api/social-api?fn=xdash&route=new-tokens" },
+    { "source": "/api/xdash/majors", "destination": "/api/social-api?fn=xdash&route=majors" },
+    { "source": "/api/xdash/creator-edits", "destination": "/api/social-api?fn=xdash&route=creator-edits" },
+    { "source": "/api/xdash/token/:cgId", "destination": "/api/social-api?fn=xdash&route=token&cgId=:cgId" },
+    { "source": "/api/xdash/author/:authorId", "destination": "/api/social-api?fn=xdash&route=author&authorId=:authorId" },
+    { "source": "/api/xdash/thesis", "destination": "/api/social-api?fn=xdash&route=thesis" },
+    { "source": "/api/xdash/paper-trader", "destination": "/api/social-api?fn=xdash&route=paper-trader" },
+    { "source": "/api/xdash/momentum-origin/:asset", "destination": "/api/social-api?fn=xdash&route=momentum-origin&asset=:asset" },
+    { "source": "/api/momentum/setups/performance", "destination": "/api/social-api?fn=xdash&route=momentum-performance" },
+    { "source": "/api/momentum/setups/history", "destination": "/api/social-api?fn=xdash&route=momentum-history" },
+    { "source": "/api/momentum/setups/receipts", "destination": "/api/social-api?fn=xdash&route=momentum-receipts" },
+    { "source": "/api/momentum/setups/signals", "destination": "/api/social-api?fn=xdash&route=momentum-signals" },
+    { "source": "/api/momentum/setups", "destination": "/api/social-api?fn=xdash&route=momentum-setups" },
+    { "source": "/api/xdash/:route", "destination": "/api/social-api?fn=xdash&route=:route" },
+    { "source": "/api/kol/:route(.*)", "destination": "/api/social-api?fn=kol&route=:route" },
+    { "source": "/api/kol", "destination": "/api/social-api?fn=kol" },
+    { "source": "/api/x-beta/token/:cgId", "destination": "/api/social-api?fn=x-beta&route=token&cgId=:cgId" },
+    { "source": "/api/x-beta/:route", "destination": "/api/social-api?fn=x-beta&route=:route" },
+    { "source": "/api/compare/chart", "destination": "/api/data-api?fn=extended-proxy&route=compare" },
+    { "source": "/api/weather", "destination": "/api/data-api?fn=extended-proxy&route=weather" },
+    { "source": "/api/ambient", "destination": "/api/data-api?fn=extended-proxy&route=ambient" },
+    { "source": "/api/rwa/protocol/:slug/detail", "destination": "/api/data-api?fn=extended-proxy&route=rwa&sub=protocol-detail&slug=:slug" },
+    { "source": "/api/rwa/review", "destination": "/api/rwa-review" },
+    { "source": "/api/rwa/analysis/protocol/:slug", "destination": "/api/rwa-analysis?protocol=:slug" },
+    { "source": "/api/rwa/analysis/:topic", "destination": "/api/rwa-analysis?topic=:topic" },
+    { "source": "/api/rwa/bundle", "destination": "/api/data-api?fn=extended-proxy&route=rwa&sub=bundle" },
+    { "source": "/api/rwa/bundle-risk", "destination": "/api/data-api?fn=extended-proxy&route=rwa&sub=bundle-risk" },
+    { "source": "/api/rwa/breakdown/history", "destination": "/api/data-api?fn=extended-proxy&route=rwa&sub=breakdown/history" },
+    { "source": "/api/rwa/stablecoins-summary", "destination": "/api/data-api?fn=extended-proxy&route=rwa&sub=stablecoins-summary" },
+    { "source": "/api/rwa/issuer/:slug", "destination": "/api/data-api?fn=extended-proxy&route=rwa&sub=issuer/:slug" },
+    { "source": "/api/rwa/index/history", "destination": "/api/data-api?fn=extended-proxy&route=rwa&sub=index/history" },
+    { "source": "/api/rwa/index/composition", "destination": "/api/data-api?fn=extended-proxy&route=rwa&sub=index/composition" },
+    { "source": "/api/rwa/index/methodology", "destination": "/api/data-api?fn=extended-proxy&route=rwa&sub=index/methodology" },
+    { "source": "/api/rwa/credit-rating/:slug", "destination": "/api/data-api?fn=extended-proxy&route=rwa&sub=credit-rating/:slug" },
+    { "source": "/api/rwa/issuer/:slug/chains", "destination": "/api/data-api?fn=extended-proxy&route=rwa&sub=issuer/:slug/chains" },
+    { "source": "/api/rwa/composability/graph", "destination": "/api/data-api?fn=extended-proxy&route=rwa&sub=composability/graph" },
+    { "source": "/api/rwa/parity/history", "destination": "/api/data-api?fn=extended-proxy&route=rwa&sub=parity/history" },
+    { "source": "/api/rwa/discovery-candidates/:slug/approve", "destination": "/api/data-api?fn=extended-proxy&route=rwa&sub=discovery-candidates/:slug/approve" },
+    { "source": "/api/rwa/discovery-candidates/:slug/reject", "destination": "/api/data-api?fn=extended-proxy&route=rwa&sub=discovery-candidates/:slug/reject" },
+    { "source": "/api/rwa/alerts/:id/acknowledge", "destination": "/api/data-api?fn=extended-proxy&route=rwa&sub=alerts/:id/acknowledge" },
+    { "source": "/api/rwa/:sub", "destination": "/api/data-api?fn=extended-proxy&route=rwa&sub=:sub" },
+    { "source": "/api/token/resolve", "destination": "/api/data-api?fn=extended-proxy&route=token-resolve" },
+    { "source": "/api/token/market-profile", "destination": "/api/data-api?fn=extended-proxy&route=token-market-profile" },
+    { "source": "/api/token/market-scenario", "destination": "/api/token-stubs?fn=market-scenario" },
+    { "source": "/api/token/fundamentals", "destination": "/api/token-stubs?fn=fundamentals" },
+    { "source": "/api/token-exchanges", "destination": "/api/data-api?fn=extended-proxy&route=token-exchanges" },
+    { "source": "/api/token-markets", "destination": "/api/data-api?fn=extended-proxy&route=token-markets" },
+    { "source": "/api/binance-klines", "destination": "/api/data-api?fn=extended-proxy&route=binance-klines" },
+    { "source": "/api/solana-balance", "destination": "/api/data-api?fn=extended-proxy&route=solana-balance" },
+    { "source": "/api/hero/:slug", "destination": "/api/data-api?fn=extended-proxy&route=hero&slug=:slug" },
+    { "source": "/api/og/:file", "destination": "/api/data-api?fn=extended-proxy&route=og&file=:file" },
+    { "source": "/api/monarch/chat", "destination": "/api/monarch-api?fn=chat" },
+    { "source": "/api/monarch/health", "destination": "/api/monarch-api?fn=health" },
+    { "source": "/api/search/query", "destination": "/api/data-api?fn=extended-proxy&route=search-query" },
+    { "source": "/api/accelerators/:path", "destination": "/api/data-api?fn=extended-proxy&route=accelerators&path=:path" },
+    { "source": "/api/accelerators", "destination": "/api/data-api?fn=extended-proxy&route=accelerators" },
+    { "source": "/api/private/:sub(.*)", "destination": "/api/data-api?fn=extended-proxy&route=private-markets&sub=:sub" },
+    { "source": "/api/private-markets/:sub(.*)", "destination": "/api/data-api?fn=extended-proxy&route=private-markets&sub=:sub" },
+    { "source": "/api/private", "destination": "/api/data-api?fn=extended-proxy&route=private-markets" },
+    { "source": "/api/stocks/market-status", "destination": "/api/data-api?fn=extended-proxy&route=stocks-extended&sub=market-status" },
+    { "source": "/api/stocks/news/market", "destination": "/api/data-api?fn=extended-proxy&route=stocks-extended&sub=news-market" },
+    { "source": "/api/stocks/sectors", "destination": "/api/data-api?fn=extended-proxy&route=stocks-extended&sub=sectors" },
+    { "source": "/api/stocks/earnings-calendar", "destination": "/api/data-api?fn=extended-proxy&route=stocks-extended&sub=earnings-calendar" },
+    { "source": "/api/stocks/ai-analysis/:symbol", "destination": "/api/data-api?fn=extended-proxy&route=stocks-extended&sub=ai-analysis&symbol=:symbol" },
+    { "source": "/api/stocks/sparkline/:symbol", "destination": "/api/data-api?fn=extended-proxy&route=stocks-extended&sub=sparkline&symbol=:symbol" },
+    { "source": "/data-api/v1/intelligence/feed", "destination": "/api/data-api?fn=extended-proxy&route=intelligence-feed" },
+    { "source": "/data-api/v1/metrics/insight", "destination": "/api/data-api?fn=extended-proxy&route=metrics-insight" },
+    { "source": "/data-api/v1/metrics/patterns/:key", "destination": "/api/data-api?fn=extended-proxy&route=metrics-patterns&key=:key" },
+    { "source": "/data-api/v1/:path(.*)", "destination": "/api/data-api?fn=extended-proxy&route=v1-proxy&path=:path" },
+    { "source": "/spectre-market-api/:path(.*)", "destination": "https://api.spectreai.io/api/:path" },
+    { "source": "/facts", "destination": "/facts.html" },
+    { "source": "/website2", "destination": "/website2.html" },
+    { "source": "/website2/api", "destination": "/website2/api.html" },
+    { "source": "/fear-greed", "destination": "/fear-greed.html" },
+    { "source": "/liquidation-heatmap", "destination": "/liquidation-heatmap.html" },
+    { "source": "/economic-calendar", "destination": "/economic-calendar.html" },
+    { "source": "/intelligence", "destination": "/intelligence.html" },
+    { "source": "/vs/nansen", "destination": "/vs/nansen.html" },
+    { "source": "/vs/arkham", "destination": "/vs/arkham.html" },
+    { "source": "/vs/tradingview", "destination": "/vs/tradingview.html" },
+    { "source": "/vs/messari", "destination": "/vs/messari.html" },
+    { "source": "/vs/cryptoquant", "destination": "/vs/cryptoquant.html" },
+    { "source": "/vs/dextools", "destination": "/vs/dextools.html" },
+    { "source": "/research-zone/bitcoin", "destination": "/research-zone/bitcoin.html" },
+    { "source": "/research-zone/ethereum", "destination": "/research-zone/ethereum.html" },
+    { "source": "/research-zone/solana", "destination": "/research-zone/solana.html" },
+    { "source": "/research-zone/ripple", "destination": "/research-zone/ripple.html" },
+    { "source": "/research-zone/dogecoin", "destination": "/research-zone/dogecoin.html" },
+    { "source": "/research-zone/chainlink", "destination": "/research-zone/chainlink.html" },
+    { "source": "/research-zone/uniswap", "destination": "/research-zone/uniswap.html" },
+    { "source": "/research-zone/avalanche-2", "destination": "/research-zone/avalanche-2.html" },
+    { "source": "/research-zone/arbitrum", "destination": "/research-zone/arbitrum.html" },
+    { "source": "/how-to/trade-crypto-non-custodially", "destination": "/how-to/trade-crypto-non-custodially.html" },
+    { "source": "/how-to/use-mcp-server-with-claude", "destination": "/how-to/use-mcp-server-with-claude.html" },
+    { "source": "/how-to/read-crypto-fear-and-greed-index", "destination": "/how-to/read-crypto-fear-and-greed-index.html" },
+    { "source": "/glossary/fear-and-greed-index", "destination": "/glossary/fear-and-greed-index.html" },
+    { "source": "/glossary/liquidation", "destination": "/glossary/liquidation.html" },
+    { "source": "/glossary/funding-rate", "destination": "/glossary/funding-rate.html" },
+    { "source": "/glossary/open-interest", "destination": "/glossary/open-interest.html" },
+    { "source": "/glossary/cvd", "destination": "/glossary/cvd.html" },
+    { "source": "/glossary/order-book-depth", "destination": "/glossary/order-book-depth.html" },
+    { "source": "/glossary/whale-tracking", "destination": "/glossary/whale-tracking.html" },
+    { "source": "/glossary/exchange-flows", "destination": "/glossary/exchange-flows.html" },
+    { "source": "/glossary/on-chain-analytics", "destination": "/glossary/on-chain-analytics.html" },
+    { "source": "/glossary/mvrv", "destination": "/glossary/mvrv.html" },
+    { "source": "/glossary/realised-price", "destination": "/glossary/realised-price.html" },
+    { "source": "/glossary/dormant-supply", "destination": "/glossary/dormant-supply.html" },
+    { "source": "/glossary/stablecoin-supply", "destination": "/glossary/stablecoin-supply.html" },
+    { "source": "/glossary/mcp-server", "destination": "/glossary/mcp-server.html" },
+    { "source": "/glossary/x402", "destination": "/glossary/x402.html" },
+    { "source": "/glossary/ai-agent", "destination": "/glossary/ai-agent.html" },
+    { "source": "/glossary/monarch-ai", "destination": "/glossary/monarch-ai.html" },
+    { "source": "/glossary/daily-brief", "destination": "/glossary/daily-brief.html" },
+    { "source": "/glossary/narrative", "destination": "/glossary/narrative.html" },
+    { "source": "/glossary/mindshare", "destination": "/glossary/mindshare.html" },
+    { "source": "/glossary/kol-tracking", "destination": "/glossary/kol-tracking.html" },
+    { "source": "/glossary/social-sentiment", "destination": "/glossary/social-sentiment.html" },
+    { "source": "/glossary/non-custodial", "destination": "/glossary/non-custodial.html" },
+    { "source": "/glossary/privy-wallet", "destination": "/glossary/privy-wallet.html" },
+    { "source": "/glossary/jupiter", "destination": "/glossary/jupiter.html" },
+    { "source": "/glossary/zero-x", "destination": "/glossary/zero-x.html" },
+    { "source": "/glossary/api", "destination": "/glossary/api.html" },
+    { "source": "/glossary/websocket", "destination": "/glossary/websocket.html" },
+    { "source": "/glossary/intelligence-hub", "destination": "/glossary/intelligence-hub.html" },
+    { "source": "/glossary/spect-token", "destination": "/glossary/spect-token.html" },
+    { "source": "/((?!assets/|api/|sw\\.js|registerSW\\.js|workbox-|telegram-detect\\.js|error-beacon\\.js|robots\\.txt|sitemap|llms|manifest\\.json|favicon|og-cache/|tour-images/).*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(self), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), display-capture=(), screen-wake-lock=(), web-share=()" },
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin-allow-popups" },
+        { "key": "Cross-Origin-Resource-Policy", "value": "cross-origin" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://us.i.posthog.com https://us-assets.i.posthog.com https://telegram.org https://auth.privy.io https://privy.spectreai.io https://static.cloudflareinsights.com https://vercel.live; worker-src 'self' blob:; media-src 'self' blob: data: https:; style-src 'self' 'unsafe-inline'; font-src 'self' data: https://vercel.live; img-src 'self' data: blob: https://financialmodelingprep.com https://images.financialmodelingprep.com https://companiesmarketcap.com https://static2.finnhub.io https://assets.coingecko.com https://coin-images.coingecko.com https://*.dexscreener.com https://cryptologos.cc https://*.cloudfront.net https://*.amazonaws.com https://pbs.twimg.com https://abs.twimg.com https://api.dicebear.com https://unavatar.io https://*.googleusercontent.com https://cdn.spectreai.io https://*.public.blob.vercel-storage.com https://*.r2.dev https://*.r2.cloudflarestorage.com https://vercel.live https://vercel.com https:; connect-src 'self' https://api.dexscreener.com https://api.geckoterminal.com https://api.llama.fi https://spectreai.io https://stream.spectreai.io https://us.i.posthog.com https://us-assets.i.posthog.com wss://*.privy.io wss://relay.walletconnect.org https://auth.privy.io https://privy.spectreai.io https://*.privy.systems https://explorer-api.walletconnect.com https://developer-control.vercel.app https://spectre-trading.vercel.app https://trade.spectreai.io https://oauth.telegram.org wss://ws-us3.pusher.com https://ethereum-rpc.publicnode.com https://bsc-dataseed.binance.org https://polygon-bor-rpc.publicnode.com https://arb1.arbitrum.io https://mainnet.base.org https://api.mainnet-beta.solana.com https://api.binance.com https://api.coingecko.com https://assets.coingecko.com https://coin-images.coingecko.com https://api.open-meteo.com https://geocoding-api.open-meteo.com https://vercel.live; frame-src https://oauth.telegram.org https://spectre-trading.vercel.app https://trade.spectreai.io https://auth.privy.io https://privy.spectreai.io https://s.tradingview.com https://www.tradingview.com https://www.youtube.com https://www.youtube-nocookie.com https://youtube.com https://*.bubblemaps.io https://bubblemaps.io https://open.spotify.com https://player.twitch.tv https://www.twitch.tv https://vercel.live https://dexscreener.com https://*.dexscreener.com blob:; frame-ancestors 'self' https://spectreai.io https://research.spectreai.io https://trade.spectreai.io https://app.spectreai.io; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests" }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+        { "key": "Access-Control-Allow-Origin", "value": "https://app.spectreai.io" },
+        { "key": "Vary", "value": "Origin" }
+      ]
+    },
+    {
+      "source": "/charting_library/bundles/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/favicon-(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400" },
+        { "key": "Access-Control-Allow-Origin", "value": "https://app.spectreai.io" },
+        { "key": "Vary", "value": "Origin" }
+      ]
+    },
+    {
+      "source": "/apple-touch-icon.png",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400" },
+        { "key": "Access-Control-Allow-Origin", "value": "https://app.spectreai.io" },
+        { "key": "Vary", "value": "Origin" }
+      ]
+    },
+    {
+      "source": "/(.*)\\.(png|jpg|jpeg|webp|svg|ico|gif|avif)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/(.*)\\.(mp4|webm|mov|m4v)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/(.*)\\.(woff|woff2|ttf|otf|eot)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/robots.txt",
+      "headers": [
+        { "key": "Content-Type", "value": "text/plain; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=3600, s-maxage=3600" },
+        { "key": "X-Robots-Tag", "value": "index, follow" }
+      ]
+    },
+    {
+      "source": "/llms.txt",
+      "headers": [
+        { "key": "Content-Type", "value": "text/plain; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=3600, s-maxage=3600" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
+    {
+      "source": "/llms-full.txt",
+      "headers": [
+        { "key": "Content-Type", "value": "text/plain; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=3600, s-maxage=3600" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
+    {
+      "source": "/sitemap.xml",
+      "headers": [
+        { "key": "Content-Type", "value": "application/xml; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=3600, s-maxage=3600" }
+      ]
+    },
+    {
+      "source": "/sitemap-news.xml",
+      "headers": [
+        { "key": "Content-Type", "value": "application/xml; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=600, s-maxage=600" }
+      ]
+    },
+    {
+      "source": "/manifest.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=3600, s-maxage=3600" }
+      ]
+    },
+    {
+      "source": "/:path*.html",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(self)" }
+      ]
+    },
+    {
+      "source": "/",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Link", "value": "<https://spectreai.io/>; rel=\"canonical\"" },
+        { "key": "Cache-Control", "value": "public, max-age=0, s-maxage=60, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/index.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, s-maxage=60, must-revalidate" }
+      ]
+    }
+  ]
+}

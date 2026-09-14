@@ -1,0 +1,379 @@
+/**
+ * SPECTRE AI — Obsidian & White Design Tokens
+ *
+ * Single global source of truth for the token-page redesign (and the eventual
+ * app-wide pass). Every component CSS file consumes `var(--*)` from here;
+ * NO hard-coded hex values anywhere else in the app.
+ *
+ * Loaded once from `src/index.css` (top of file). The legacy alias block
+ * at the bottom keeps non-redesigned surfaces (Header, Discover, Dashboard)
+ * rendering correctly during the P2-P7 rollout.
+ *
+ * BRAND (2026-07-03): Spectre is BLACK & WHITE. The default accent channel is
+ * warm white — never a hue. The electric-lime experiment is retired; the
+ * `--lime*` variable NAMES survive for legacy consumers but their VALUES now
+ * resolve to the warm-white ramp. Color in the UI exists ONLY as market
+ * semantics (--up mint / --down coral) and per-token accents (useAccentTheme
+ * re-tints the accent channel on token pages from the token's own brand).
+ *
+ * Signature: "A trading terminal carved from a single block of obsidian,
+ * lit from within by a thread of warm white light."
+ */
+
+/* Geist + Geist Mono load from index.html (async, non-render-blocking).
+   The @import that lived here survived into the built main-*.css as a
+   render-blocking cross-origin chain (browser can't paint until the
+   imported CSS resolves) - do NOT reintroduce a font @import in any CSS. */
+
+/* ================================================================
+   ADAPTIVE ACCENT CHANNEL (Iteration 3)
+   ----
+   The accent channel is the page's identity colour. It defaults to
+   WARM WHITE (Spectre is black & white) and the token-page hook
+   (useAccentTheme) overrides these vars per-token with the brand
+   colour extracted from the token's logo / X profile, so SPX themes
+   the page yellow + black, SPECTRE silver,
+   etc. Registering each var via @property tells the browser these
+   custom properties carry <color> values — which is what makes the
+   .app.token-page transition declaration animate them smoothly.
+   Browsers without @property support ignore the registration and
+   simply hard-swap the colour (no JS fallback needed).
+   ================================================================ */
+@property --accent          { syntax: '<color>'; inherits: true; initial-value: #F5F5F7; }
+@property --accent-bright   { syntax: '<color>'; inherits: true; initial-value: #FFFFFF; }
+@property --accent-deep     { syntax: '<color>'; inherits: true; initial-value: #D9D9DE; }
+@property --accent-glow     { syntax: '<color>'; inherits: true; initial-value: rgba(245, 245, 247, 0.38); }
+@property --accent-wash     { syntax: '<color>'; inherits: true; initial-value: rgba(245, 245, 247, 0.07); }
+@property --accent-contrast { syntax: '<color>'; inherits: true; initial-value: #0A0A0B; }
+
+:root {
+  /* ============================================================
+     Mobile token-page bottom dock — single source of truth for the
+     two-bar stack height (Buy/Sell bar + view-nav tab bar). Consumed
+     by .mbn (bottom offset), .mtp-dock-spacer (scroll clearance), and
+     .mstt (scroll-top button offset). Excludes the safe-area inset,
+     which each consumer adds via env(safe-area-inset-bottom).
+     ============================================================ */
+  --mtp-mvn-h: 56px;   /* view-nav tab bar content height (4+48+4) */
+  --mtp-mbn-h: 53px;   /* Buy/Sell bar content height (7+38+8) */
+  --mtp-dock-h: 109px; /* --mtp-mvn-h + --mtp-mbn-h */
+
+  /* ============================================================
+     OBSIDIAN — surface ladder (elevation by lightness, not hue)
+     ============================================================ */
+  --ob-void:        #000000;
+  /* The PAGE SUBSTRATE - what the viewport shows behind every panel.
+     Deliberately NOT --ob-void: on pure black the whole shadow half of the
+     depth system is a no-op, because every panel's `0 14px 38px
+     rgba(0,0,0,0.6)` has nothing left to darken. Lifting the floor a few
+     points is what lets the elevation the panels already declare actually
+     render. Neutral by mandate - a lighter black, never a blue-grey.
+     (--ob-void stays #000 - it is also used as a TEXT colour on light chips,
+     e.g. MobileChartToolbar.css:168.) */
+  --ob-page:        #0A0B0D;
+  --ob-surface-1:   #08090A;   /* base panels */
+  --ob-surface-2:   #0E0F11;   /* raised cards */
+  --ob-surface-3:   #15171A;   /* hover / active card, popovers */
+  --ob-surface-4:   #1C1F23;   /* highest — modals, command palette */
+  /* The CHART plane. Its own tier, deliberately NOT --ob-surface-2: the chart
+     is the focal element and has to read as raised above the panels that frame
+     it (banner, tabs), which are surface-2. It used to follow surface-2, which
+     is why the chart looked like a black hole punched in the page.
+     #111113 is the exact value the Research Zone's TradingView chart uses
+     (apps/research/src/components/TradingViewAdvanced.jsx), so the same asset
+     renders on an identical canvas across both platforms.
+     Consumed by lib/chartStyle.js themeChartSurface() AND by the chart
+     container in TradingChart.css - the two MUST agree or the candles show a
+     seam at the frame edge. bgTone.js re-derives this from the ladder so a
+     picked tone still re-tones the chart. */
+  --ob-chart:       #111113;
+
+  /* ============================================================
+     GLASS — translucent fills layered over the void / aurora
+     ============================================================ */
+  --glass-fill:        rgba(255, 255, 255, 0.025);
+  --glass-fill-hover:  rgba(255, 255, 255, 0.045);
+  --glass-border:      rgba(255, 255, 255, 0.07);
+  --glass-border-lit:  rgba(255, 255, 255, 0.13);
+  --glass-highlight:   rgba(255, 255, 255, 0.10);
+
+  /* ============================================================
+     ACCENT — warm white, the ONLY brand accent (sparingly, < 5%).
+     Spectre is black & white. The --lime* names are LEGACY aliases
+     kept so older CSS keeps resolving — their values are white now.
+     Do not reintroduce a hue here; hue belongs to market semantics
+     (--up/--down) and per-token accents only.
+     ============================================================ */
+  --lime-soft:   #FFFFFF;          /* tint text on accent fills */
+  --lime-300:    #FFFFFF;          /* light hover text */
+  --lime:        #F5F5F7;          /* THE accent — primary actions, focus, live */
+  --lime-deep:   #D9D9DE;          /* pressed states, accent borders */
+  --lime-glow:   rgba(245, 245, 247, 0.38);  /* bloom halos, box-shadow glow */
+  --lime-wash:   rgba(245, 245, 247, 0.07);  /* faint accent backgrounds */
+
+  /* ============================================================
+     MARKET SEMANTICS — distinct from lime (NEVER reuse)
+     ============================================================ */
+  --up:          #34E89E;          /* price up, buy — mint green */
+  --up-glow:     rgba(52, 232, 158, 0.35);
+  --down:        #FF5169;          /* price down, sell — coral red */
+  --down-glow:   rgba(255, 81, 105, 0.35);
+  /* SOFT pair — the Research Zone's chart palette, matched exactly
+     (apps/research/src/pages/x-bubbles/components/x-bubbles-page.jsx). Lighter
+     and less acid than --up/--down, which makes them read better as TEXT on a
+     dark row: the base pair is tuned for fills and glows, where saturation is
+     the point. Use these for money values and direction labels; keep --up/--down
+     for bars, spines and glows. */
+  --up-soft:     #5CE6A1;
+  --down-soft:   #FF6E8E;
+  /* TEXT pair for the tape's money values and BUY/SELL labels - GMGN's own
+     text green/red (their --color-green-100 / --color-red-100), matched
+     exactly. Deeper and less neon than the soft mint, which is what makes a
+     14px number read as a clear green/red rather than a pale tint that loses
+     to the white digits beside it. */
+  --up-text:     #46B87D;
+  --down-text:   #DE5759;
+  --neutral:     #8A8F98;          /* flat / unchanged */
+
+  /* ============================================================
+     TEXT — on obsidian, opacity ramp
+     ============================================================ */
+  --text-1:  rgba(255, 255, 255, 0.95);   /* headings, prices, primary */
+  --text-2:  rgba(255, 255, 255, 0.62);   /* body, secondary */
+  --text-3:  rgba(255, 255, 255, 0.40);   /* labels, captions, metadata */
+  --text-4:  rgba(255, 255, 255, 0.24);   /* disabled, faint scaffolding */
+
+  /* ============================================================
+     AURORA — ambient background blooms (consumed by AuroraField)
+     ============================================================ */
+  --aurora-cool-color:  rgba(120, 140, 170, 0.10);
+  --aurora-warm-color:  rgba(150, 150, 160, 0.06);
+  --aurora-ember-color: rgba(245, 245, 247, 0.05);
+
+  /* ============================================================
+     TYPOGRAPHY
+     ============================================================ */
+  --font-display: 'Geist', Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body:    'Geist', Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:    'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Dedicated font for SHORT delta / signal chips (+1.45%, -6.14%, +0.00%).
+     Geist sans + tabular-nums + slashed-zero OFF — wins at chip sizes where
+     Geist Mono's slashed zero turns `+0.00%` into a wall of crossed circles
+     fighting legibility. Geist Mono stays in use for column-aligned prices,
+     full data tables, addresses, wallet hashes. Apply via `.tnum-chip`
+     utility class OR <DeltaChip> component — never spread the font feature
+     settings inline across components. */
+  --font-num-chip: 'Geist', Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Type scale (rem, 16px root) */
+  --t-display:  clamp(2.6rem, 4vw, 4rem);
+  --t-h1:       1.95rem;
+  --t-h2:       1.35rem;
+  --t-h3:       1.05rem;
+  --t-body:     0.9375rem;
+  --t-label:    0.8125rem;
+  --t-caption:  0.6875rem;   /* uppercase eyebrows, table headers */
+  --t-micro:    0.625rem;
+
+  /* ============================================================
+     SPACING — 8px base
+     ============================================================ */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  24px;
+  --sp-6:  32px;
+  --sp-7:  48px;
+  --sp-8:  64px;
+  --sp-9:  96px;
+
+  /* ============================================================
+     RADIUS
+     ============================================================ */
+  --r-xs:   6px;    /* chips, tags, small inputs */
+  --r-sm:   10px;   /* buttons, inputs, table-row hover */
+  --r-md:   16px;   /* cards, panels */
+  --r-lg:   22px;   /* major modules, hero card */
+  --r-pill: 999px;  /* pills, nav, toggles */
+
+  /* ============================================================
+     ELEVATION & GLOW
+     ============================================================ */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 8px 24px -8px rgba(0, 0, 0, 0.7);
+  --shadow-3: 0 24px 60px -16px rgba(0, 0, 0, 0.85);
+  --glow-lime: 0 0 24px var(--lime-glow), 0 0 4px var(--lime-glow);
+  --glow-up:   0 0 20px var(--up-glow);
+  --glow-down: 0 0 20px var(--down-glow);
+
+  /* ============================================================
+     MOTION — easings + durations
+     ============================================================ */
+  --ease-out:    cubic-bezier(0.16, 1, 0.30, 1);    /* entrances, hovers — Apple snap */
+  --ease-inout:  cubic-bezier(0.65, 0, 0.35, 1);    /* moves, reorders */
+  --ease-soft:   cubic-bezier(0.33, 1, 0.68, 1);    /* gentle, ambient */
+
+  --dur-micro:   120ms;
+  --dur-base:    240ms;
+  --dur-enter:   480ms;
+  --dur-ambient: 1200ms;
+  /* Token-switch accent recolor. Was riding --dur-enter (480ms), which
+     rippled a half-second color fade across every accent consumer on each
+     token switch - reads as lag, not polish. */
+  --dur-accent:  160ms;
+
+  /* ============================================================
+     LEGACY ALIASES — keep non-redesigned surfaces working
+     ----
+     During the P2-P7 rollout, old CSS files reference the v1/v2
+     variable names (--bg-void, --text-primary, --accent, --bull, etc.).
+     This alias block maps every legacy name to the new canonical token
+     so the app renders correctly through the entire phased migration.
+     Once all P2-P7 phases land, this block can be removed and any
+     stragglers will be flagged in P8.
+     ============================================================ */
+  --bg-void:        var(--ob-void);
+  --bg-base:        var(--ob-surface-1);
+  --bg-surface:     var(--ob-surface-2);
+  --bg-elevated:    var(--ob-surface-3);
+  --bg-overlay:     var(--ob-surface-4);
+  --bg-hover:       var(--ob-surface-3);
+
+  --text-primary:    var(--text-1);
+  --text-secondary:  var(--text-2);
+  --text-tertiary:   var(--text-3);
+  --text-muted:      var(--text-4);
+  --text-disabled:   var(--text-4);
+
+  --border-subtle:   var(--glass-border);
+  --border-default:  var(--glass-border);
+  --border-strong:   var(--glass-border-lit);
+  --border-accent:   var(--accent-bright);
+
+  /* ============================================================
+     ACCENT CHANNEL DEFAULTS — Iteration 3
+     ----
+     The full ramp. `--accent` and its siblings start mapped to lime
+     and a near-black contrast colour; useAccentTheme overrides them
+     on `.app.token-page` per token. Old aliases (--accent-secondary
+     / --accent-hover / --accent-muted) re-route to the new names so
+     consumers that haven't been migrated yet still resolve.
+     ============================================================ */
+  --accent:          var(--lime);
+  --accent-bright:   var(--lime-300);
+  --accent-deep:     var(--lime-deep);
+  --accent-glow:     var(--lime-glow);
+  --accent-wash:     var(--lime-wash);
+  --accent-contrast: #0A0A0B;          /* text on accent fills, near-black */
+
+  --accent-secondary: var(--accent-bright);
+  --accent-hover:    var(--accent-bright);
+  --accent-muted:    var(--accent-wash);
+
+  --bull:            var(--up);
+  --bull-bright:     var(--up);
+  --bull-muted:      rgba(52, 232, 158, 0.08);
+  --bull-glow:       var(--up-glow);
+  --bear:            var(--down);
+  --bear-bright:     var(--down);
+  --bear-muted:      rgba(255, 81, 105, 0.08);
+  --bear-glow:       var(--down-glow);
+
+  --radius-xs:       var(--r-xs);
+  --radius-sm:       var(--r-sm);
+  --radius-md:       var(--r-md);
+  --radius-lg:       var(--r-lg);
+  --radius-2xl:      var(--r-lg);
+  --radius-full:     var(--r-pill);
+
+  --shadow-sm:       var(--shadow-1);
+  --shadow-md:       var(--shadow-2);
+  --shadow-lg:       var(--shadow-3);
+  --shadow-xl:       var(--shadow-3);
+  --shadow-glow:     var(--glow-lime);
+  --shadow-inner:    inset 0 1px 0 var(--glass-highlight);
+
+  --duration-instant: 100ms;
+  --duration-fast:    var(--dur-micro);
+  --duration-base:    var(--dur-base);
+  --duration-slow:    var(--dur-enter);
+  --duration-slower:  600ms;
+}
+
+/* ============================================================
+   REDUCED MOTION — system preference + in-app toggle
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-micro:   1ms;
+    --dur-base:    1ms;
+    --dur-enter:   1ms;
+    --dur-ambient: 1ms;
+    --dur-accent:  1ms;
+  }
+}
+
+.app[data-reduced-motion="true"] {
+  --dur-micro:   1ms;
+  --dur-base:    1ms;
+  --dur-enter:   1ms;
+  --dur-ambient: 1ms;
+  --dur-accent:  1ms;
+}
+
+/* ================================================================
+   ACCENT CROSS-FADE (Iteration 3)
+   ----
+   When the user switches tokens, useAccentTheme writes new values
+   to --accent / --accent-bright / etc as inline custom properties
+   on the .app.token-page root. Because each var is registered via
+   @property above as a <color>, the transition declaration here
+   tells the browser to interpolate between values smoothly. The
+   whole page (every consumer that reads var(--accent*)) animates
+   in lockstep over --dur-enter (~480ms). Older browsers without
+   @property support degrade to an instant swap with no JS path
+   needed.
+   ================================================================ */
+/* Transition lives on `.app` (not `.app.token-page`) so the cross-fade
+   fires the moment `useAccentTheme` writes new --accent* inline styles,
+   regardless of whether the `token-page` class has been applied yet.
+   Removing the class gate also closes the race where hash-direct
+   navigation to #token/... mounted .app before the class was added,
+   leaving the cross-fade dead on first paint. The hook only writes
+   --accent* on the token view anyway, so this is functionally identical
+   for non-token surfaces but bullet-proof against timing. */
+.app {
+  /* --dur-accent (160ms, was --dur-enter 480ms): the recolor should feel
+     like the new token snapping in, not a half-second fade dragging behind
+     every switch. */
+  transition:
+    --accent          var(--dur-accent) var(--ease-out),
+    --accent-bright   var(--dur-accent) var(--ease-out),
+    --accent-deep     var(--dur-accent) var(--ease-out),
+    --accent-glow     var(--dur-accent) var(--ease-out),
+    --accent-wash     var(--dur-accent) var(--ease-out),
+    --accent-contrast var(--dur-accent) var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app { transition: none; }
+}
+.app[data-reduced-motion="true"] { transition: none; }
+
+/* ================================================================
+   .tnum-chip — utility class for short delta / signal chips.
+   Apply anywhere a small `%` value renders (watchlist row, ticker
+   pill, vitals tile, heatmap tile, transaction % column, etc.).
+   See <DeltaChip> for a Component wrapper that adds explicit
+   +/- sign + bull/bear/flat tone classes. The font-feature
+   `'zero' 0` is what kills the slashed zero — keep it.
+   ================================================================ */
+.tnum-chip {
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}

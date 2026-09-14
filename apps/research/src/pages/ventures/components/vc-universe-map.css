@@ -1,0 +1,197 @@
+/* Token Consensus view — summary strip + conviction-ranked token tape. */
+
+.smu-consensus {
+  display: flex;
+  flex-direction: column;
+  padding: 18px;
+  gap: 18px;
+}
+
+/* ── summary strip ────────────────────────────────────────────────────── */
+.smu-summary {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+.smu-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 17px 18px;
+  background: linear-gradient(180deg, rgba(22, 22, 28, 0.92), rgba(13, 13, 17, 0.92));
+}
+.smu-stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.4);
+}
+.smu-stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+.smu-stat-sub {
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.4);
+}
+.smu-stat-value.is-bull { color: var(--bull-bright); }
+.smu-stat-value.is-bear { color: var(--bear); }
+
+.smu-stat--live {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.smu-stat-value--live { font-size: 14px; letter-spacing: 0.04em; color: var(--bull-bright); }
+.smu-live-dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bull-bright);
+  flex: 0 0 auto;
+}
+/* transform/opacity pulse — GPU-composited, no per-frame repaint */
+.smu-live-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(52, 211, 153, 0.5);
+  animation: smu-pulse 2s ease-out infinite;
+  will-change: transform, opacity;
+}
+@keyframes smu-pulse {
+  0% { transform: scale(1); opacity: 0.5; }
+  70%, 100% { transform: scale(3); opacity: 0; }
+}
+
+/* ── consensus header ─────────────────────────────────────────────────── */
+.smu-cons-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.smu-cons-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+.smu-cons-desc {
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.42);
+}
+
+.smu-cons-colhead,
+.smu-cons-row {
+  display: grid;
+  grid-template-columns: 200px 1fr 220px;
+  align-items: center;
+  gap: 18px;
+}
+.smu-cons-colhead {
+  padding: 0 16px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.smu-cons-colhead span {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.35);
+}
+.smu-col-stats { text-align: right; }
+
+.smu-cons-list { display: flex; flex-direction: column; }
+
+.smu-cons-row {
+  width: 100%;
+  padding: 13px 16px;
+  background: none;
+  border: 1px solid transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  transition: background 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+.smu-cons-row:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+  border-color: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+/* token cell */
+.smu-col-token { display: inline-flex; align-items: center; gap: 12px; }
+.smu-token-id { display: inline-flex; flex-direction: column; gap: 2px; }
+.smu-token-sym {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+.smu-token-chg { font-size: 12px; font-family: var(--font-mono); color: rgba(245, 245, 247, 0.4); }
+.smu-token-chg.is-bull { color: var(--bull-bright); }
+.smu-token-chg.is-bear { color: var(--bear); }
+
+/* backers cell */
+.smu-col-backers { display: inline-flex; align-items: center; gap: 16px; min-width: 0; }
+.smu-tape {
+  position: relative;
+  flex: 1;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  overflow: hidden;
+  min-width: 40px;
+}
+.smu-tape-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+  border-radius: 2px;
+}
+.smu-tape--bull .smu-tape-fill { background: linear-gradient(90deg, rgba(52, 211, 153, 0), rgba(52, 211, 153, 0.65)); }
+.smu-tape--bear .smu-tape-fill { background: linear-gradient(90deg, rgba(248, 113, 113, 0), rgba(248, 113, 113, 0.6)); }
+.smu-tape--flat .smu-tape-fill { background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.25)); }
+
+/* stats cell */
+.smu-col-stats {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+}
+.smu-stat-pool { font-size: 14px; font-weight: 600; font-family: var(--font-mono); color: var(--text-primary); min-width: 64px; text-align: right; }
+.smu-stat-backers { font-size: 12px; font-family: var(--font-mono); color: rgba(245, 245, 247, 0.5); min-width: 30px; text-align: right; }
+.smu-stat-mcap { font-size: 13px; font-family: var(--font-mono); color: rgba(245, 245, 247, 0.6); min-width: 56px; text-align: right; }
+.smu-cons-go { color: rgba(245, 245, 247, 0.3); opacity: 0; transform: translateX(-4px); transition: opacity 180ms ease, transform 180ms ease; }
+.smu-cons-row:hover .smu-cons-go { opacity: 1; transform: translateX(0); color: rgba(245, 245, 247, 0.85); }
+.app.app-day-mode .smu-cons-row:hover .smu-cons-go { color: #0f172a; }
+
+.smu-cons-empty { padding: 40px; text-align: center; color: rgba(245, 245, 247, 0.4); font-size: 13px; }
+
+@media (max-width: 900px) {
+  .smu-summary { grid-template-columns: repeat(3, 1fr); row-gap: 18px; }
+  .smu-cons-colhead { display: none; }
+  .smu-cons-row { grid-template-columns: 1fr; gap: 10px; }
+  .smu-col-stats { justify-content: flex-start; }
+  .smu-tape { display: none; }
+}

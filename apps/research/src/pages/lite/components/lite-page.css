@@ -1,0 +1,4566 @@
+/* SPECTRE LITE - simple-mode shell: left nav + five easy views, two looks.
+   GLASS: gm-dashboard DNA (photo + frosted panels, deep layered shadows).
+   PAPER: apple.com keynote (warm gray canvas, elevated white cards).
+   NOTE: never use a "glass-" substring in class names here - a global
+   [class*="glass-"] rule in app-store-ready.css hijacks them. */
+
+.lite-root {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+}
+
+/* ── Background layers (glass only) ── */
+.lite-bg-base { position: absolute; inset: 0; background: #0f172a; }
+
+.lite-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 1.4s ease-in-out;
+  pointer-events: none;
+}
+
+.lite-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 50% 8%, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.42) 70%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.28) 0%, rgba(0, 0, 0, 0.6) 100%);
+  pointer-events: none;
+}
+
+/* ── Left nav rail ── */
+.lite-nav {
+  position: relative;
+  z-index: 5;
+  width: 236px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 26px 18px 22px;
+}
+
+.lite-wordmark {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  padding: 0 10px;
+}
+
+.lite-wordmark-tag {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  vertical-align: 2px;
+  margin-left: 4px;
+  padding: 3px 7px;
+  border-radius: 9999px;
+}
+
+.lite-nav-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 30px;
+  flex: 1;
+  /* 19 tabs outgrow short windows - the LIST scrolls internally so the
+     look toggle + Open PRO at the bottom are never cut off (user report:
+     sidebar clipped, PRO button invisible on laptop-height screens) */
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.lite-nav-items::-webkit-scrollbar { display: none; }
+
+/* The scrollbar is hidden, so nothing told the reader the list continues - a
+   tab was simply cut through its own label. Fade only the edge that has more
+   behind it, so a fully-scrolled rail never dims its last tab. */
+.lite-nav-items { --lite-nav-fade: 26px; }
+.lite-nav-items.has-below {
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--lite-nav-fade)), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--lite-nav-fade)), transparent 100%);
+}
+.lite-nav-items.has-above {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--lite-nav-fade), #000 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--lite-nav-fade), #000 100%);
+}
+.lite-nav-items.has-above.has-below {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--lite-nav-fade), #000 calc(100% - var(--lite-nav-fade)), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--lite-nav-fade), #000 calc(100% - var(--lite-nav-fade)), transparent 100%);
+}
+
+/* Short windows: tighten the rail so everything fits without scrolling */
+@media (max-height: 940px) {
+  .lite-nav { padding-top: 16px; padding-bottom: 14px; }
+  .lite-nav-items { margin-top: 14px; gap: 2px; }
+  .lite-nav-item { padding: 7px 12px; }
+}
+
+.lite-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.18s;
+}
+
+.lite-nav-item svg { width: 19px; height: 19px; flex-shrink: 0; }
+
+/* ── Collapsible rail ── */
+.lite-nav { transition: width 0.24s cubic-bezier(0.16, 1, 0.3, 1), padding 0.24s cubic-bezier(0.16, 1, 0.3, 1); }
+.lite-nav-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.lite-nav-head .lite-wordmark { padding: 0 4px 0 10px; }
+.lite-nav-toggle {
+  flex-shrink: 0; display: grid; place-items: center;
+  width: 30px; height: 30px; padding: 0; border: none; border-radius: 9px;
+  background: transparent; cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+.lite-nav-toggle-icon { width: 18px; height: 18px; transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1); }
+
+.lite-nav--collapsed { width: 66px; padding-left: 10px; padding-right: 10px; }
+.lite-nav--collapsed .lite-wordmark { display: none; }
+.lite-nav--collapsed .lite-nav-head { justify-content: center; }
+.lite-nav--collapsed .lite-nav-toggle-icon { transform: rotate(180deg); }
+.lite-nav--collapsed .lite-nav-item { justify-content: center; gap: 0; padding: 11px 0; }
+.lite-nav--collapsed .lite-nav-item span { display: none; }
+.lite-nav--collapsed .lite-look-toggle { display: none; }
+.lite-nav--collapsed .lite-pro-btn { padding: 11px 0; justify-content: center; }
+.lite-nav--collapsed .lite-pro-label { display: none; }
+
+.lite-nav-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Segmented control, family two (topbar market/theme switches, cinema chart
+   bars). Identical containment contract to .lite-tf-toggle below: the TRACK
+   owns the height, the thumb is inset by the track's padding on every side,
+   and overflow clips anything that still tries to escape. `overflow` clips at
+   the PADDING box, so the thumb's own elevation shadow still paints inside the
+   groove - it is the thumb leaving the track that is impossible, not the
+   shadow. Founder 2026-08-12: the topbar pills were bursting their tracks
+   because the blanket 38px mobile touch floor beat a 32px track. */
+.lite-look-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  /* A switch is a rounded RECT; a stadium is a chip. Running both as stadiums
+     is most of why the thumb read as a sticker sitting ON the track rather
+     than a segment sitting IN it - the two shapes were the same shape. The
+     thumb's radius is the track's minus the padding, so the two curves stay
+     concentric the way a real inset does. */
+  border-radius: 13px;
+  overflow: hidden;
+}
+
+.lite-look-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 8px 12px;
+  border-radius: 9px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.lite-pro-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.lite-pro-btn svg { width: 14px; height: 14px; }
+.lite-pro-btn:hover { transform: translateY(-1px); }
+
+/* ── Topbar + tabbar (mobile chrome, hidden on desktop) ── */
+.lite-topbar, .lite-tabbar { display: none; }
+
+/* ── Main column ── */
+.lite-main {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  /* keep wheel/trackpad momentum inside the page - boundary chaining into
+     nested x-scrollers read as "blocky" scroll stalls */
+  overscroll-behavior: contain;
+  padding: 44px 44px 80px;
+  }
+
+.lite-view {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Wide views (Today dashboard, Research) fill left-to-right */
+.lite-view--wide { max-width: 1340px; }
+
+/* Wrapping flex, not a rigid 12-col grid: when the user hides/reorders
+   panels, survivors GROW to fill their row - no holes, every row reaches
+   the right edge. Spans express preferred share; grow does the adjusting. */
+.lite-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.lite-span-3 { flex: 1 1 calc(25% - 15px); min-width: 230px; }
+.lite-span-4 { flex: 1 1 calc(33.33% - 14px); min-width: 250px; }
+.lite-span-5 { flex: 1.2 1 calc(38% - 12px); min-width: 270px; }
+.lite-span-6 { flex: 1 1 calc(50% - 10px); min-width: 280px; }
+.lite-span-7 { flex: 1.4 1 calc(55% - 10px); min-width: 300px; }
+.lite-span-8 { flex: 1.7 1 calc(62% - 8px); min-width: 320px; }
+.lite-span-12 { flex: 1 1 100%; min-width: 0; }
+
+.lite-col { display: flex; flex-direction: column; gap: 20px; }
+
+.lite-today-head {
+  display: flex;
+  /* Greeting, then the pill row, both centred over the centred search - one
+     axis for the whole head instead of a left title with a right-hand row
+     that wrapped under it at laptop widths. */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  /* Above the later rise-sections (each retains a transform = stacking
+     context, DOM order wins) so the Edit popover isn't buried. */
+  position: relative;
+  z-index: 70;
+}
+
+.lite-today-head .lite-greeting { text-align: center; margin: 0; }
+.lite-today-head .lite-pills { justify-content: center; }
+
+.lite-view-head { margin-bottom: 6px; }
+
+.lite-view-title {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 2.7rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.lite-view-sub {
+  margin: 8px 0 0;
+  font-size: 1.02rem;
+  line-height: 1.5;
+}
+
+.lite-greeting {
+  margin: 4px 0 0;
+  text-align: center;
+  font-size: clamp(1.9rem, 4vw, 2.5rem);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.lite-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.lite-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 18px;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+/* inline-flex drops the leading space inside the change span - keep the gap. */
+.lite-pill > .lite-change { margin-left: 5px; }
+
+.lite-eyebrow {
+  margin: 0 0 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* A panel whose content is short has no business stretching to match the tall
+   panel beside it - `align-items: stretch` on .lite-grid otherwise leaves a
+   long empty tail of glass under the last row (Themes: Today sections next to
+   the backdrop catalog). */
+.lite-panel--hug { align-self: flex-start; }
+
+/* Panels - the dimension carrier in both looks */
+.lite-panel {
+  padding: 24px 26px;
+  border-radius: 22px;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lite-brief-headline {
+  margin: 0 0 8px;
+  font-size: clamp(1.5rem, 3vw, 1.95rem);
+  letter-spacing: -0.015em;
+}
+
+.lite-brief-body {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.65;
+}
+
+.lite-two-up {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* Mini rows (Today / Sentiment side panels) */
+.lite-mini-list { list-style: none; margin: 0; padding: 0; }
+
+.lite-mini-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.lite-mini-sym { font-weight: 600; min-width: 54px; }
+/* Market cap sits between the ticker and the price, the way every reference
+   board (CMC, CG) reads: what it IS, then what it's WORTH, then what it did.
+   Quiet by design — it's context for the price, not a competing number. */
+.lite-mini-mcap { font-size: 0.74rem; font-weight: 500; white-space: nowrap; flex-shrink: 0; }
+.lite-mini-price { flex: 1; text-align: right; }
+.lite-mini-row .lite-change { min-width: 66px; text-align: right; font-size: 0.88rem; }
+/* Stocks Winning / Losing / Most traded carry the same logo as The Big Names,
+   scaled to the row - a bare ticker list read as unfinished beside a
+   logo-led table (founder screenshot 2026-09-05). */
+.lite-mini-row .lite-trow-logo { width: 22px; height: 22px; }
+.lite-mini-row .lite-trow-fallback { font-size: 0.62rem; }
+
+.lite-empty { margin: 0; font-size: 0.92rem; line-height: 1.55; }
+
+.lite-movers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.lite-mover {
+  padding: 8px 15px;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Full token rows (Markets / Watchlist) */
+.lite-tlist { list-style: none; margin: 0; padding: 0; }
+
+.lite-trow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.lite-trow-logo {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.lite-trow-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.lite-trow-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: 50%;
+}
+
+.lite-trow-id {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  overflow: hidden;
+}
+
+.lite-trow-id strong {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lite-trow-id em {
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.lite-trow-mcap { font-size: 0.82rem; white-space: nowrap; }
+
+.lite-trow-price { font-size: 1rem; font-weight: 600; white-space: nowrap; }
+
+.lite-trow-change { min-width: 74px; text-align: right; font-size: 0.88rem; font-weight: 600; }
+
+/* Gauges (Sentiment) */
+.lite-gauge-hero {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.lite-gauge-value {
+  font-size: 2.6rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.lite-gauge-label { font-size: 1rem; font-weight: 500; }
+
+.lite-meter {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #f87171 0%, #fbbf24 40%, #a3e635 65%, #34d399 100%);
+}
+
+.lite-meter--alt {
+  background: linear-gradient(90deg, #fbbf24 0%, rgba(160, 160, 165, 0.7) 50%, #34d399 100%);
+}
+
+.lite-meter-dot {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid rgba(0, 0, 0, 0.35);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.lite-gauge-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.lite-gauge--mini .lite-gauge-hero { margin-bottom: 12px; }
+.lite-gauge-hero--second { margin-top: 20px; }
+.lite-gauge-value--sm { font-size: 1.9rem; }
+
+/* ── Research view ── */
+.lite-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lite-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  padding: 8px 15px 8px 11px;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.18s;
+}
+
+.lite-chip-logo { width: 17px; height: 17px; border-radius: 50%; object-fit: cover; flex-shrink: 0; display: block; }
+
+.lite-chip:active { transform: scale(0.96); }
+
+/* Segmented control (chart type / timeframe / sort / tabs).
+   The TRACK owns the height and the pill is inset by the track's padding on
+   every side, so the active fill can never reach - let alone cross - the track
+   edge. Two rules make that a guarantee rather than an arithmetic coincidence:
+   `align-items: center` (a taller sibling can't stretch the rest into the
+   padding) and `overflow-y: hidden` (anything that still tries is clipped).
+   Founder 2026-08-12: "the toggles are not well designed like a shader out of
+   bounds" - the pill had been inflated to the blanket 38px mobile touch floor
+   inside a 1px-padded track. That floor is now waived for these pills in
+   app-store-ready.css; the hit area comes from the track padding + row gap. */
+.lite-tf-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  align-self: flex-start;
+  border-radius: 13px;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.lite-tf-toggle::-webkit-scrollbar { display: none; }
+/* .lite-panel is a block, so `align-self: flex-start` above is inert there and
+   the track spans the whole card - a 600px bar holding three small pills.
+   Use this modifier wherever the toggle sits directly in a panel. */
+.lite-tf-toggle--fit { width: -moz-fit-content; width: fit-content; }
+
+.lite-tf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border: none;
+  background: transparent;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 7px 13px;
+  border-radius: 9px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+}
+
+
+.lite-research-price {
+  margin: 2px 0 0;
+  font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+
+.lite-research-change { margin: 6px 0 0; font-size: 0.95rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.lite-chart svg { display: block; width: 100%; height: 260px; }
+/* The pixel-measured Research chart: the STAGE owns the height, the svg fills it. */
+.lite-chart--px svg { height: 100%; }
+.lite-chart--px .lite-chart-stage { height: 260px; overflow: hidden; }
+
+.lite-chart-empty {
+  height: 260px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+.lite-chart-empty .lite-skel { width: 100%; }
+
+.lite-chart-axis {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.lite-stat-list { list-style: none; margin: 0; padding: 0; }
+
+.lite-market-toggle .lite-look-btn { display: inline-flex; align-items: center; gap: 5px; }
+
+/* Chart-type icons: desktop keeps the labels, mobile flips to glyphs */
+.lite-ct-ico { display: none; }
+.lite-tf-btn--ct { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Compact language/currency dropdowns (Themes) - our own list, both looks.
+   The trigger keeps .lite-select so the closed control is pixel-identical to
+   the native one it replaced; .lite-cselect-* is the open list. */
+.lite-cselect { position: relative; }
+.lite-select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 12px 42px 12px 14px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.lite-cselect-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 38px;
+  text-align: left;
+}
+
+.lite-cselect-face { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.lite-cselect-lbl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lite-cselect-flag { font-style: normal; font-size: 1.05em; line-height: 1; flex: none; }
+.lite-cselect-note {
+  font-weight: 500;
+  font-size: 0.82em;
+  opacity: 0.62;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lite-cselect-chev {
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  opacity: 0.55;
+  pointer-events: none;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.lite-cselect.open .lite-cselect-chev { transform: rotate(180deg); }
+
+.lite-cselect-pop {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: min(340px, 52vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  border-radius: 14px;
+  outline: none;
+  animation: liteCselectIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes liteCselectIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+.lite-cselect-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  /* 🪤 A global button rule paints bare buttons #fff, and LITE Paper sits
+     outside .app so it cannot undo that through the design tokens - the same
+     trap as .lite-insight-link. */
+  color: inherit;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+.lite-cselect-opt .lite-cselect-lbl { flex: none; }
+.lite-cselect-opt .lite-cselect-note { flex: 1 1 auto; min-width: 0; }
+.lite-cselect-opt.sel { font-weight: 700; }
+.lite-cselect-tick { width: 15px; height: 15px; flex: none; margin-left: auto; opacity: 0; }
+.lite-cselect-opt.sel .lite-cselect-tick { opacity: 1; }
+
+/* A glass panel has backdrop-filter, which makes it a stacking context - no
+   z-index on the list itself can lift it above the panels that follow it in
+   the DOM. The host panel has to be raised for as long as the list is open. */
+.lite-panel--pop { position: relative; z-index: 80; }
+
+.lite-root--glass .lite-cselect { color: #fff; }
+.lite-root--glass .lite-select {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+.lite-root--glass .lite-select:hover { border-color: rgba(255, 255, 255, 0.32); }
+.lite-root--glass .lite-cselect-pop {
+  /* Opaque on purpose. At 0.94 the panel's own note text ghosted through the
+     first rows - a menu is a thing you read, not a thing you see through. */
+  background: linear-gradient(160deg, #171c25, #0f131a);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+  color: rgba(245, 245, 247, 0.86);
+}
+.lite-root--glass .lite-cselect-opt.hot { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.lite-root--glass .lite-cselect-opt.sel { color: #fff; }
+.lite-root--glass .lite-cselect-tick { color: #34d399; }
+
+.lite-root--paper .lite-cselect { color: #1d1d1f; }
+.lite-root--paper .lite-select {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #1d1d1f;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.lite-root--paper .lite-select:hover { border-color: rgba(0, 0, 0, 0.22); }
+.lite-root--paper .lite-cselect-pop {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.14);
+  color: #1d1d1f;
+}
+.lite-root--paper .lite-cselect-opt.hot { background: #f2f2f5; }
+.lite-root--paper .lite-cselect-tick { color: #037b3e; }
+
+/* ── DAYLIGHT GLASS - bright/white backdrops. The standard black scrim
+   muddied them to gray ("they are very darkened"); here the wallpaper stays
+   bright, panels deepen to a dark frost so the glass-look white text keeps
+   its contrast, and bare-on-backdrop text flips dark. ── */
+.lite-root--glass.lite-root--daylight .lite-scrim {
+  /* NEUTRAL white veil - the blue-gray tint read as "grayed out" on the
+     pure-white solids (founder: whites must be TRUE whites). */
+  background:
+    radial-gradient(120% 90% at 50% 8%, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.1) 70%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.12) 100%);
+}
+.lite-root--glass.lite-root--daylight .lite-panel,
+.lite-root--glass.lite-root--daylight .lite-stat,
+.lite-root--glass.lite-root--daylight .lite-mover,
+.lite-root--glass.lite-root--daylight .lite-strip-card,
+.lite-root--glass.lite-root--daylight .lite-tf-toggle {
+  background: linear-gradient(160deg, rgba(24, 30, 42, 0.68) 0%, rgba(21, 27, 38, 0.58) 100%);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.lite-root--glass.lite-root--daylight .lite-greeting,
+.lite-root--glass.lite-root--daylight .lite-view-title { color: #171a20; }
+.lite-root--glass.lite-root--daylight .lite-view-sub,
+.lite-root--glass.lite-root--daylight .lite-thought,
+.lite-root--glass.lite-root--daylight .lite-back { color: rgba(23, 26, 32, 0.62); }
+.lite-root--glass.lite-root--daylight .lite-pill {
+  background: rgba(24, 30, 42, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Flat light backdrops under Glass: full light mode - Paper's ink + cards
+   frosted over the chosen white/pearl backdrop. */
+.lite-scrim--light {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.14) 100%);
+}
+.lite-root--paper.lite-root--onlight { background: transparent; }
+.lite-root--paper.lite-root--onlight .lite-panel,
+.lite-root--paper.lite-root--onlight .lite-stat {
+  background: rgba(255, 255, 255, 0.66);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+}
+
+/* Glass intensity levels - Balanced tints panels, Solid nearly fills them */
+.lite-glass-balanced .lite-panel,
+.lite-glass-balanced .lite-stat,
+.lite-glass-balanced .lite-tf-toggle,
+.lite-glass-balanced .lite-statband { background-color: rgba(14, 19, 27, 0.44) !important; }
+.lite-glass-solid .lite-panel,
+.lite-glass-solid .lite-stat,
+.lite-glass-solid .lite-tf-toggle,
+.lite-glass-solid .lite-statband { background-color: rgba(13, 17, 24, 0.82) !important; background-image: none !important; }
+.lite-glass-solid .lite-scrim { background: linear-gradient(180deg, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0.7) 100%); }
+
+.lite-wordmark--btn { background: none; border: 0; padding: 0; cursor: pointer; font: inherit; color: inherit; text-align: left; }
+.lite-nav-item--pinned { width: 100%; margin-bottom: 8px; }
+
+/* Fill the panel and scroll past ~9 rows instead of capping at five */
+.lite-mini-list--scroll { max-height: 384px; overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
+
+.lite-stat--wide { grid-column: 1 / -1; }
+
+.lite-nav-group { display: flex; flex-direction: column; gap: 2px; }
+.lite-nav-group + .lite-nav-group { margin-top: 10px; }
+.lite-nav-group-label {
+  margin: 0 0 3px; padding: 0 12px;
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  opacity: 0.45;
+}
+.lite-nav-group-rule { display: block; height: 1px; margin: 4px 8px 6px; background: currentColor; opacity: 0.12; }
+
+.lite-cmp-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+.lite-cmp-key { display: inline-flex; align-items: center; gap: 7px; font-size: 0.85rem; }
+.lite-cmp-key strong { font-variant-numeric: tabular-nums; }
+.lite-cmp-key strong.up { color: var(--bull, #10B981); }
+.lite-cmp-key strong.down { color: var(--bear, #EF4444); }
+.lite-cmp-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.lite-cmp-chart { position: relative; }
+
+/* The legend IS the remove control - a line you can see is a line you can drop. */
+.lite-cmp-key {
+  padding: 4px 4px 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.lite-cmp-key:hover { background: rgba(255, 255, 255, 0.11); }
+.lite-root--paper .lite-cmp-key,
+.lite-root--glass.lite-root--daylight .lite-cmp-key {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.lite-root--paper .lite-cmp-key:hover,
+.lite-root--glass.lite-root--daylight .lite-cmp-key:hover { background: rgba(255, 255, 255, 0.9); }
+
+.lite-cmp-dot { box-shadow: 0 0 10px currentColor; }
+.lite-cmp-dot--ramp { background: linear-gradient(90deg, #ef4444 0%, #eab308 50%, #22c55e 100%); box-shadow: none; }
+
+.lite-cmp-x {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; min-height: 20px; padding: 0; margin-left: 1px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: currentColor; opacity: 0.65; cursor: pointer;
+  transition: all 0.18s ease;
+}
+.lite-cmp-x svg { width: 10px; height: 10px; }
+.lite-cmp-x:hover {
+  opacity: 1;
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.22);
+  color: #fff;
+}
+.lite-cmp-x:active { transform: scale(0.9); }
+.lite-root--paper .lite-cmp-x,
+.lite-root--glass.lite-root--daylight .lite-cmp-x {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.05);
+}
+.lite-root--paper .lite-cmp-x:hover,
+.lite-root--glass.lite-root--daylight .lite-cmp-x:hover {
+  border-color: rgba(220, 38, 38, 0.45);
+  background: rgba(254, 202, 202, 1);
+  color: #b91c1c;
+}
+
+/* F&G toggle - tinted by the live reading, not a fixed accent. */
+.lite-fng-btn { display: inline-flex; align-items: center; gap: 6px; }
+.lite-fng-btn strong { font-variant-numeric: tabular-nums; }
+.lite-fng-swatch {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(90deg, #ef4444 0%, #eab308 50%, #22c55e 100%);
+  opacity: 0.5; transition: all 0.2s ease;
+}
+.lite-fng-btn.active .lite-fng-swatch {
+  background: var(--fng, #eab308);
+  opacity: 1;
+  box-shadow: 0 0 0 3px rgba(var(--fng-rgb, 234, 179, 8), 0.18), 0 0 10px rgba(var(--fng-rgb, 234, 179, 8), 0.85);
+}
+
+.lite-nav-market { width: 100%; margin-bottom: 8px; }
+.lite-nav-market .lite-look-btn { flex: 1; justify-content: center; }
+.lite-nav-market .lite-market-ico { display: block; width: 14px; height: 14px; }
+.lite-nav-lookrow { display: flex; align-items: center; gap: 8px; }
+.lite-nav-lookrow .lite-look-toggle { flex: 1; }
+.lite-nav-refresh {
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; padding: 0; border: none; border-radius: 50%; cursor: pointer;
+  flex-shrink: 0;
+}
+.lite-nav-refresh svg { width: 15px; height: 15px; }
+.lite-root--glass .lite-nav-refresh { background: rgba(255, 255, 255, 0.14); color: #fff; }
+.lite-root--paper .lite-nav-refresh { background: rgba(0, 0, 0, 0.06); color: #1d1d1f; }
+.lite-nav--collapsed .lite-nav-market .lite-market-lbl { display: none; }
+.lite-nav--collapsed .lite-nav-market { flex-direction: column; }
+.lite-nav--collapsed .lite-nav-lookrow { flex-direction: column; }
+
+.lite-refresh-btn svg { transition: transform 0.25s ease; }
+.lite-refresh-btn--spin svg { animation: literefspin 0.9s ease; }
+@keyframes literefspin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* While actively scrolling, freeze hover targets - rows lighting up as they
+   pass under a stationary cursor reads as flicker (cleared 140ms after the
+   last scroll event, so taps/clicks are unaffected). */
+/* 🪤 This used to be `.lite-scrolling .lite-main *`. `pointer-events` INHERITS,
+   so the universal selector bought nothing — but it made the browser re-match
+   and re-resolve style for EVERY descendant of the main column twice per scroll
+   burst (once when the class lands, once 140ms after the last scroll event).
+   On a page whose panels are backdrop-filter glass, that recalc lands on the
+   compositor as a visible flash at the tail of a flick — the "lite flickers at
+   the bottom on desktop" report (founder 2026-08-12). One element, same effect,
+   no subtree invalidation.
+   It must stay OFF `.lite-main` itself — that element is the scroll container
+   (overflow-y: auto above), and making the scroller untargetable would hand the
+   wheel to its ancestor. Direct children only. */
+.lite-scrolling .lite-main > * { pointer-events: none; }
+
+.lite-research-toggles { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+/* The window line under the TradingView pills ("about 38h shown" - the pills
+   themselves name the candle).
+   Its OWN GRID ROW, spanning both columns of .lite-research-head - not a
+   flex-basis:100% child of .lite-research-toggles. That was the first shape and
+   it measurably broke the header: a wrapping flex container's max-content is the
+   SUM of its items, so a 126px hint widened the `auto` column 667 -> 793px and
+   squeezed the price block to zero (the change line wrapped mid-sentence). */
+.lite-tf-hint {
+  grid-column: 1 / -1;
+  justify-self: end;
+  margin: -2px 0 0;
+  text-align: right;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  color: rgba(245, 245, 247, 0.42);
+}
+.lite-root--paper .lite-tf-hint { color: #86868b; }
+
+.lite-chart-stage { position: relative; touch-action: pan-y; }
+.lite-chart-grid { stroke: rgba(148, 163, 184, 0.13); stroke-width: 1; }
+.lite-chart-floor { stroke: rgba(148, 163, 184, 0.28); stroke-width: 1; }
+.lite-chart-ylab,
+.lite-chart-xlab { font-size: 11px; font-variant-numeric: tabular-nums; letter-spacing: 0.01em; fill: rgba(148, 163, 184, 0.9); }
+.lite-chart-ylab--base { font-weight: 600; }
+.lite-chart-last { stroke: currentColor; stroke-width: 1; stroke-dasharray: 3 4; opacity: 0.75; }
+.lite-chart-lasttag rect { fill: currentColor; }
+.lite-chart-lasttag text { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; fill: #0b0e13; }
+.lite-chart-cross-line { stroke: rgba(148, 163, 184, 0.5); stroke-width: 1; }
+.lite-chart-cross-h { stroke-dasharray: 3 3; }
+.lite-chart-cross-pt { fill: currentColor; stroke: rgba(148, 163, 184, 0.3); stroke-width: 3; }
+.lite-base--up path:first-child { fill: rgba(16, 185, 129, 0.16); }
+.lite-base--up path:last-child { stroke: var(--bull, #10B981); }
+.lite-base--down path:first-child { fill: rgba(239, 68, 68, 0.15); }
+.lite-base--down path:last-child { stroke: var(--bear, #EF4444); }
+.lite-base-ref { stroke: rgba(148, 163, 184, 0.55); stroke-width: 1; stroke-dasharray: 3 4; }
+.lite-chart-yaxis-base { font-weight: 600; opacity: 0.9 !important; }
+.lite-chart-yaxis { position: absolute; inset: 0; pointer-events: none; }
+.lite-chart-yaxis span {
+  position: absolute; right: 6px; transform: translateY(-55%);
+  font-size: 0.68rem; letter-spacing: 0.01em; opacity: 0.62;
+  font-variant-numeric: tabular-nums; padding: 1px 5px; border-radius: 6px;
+}
+.lite-root--glass .lite-chart-yaxis span { color: rgba(255, 255, 255, 0.85); background: rgba(10, 12, 16, 0.45); }
+.lite-root--paper .lite-chart-yaxis span { color: rgba(30, 34, 42, 0.75); background: rgba(255, 255, 255, 0.65); }
+.lite-root--glass .lite-chart-ylab,
+.lite-root--glass .lite-chart-xlab { fill: rgba(255, 255, 255, 0.55); }
+.lite-root--paper .lite-chart-ylab,
+.lite-root--paper .lite-chart-xlab { fill: #86868b; }
+.lite-root--paper .lite-chart-lasttag text { fill: #fff; }
+.lite-root--paper .lite-chart-grid { stroke: rgba(0, 0, 0, 0.07); }
+.lite-root--paper .lite-chart-floor { stroke: rgba(0, 0, 0, 0.14); }
+.lite-chart-cross { position: absolute; inset: 0; pointer-events: none; }
+.lite-chart-cross-tip {
+  position: absolute; top: 4px; transform: translateX(8px);
+  display: flex; flex-direction: column; gap: 1px; padding: 5px 9px; border-radius: 9px;
+  font-size: 0.72rem; white-space: nowrap;
+}
+.lite-chart-cross-tip--left { transform: translateX(calc(-100% - 8px)); }
+.lite-chart-cross-tip--anchored { top: auto; align-items: center; text-align: center; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); }
+.lite-chart-cross-tip strong { font-variant-numeric: tabular-nums; }
+.lite-chart-cross-tip em { font-style: normal; opacity: 0.65; font-size: 0.65rem; }
+.lite-root--glass .lite-chart-cross-tip { background: rgba(14, 17, 22, 0.92); color: #fff; border: 1px solid rgba(255, 255, 255, 0.08); }
+.lite-root--paper .lite-chart-cross-tip { background: rgba(255, 255, 255, 0.96); color: #1c2028; border: 1px solid rgba(0, 0, 0, 0.08); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08); }
+.lite-tv-embed { position: relative; height: 340px; border-radius: 14px; overflow: hidden; }
+.lite-tv-embed iframe { width: 100%; height: 100%; border: 0; }
+.lite-candle--up line { stroke: var(--bull, #10B981); }
+.lite-candle--up rect { fill: var(--bull, #10B981); }
+.lite-candle--down line { stroke: var(--bear, #EF4444); }
+.lite-candle--down rect { fill: var(--bear, #EF4444); }
+.lite-social-stat--warn strong { color: #fbbf24; }
+.lite-market-ico { display: none; width: 16px; height: 16px; }
+/* An icon-only segment has no word to read, so at the same "inactive" weight a
+   glyph is far harder to make out than a label - the market switch was the one
+   control in the topbar you had to squint at (founder 2026-08-12). More size,
+   more contrast, and the padding trimmed so the taller glyph still fits the
+   32px track exactly. */
+.lite-market-toggle .lite-look-btn { padding-left: 10px; padding-right: 10px; }
+.lite-root--glass .lite-market-toggle .lite-look-btn:not(.active) { color: rgba(255, 255, 255, 0.74); }
+.lite-root--paper .lite-market-toggle .lite-look-btn:not(.active) { color: rgba(29, 29, 31, 0.66); }
+
+.lite-stat-list li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.lite-stat-list li span { font-size: 0.88rem; }
+.lite-stat-list li strong { font-size: 0.98rem; font-weight: 600; letter-spacing: -0.01em; }
+
+.lite-research-cta { display: flex; flex-direction: column; gap: 12px; }
+.lite-research-cta .lite-empty { flex: 1; }
+
+/* Performance windows under the chart */
+.lite-perf {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.lite-perf-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 7px 13px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.lite-perf-chip em {
+  font-style: normal;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* 24h range bar */
+.lite-range { margin-top: 18px; }
+
+.lite-range-labels {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.lite-range-title {
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+.lite-range-track {
+  position: relative;
+  height: 5px;
+  border-radius: 3px;
+}
+
+.lite-range-dot {
+  position: absolute;
+  top: 50%;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid rgba(0, 0, 0, 0.3);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Sector rows: three overlapping coin marks in the logo slot */
+.lite-sector-logos {
+  display: flex;
+  flex-shrink: 0;
+  width: 52px;
+}
+
+.lite-sector-logos img {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.lite-sector-logos img + img { margin-left: -9px; }
+
+/* Gauge explainer line */
+.lite-gauge-note {
+  margin: 14px 0 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+/* ── Heatmap tiles ── */
+.lite-heat {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-auto-flow: dense;
+  gap: 10px;
+}
+
+.lite-heat-tile {
+  min-height: 86px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #fff;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  grid-column: span 2;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Tint via custom props (set inline) OVER a dark underlay - the tint alone
+     washed out on bright wallpapers (Sunny: "heatmaps too transparent"). */
+  background:
+    linear-gradient(rgb(var(--hrgb, 128 128 128) / var(--ha, 0.3)), rgb(var(--hrgb, 128 128 128) / var(--ha, 0.3))),
+    rgba(14, 18, 16, 0.62);
+}
+
+.lite-root--paper .lite-heat-tile {
+  background: rgb(var(--hrgb, 128 128 128) / var(--hap, 0.6));
+}
+
+.lite-heat-tile:hover { transform: translateY(-2px) scale(1.02); }
+
+.lite-heat-tile--big {
+  grid-column: span 4;
+  grid-row: span 2;
+}
+
+.lite-heat-sym { font-size: 0.95rem; font-weight: 700; letter-spacing: 0.02em; }
+.lite-heat-price { font-size: 0.78rem; font-weight: 600; font-variant-numeric: tabular-nums; opacity: 0.85; }
+.lite-heat-chg { font-size: 0.8rem; font-weight: 600; font-variant-numeric: tabular-nums; opacity: 0.92; }
+
+.lite-heat-tile--big .lite-heat-sym { font-size: 1.5rem; }
+.lite-heat-tile--big .lite-heat-price { font-size: 1rem; }
+.lite-heat-tile--big .lite-heat-chg { font-size: 1.05rem; }
+
+/* ── Social buzz rows ── */
+.lite-social-rank {
+  flex-shrink: 0;
+  width: 22px;
+  text-align: right;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.lite-social-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  min-width: 74px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lite-social-stat strong { font-size: 0.95rem; font-weight: 650; letter-spacing: -0.01em; }
+
+.lite-social-stat em {
+  font-style: normal;
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.lite-social-delta {
+  min-width: 44px;
+  text-align: right;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.lite-social-note {
+  margin: 14px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+/* 7d secondary change on market rows */
+.lite-trow-change7 {
+  min-width: 76px;
+  text-align: right;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.lite-trow-change7 em {
+  font-style: normal;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin-left: 4px;
+  opacity: 0.55;
+}
+
+/* ── Calendar rows ── */
+.lite-cal-group + .lite-cal-group { margin-top: 22px; }
+
+.lite-cal-group-label {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+.lite-root--glass .lite-cal-group-label { color: rgba(255, 255, 255, 0.55); }
+.lite-root--paper .lite-cal-group-label { color: #86868b; }
+
+.lite-cal-list { list-style: none; margin: 0; padding: 0; }
+
+.lite-cal-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 13px 0;
+}
+
+.lite-cal-when {
+  flex-shrink: 0;
+  width: 128px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lite-cal-when strong { font-size: 0.9rem; font-weight: 650; }
+.lite-cal-when em { font-style: normal; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+
+.lite-cal-what {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lite-cal-what strong {
+  font-size: 0.98rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lite-cal-what em { font-style: normal; font-size: 0.82rem; }
+
+.lite-cal-nums {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.lite-cal-impact {
+  flex-shrink: 0;
+  padding: 4px 9px;
+  border-radius: 7px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* ── Prediction rows ── */
+.lite-pred-list { list-style: none; margin: 0; padding: 0; }
+
+.lite-pred-link {
+  display: grid;
+  grid-template-columns: 1fr 190px;
+  grid-template-areas: 'q odds' 'meta odds';
+  align-items: center;
+  column-gap: 20px;
+  row-gap: 4px;
+  padding: 14px 0;
+  text-decoration: none;
+}
+
+.lite-pred-q {
+  grid-area: q;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}
+
+.lite-pred-meta {
+  grid-area: meta;
+  display: flex;
+  gap: 14px;
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.lite-pred-odds {
+  grid-area: odds;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lite-pred-odds strong { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.02em; }
+
+.lite-pred-odds em {
+  font-style: normal;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lite-pred-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.lite-pred-fill { display: block; height: 100%; border-radius: 3px; }
+
+/* ── Top-coins strip (Today, left-to-right rail) ── */
+.lite-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 2px 8px;
+  /* no scroll-snap: proximity snapping grabbed diagonal trackpad swipes and
+     read as scroll hitches over the rail */
+  overscroll-behavior-x: contain;
+}
+
+.lite-strip::-webkit-scrollbar { display: none; }
+
+.lite-strip-card {
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 13px;
+  border-radius: 15px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  /* Drag-to-scroll on the rail - text selection mid-drag reads as a glitch. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.lite-strip-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.lite-strip-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.lite-strip-body { display: flex; flex-direction: column; gap: 1px; }
+.lite-strip-sym { font-size: 0.74rem; font-weight: 700; letter-spacing: 0.03em; }
+.lite-strip-price { font-size: 0.86rem; font-weight: 600; white-space: nowrap; }
+.lite-strip-change { font-size: 0.76rem; font-weight: 600; white-space: nowrap; }
+
+/* ── Search ── */
+/* The rise animations retain a transform (fill-mode both), so every section
+   is its own stacking context and DOM order wins - the wrapper needs an
+   explicit z-index or the dropdown paints UNDER the coin strip. */
+.lite-search-wrap {
+  position: relative;
+  z-index: 60;
+}
+
+.lite-search {
+  position: relative;
+  max-width: 560px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.lite-search-icon {
+  position: absolute;
+  left: 17px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 17px;
+  height: 17px;
+  pointer-events: none;
+  /* 🪤 The glass input has a backdrop-filter, which makes it a stacking
+     context painted in the same layer as this positioned icon - and it comes
+     later in the DOM, so it painted OVER the icon. Invisible for weeks. */
+  z-index: 1;
+}
+
+.lite-search-input {
+  width: 100%;
+  padding: 14px 18px 14px 46px;
+  border-radius: 9999px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border: none;
+  outline: none;
+}
+
+.lite-search-drop {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  padding: 8px;
+  border-radius: 18px;
+}
+
+.lite-search-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.lite-search-rank { font-size: 0.76rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ── Watchlist star ── */
+.lite-star {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: color 0.15s, transform 0.12s;
+}
+
+/* display:block - inline svg/img in flex rows baseline-shifts a few px on
+   iOS Safari (beta report: "stars are a little off" on iPhone) */
+.lite-star svg { width: 17px; height: 17px; display: block; }
+
+
+/* Chart panel: the chart absorbs slack when the right column runs taller, but
+   only UP TO A CAP (see below - unbounded growth was the "график растянут по
+   высоте" bug); the quick stats pin to the card bottom. */
+.lite-research-chart { display: flex; flex-direction: column; }
+/* HEIGHT IS CAPPED BY THE VIEWPORT, NOT BY THE NEIGHBOUR.
+   `.lite-grid` is `align-items: stretch`, and the panel beside this one is a
+   tweet list that routinely runs past 1500px. Every pixel of that used to land
+   on the chart, because `.lite-chart` grew with `flex: 1` and the svg is
+   `height: 100%`: measured 2026-08-20, forcing the rail to 1500px took the
+   drawing area from 263px to **1132px** - a line stretched corner to corner,
+   which is the "график растянут по высоте" report. The panel still stretches
+   (the two columns must stay aligned); the CHART stops at a readable size and
+   the slack falls through to the stats block, which is already bottom-pinned
+   with `margin-top: auto`. */
+.lite-research-chart .lite-chart {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 280px;
+  max-height: clamp(280px, 36vh, 440px);
+}
+/* Same story for the widget pane: it stretched to 1161px while the iframe
+   inside stayed at its 430px prop height, leaving 700px of dead panel. Size to
+   the widget instead of growing. */
+.lite-research-chart .lite-tv-embed { flex: 0 0 auto; min-height: 430px; }
+.lite-rz-quickstats {
+  margin-top: auto;
+  padding-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 30px;
+}
+.lite-rz-quickstats > div { display: flex; flex-direction: column; gap: 3px; min-width: 88px; }
+.lite-rz-quickstats em {
+  font-style: normal;
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.55;
+}
+.lite-rz-quickstats strong {
+  font-size: 1.02rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Live pulse at the chart's last point (line/baseline, market open) */
+.lite-chart-livedot {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: currentColor;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.lite-chart-livedot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+  animation: liteLivePing 1.8s ease-out infinite;
+}
+@keyframes liteLivePing {
+  0% { transform: scale(1); opacity: 0.5; }
+  80%, 100% { transform: scale(3.2); opacity: 0; }
+}
+
+.lite-research-scrubdate { opacity: 0.6; font-weight: 500; }
+
+.lite-earn-line { font-size: 0.96rem; font-weight: 650; margin: 2px 0 0; letter-spacing: -0.01em; }
+
+/* Verdict gauges (Technicals) - deterministic speedometers */
+.lite-tech-top { display: flex; gap: 34px; align-items: center; margin-bottom: 4px; }
+.lite-tech-main { flex: 1; min-width: 0; }
+.lite-vgauges { display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; width: 170px; }
+.lite-vgauge { display: flex; flex-direction: column; align-items: center; width: 170px; }
+.lite-vgauge svg { width: 100%; height: auto; display: block; overflow: visible; }
+.lite-vgauge-track { stroke: rgba(148, 163, 184, 0.16); }
+.lite-vgauge-band { opacity: 0.7; }
+.lite-vgauge-notch { stroke: rgba(148, 163, 184, 0.5); }
+.lite-vgauge-marker { transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+.lite-vgauge-marker-glow { fill: currentColor; opacity: 0.22; }
+.lite-vgauge-marker-dot { fill: currentColor; stroke: #fff; stroke-width: 2; }
+.lite-vgauge-marker-core { fill: #fff; }
+.lite-vgauge.up svg { color: #10b981; }
+.lite-vgauge.down svg { color: #ef4444; }
+.lite-vgauge.flat svg { color: #9ca3af; }
+.lite-vgauge-score { font-size: 30px; font-weight: 750; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; fill: currentColor; }
+.lite-vgauge-scale,
+.lite-vgauge-end { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; fill: rgba(148, 163, 184, 0.7); }
+.lite-vgauge-end { font-size: 8px; }
+.lite-vgauge-verdict { font-size: 1.02rem; font-weight: 750; letter-spacing: -0.01em; margin-top: 4px; }
+.lite-root--glass .lite-vgauge-score { fill: #fff; }
+.lite-root--paper .lite-vgauge-score { fill: #1d1d1f; }
+.lite-root--paper .lite-vgauge-marker-dot { stroke: #fff; }
+.lite-root--paper .lite-vgauge-track { stroke: rgba(0, 0, 0, 0.08); }
+.lite-root--glass .lite-vgauge.up svg { color: #34d399; }
+.lite-root--glass .lite-vgauge.down svg { color: #f87171; }
+.lite-root--paper .lite-vgauge.up svg { color: #0a8a4a; }
+.lite-root--paper .lite-vgauge.down svg { color: #d70015; }
+@media (prefers-reduced-motion: reduce) {
+  .lite-vgauge-marker { transition: none; }
+}
+.lite-vgauge-verdict.up { color: #10b981; }
+.lite-vgauge-verdict.down { color: #ef4444; }
+.lite-vgauge-title {
+  font-style: normal;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.55;
+  margin-top: 5px;
+}
+.lite-vgauge-note { font-size: 0.72rem; opacity: 0.6; margin-top: 2px; }
+
+/* The debate - two-column deterministic bull/bear case */
+.lite-debate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 4px; }
+.lite-debate-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  margin-bottom: 11px;
+}
+.lite-debate-tag--bull { color: #10b981; background: rgba(16, 185, 129, 0.12); }
+.lite-debate-tag--bear { color: #ef4444; background: rgba(239, 68, 68, 0.12); }
+.lite-debate-col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.lite-debate-col li { position: relative; padding-left: 16px; font-size: 0.92rem; line-height: 1.45; }
+.lite-debate-col li::before { content: ""; position: absolute; left: 0; top: 0.52em; width: 6px; height: 6px; border-radius: 50%; }
+.lite-debate-col:first-child li::before { background: #10b981; }
+.lite-debate-col:last-child li::before { background: #ef4444; }
+.lite-star--rz { width: 26px; height: 26px; margin: -4px 0; }
+.lite-star:active { transform: scale(0.88); }
+
+/* ── Today edit popover ── */
+.lite-editwrap { position: relative; }
+
+.lite-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.lite-edit-btn svg { width: 14px; height: 14px; }
+
+.lite-editpop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  /* Wide enough that "Total market cap" and "Heatmap / Bubbles" stay on one
+     line each. */
+  width: 264px;
+  padding: 10px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  /* Twenty-odd sections do not fit under the header on a laptop; the list
+     scrolls inside the card instead of running off the bottom of the screen.
+     Capped well short of the viewport so it reads as a menu, not a panel. */
+  max-height: min(60vh, calc(100vh - 240px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.lite-editrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+  padding: 5px 8px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+/* Row = [toggle button][reorder arrows]. The main region keeps the old
+   full-row toggle behavior; arrows move the panel in the Today grid. */
+.lite-editrow-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+
+/* Reorder = drag by the grip (use-drag-reorder.js). The row's transform is
+   driven from JS while dragging; the list is the measuring frame. */
+.lite-editlist { position: relative; display: flex; flex-direction: column; gap: 2px; }
+
+.lite-grip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.lite-grip svg { width: 16px; height: 16px; pointer-events: none; }
+.lite-grip:active { cursor: grabbing; }
+
+.lite-editrow--dragging {
+  position: relative;
+  z-index: 2;
+  cursor: grabbing;
+}
+
+.lite-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 34px;
+  height: 19px;
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+
+.lite-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s;
+}
+
+.lite-switch.on .lite-switch-knob { transform: translateX(15px); }
+
+.lite-block-tools { display: flex; align-items: center; gap: 12px; }
+
+/* ── Back chip (jump history) ── */
+.lite-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 auto 14px;
+  padding: 9px 16px 9px 12px;
+  border: none;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.2s;
+}
+
+.lite-back svg { width: 14px; height: 14px; }
+.lite-back:hover { transform: translateX(-2px); }
+
+.lite-root--glass .lite-back {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+.lite-root--paper .lite-back {
+  color: #1d1d1f;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 8px 20px rgba(0, 0, 0, 0.07);
+}
+
+/* ── Edit popover extras: titles + background swatches ── */
+.lite-editpop-title {
+  margin: 6px 0 4px;
+  padding: 0 8px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+.lite-root--glass .lite-editpop-title { color: rgba(255, 255, 255, 0.5); }
+.lite-root--paper .lite-editpop-title { color: #86868b; }
+
+.lite-bg-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 2px 6px 6px;
+}
+
+.lite-bg-swatch {
+  position: relative;
+  height: 34px;
+  border: 2px solid transparent;
+  border-radius: 9px;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  background: rgba(128, 128, 128, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.lite-bg-swatch img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.lite-bg-swatch.active { border-color: #34d399; }
+.lite-bg-swatch-fill { position: absolute; inset: 0; }
+.lite-bg-swatch--fill { border-color: rgba(0, 0, 0, 0.08); }
+.lite-bg-swatch--fill.active { border-color: #34d399; }
+.lite-bg-swatch--mix { color: #fff; background: linear-gradient(135deg, #3b6ea5, #6b4f8a 55%, #1c2a3a); }
+.lite-bg-swatch--upload { color: inherit; }
+.lite-bg-swatch--upload svg { width: 15px; height: 15px; }
+.lite-bg-swatch--upload input { display: none; }
+.lite-root--glass .lite-bg-swatch--upload { color: rgba(255, 255, 255, 0.8); background: rgba(255, 255, 255, 0.12); }
+.lite-root--paper .lite-bg-swatch--upload { color: #1d1d1f; background: #f0f0f2; }
+
+/* ── Month grid (Calendar) ── */
+.lite-calgrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.lite-calgrid-wd {
+  text-align: center;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding-bottom: 2px;
+}
+
+.lite-calgrid-cell {
+  min-height: 104px;
+  border-radius: 12px;
+  padding: 7px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+  /* anchors the tier bloom below the content */
+  position: relative;
+  isolation: isolate;
+  transition: border-color 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Tier light ───────────────────────────────────────────────────────────
+   Same language as the PRO board: the day's heaviest tier blooms in its own
+   corner, so the week of a PCE and a Jackson Hole is visibly hotter than the
+   week around it. Light on the surface, not a sticker on top of it. */
+.lite-calgrid-cell::after {
+  content: '';
+  position: absolute;
+  top: -34%;
+  right: -26%;
+  width: 72%;
+  height: 92%;
+  border-radius: 50%;
+  filter: blur(14px);
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0;
+}
+
+.lite-calgrid-cell.tier-critical::after {
+  opacity: 1;
+  background: radial-gradient(circle at 62% 38%, rgba(239, 68, 68, 0.42) 0%, rgba(239, 68, 68, 0.12) 44%, transparent 72%);
+}
+
+.lite-calgrid-cell.tier-high::after {
+  opacity: 1;
+  background: radial-gradient(circle at 62% 38%, rgba(249, 115, 22, 0.3) 0%, rgba(249, 115, 22, 0.08) 46%, transparent 72%);
+}
+
+.lite-calgrid-cell.tier-medium::after {
+  opacity: 1;
+  background: radial-gradient(circle at 62% 38%, rgba(245, 158, 11, 0.16) 0%, transparent 62%);
+}
+
+.lite-calgrid-cell.past::after { opacity: 0.28; }
+
+/* An empty day recedes so the loud ones can land. */
+.lite-calgrid-cell.empty { box-shadow: none; }
+
+.lite-calgrid-cell:hover { transform: translateY(-1px); }
+
+/* PAST — settled, not deleted. 0.45 was low enough that a landed print was
+   unreadable, which is the one thing a past cell is for. */
+.lite-calgrid-cell.past { opacity: 0.62; }
+.lite-calgrid-cell.past .lite-calgrid-actual { opacity: 1; }
+
+.lite-calgrid-day { font-size: 0.78rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.lite-calgrid-chip {
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.3;
+  padding: 3px 7px;
+  border-radius: 6px;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  /* When the name and the print can't share a line, the print drops to its own
+     rather than squeezing the name down to three characters. */
+  flex-wrap: wrap;
+}
+
+.lite-calgrid-chip-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 62px;
+  flex: 1 1 auto;
+}
+
+/* The print, tinted against consensus — same green/red meaning as the list
+   rows below the grid and as the PRO calendar. */
+.lite-calgrid-actual {
+  font-style: normal;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.lite-calgrid-more { font-size: 0.68rem; font-weight: 700; }
+
+.lite-root--glass .lite-calgrid-wd { color: rgba(255, 255, 255, 0.45); }
+.lite-root--glass .lite-calgrid-cell { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); }
+.lite-root--glass .lite-calgrid-cell { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 6px 18px rgba(0, 0, 0, 0.18); }
+/* TODAY is LIFTED — ring, brighter glass and a deeper shadow, so it reads as
+   the near surface rather than a differently-coloured box. */
+.lite-root--glass .lite-calgrid-cell.today {
+  border-color: rgba(110, 231, 168, 0.7);
+  background: rgba(110, 231, 168, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(110, 231, 168, 0.35),
+              inset 0 1px 0 rgba(255, 255, 255, 0.14),
+              0 10px 26px rgba(0, 0, 0, 0.3);
+}
+.lite-root--glass .lite-calgrid-day { color: rgba(255, 255, 255, 0.75); }
+.lite-root--glass .lite-calgrid-chip { background: rgba(252, 211, 77, 0.2); color: #fde68a; }
+.lite-root--glass .lite-calgrid-chip.fed { background: rgba(147, 197, 253, 0.2); color: #bfdbfe; }
+.lite-root--glass .lite-calgrid-chip.critical { background: rgba(248, 113, 113, 0.18); color: #fca5a5; }
+.lite-root--glass .lite-calgrid-actual { color: rgba(255, 255, 255, 0.75); }
+.lite-root--glass .lite-calgrid-actual.beat { color: #6ee7a8; }
+.lite-root--glass .lite-calgrid-actual.miss { color: #fca5a5; }
+.lite-root--glass .lite-calgrid-more { color: rgba(255, 255, 255, 0.5); }
+
+.lite-root--paper .lite-calgrid-wd { color: #86868b; }
+.lite-root--paper .lite-calgrid-cell { background: #f5f5f7; }
+.lite-root--paper .lite-calgrid-cell { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 14px rgba(15, 23, 42, 0.06); }
+.lite-root--paper .lite-calgrid-cell.today {
+  background: #e8f6ee;
+  box-shadow: inset 0 0 0 2px #34c759,
+              inset 0 1px 0 rgba(255, 255, 255, 0.9),
+              0 10px 24px rgba(15, 23, 42, 0.12);
+}
+/* On paper the bloom has to sit far lower or it turns the card into a stain. */
+.lite-root--paper .lite-calgrid-cell.tier-critical::after {
+  background: radial-gradient(circle at 62% 38%, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.05) 44%, transparent 72%);
+}
+.lite-root--paper .lite-calgrid-cell.tier-high::after {
+  background: radial-gradient(circle at 62% 38%, rgba(234, 88, 12, 0.13) 0%, transparent 60%);
+}
+.lite-root--paper .lite-calgrid-cell.tier-medium::after {
+  background: radial-gradient(circle at 62% 38%, rgba(217, 119, 6, 0.08) 0%, transparent 60%);
+}
+.lite-root--paper .lite-calgrid-day { color: #1d1d1f; }
+.lite-root--paper .lite-calgrid-chip { background: #fef3c7; color: #92600a; }
+.lite-root--paper .lite-calgrid-chip.fed { background: #dbeafe; color: #1d4ed8; }
+.lite-root--paper .lite-calgrid-chip.critical { background: #fee2e2; color: #b91c1c; }
+.lite-root--paper .lite-calgrid-actual { color: #475569; }
+.lite-root--paper .lite-calgrid-actual.beat { color: #047857; }
+.lite-root--paper .lite-calgrid-actual.miss { color: #b91c1c; }
+.lite-root--paper .lite-calgrid-more { color: #86868b; }
+
+/* ── Fear & Greed 90d spark ── */
+.lite-fgspark { margin-top: 16px; }
+
+.lite-fgspark-label {
+  margin: 0 0 6px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.lite-fgspark svg { display: block; width: 100%; height: 84px; }
+.lite-fgspark-line { stroke-width: 2; }
+.lite-fgspark-mid { stroke-width: 1; stroke-dasharray: 4 5; }
+
+.lite-root--glass .lite-fgspark-label { color: rgba(255, 255, 255, 0.5); }
+.lite-root--glass .lite-fgspark-line { stroke: #fcd34d; }
+.lite-root--glass .lite-fgspark-mid { stroke: rgba(255, 255, 255, 0.2); }
+.lite-root--paper .lite-fgspark-label { color: #86868b; }
+.lite-root--paper .lite-fgspark-line { stroke: #d9930d; }
+.lite-root--paper .lite-fgspark-mid { stroke: rgba(0, 0, 0, 0.12); }
+
+/* ── Research technicals card ── */
+.lite-tech-read { margin: 0 0 16px; font-size: 1rem; line-height: 1.6; }
+
+.lite-root--glass .lite-tech-read { color: rgba(255, 255, 255, 0.88); }
+.lite-root--paper .lite-tech-read { color: #1d1d1f; }
+
+.lite-tech-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.4fr;
+  gap: 18px;
+}
+
+.lite-tech-item { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+.lite-tech-item em {
+  font-style: normal;
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.lite-tech-item strong { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+
+.lite-tech-item > span:last-child { font-size: 0.74rem; }
+
+.lite-tech-meter { margin: 9px 0 5px; }
+
+.lite-root--glass .lite-tech-item em { color: rgba(255, 255, 255, 0.5); }
+.lite-root--glass .lite-tech-item strong { color: #fff; }
+.lite-root--glass .lite-tech-item strong.up { color: #6ee7a8; }
+.lite-root--glass .lite-tech-item strong.down { color: #fca5a5; }
+.lite-root--glass .lite-tech-item > span:last-child { color: rgba(255, 255, 255, 0.55); }
+.lite-root--paper .lite-tech-item em { color: #86868b; }
+.lite-root--paper .lite-tech-item strong { color: #1d1d1f; }
+.lite-root--paper .lite-tech-item strong.up { color: #037b3e; }
+.lite-root--paper .lite-tech-item strong.down { color: #d70015; }
+.lite-root--paper .lite-tech-item > span:last-child { color: #86868b; }
+
+/* Compact variant for inline block heads. With line-height:1 on the base rule
+   the padding IS the pill height, so these values are the visual size: 11px
+   text + 12px = 23px pill inside a 29px track. */
+.lite-tf-toggle--sm { padding: 3px; border-radius: 11px; }
+.lite-tf-toggle--sm .lite-tf-btn { border-radius: 8px; }
+.lite-tf-toggle--sm .lite-tf-btn { padding: 6px 11px; font-size: 0.68rem; }
+
+/* ── Block head + See-all jump ── */
+.lite-block-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lite-block-head .lite-eyebrow { margin-bottom: 12px; }
+
+.lite-seeall {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.lite-seeall svg { width: 12px; height: 12px; }
+
+/* Mini heatmap (Today): WIDE left-to-right pills, 2 per row - the compact
+   vertical tiles read as a cramped blob (founder screenshot). */
+/* Treemap view: size = market cap, percentage-positioned tiles */
+.lite-treemap {
+  position: relative;
+  height: 580px;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.lite-treemap-tile {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: #fff;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(10, 12, 16, 0.35);
+  background:
+    linear-gradient(rgb(var(--hrgb, 128 128 128) / var(--ha, 0.3)), rgb(var(--hrgb, 128 128 128) / var(--ha, 0.3))),
+    rgba(14, 18, 16, 0.72);
+  cursor: pointer;
+  overflow: hidden;
+  transition: filter 0.15s;
+}
+
+.lite-treemap-tile:hover { filter: brightness(1.15); }
+
+.lite-root--paper .lite-treemap-tile { background: rgb(var(--hrgb, 128 128 128) / var(--hap, 0.6)); }
+
+.lite-wallets-type { min-width: 90px; text-align: right; font-size: 0.72rem; text-transform: capitalize; opacity: 0.75; }
+/* Token quantity beside the dollar value. Opacity-only so it rides every
+   lite theme (dark / glass / paper / daylight) without a counterpart rule. */
+.lite-wallets-qty { min-width: 72px; text-align: right; font-size: 0.78rem; opacity: 0.62; white-space: nowrap; }
+
+/* Sector drill */
+.lite-drill-caret { flex-shrink: 0; opacity: 0.55; transition: transform 0.2s; }
+.lite-drill-caret svg { width: 15px; height: 15px; }
+.lite-drill-caret.open { transform: rotate(180deg); }
+.lite-drill { padding: 4px 0 10px 46px; }
+
+/* Media grid */
+.lite-media-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.lite-media-card {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 12px !important;
+  text-decoration: none;
+}
+
+.lite-media-thumb {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(20, 24, 30, 0.5);
+}
+
+.lite-media-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.lite-media-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+
+.lite-media-card:hover .lite-media-play { opacity: 1; }
+.lite-media-play svg { width: 34px; height: 34px; filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5)); }
+
+.lite-media-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lite-media-meta { font-size: 0.72rem; }
+
+.lite-root--glass .lite-media-title { color: #fff; }
+.lite-root--glass .lite-media-meta { color: rgba(255, 255, 255, 0.6); }
+.lite-root--paper .lite-media-title { color: #1d1d1f; }
+.lite-root--paper .lite-media-meta { color: #86868b; }
+
+/* Attention heatmap tiles: color = board-rank direction */
+.lite-treemap--attn { height: 520px; }
+.lite-attn-tile--up { background: rgba(16, 185, 129, 0.5); }
+.lite-attn-tile--down { background: rgba(239, 68, 68, 0.45); }
+.lite-attn-tile--flat { background: rgba(120, 130, 150, 0.35); }
+.lite-root--paper .lite-attn-tile--up { background: rgba(16, 185, 129, 0.75); }
+.lite-root--paper .lite-attn-tile--down { background: rgba(239, 68, 68, 0.7); }
+.lite-root--paper .lite-attn-tile--flat { background: rgba(120, 130, 150, 0.6); }
+
+/* RWA sub-tabs */
+.lite-rwa-name { min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46%; }
+
+.lite-rwa-cat { padding: 9px 0; }
+.lite-rwa-cat-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+
+.lite-rwa-bar {
+  display: block;
+  height: 7px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(128, 128, 140, 0.22);
+}
+
+.lite-rwa-bar > span { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #34d399, #10b981); }
+
+/* Mini-row coin logo (letter fallback) */
+.lite-coindot {
+  position: relative;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.lite-coindot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* (already block; kept for the iOS inline-svg audit) */
+
+.lite-coindot-fb {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 700;
+  border-radius: 50%;
+}
+
+.lite-root--glass .lite-coindot-fb { background: rgba(255, 255, 255, 0.14); color: #fff; }
+.lite-root--paper .lite-coindot-fb { background: #ececee; color: #1d1d1f; }
+
+.lite-heat--mini { grid-template-columns: 1fr 1fr; gap: 8px; }
+.lite-heat--mini .lite-heat-tile {
+  grid-column: auto;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 0 15px;
+  min-height: 46px;
+  border-radius: 12px;
+}
+.lite-heat--mini .lite-heat-sym { font-size: 0.82rem; }
+.lite-heat--mini .lite-heat-price { flex: 1; text-align: right; margin-right: 12px; font-size: 0.76rem; opacity: 0.85; }
+.lite-heat--mini .lite-heat-chg { font-size: 0.78rem; }
+
+/* Mini bubbles (Today toggle) - packed stage, centered */
+.lite-minibubbles {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lite-minibubbles-stage { position: relative; flex-shrink: 0; }
+
+.lite-minibubbles .lite-bubble { animation: none; }
+
+.lite-mini-buzzrank {
+  flex-shrink: 0;
+  width: 16px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Bubbles field ── */
+.lite-bubbles {
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.lite-bubbles-stage {
+  position: relative;
+  width: 960px;
+  height: 600px;
+  flex-shrink: 0;
+}
+
+@keyframes liteBubbleFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+
+/* Sphere look: rim ring + top highlight + inner-glow body. */
+.lite-bubble {
+  position: absolute;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  color: #fff;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
+  animation: liteBubbleFloat 6s ease-in-out infinite;
+  border: 1px solid rgb(var(--hrgb, 128 128 128) / calc(var(--ha, 0.4) + 0.25));
+  box-shadow:
+    0 12px 34px rgb(var(--hrgb, 128 128 128) / 0.28),
+    inset 0 2px 8px rgba(255, 255, 255, 0.22),
+    inset 0 -10px 24px rgb(var(--hrgb, 128 128 128) / 0.4);
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.32), transparent 46%),
+    radial-gradient(circle at 50% 55%, rgb(var(--hrgb, 128 128 128) / calc(var(--ha, 0.4) * 0.7)) 0%, rgb(var(--hrgb, 128 128 128) / var(--ha, 0.4)) 78%, rgb(var(--hrgb, 128 128 128) / calc(var(--ha, 0.4) + 0.18)) 100%);
+}
+
+.lite-root--paper .lite-bubble {
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.34), transparent 46%),
+    radial-gradient(circle at 50% 55%, rgb(var(--hrgb, 128 128 128) / calc(var(--hap, 0.7) * 0.8)) 0%, rgb(var(--hrgb, 128 128 128) / var(--hap, 0.7)) 78%, rgb(var(--hrgb, 128 128 128) / calc(var(--hap, 0.7) + 0.1)) 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lite-bubble { animation: none; }
+}
+
+.lite-bubble-sym { font-weight: 700; letter-spacing: 0.02em; }
+.lite-bubble-price { font-weight: 600; font-variant-numeric: tabular-nums; opacity: 0.95; }
+.lite-bubble-chg { font-size: 0.66rem; font-weight: 600; font-variant-numeric: tabular-nums; opacity: 0.88; }
+
+/* ── Skeleton shimmer (loading states - never "Loading…" text) ── */
+@keyframes liteShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.lite-skel { list-style: none; margin: 0; padding: 0; }
+
+.lite-skel-row {
+  height: 20px;
+  border-radius: 7px;
+  margin: 14px 0;
+  background-size: 200% 100%;
+  animation: liteShimmer 1.8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lite-skel-row { animation: none; }
+}
+
+/* ── "Go deeper in PRO" per-view door ── */
+.lite-prolink {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  align-self: center;
+  border: none;
+  padding: 12px 22px;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.lite-prolink svg { width: 14px; height: 14px; }
+.lite-prolink:hover { transform: translateY(-1px); }
+
+/* ── Derivatives pulse (Markets) ── */
+.lite-deriv-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.lite-deriv-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.lite-deriv-item em {
+  font-style: normal;
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.lite-deriv-item strong {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.lite-deriv-item > span { font-size: 0.72rem; }
+
+/* ── Market stats band (Markets) ── */
+.lite-statband {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+/* Index tiles open their own research page */
+.lite-stat--link { cursor: pointer; transition: transform 0.16s ease; }
+.lite-stat--link:hover { transform: translateY(-1px); }
+.lite-stat--link:active { transform: scale(0.985); }
+
+.lite-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 18px 20px;
+  border-radius: 18px;
+}
+
+.lite-stat em {
+  font-style: normal;
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.lite-stat strong {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.lite-stat > span { font-size: 0.74rem; }
+.lite-stat .lite-change { font-size: 0.8rem; font-weight: 600; }
+
+/* Toggle rows that hold two controls side by side */
+.lite-toolrow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+/* Toolrow hosting the Edit popover - lift above the later rise-sections (each
+   retains a transform = stacking context, DOM order wins) so it isn't buried. */
+.lite-toolrow--edit {
+  justify-content: flex-end;
+  position: relative;
+  z-index: 70;
+}
+
+/* Five stat tiles in one row (stocks: session + 3 indices + VIX) */
+.lite-statband--five { grid-template-columns: repeat(5, 1fr); }
+
+.lite-fgchart-tools { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+
+/* ── Two-column token lists (Markets / Today board). Two separate ULs so the
+   ranking reads TOP-DOWN each column (BTC 1 with ETH 2 right under it). ── */
+.lite-tsplit {
+  display: grid;
+  /* minmax(0,1fr) NOT 1fr: a long name (BlackRock BUIDL) inflates a track's
+     min-content and 1fr refuses to shrink below it - the right column then
+     overflows the panel. Forcing 0-min keeps the halves equal; names inside
+     already ellipsize. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 46px;
+  align-items: start;
+}
+
+.lite-tsplit > ul { min-width: 0; }
+
+.lite-trow-rank {
+  min-width: 20px;
+  text-align: right;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.lite-tlist--compact .lite-trow { padding: 8px 0; }
+.lite-tlist--compact .lite-trow-logo { width: 26px; height: 26px; }
+.lite-tlist--compact .lite-trow-price { font-size: 0.92rem; }
+.lite-tlist--compact .lite-trow-id strong { font-size: 0.92rem; }
+
+.lite-ls-track {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 6px 0 2px;
+}
+
+.lite-ls-track > span { display: block; height: 100%; }
+
+/* ── Daily thought (Today) ── */
+.lite-thought {
+  margin: 26px auto 0;
+  max-width: 560px;
+  text-align: center;
+  font-size: 0.98rem;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* ── More sheet (mobile nav overflow) ── */
+.lite-sheet-scrim, .lite-sheet { display: none; }
+
+/* News */
+.lite-news-list { list-style: none; margin: 0; padding: 0; }
+
+.lite-news-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 0;
+  text-decoration: none;
+}
+
+.lite-news-body { flex: 1; min-width: 0; }
+
+.lite-news-thumb {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.lite-news-thumb--lg { width: 72px; height: 72px; border-radius: 12px; }
+
+.lite-news-title {
+  display: block;
+  font-size: 0.98rem;
+  font-weight: 550;
+  line-height: 1.4;
+  margin-bottom: 3px;
+  transition: color 0.15s;
+}
+
+.lite-news-meta { display: block; font-size: 0.76rem; }
+.lite-news-context { margin: 2px 0 4px; line-height: 1.4; }
+
+/* When title + meta are direct children of the flex link (the research and
+   stocks rails), the title must be allowed to shrink and the meta must not -
+   otherwise one unbreakable word pushes the byline clean out of the panel. */
+.lite-news-link > .lite-news-title { min-width: 0; overflow-wrap: anywhere; }
+.lite-news-link > .lite-news-meta { flex-shrink: 0; white-space: nowrap; }
+
+/* X mentions. A tweet is an attribution plus a body - not a headline with a
+   trailing byline - so the handle leads and the text wraps under it, clamped
+   so six posts stay a scannable list instead of six paragraphs. */
+.lite-tweet-list { list-style: none; margin: 0; padding: 0; }
+
+.lite-tweet {
+  display: block;
+  padding: 11px 0;
+  text-decoration: none;
+}
+
+.lite-tweet-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.lite-tweet-handle {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lite-tweet-dot, .lite-tweet-time { flex-shrink: 0; }
+
+.lite-tweet-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  transition: color 0.15s;
+}
+
+.lite-news-list--full .lite-news-link { padding: 15px 0; }
+.lite-news-list--full .lite-news-title { font-size: 1.1rem; }
+
+/* Today's news spread across two columns to fill the width */
+.lite-news-list--cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 40px;
+}
+
+/* Entrance */
+@keyframes liteRise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* fill-mode backwards, NOT both: a retained transform (even translateY(0))
+   makes the riser the containing block for position:fixed children (the Edit
+   sheet), pinning them to scrolled content instead of the viewport. */
+.lite-rise { animation: liteRise 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+.lite-rise-1 { animation: liteRise 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.07s backwards; }
+.lite-rise-2 { animation: liteRise 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.14s backwards; }
+.lite-rise-3 { animation: liteRise 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.21s backwards; }
+
+/* GLASS: slide only, no fade. An ancestor sitting at opacity < 1 is a backdrop
+   root, so every backdrop-filter inside it blurs NOTHING until the fade ends -
+   the watchlist stat cards read as clear glass for the whole 0.6s and the blur
+   popped in afterwards (founder screenshot 2026-09-05). Measured with the
+   animation slowed to 12s: sharp horizon through the cards while opacity
+   animated, blurred from the first frame with transform alone - a transform
+   does not isolate the backdrop. Same easing and distance, so the entrance
+   reads the same; only the fade is gone, and only where glass needs it. */
+@keyframes liteRiseMove {
+  from { transform: translateY(16px); }
+  to { transform: translateY(0); }
+}
+.lite-root--glass .lite-rise,
+.lite-root--glass .lite-rise-1,
+.lite-root--glass .lite-rise-2,
+.lite-root--glass .lite-rise-3 { animation-name: liteRiseMove; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lite-rise, .lite-rise-1, .lite-rise-2, .lite-rise-3 { animation: none; }
+  .lite-bg { transition: none; }
+}
+
+/* ════════════════════════ GLASS look ════════════════════════ */
+
+.lite-root--glass { background: #0f172a; color: #fff; }
+
+.lite-root--glass .lite-nav {
+  background: linear-gradient(180deg, rgba(14, 18, 28, 0.5) 0%, rgba(14, 18, 28, 0.34) 100%);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(11px) saturate(160%);
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 12px 0 44px rgba(0, 0, 0, 0.35), inset -1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+.lite-root--glass .lite-wordmark { color: #fff; }
+.lite-root--glass .lite-wordmark-tag { background: rgba(255, 255, 255, 0.18); color: rgba(255, 255, 255, 0.92); }
+
+.lite-root--glass .lite-nav-toggle { color: rgba(255, 255, 255, 0.55); }
+.lite-root--glass .lite-nav-toggle:hover { color: #fff; background: rgba(255, 255, 255, 0.1); }
+.lite-root--glass .lite-nav-item { color: rgba(255, 255, 255, 0.62); }
+.lite-root--glass .lite-nav-item:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+.lite-root--glass .lite-nav-item.active {
+  color: #fff;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.1) 100%);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+/* SEGMENTED CONTROLS - the premium treatment, glass.
+   A flat rgba(255,255,255,0.22) fill on a flat track is what read as "weird
+   cheap overlays" (founder 2026-08-12): two grey shapes with nothing telling
+   you which one is the surface and which is the hole. So give them opposite
+   jobs. The TRACK is a recessed groove - darker than its surroundings with an
+   inset shadow along its top lip. The THUMB is a raised chip - a top-lit
+   gradient, a bright 1px inner highlight where light would catch its edge, a
+   hairline ring, and a tight drop shadow. Light comes from above in both, and
+   the depth cue does the work no amount of extra grey ever could. */
+.lite-root--glass .lite-look-toggle,
+.lite-root--glass .lite-tf-toggle {
+  /* Deep enough to still read as a HOLE over a bright wallpaper - measured at
+     0.30 the groove washed out against a daylight photo and the control went
+     back to looking like two flat greys. */
+  background: rgba(6, 9, 15, 0.46);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+.lite-root--glass .lite-look-btn,
+.lite-root--glass .lite-tf-btn { color: rgba(255, 255, 255, 0.58); }
+.lite-root--glass .lite-look-btn:hover:not(.active),
+.lite-root--glass .lite-tf-btn:hover:not(.active) { color: rgba(255, 255, 255, 0.85); }
+.lite-root--glass .lite-look-btn.active,
+.lite-root--glass .lite-tf-btn.active {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.44) 0%, rgba(255, 255, 255, 0.26) 100%);
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.lite-root--glass .lite-pro-btn {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+.lite-root--glass .lite-pro-btn:hover { background: linear-gradient(160deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.14) 100%); }
+
+/* Photo Glass owns its ink independently of the surrounding Pro theme.
+   The more specific daylight rule above keeps bright backdrops dark. */
+.lite-root--glass .lite-greeting {
+  color: #fff;
+  text-shadow: 0 2px 22px rgba(0, 0, 0, 0.5);
+}
+
+.lite-root--glass .lite-pill {
+  color: rgba(255, 255, 255, 0.9);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.09) 100%);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.lite-root--glass .lite-panel {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.08) 100%);
+  /* blur 22->14: every panel re-filters its backdrop each scroll frame; over
+     the hi-res wallpapers 22px was the scroll-lag driver. 14 reads identical
+     over the scrim (same lesson as the header A1 fix). */
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.34), 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.26);
+}
+
+.lite-root--glass .lite-panel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 26px 60px rgba(0, 0, 0, 0.42), 0 6px 16px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.lite-root--glass .lite-eyebrow { color: rgba(255, 255, 255, 0.62); }
+
+.lite-root--glass .lite-brief-headline {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  color: #fff;
+}
+
+.lite-root--glass .lite-brief-body { color: rgba(255, 255, 255, 0.86); }
+.lite-root--glass .lite-view-title { color: #fff; text-shadow: 0 2px 20px rgba(0, 0, 0, 0.45); }
+.lite-root--glass .lite-view-sub { color: rgba(255, 255, 255, 0.78); text-shadow: 0 1px 12px rgba(0, 0, 0, 0.4); }
+
+/* ── Money-flow hero over a photo ─────────────────────────────────────────
+   🪤 The treemap's hero (the big number, the in/out split, the scope line) is
+   built for PRO's black page and paints straight onto whatever is behind it.
+   In LITE that is a WALLPAPER, and a photo is not uniformly dark — the founder
+   hit this on a waterfall scene (08-07: "text is blurred in lite"), where the
+   number sat on the white water and vanished. A text-shadow does not save a
+   green-on-white number; only a surface does. So the hero gets the same
+   frosted plate every other LITE panel has, and reads over ANY backdrop
+   instead of over the lucky half of one. PRO leaves .mfx-hero unstyled. */
+.lite-root--glass .mfx-hero,
+.lite-root--paper .mfx-hero {
+  padding: 18px 22px 16px;
+  border-radius: 20px;
+  margin-bottom: 14px;
+}
+.lite-root--glass .mfx-hero {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.08) 100%);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+.lite-root--glass .mfx-hero .mfx-sub { margin-top: 4px; }
+.lite-root--glass .mfx-amount,
+.lite-root--glass .mfx[data-dir='up'] .mfx-amount,
+.lite-root--glass .mfx[data-dir='down'] .mfx-amount { color: #fff; }
+.lite-root--glass .mfx-verb { color: rgba(255, 255, 255, 0.72); }
+.lite-root--glass .mfx-scope { color: rgba(255, 255, 255, 0.6); }
+.lite-root--glass .mfx-rail-hint { color: rgba(255, 255, 255, 0.62); }
+.lite-root--glass .mfx-sep { background: rgba(255, 255, 255, 0.3); }
+.lite-root--paper .mfx-hero {
+  background: linear-gradient(150deg, #ffffff 0%, #fdfcff 48%, #f8fbfe 100%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 6px rgba(49, 61, 92, 0.05), 0 14px 32px rgba(49, 61, 92, 0.08), inset 0 1px 0 #ffffff;
+}
+.lite-root--paper .mfx-amount,
+.lite-root--paper .mfx[data-dir='up'] .mfx-amount,
+.lite-root--paper .mfx[data-dir='down'] .mfx-amount { color: #1d1d1f; }
+.lite-root--paper .mfx-verb { color: #6e6e73; }
+.lite-root--paper .mfx-scope { color: #86868b; }
+.lite-root--paper .mfx-rail-hint { color: #6e6e73; }
+.lite-root--paper .mfx-sep { background: rgba(0, 0, 0, 0.2); }
+/* The key under the map is the same problem in miniature - small muted type
+   with nothing behind it. A shadow is enough here: it is grey, not a coloured
+   number, so it survives on either half of a photo once it has an edge. */
+.lite-root--glass .mfx-legend-label,
+.lite-root--glass .mfx-legend-note { color: rgba(255, 255, 255, 0.72); text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55); }
+.lite-root--paper .mfx-legend-label,
+.lite-root--paper .mfx-legend-note { color: #6e6e73; }
+
+.lite-root--glass .lite-mini-row { border-bottom: 1px solid rgba(255, 255, 255, 0.09); }
+.lite-root--glass .lite-mini-row:last-child { border-bottom: none; }
+.lite-root--glass .lite-mini-sym { color: #fff; }
+.lite-root--glass .lite-mini-price { color: rgba(255, 255, 255, 0.92); }
+.lite-root--glass .lite-mini-mcap { color: rgba(255, 255, 255, 0.5); }
+
+.lite-root--glass .lite-change.up { color: #6ee7a8; }
+.lite-root--glass .lite-change.down { color: #fca5a5; }
+
+.lite-root--glass .lite-empty { color: rgba(255, 255, 255, 0.58); }
+
+.lite-root--glass .lite-mover {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.07) 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.2);
+}
+.lite-root--glass .lite-mover.up { color: #86efac; }
+.lite-root--glass .lite-mover.down { color: #fca5a5; }
+
+.lite-root--glass .lite-trow { border-bottom: 1px solid rgba(255, 255, 255, 0.09); }
+.lite-root--glass .lite-trow:last-child { border-bottom: none; }
+.lite-root--glass .lite-trow-id strong { color: #fff; }
+.lite-root--glass .lite-trow-id em { color: rgba(255, 255, 255, 0.5); }
+.lite-root--glass .lite-trow-mcap { color: rgba(255, 255, 255, 0.55); }
+.lite-root--glass .lite-trow-price { color: rgba(255, 255, 255, 0.95); }
+.lite-root--glass .lite-trow-change.up { color: #6ee7a8; }
+.lite-root--glass .lite-trow-change.down { color: #fca5a5; }
+.lite-root--glass .lite-trow-fallback { background: rgba(255, 255, 255, 0.14); color: #fff; }
+
+.lite-root--glass .lite-gauge-value { color: #fff; }
+.lite-root--glass .lite-gauge-label { color: rgba(255, 255, 255, 0.82); }
+.lite-root--glass .lite-gauge-scale { color: rgba(255, 255, 255, 0.48); }
+
+.lite-root--glass .lite-news-title { color: rgba(255, 255, 255, 0.94); }
+.lite-root--glass .lite-news-link:hover .lite-news-title { color: #fff; }
+.lite-root--glass .lite-news-meta { color: rgba(255, 255, 255, 0.55); }
+.lite-root--glass .lite-news-list li { border-bottom: 1px solid rgba(255, 255, 255, 0.09); }
+.lite-root--glass .lite-news-list li:last-child { border-bottom: none; }
+
+.lite-root--glass .lite-tweet-text { color: rgba(255, 255, 255, 0.9); }
+.lite-root--glass a.lite-tweet:hover .lite-tweet-text { color: #fff; }
+.lite-root--glass .lite-tweet-handle { color: rgba(255, 255, 255, 0.66); }
+.lite-root--glass .lite-tweet-dot, .lite-root--glass .lite-tweet-time { color: rgba(255, 255, 255, 0.44); }
+.lite-root--glass .lite-tweet-list li { border-bottom: 1px solid rgba(255, 255, 255, 0.09); }
+.lite-root--glass .lite-tweet-list li:last-child { border-bottom: none; }
+
+.lite-root--glass .lite-chip {
+  color: rgba(255, 255, 255, 0.68);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+.lite-root--glass .lite-chip:hover { color: #fff; }
+.lite-root--glass .lite-chip.active {
+  color: #fff;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.14) 100%);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+
+.lite-root--glass .lite-research-price { color: #fff; }
+.lite-root--glass .lite-research-change.up { color: #6ee7a8; }
+.lite-root--glass .lite-research-change.down { color: #fca5a5; }
+.lite-root--glass .lite-chart-axis { color: rgba(255, 255, 255, 0.5); }
+.lite-root--glass .lite-chart.up { color: #6ee7a8; }
+.lite-root--glass .lite-chart.down { color: #fca5a5; }
+.lite-root--glass .lite-chart-empty { color: rgba(255, 255, 255, 0.55); }
+
+.lite-root--glass .lite-stat-list li { border-bottom: 1px solid rgba(255, 255, 255, 0.09); }
+.lite-root--glass .lite-stat-list li:last-child { border-bottom: none; }
+.lite-root--glass .lite-stat-list li span { color: rgba(255, 255, 255, 0.6); }
+.lite-root--glass .lite-stat-list li strong { color: #fff; }
+
+.lite-root--glass .lite-perf-chip { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.14); }
+.lite-root--glass .lite-perf-chip em { color: rgba(255, 255, 255, 0.5); }
+.lite-root--glass .lite-perf-chip.up { color: #6ee7a8; }
+.lite-root--glass .lite-perf-chip.down { color: #fca5a5; }
+
+.lite-root--glass .lite-range-labels { color: rgba(255, 255, 255, 0.75); }
+.lite-root--glass .lite-range-title { color: rgba(255, 255, 255, 0.45); }
+.lite-root--glass .lite-range-track { background: linear-gradient(90deg, rgba(252, 165, 165, 0.7), rgba(255, 255, 255, 0.3), rgba(110, 231, 168, 0.7)); }
+
+.lite-root--glass .lite-gauge-note { color: rgba(255, 255, 255, 0.66); }
+.lite-root--glass .lite-sector-logos img { border: 2px solid rgba(30, 36, 48, 0.9); background: rgba(255, 255, 255, 0.12); }
+
+.lite-root--glass .lite-social-rank { color: rgba(255, 255, 255, 0.45); }
+.lite-root--glass .lite-social-stat strong { color: #fff; }
+.lite-root--glass .lite-social-stat em { color: rgba(255, 255, 255, 0.45); }
+.lite-root--glass .lite-social-delta { color: rgba(255, 255, 255, 0.5); }
+.lite-root--glass .lite-social-delta.up { color: #6ee7a8; }
+.lite-root--glass .lite-social-delta.down { color: #fca5a5; }
+.lite-root--glass .lite-social-note { color: rgba(255, 255, 255, 0.5); }
+.lite-root--glass .lite-heat-tile { border: 1px solid rgba(255, 255, 255, 0.14); }
+
+.lite-root--glass .lite-trow-change7.up { color: rgba(110, 231, 168, 0.75); }
+.lite-root--glass .lite-trow-change7.down { color: rgba(252, 165, 165, 0.75); }
+
+.lite-root--glass .lite-cal-row { border-bottom: 1px solid rgba(255, 255, 255, 0.09); }
+.lite-root--glass .lite-cal-row:last-child { border-bottom: none; }
+.lite-root--glass .lite-cal-when strong { color: #fff; }
+.lite-root--glass .lite-cal-when em { color: rgba(255, 255, 255, 0.5); }
+.lite-root--glass .lite-cal-what strong { color: rgba(255, 255, 255, 0.94); }
+.lite-root--glass .lite-cal-what em { color: rgba(255, 255, 255, 0.5); }
+.lite-root--glass .lite-cal-nums { color: rgba(255, 255, 255, 0.6); }
+.lite-root--glass .lite-cal-impact { background: rgba(252, 211, 77, 0.18); color: #fcd34d; }
+.lite-root--glass .lite-cal-impact.fed { background: rgba(147, 197, 253, 0.18); color: #93c5fd; }
+.lite-root--glass .lite-cal-impact.critical { background: rgba(248, 113, 113, 0.18); color: #fca5a5; }
+
+.lite-root--glass .lite-pred-list li { border-bottom: 1px solid rgba(255, 255, 255, 0.09); }
+.lite-root--glass .lite-pred-list li:last-child { border-bottom: none; }
+.lite-root--glass .lite-pred-q { color: rgba(255, 255, 255, 0.94); }
+.lite-root--glass .lite-pred-link:hover .lite-pred-q { color: #fff; }
+.lite-root--glass .lite-pred-meta { color: rgba(255, 255, 255, 0.5); }
+.lite-root--glass .lite-pred-odds strong { color: #fff; }
+.lite-root--glass .lite-pred-odds em { color: rgba(255, 255, 255, 0.5); }
+.lite-root--glass .lite-pred-track { background: rgba(255, 255, 255, 0.14); }
+.lite-root--glass .lite-pred-fill { background: linear-gradient(90deg, #6ee7a8, #34d399); }
+
+.lite-root--glass .lite-skel-row {
+  background-image: linear-gradient(90deg, rgba(255, 255, 255, 0.07) 25%, rgba(255, 255, 255, 0.16) 50%, rgba(255, 255, 255, 0.07) 75%);
+}
+
+.lite-root--glass .lite-prolink {
+  color: #fff;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.09) 100%);
+  backdrop-filter: blur(11px);
+  -webkit-backdrop-filter: blur(11px);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.26);
+}
+.lite-root--glass .lite-prolink:hover { background: linear-gradient(160deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.13) 100%); }
+
+.lite-root--glass .lite-deriv-item em { color: rgba(255, 255, 255, 0.5); }
+.lite-root--glass .lite-deriv-item strong { color: #fff; }
+.lite-root--glass .lite-deriv-item strong.up { color: #6ee7a8; }
+.lite-root--glass .lite-deriv-item strong.down { color: #fca5a5; }
+.lite-root--glass .lite-deriv-item > span { color: rgba(255, 255, 255, 0.55); }
+
+.lite-root--glass .lite-stat {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.08) 100%);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.26);
+}
+
+.lite-root--glass .lite-stat em { color: rgba(255, 255, 255, 0.55); }
+.lite-root--glass .lite-stat strong { color: #fff; }
+.lite-root--glass .lite-stat strong.up { color: #6ee7a8; }
+.lite-root--glass .lite-stat strong.down { color: #fca5a5; }
+.lite-root--glass .lite-stat > span { color: rgba(255, 255, 255, 0.55); }
+.lite-root--glass .lite-trow-rank { color: rgba(255, 255, 255, 0.42); }
+.lite-root--glass .lite-ls-track { background: rgba(252, 165, 165, 0.4); }
+.lite-root--glass .lite-ls-track > span { background: #6ee7a8; }
+
+.lite-root--glass .lite-thought { color: rgba(255, 255, 255, 0.72); text-shadow: 0 1px 12px rgba(0, 0, 0, 0.4); }
+
+.lite-root--glass .lite-strip-card {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+  backdrop-filter: blur(11px) saturate(160%);
+  -webkit-backdrop-filter: blur(11px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.lite-root--glass .lite-strip-sym { color: rgba(255, 255, 255, 0.6); }
+.lite-root--glass .lite-strip-price { color: #fff; }
+.lite-root--glass .lite-strip-change.up { color: #6ee7a8; }
+.lite-root--glass .lite-strip-change.down { color: #fca5a5; }
+.lite-root--glass .lite-strip-logo { background: rgba(255, 255, 255, 0.12); }
+
+.lite-root--glass .lite-seeall { color: rgba(255, 255, 255, 0.55); }
+.lite-root--glass .lite-seeall:hover { color: #fff; }
+.lite-root--glass .lite-mini-buzzrank { color: rgba(255, 255, 255, 0.45); }
+
+.lite-root--glass .lite-bubble { border: 1px solid rgba(255, 255, 255, 0.22); }
+
+.lite-root--glass .lite-search-icon { color: rgba(255, 255, 255, 0.55); }
+.lite-root--glass .lite-search-input {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.lite-root--glass .lite-search-input::placeholder { color: rgba(255, 255, 255, 0.5); }
+.lite-root--glass .lite-search-drop {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+  backdrop-filter: blur(15px) saturate(170%);
+  -webkit-backdrop-filter: blur(15px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+.lite-root--glass .lite-search-row:hover { background: rgba(255, 255, 255, 0.1); }
+.lite-root--glass .lite-search-rank { color: rgba(255, 255, 255, 0.45); }
+
+.lite-root--glass .lite-star { color: rgba(255, 255, 255, 0.4); }
+.lite-root--glass .lite-star:hover { color: #fff; }
+.lite-root--glass .lite-star.on { color: #fcd34d; }
+
+/* Near-opaque frost: the popover floats over dense bright rows (top-coins
+   board), and backdrop blur alone can't keep them from reading through. */
+.lite-root--glass .lite-editpop {
+  background: linear-gradient(160deg, rgba(82, 90, 104, 0.88) 0%, rgba(48, 52, 62, 0.94) 100%);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+.lite-root--glass .lite-editrow { color: rgba(255, 255, 255, 0.88); }
+.lite-root--glass .lite-editrow:hover { background: rgba(255, 255, 255, 0.09); }
+.lite-root--glass .lite-grip { color: rgba(255, 255, 255, 0.4); }
+.lite-root--glass .lite-grip:hover { color: rgba(255, 255, 255, 0.8); }
+.lite-root--glass .lite-editrow--dragging {
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.lite-root--glass .lite-switch { background: rgba(255, 255, 255, 0.2); }
+.lite-root--glass .lite-switch.on { background: rgba(110, 231, 168, 0.6); }
+
+/* ════════════════════════ PAPER look ════════════════════════ */
+
+.lite-root--paper {
+  background: #f5f5f7;
+  color: #1d1d1f;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Paper canvas wash layer (BG_PAPER picks, 'pearl' default). Sits with the
+   glass bg layers - below nav z-5 / main z-2. Background comes inline from
+   resolvePaperBg so the user's pick applies instantly. */
+.lite-paperwash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* ── RAW beta notice (once per device) ── */
+.lite-beta-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(4, 6, 12, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.lite-beta-card {
+  max-width: 440px;
+  width: 100%;
+  padding: 30px 30px 26px;
+  border-radius: 24px;
+  text-align: left;
+}
+
+.lite-beta-tag {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.lite-beta-card h2 {
+  margin: 0 0 10px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.lite-beta-card p { margin: 0 0 22px; font-size: 0.95rem; line-height: 1.6; }
+
+.lite-beta-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.lite-beta-go,
+.lite-beta-exit {
+  border: none;
+  padding: 12px 22px;
+  border-radius: 9999px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.2s;
+}
+
+.lite-beta-go:hover, .lite-beta-exit:hover { transform: translateY(-1px); }
+
+.lite-root--glass .lite-beta-card {
+  background: linear-gradient(160deg, rgba(82, 90, 104, 0.92) 0%, rgba(44, 48, 58, 0.96) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+.lite-root--glass .lite-beta-card h2 { color: #fff; }
+.lite-root--glass .lite-beta-card p { color: rgba(255, 255, 255, 0.82); }
+.lite-root--glass .lite-beta-go { background: #fff; color: #101318; }
+.lite-root--glass .lite-beta-exit { background: rgba(255, 255, 255, 0.14); color: #fff; }
+
+.lite-root--paper .lite-beta-overlay { background: rgba(240, 241, 245, 0.6); }
+.lite-root--paper .lite-beta-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2);
+}
+.lite-root--paper .lite-beta-card h2 { color: #1d1d1f; }
+.lite-root--paper .lite-beta-card p { color: #6e6e73; }
+.lite-root--paper .lite-beta-tag { background: rgba(245, 158, 11, 0.12); color: #b45309; border-color: rgba(245, 158, 11, 0.35); }
+.lite-root--paper .lite-beta-go { background: #1d1d1f; color: #fff; }
+.lite-root--paper .lite-beta-exit { background: #f0f0f2; color: #1d1d1f; }
+
+.lite-beta-feedback {
+  display: inline-block;
+  margin-top: 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.lite-root--glass .lite-beta-feedback { color: rgba(255, 255, 255, 0.6); }
+.lite-root--glass .lite-beta-feedback:hover { color: #fff; }
+.lite-root--paper .lite-beta-feedback { color: #6e6e73; }
+.lite-root--paper .lite-beta-feedback:hover { color: #1d1d1f; }
+
+.lite-feedback-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 11px 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.lite-feedback-row svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+.lite-root--glass .lite-feedback-row { color: rgba(255, 255, 255, 0.72); background: rgba(255, 255, 255, 0.08); }
+.lite-root--glass .lite-feedback-row:hover { color: #fff; background: rgba(255, 255, 255, 0.13); }
+.lite-root--paper .lite-feedback-row { color: #48484d; background: #f2f2f4; }
+.lite-root--paper .lite-feedback-row:hover { color: #1d1d1f; background: #ececee; }
+
+.lite-root--paper .lite-nav {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(13px) saturate(180%);
+  -webkit-backdrop-filter: blur(13px) saturate(180%);
+  border-right: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 10px 0 34px rgba(0, 0, 0, 0.05);
+}
+
+.lite-root--paper .lite-wordmark { color: #1d1d1f; }
+.lite-root--paper .lite-wordmark-tag { background: #1d1d1f; color: #fff; }
+
+.lite-root--paper .lite-nav-toggle { color: rgba(29, 29, 31, 0.5); }
+.lite-root--paper .lite-nav-toggle:hover { color: #1d1d1f; background: rgba(0, 0, 0, 0.05); }
+.lite-root--paper .lite-nav-item { color: #6e6e73; }
+.lite-root--paper .lite-nav-item:hover { color: #1d1d1f; background: rgba(0, 0, 0, 0.045); }
+.lite-root--paper .lite-nav-item.active {
+  color: #1d1d1f;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07), 0 10px 24px rgba(0, 0, 0, 0.07);
+}
+
+/* Same two jobs on paper: recessed groove, raised white chip. */
+.lite-root--paper .lite-look-toggle,
+.lite-root--paper .lite-tf-toggle {
+  background: rgba(0, 0, 0, 0.055);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.055);
+}
+.lite-root--paper .lite-look-btn,
+.lite-root--paper .lite-tf-btn { color: rgba(29, 29, 31, 0.55); }
+.lite-root--paper .lite-look-btn:hover:not(.active),
+.lite-root--paper .lite-tf-btn:hover:not(.active) { color: #1d1d1f; }
+.lite-root--paper .lite-look-btn.active,
+.lite-root--paper .lite-tf-btn.active {
+  background: linear-gradient(180deg, #ffffff 0%, #fafafb 100%);
+  color: #1d1d1f;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.14),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.045);
+}
+
+.lite-root--paper .lite-pro-btn {
+  background: #1d1d1f;
+  color: #fff;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
+}
+.lite-root--paper .lite-pro-btn:hover { background: #000; }
+
+.lite-root--paper .lite-greeting { color: #1d1d1f; }
+
+.lite-root--paper .lite-pill {
+  color: #1d1d1f;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 8px 22px rgba(0, 0, 0, 0.06);
+}
+
+.lite-root--paper .lite-panel {
+  background: linear-gradient(150deg, #ffffff 0%, #fdfcff 48%, #f8fbfe 100%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 6px rgba(49, 61, 92, 0.05), 0 20px 44px rgba(49, 61, 92, 0.09), inset 0 1px 0 #ffffff;
+}
+
+.lite-root--paper .lite-panel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(49, 61, 92, 0.06), 0 30px 60px rgba(49, 61, 92, 0.12), inset 0 1px 0 #ffffff;
+}
+
+.lite-root--paper .lite-eyebrow { color: #86868b; }
+
+.lite-root--paper .lite-brief-headline { font-weight: 700; letter-spacing: -0.03em; color: #1d1d1f; }
+.lite-root--paper .lite-brief-body { color: #6e6e73; }
+.lite-root--paper .lite-view-title { color: #1d1d1f; }
+.lite-root--paper .lite-view-sub { color: #6e6e73; }
+
+.lite-root--paper .lite-mini-row { border-bottom: 1px solid rgba(0, 0, 0, 0.07); }
+.lite-root--paper .lite-mini-row:last-child { border-bottom: none; }
+.lite-root--paper .lite-mini-sym { color: #1d1d1f; }
+.lite-root--paper .lite-mini-price { color: #1d1d1f; }
+.lite-root--paper .lite-mini-mcap { color: #6e6e73; }
+
+.lite-root--paper .lite-change.up { color: #037b3e; }
+.lite-root--paper .lite-change.down { color: #d70015; }
+
+.lite-root--paper .lite-empty { color: #86868b; }
+
+.lite-root--paper .lite-mover {
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 10px 24px rgba(0, 0, 0, 0.07);
+}
+.lite-root--paper .lite-mover.up { color: #037b3e; }
+.lite-root--paper .lite-mover.down { color: #d70015; }
+
+.lite-root--paper .lite-trow { border-bottom: 1px solid rgba(0, 0, 0, 0.07); }
+.lite-root--paper .lite-trow:last-child { border-bottom: none; }
+.lite-root--paper .lite-trow-id strong { color: #1d1d1f; }
+.lite-root--paper .lite-trow-id em { color: #86868b; }
+.lite-root--paper .lite-trow-mcap { color: #86868b; }
+.lite-root--paper .lite-trow-price { color: #1d1d1f; }
+.lite-root--paper .lite-trow-change.up { color: #037b3e; }
+.lite-root--paper .lite-trow-change.down { color: #d70015; }
+.lite-root--paper .lite-trow-fallback { background: #f0f0f2; color: #1d1d1f; }
+
+.lite-root--paper .lite-gauge-value { color: #1d1d1f; }
+.lite-root--paper .lite-gauge-label { color: #6e6e73; }
+.lite-root--paper .lite-gauge-scale { color: #86868b; }
+.lite-root--paper .lite-meter-dot { border-color: rgba(0, 0, 0, 0.2); }
+
+.lite-root--paper .lite-news-title { color: #1d1d1f; }
+.lite-root--paper .lite-news-link:hover .lite-news-title { color: #0066cc; }
+.lite-root--paper .lite-news-meta { color: #86868b; }
+.lite-root--paper .lite-news-list li { border-bottom: 1px solid rgba(0, 0, 0, 0.07); }
+.lite-root--paper .lite-news-list li:last-child { border-bottom: none; }
+
+.lite-root--paper .lite-tweet-text { color: #1d1d1f; }
+.lite-root--paper a.lite-tweet:hover .lite-tweet-text { color: #0066cc; }
+.lite-root--paper .lite-tweet-handle { color: #6e6e73; }
+.lite-root--paper .lite-tweet-dot, .lite-root--paper .lite-tweet-time { color: #86868b; }
+.lite-root--paper .lite-tweet-list li { border-bottom: 1px solid rgba(0, 0, 0, 0.07); }
+.lite-root--paper .lite-tweet-list li:last-child { border-bottom: none; }
+
+.lite-root--paper .lite-chip {
+  color: #6e6e73;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 6px 16px rgba(0, 0, 0, 0.05);
+}
+.lite-root--paper .lite-chip:hover { color: #1d1d1f; }
+.lite-root--paper .lite-chip.active {
+  color: #fff;
+  background: #1d1d1f;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+
+.lite-root--paper .lite-research-price { color: #1d1d1f; }
+.lite-root--paper .lite-research-change.up { color: #037b3e; }
+.lite-root--paper .lite-research-change.down { color: #d70015; }
+.lite-root--paper .lite-chart-axis { color: #86868b; }
+.lite-root--paper .lite-chart.up { color: #0a8a4a; }
+.lite-root--paper .lite-chart.down { color: #d70015; }
+.lite-root--paper .lite-chart-empty { color: #86868b; }
+
+.lite-root--paper .lite-stat-list li { border-bottom: 1px solid rgba(0, 0, 0, 0.07); }
+.lite-root--paper .lite-stat-list li:last-child { border-bottom: none; }
+.lite-root--paper .lite-stat-list li span { color: #86868b; }
+.lite-root--paper .lite-stat-list li strong { color: #1d1d1f; }
+
+.lite-root--paper .lite-perf-chip { background: #f5f5f7; }
+.lite-root--paper .lite-perf-chip em { color: #86868b; }
+.lite-root--paper .lite-perf-chip.up { color: #037b3e; }
+.lite-root--paper .lite-perf-chip.down { color: #d70015; }
+
+.lite-root--paper .lite-range-labels { color: #6e6e73; }
+.lite-root--paper .lite-range-title { color: #86868b; }
+.lite-root--paper .lite-range-track { background: linear-gradient(90deg, rgba(215, 0, 21, 0.4), rgba(0, 0, 0, 0.1), rgba(3, 123, 62, 0.45)); }
+.lite-root--paper .lite-range-dot { border-color: rgba(0, 0, 0, 0.25); }
+
+.lite-root--paper .lite-gauge-note { color: #6e6e73; }
+.lite-root--paper .lite-sector-logos img { border: 2px solid #ffffff; background: #f0f0f2; }
+
+.lite-root--paper .lite-social-rank { color: #86868b; }
+.lite-root--paper .lite-social-stat strong { color: #1d1d1f; }
+.lite-root--paper .lite-social-stat em { color: #86868b; }
+.lite-root--paper .lite-social-delta { color: #86868b; }
+.lite-root--paper .lite-social-delta.up { color: #037b3e; }
+.lite-root--paper .lite-social-delta.down { color: #d70015; }
+.lite-root--paper .lite-social-note { color: #86868b; }
+.lite-root--paper .lite-heat-tile { box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06), 0 14px 30px rgba(0, 0, 0, 0.1); }
+
+.lite-root--paper .lite-trow-change7.up { color: rgba(3, 123, 62, 0.7); }
+.lite-root--paper .lite-trow-change7.down { color: rgba(215, 0, 21, 0.7); }
+
+.lite-root--paper .lite-cal-row { border-bottom: 1px solid rgba(0, 0, 0, 0.07); }
+.lite-root--paper .lite-cal-row:last-child { border-bottom: none; }
+.lite-root--paper .lite-cal-when strong { color: #1d1d1f; }
+.lite-root--paper .lite-cal-when em { color: #86868b; }
+.lite-root--paper .lite-cal-what strong { color: #1d1d1f; }
+.lite-root--paper .lite-cal-what em { color: #86868b; }
+.lite-root--paper .lite-cal-nums { color: #6e6e73; }
+.lite-root--paper .lite-cal-impact { background: #fef3c7; color: #92600a; }
+.lite-root--paper .lite-cal-impact.fed { background: #dbeafe; color: #1d4ed8; }
+.lite-root--paper .lite-cal-impact.critical { background: #fee2e2; color: #b91c1c; }
+
+.lite-root--paper .lite-pred-list li { border-bottom: 1px solid rgba(0, 0, 0, 0.07); }
+.lite-root--paper .lite-pred-list li:last-child { border-bottom: none; }
+.lite-root--paper .lite-pred-q { color: #1d1d1f; }
+.lite-root--paper .lite-pred-link:hover .lite-pred-q { color: #0066cc; }
+.lite-root--paper .lite-pred-meta { color: #86868b; }
+.lite-root--paper .lite-pred-odds strong { color: #1d1d1f; }
+.lite-root--paper .lite-pred-odds em { color: #86868b; }
+.lite-root--paper .lite-pred-track { background: rgba(0, 0, 0, 0.08); }
+.lite-root--paper .lite-pred-fill { background: linear-gradient(90deg, #0a8a4a, #037b3e); }
+
+.lite-root--paper .lite-skel-row {
+  background-image: linear-gradient(90deg, rgba(0, 0, 0, 0.05) 25%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.05) 75%);
+}
+
+.lite-root--paper .lite-prolink {
+  color: #fff;
+  background: #1d1d1f;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.2);
+}
+.lite-root--paper .lite-prolink:hover { background: #000; }
+
+.lite-root--paper .lite-deriv-item em { color: #86868b; }
+.lite-root--paper .lite-deriv-item strong { color: #1d1d1f; }
+.lite-root--paper .lite-deriv-item strong.up { color: #037b3e; }
+.lite-root--paper .lite-deriv-item strong.down { color: #d70015; }
+.lite-root--paper .lite-deriv-item > span { color: #86868b; }
+
+.lite-root--paper .lite-stat {
+  background: linear-gradient(150deg, #ffffff 0%, #fdfcff 48%, #f8fbfe 100%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 6px rgba(49, 61, 92, 0.05), 0 14px 32px rgba(49, 61, 92, 0.08), inset 0 1px 0 #ffffff;
+}
+
+.lite-root--paper .lite-stat em { color: #86868b; }
+.lite-root--paper .lite-stat strong { color: #1d1d1f; }
+.lite-root--paper .lite-stat strong.up { color: #037b3e; }
+.lite-root--paper .lite-stat strong.down { color: #d70015; }
+.lite-root--paper .lite-stat > span { color: #86868b; }
+.lite-root--paper .lite-trow-rank { color: #aeaeb2; }
+.lite-root--paper .lite-ls-track { background: rgba(215, 0, 21, 0.28); }
+.lite-root--paper .lite-ls-track > span { background: #0a8a4a; }
+
+.lite-root--paper .lite-thought { color: #6e6e73; }
+
+.lite-root--paper .lite-strip-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 10px 22px rgba(0, 0, 0, 0.06);
+}
+.lite-root--paper .lite-strip-sym { color: #86868b; }
+.lite-root--paper .lite-strip-price { color: #1d1d1f; }
+.lite-root--paper .lite-strip-change.up { color: #037b3e; }
+.lite-root--paper .lite-strip-change.down { color: #d70015; }
+.lite-root--paper .lite-strip-logo { background: #f0f0f2; }
+
+.lite-root--paper .lite-seeall { color: #86868b; }
+.lite-root--paper .lite-seeall:hover { color: #1d1d1f; }
+.lite-root--paper .lite-mini-buzzrank { color: #86868b; }
+
+.lite-root--paper .lite-bubble { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1), 0 18px 40px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.25); }
+
+.lite-root--paper .lite-search-icon { color: #86868b; }
+.lite-root--paper .lite-search-input {
+  color: #1d1d1f;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 10px 26px rgba(0, 0, 0, 0.07);
+}
+.lite-root--paper .lite-search-input::placeholder { color: #86868b; }
+.lite-root--paper .lite-search-drop {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+}
+.lite-root--paper .lite-search-row:hover { background: #f5f5f7; }
+.lite-root--paper .lite-search-rank { color: #86868b; }
+
+.lite-root--paper .lite-star { color: rgba(29, 29, 31, 0.3); }
+.lite-root--paper .lite-star:hover { color: #1d1d1f; }
+.lite-root--paper .lite-star.on { color: #d9930d; }
+
+.lite-root--paper .lite-editpop {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+}
+.lite-root--paper .lite-editrow { color: #1d1d1f; }
+.lite-root--paper .lite-editrow:hover { background: #f5f5f7; }
+.lite-root--paper .lite-grip { color: #b8b8bd; }
+.lite-root--paper .lite-grip:hover { color: #1d1d1f; }
+.lite-root--paper .lite-editrow--dragging {
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+.lite-root--paper .lite-switch { background: rgba(0, 0, 0, 0.15); }
+.lite-root--paper .lite-switch.on { background: #34c759; }
+
+/* ── Research crowd-tone card + derivs ── */
+
+.lite-tone-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.lite-tone-bar span { display: block; height: 100%; }
+.lite-tone-bull { background: #34d399; }
+.lite-tone-bear { background: #f87171; }
+
+.lite-root--glass .lite-tone-neutral { background: rgba(255, 255, 255, 0.22); }
+.lite-root--paper .lite-tone-neutral { background: rgba(0, 0, 0, 0.12); }
+
+.lite-tone-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.lite-root--glass .lite-tone-legend { color: rgba(255, 255, 255, 0.6); }
+.lite-root--glass .lite-tone-legend .up { color: #6ee7a8; }
+.lite-root--glass .lite-tone-legend .down { color: #fca5a5; }
+.lite-root--paper .lite-tone-legend { color: #86868b; }
+.lite-root--paper .lite-tone-legend .up { color: #037b3e; }
+.lite-root--paper .lite-tone-legend .down { color: #d70015; }
+
+.lite-root--glass .lite-tone-read--warn { color: #fcd34d; }
+.lite-root--paper .lite-tone-read--warn { color: #b45309; }
+.lite-root--glass .lite-tone-read--down { color: #fca5a5; }
+.lite-root--paper .lite-tone-read--down { color: #d70015; }
+
+/* ── Themes studio ── */
+.lite-look-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+
+.lite-look-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  padding: 15px 17px;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.18s, border-color 0.18s;
+}
+
+.lite-look-card:hover { transform: translateY(-2px); }
+.lite-look-card.active { border-color: #34d399; }
+.lite-look-card strong { font-size: 1rem; font-weight: 700; letter-spacing: -0.01em; }
+.lite-look-card span { font-size: 0.78rem; }
+
+.lite-look-card--glass { background: linear-gradient(150deg, #35506b, #22303f 70%); color: #fff; }
+.lite-look-card--glass span { color: rgba(255, 255, 255, 0.7); }
+.lite-look-card--paper { background: #f5f5f7; color: #1d1d1f; border: 2px solid rgba(0, 0, 0, 0.06); }
+.lite-look-card--paper.active { border-color: #34c759; }
+.lite-look-card--paper span { color: #6e6e73; }
+
+.lite-themes-sub { margin-top: 18px !important; }
+
+.lite-themes-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+}
+
+.lite-theme-swatch {
+  position: relative;
+  height: 68px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  background: rgba(128, 128, 128, 0.15);
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.lite-theme-swatch:hover { transform: translateY(-2px); }
+.lite-theme-swatch.active { border-color: #34d399; }
+.lite-theme-swatch img, .lite-theme-fill { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.lite-theme-name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 10px 8px 5px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.45), transparent);
+  text-align: left;
+}
+
+.lite-theme-fill--upload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lite-theme-fill--upload svg { width: 18px; height: 18px; }
+.lite-theme-swatch--upload input { display: none; }
+
+.lite-root--glass .lite-theme-fill--upload { color: rgba(255, 255, 255, 0.8); background: rgba(255, 255, 255, 0.1); }
+.lite-root--paper .lite-theme-fill--upload { color: #1d1d1f; background: #ececef; }
+
+.lite-editrow--link { font-weight: 600; }
+.lite-root--glass .lite-editrow--link { color: #6ee7a8; }
+.lite-root--paper .lite-editrow--link { color: #037b3e; }
+
+/* Insights rows are buttons (deep-link into the PRO article) */
+/* 🪤 `color: inherit` is load-bearing, not tidiness: this is a <button>, and a
+   global button rule paints it #fff. LITE Paper cannot undo that through the
+   design-system tokens (`.lite-root--paper` is outside `.app`), so without it
+   the whole insight row rendered white on white. Same class of bug as the
+   Why-view day labels. Any bare <button> or heading added to LITE needs this. */
+
+/* ── Clickable rows/tiles/bubbles (open Research) ── */
+.lite-trow--link, .lite-mini-row--link, .lite-heat-tile--link, .lite-bubble--link { cursor: pointer; }
+.lite-root--glass .lite-trow--link:hover .lite-trow-id strong { color: #fff; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,0.4); }
+.lite-root--paper .lite-trow--link:hover .lite-trow-id strong { color: #0066cc; }
+.lite-root--glass .lite-mini-row--link:hover .lite-mini-sym { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,0.4); }
+.lite-root--paper .lite-mini-row--link:hover .lite-mini-sym { color: #0066cc; }
+
+/* ── Fear & Greed year chart ── */
+.lite-fgchart-plot { position: relative; }
+.lite-fgchart svg { display: block; width: 100%; height: 240px; }
+.lite-fgz-greed { fill: rgba(52, 211, 153, 0.1); }
+.lite-fgz-fear { fill: rgba(248, 113, 113, 0.1); }
+.lite-fgchart-dot { fill: #fff; stroke: rgba(0, 0, 0, 0.35); stroke-width: 2; }
+.lite-fgchart-zones i { font-style: normal; font-weight: 600; }
+.lite-root--glass .lite-fgchart-zones { color: rgba(255,255,255,0.5); }
+.lite-root--glass .lite-fgchart-zones .up { color: #6ee7a8; }
+.lite-root--glass .lite-fgchart-zones .down { color: #fca5a5; }
+.lite-root--paper .lite-fgchart-zones { color: #86868b; }
+.lite-root--paper .lite-fgchart-zones .up { color: #037b3e; }
+.lite-root--paper .lite-fgchart-zones .down { color: #d70015; }
+
+/* ── Technicals six-grid + tone/stat extras ── */
+.lite-tech-grid--six { grid-template-columns: repeat(3, 1fr); row-gap: 22px; }
+.lite-tech-rangeblock { margin-top: 22px; }
+.lite-stat-note { font-style: normal; font-size: 0.7rem; font-weight: 600; margin-left: 6px; opacity: 0.65; }
+
+/* ── ROI ── */
+.lite-roi-controls { display: flex; flex-direction: column; gap: 16px; margin-bottom: 22px; }
+.lite-roi-label, .lite-roi-amount em {
+  display: block;
+  font-style: normal;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+.lite-root--glass .lite-roi-label, .lite-root--glass .lite-roi-amount em { color: rgba(255,255,255,0.55); }
+.lite-root--paper .lite-roi-label, .lite-root--paper .lite-roi-amount em { color: #86868b; }
+
+.lite-roi-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.lite-roi-input input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; font: inherit; color: inherit; }
+.lite-root--glass .lite-roi-input { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22); color: #fff; }
+.lite-root--paper .lite-roi-input { background: #f5f5f7; color: #1d1d1f; }
+
+/* Amount row = [input][quick amounts]; the caption spans the row above. */
+.lite-roi-amount { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.lite-roi-amount .lite-roi-label { width: 100%; margin-bottom: 0; }
+.lite-roi-input { flex: 1 1 160px; }
+.lite-roi-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.lite-roi-preset {
+  border: none;
+  padding: 7px 11px;
+  border-radius: 9999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, transform 0.18s;
+}
+.lite-roi-preset:active { transform: scale(0.96); }
+.lite-root--glass .lite-roi-preset { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+.lite-root--glass .lite-roi-preset.active { background: rgba(255,255,255,0.2); color: #fff; }
+.lite-root--paper .lite-roi-preset { background: #f0f0f2; color: #6e6e73; }
+.lite-root--paper .lite-roi-preset.active { background: #1d1d1f; color: #fff; }
+
+.lite-roi-headline { margin: 0 0 18px; font-size: 1.35rem; line-height: 1.45; letter-spacing: -0.01em; }
+.lite-roi-headline strong { font-weight: 800; }
+.lite-root--glass .lite-roi-headline { color: rgba(255,255,255,0.92); }
+.lite-root--glass .lite-roi-headline strong.up { color: #6ee7a8; }
+.lite-root--glass .lite-roi-headline strong.down { color: #fca5a5; }
+.lite-root--paper .lite-roi-headline { color: #1d1d1f; }
+.lite-root--paper .lite-roi-headline strong.up { color: #037b3e; }
+.lite-root--paper .lite-roi-headline strong.down { color: #d70015; }
+
+/* ── Exchange trust chip (Research: where to buy) ── */
+.lite-exchange-trust {
+  flex-shrink: 0;
+  padding: 3px 9px;
+  border-radius: 7px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.lite-root--glass .lite-exchange-trust--green { background: rgba(110, 231, 168, 0.16); color: #6ee7a8; }
+.lite-root--glass .lite-exchange-trust--yellow { background: rgba(252, 211, 77, 0.16); color: #fcd34d; }
+.lite-root--glass .lite-exchange-trust--gray { background: rgba(255, 255, 255, 0.1); color: rgba(255,255,255,0.6); }
+.lite-root--paper .lite-exchange-trust--green { background: #e8f6ee; color: #037b3e; }
+.lite-root--paper .lite-exchange-trust--yellow { background: #fef3c7; color: #92600a; }
+.lite-root--paper .lite-exchange-trust--gray { background: #f0f0f2; color: #6e6e73; }
+
+/* ── ETF Flows mini-widget (opt-in Today panel) ── */
+.lite-etf .lite-etf-spark { width: 100%; height: 56px; display: block; margin: 6px 0 12px; overflow: visible; }
+.lite-etf-spark-zero { stroke: currentColor; opacity: 0.16; stroke-width: 1; }
+.lite-etf-spark rect.up { fill: #2ece83; }
+.lite-etf-spark rect.down { fill: #ff5f6a; }
+.lite-etf-rows { display: flex; flex-direction: column; gap: 8px; }
+.lite-etf-row {
+  display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 16px;
+  padding: 9px 12px; border-radius: 12px; cursor: pointer; border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+.lite-etf-row:hover { background: rgba(140,140,155,0.12); }
+.lite-etf-row.active { background: rgba(140,140,155,0.10); border-color: rgba(232,146,58,0.35); }
+.lite-etf-name { font-weight: 700; font-size: 14.5px; }
+.lite-etf-cell { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; text-align: right; min-width: 64px; }
+.lite-etf-cell em { font-style: normal; font-size: 10px; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.05em; }
+.lite-etf-cell b { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.lite-etf b.up { color: #2ece83; }
+.lite-etf b.down { color: #ff5f6a; }
+.lite-etf-skel {
+  height: 150px; border-radius: 12px;
+  background: linear-gradient(90deg, rgba(140,140,155,0.08), rgba(140,140,155,0.16), rgba(140,140,155,0.08));
+  background-size: 200% 100%; animation: liteEtfShim 1.4s ease-in-out infinite;
+}
+@keyframes liteEtfShim { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@media (max-width: 640px) {
+  .lite-etf-row { gap: 10px; padding: 8px 10px; }
+  .lite-etf-cell { min-width: 56px; }
+  .lite-etf-name { font-size: 14px; }
+}
+
+/* ETF widget — timeframe pills + horizontally-scrollable chart */
+.lite-etf-tfrow { display: flex; gap: 4px; margin: 2px 0 6px; }
+.lite-etf-tf {
+  padding: 4px 12px; border: none; border-radius: 8px;
+  background: rgba(140, 140, 155, 0.1); color: inherit; opacity: 0.55;
+  font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums;
+  cursor: pointer; transition: opacity 0.15s, background 0.15s;
+}
+.lite-etf-tf:hover { opacity: 0.85; }
+.lite-etf-tf.active { opacity: 1; background: rgba(140, 140, 155, 0.22); }
+.lite-etf-scroll {
+  width: 100%; overflow-x: auto; overflow-y: hidden; margin: 4px 0 12px;
+  -webkit-overflow-scrolling: touch;
+}
+.lite-etf-scroll::-webkit-scrollbar { height: 6px; }
+.lite-etf-scroll::-webkit-scrollbar-track { background: transparent; }
+.lite-etf-scroll::-webkit-scrollbar-thumb { background: rgba(140, 140, 155, 0.28); border-radius: 3px; }
+/* override the earlier full-width spark rule — the SVG now has an explicit px
+   width and lives inside the scroll container */
+.lite-etf .lite-etf-spark { width: auto; height: 96px; margin: 0; display: block; }
+
+/* Printed econ result on the Lite calendar — the actual leads, tinted against
+   the forecast (see calBeat). Neutral when the two cannot be compared. */
+.lite-cal-actual { font-weight: 800; }
+.lite-cal-actual.beat { color: #1e9e62; }
+.lite-cal-actual.miss { color: #d5544a; }
+.lite-cal-actual.inline { opacity: 0.95; }
+.lite-root--glass .lite-cal-actual.beat { color: #4ade80; }
+.lite-root--glass .lite-cal-actual.miss { color: #f87171; }
+
+/* ── Lite parity views: Liquidations · ETF · Gainers · Rotation · Private · ZIG ── */
+
+/* Generic line spark (rotation chart, ZIG price, COT trend) */
+.lite-spark { width: 100%; display: block; margin: 4px 0 10px; }
+.lite-spark path { stroke-width: 2; }
+.lite-root--glass .lite-spark.up path { stroke: #6ee7a8; }
+.lite-root--glass .lite-spark.down path { stroke: #ff8a93; }
+.lite-root--paper .lite-spark.up path { stroke: #0a8a4a; }
+.lite-root--paper .lite-spark.down path { stroke: #d70015; }
+
+/* Liquidations view - the shared lhp panel provides its own chart chrome */
+
+/* ETF full tab */
+
+/* Inline door (smaller than the view-level ProLink) */
+.lite-prolink--inline { align-self: flex-start; margin-top: 12px; padding: 8px 16px; font-size: 0.78rem; }
+
+/* Derivatives extras: per-asset long/short + CME COT */
+
+/* Microcaps (alt rotation) — neutral gray-alpha surfaces + currentColor text so
+   one rule set reads correctly under both Glass and Paper (the ETF panel
+   precedent). Only the up/down semantics carry a hue. */
+.lite-rot-current { font-size: 0.85rem; font-weight: 700; opacity: 0.8; font-variant-numeric: tabular-nums; }
+.lite-rot-win { font-style: normal; font-size: 0.66rem; opacity: 0.55; margin-left: 2px; }
+.lite-stat-of { font-size: 0.72em; opacity: 0.55; font-weight: 600; }
+.lite-rot-na { opacity: 0.4; font-variant-numeric: tabular-nums; }
+.lite-rot-src { font-size: 0.68rem; letter-spacing: 0.05em; text-transform: uppercase; opacity: 0.45; font-weight: 600; }
+.lite-rot-val { font-size: 0.86rem; font-weight: 600; font-variant-numeric: tabular-nums; opacity: 0.8; }
+.lite-rot-val.up { color: #2ece83; opacity: 1; }
+.lite-rot-val.down { color: #ff5f6a; opacity: 1; }
+.lite-rot-of { font-size: 0.74rem; opacity: 0.5; min-width: 54px; text-align: right; }
+
+/* verdict */
+.lite-rot-verdict-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.lite-rot-word { font-size: clamp(1.35rem, 3.4vw, 1.9rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+.lite-rot-word.up { color: #2ece83; }
+.lite-rot-word.down { color: #ff7a6b; }
+.lite-rot-score { font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lite-rot-score em { font-style: normal; font-size: 0.72em; opacity: 0.45; }
+.lite-rot-meter { height: 7px; border-radius: 999px; overflow: hidden; background: rgba(140, 140, 155, 0.2); }
+.lite-rot-meter > span { display: block; height: 100%; border-radius: inherit; background: rgba(140, 140, 155, 0.85); transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+.lite-rot-meter.up > span { background: #2ece83; }
+.lite-rot-meter.down > span { background: #ff7a6b; }
+.lite-rot-setup { margin: 14px 0 4px; font-size: 0.95rem; line-height: 1.55; }
+.lite-rot-reason { min-width: 0; flex: 1; font-weight: 500; opacity: 0.85; }
+
+/* cycle depth */
+.lite-rot-depth-pct { font-size: 0.86rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.lite-rot-depth-pct.up { color: #2ece83; }
+.lite-rot-depth-pct.down { color: #ff7a6b; }
+.lite-rot-depth-track { position: relative; height: 7px; border-radius: 999px; background: linear-gradient(90deg, rgba(255, 122, 107, 0.4), rgba(224, 185, 58, 0.35), rgba(46, 206, 131, 0.45)); }
+.lite-rot-depth-marker { position: absolute; top: 50%; width: 13px; height: 13px; border-radius: 50%; transform: translate(-50%, -50%); background: currentColor; box-shadow: 0 0 0 3px rgba(140, 140, 155, 0.25); }
+.lite-rot-depth-scale { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-top: 8px; font-size: 0.78rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.lite-rot-depth-scale em { display: block; font-style: normal; font-size: 0.68rem; font-weight: 500; opacity: 0.5; margin-top: 1px; }
+.lite-rot-depth-right { text-align: right; }
+.lite-rot-depth-zone { text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.7rem; opacity: 0.6; }
+
+/* per-chain on-chain volume */
+/* Panels in a row now share a height (they are paired by height in the JSX -
+   see the comment above the index panel), and every panel pushes its closing
+   note to the bottom edge. Before this the two columns ended at different
+   heights AND the note floated mid-card, so the board read as a pile of
+   loose cards instead of a row. `stretch` is the default, but it is spelled
+   out because the previous rule explicitly opted out with flex-start. */
+.lite-rot-grid { align-items: stretch; }
+.lite-rot-grid > .lite-panel { display: flex; flex-direction: column; }
+.lite-rot-grid > .lite-panel > .lite-social-note { margin-top: auto; padding-top: 12px; }
+.lite-rot-chainpanel { display: flex; flex-direction: column; }
+.lite-rot-chainpanel .lite-social-note { margin-top: auto; padding-top: 12px; }
+.lite-rot-chains { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+/* same shimmer language as .lite-skel-row (liteShimmer, not the global one) */
+.lite-rot-barskel {
+  display: block; width: 100%; border-radius: 8px;
+  background: linear-gradient(90deg, rgba(140, 140, 155, 0.08) 0%, rgba(140, 140, 155, 0.2) 50%, rgba(140, 140, 155, 0.08) 100%);
+  background-size: 200% 100%; animation: liteShimmer 1.8s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) { .lite-rot-barskel { animation: none; } }
+.lite-rot-chain { border-radius: 16px; padding: 12px 14px 10px; background: rgba(140, 140, 155, 0.1); transition: background 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+.lite-rot-chain:hover { background: rgba(140, 140, 155, 0.16); }
+.lite-rot-chain.open { grid-column: 1 / -1; background: rgba(140, 140, 155, 0.16); }
+/* 🪤 This was a flex row, so the four cells competed for the same space and the
+   LONGEST chain won: "Robinhood $582.93M +31.96%" squeezed the change cell down
+   to its 58px min-width, its `7d` suffix spilled out, and it landed on top of
+   the disclosure chevron (founder 08-07: "arrow in microcaps weird hidden").
+   A grid gives each cell its own track, so the numbers and the chevron can
+   never overlap no matter how long the name or the value gets - and the NAME
+   is the only track allowed to give (minmax(0, …) + ellipsis). */
+/* 🪤 This was ONE flex row holding name + value + change + chevron. Four cells
+   competing for a ~260px card meant the longest chain lost: "Robinhood
+   $582.93M +31.96%" squeezed the change cell to its 58px min-width, its `7d`
+   suffix spilled out of the box and landed on the disclosure chevron (founder
+   08-07: "arrow in microcaps weird hidden"). Widening the name track only
+   moved the problem - the name then truncated mid-word.
+   Two rows fixes it at the source: the name owns its own line, the numbers own
+   theirs, and nothing has to be clipped at any card width. */
+.lite-rot-chain-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'name chev' 'vol chg';
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 3px;
+  width: 100%; padding: 0 0 8px;
+  background: none; border: none; color: inherit; font: inherit; cursor: pointer; text-align: left;
+}
+.lite-rot-chain-id {
+  grid-area: name;
+  display: flex; align-items: center; gap: 7px; min-width: 0;
+  font-weight: 700; font-size: 0.95rem;
+}
+.lite-rot-chain-id i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.lite-rot-chain-vol { grid-area: vol; font-weight: 700; font-size: 0.95rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lite-rot-chain-vol em { display: block; font-style: normal; font-size: 0.64rem; font-weight: 500; opacity: 0.5; }
+.lite-rot-chain-head .lite-change,
+.lite-rot-chain-head .lite-rot-na { grid-area: chg; align-self: start; font-size: 0.84rem; font-weight: 600; text-align: right; white-space: nowrap; }
+.lite-rot-young { font-size: 0.8rem; }
+.lite-rot-chev { grid-area: chev; width: 15px; height: 15px; flex: none; opacity: 0.4; transition: transform 0.22s ease; }
+.lite-rot-chain.open .lite-rot-chev { transform: rotate(180deg); }
+.lite-rot-bars { display: block; width: 100%; overflow: visible; }
+.lite-rot-bars rect { fill: rgba(140, 140, 155, 0.55); }
+.lite-rot-bars.up rect { fill: rgba(46, 206, 131, 0.55); }
+.lite-rot-bars.down rect { fill: rgba(255, 95, 106, 0.5); }
+.lite-rot-bars.up rect.last { fill: #2ece83; }
+.lite-rot-bars.down rect.last { fill: #ff5f6a; }
+.lite-rot-nochart { font-size: 0.8rem; padding: 6px 0 4px; }
+.lite-rot-open { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.lite-rot-open .lite-social-note { margin: 0; }
+.lite-rot-leaders { display: flex; flex-wrap: wrap; gap: 8px; }
+.lite-rot-lead { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 6px; border-radius: 999px; background: rgba(140, 140, 155, 0.16); font-size: 0.8rem; }
+.lite-rot-lead b { font-weight: 700; }
+.lite-rot-lead em { font-style: normal; font-size: 0.76rem; font-weight: 600; }
+
+@media (max-width: 640px) {
+  .lite-rot-chains { grid-template-columns: 1fr; }
+  .lite-rot-chain-head .lite-change { min-width: 50px; }
+  .lite-rot-word { font-size: 1.3rem; }
+}
+
+/* Microcaps up/down semantics follow each look's own green/red (same values as
+   .lite-change), so a verdict never shouts in the wrong palette. */
+.lite-root--glass .lite-rot-word.up,
+.lite-root--glass .lite-rot-val.up,
+.lite-root--glass .lite-rot-depth-pct.up { color: #6ee7a8; }
+.lite-root--glass .lite-rot-word.down,
+.lite-root--glass .lite-rot-val.down,
+.lite-root--glass .lite-rot-depth-pct.down { color: #fca5a5; }
+.lite-root--glass .lite-rot-meter.up > span { background: #6ee7a8; }
+.lite-root--glass .lite-rot-meter.down > span { background: #fca5a5; }
+.lite-root--glass .lite-rot-chain { background: rgba(255, 255, 255, 0.09); }
+.lite-root--glass .lite-rot-chain:hover,
+.lite-root--glass .lite-rot-chain.open { background: rgba(255, 255, 255, 0.14); }
+.lite-root--glass .lite-rot-lead { background: rgba(255, 255, 255, 0.14); }
+
+.lite-root--paper .lite-rot-word.up,
+.lite-root--paper .lite-rot-val.up,
+.lite-root--paper .lite-rot-depth-pct.up { color: #037b3e; }
+.lite-root--paper .lite-rot-word.down,
+.lite-root--paper .lite-rot-val.down,
+.lite-root--paper .lite-rot-depth-pct.down { color: #d70015; }
+.lite-root--paper .lite-rot-meter.up > span { background: #037b3e; }
+.lite-root--paper .lite-rot-meter.down > span { background: #d70015; }
+.lite-root--paper .lite-rot-chain { background: rgba(0, 0, 0, 0.04); }
+.lite-root--paper .lite-rot-chain:hover,
+.lite-root--paper .lite-rot-chain.open { background: rgba(0, 0, 0, 0.06); }
+.lite-root--paper .lite-rot-lead { background: rgba(0, 0, 0, 0.05); }
+.lite-root--paper .lite-rot-bars rect { fill: rgba(110, 110, 125, 0.5); }
+.lite-root--paper .lite-rot-bars.up rect { fill: rgba(3, 123, 62, 0.42); }
+.lite-root--paper .lite-rot-bars.down rect { fill: rgba(215, 0, 21, 0.35); }
+.lite-root--paper .lite-rot-bars.up rect.last { fill: #037b3e; }
+.lite-root--paper .lite-rot-bars.down rect.last { fill: #d70015; }
+
+/* ZIGChain-style value + change pair (also the Rotation ETH/BTC head) */
+.lite-zig-price { display: flex; align-items: baseline; gap: 10px; }
+.lite-zig-price strong { font-size: 1.2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.lite-statband--flat { margin-top: 12px; }
+.lite-statband--flat .lite-stat { padding: 12px 14px; }
+
+@media (max-width: 640px) {
+}
+
+/* Sectors: full-universe search + expand */
+.lite-sector-search {
+  flex: 1 1 220px;
+  min-width: 160px;
+  padding: 11px 16px;
+  border-radius: 9999px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  border: none;
+  outline: none;
+}
+.lite-root--glass .lite-sector-search {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.lite-root--glass .lite-sector-search::placeholder { color: rgba(255, 255, 255, 0.5); }
+.lite-root--paper .lite-sector-search {
+  background: rgba(0, 0, 0, 0.05);
+  color: #1d1d1f;
+}
+.lite-root--paper .lite-sector-search::placeholder { color: #86868b; }
+/* WebKit paints its own clear button inside a type=search field - a grey OS
+   glyph that ignores both LITE looks and turns invisible on glass. Every other
+   LITE search field is a plain box; these two now match. */
+.lite-sector-search::-webkit-search-cancel-button,
+.lite-sector-search::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+.lite-sector-more { margin: 12px auto 0; display: flex; }
+
+/* Calendar: just-landed breaking card + enriched next-up hero */
+.lite-cal-breaking { display: flex; flex-direction: column; gap: 8px; }
+.lite-cal-livedot {
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  background: #f0b13c; margin-right: 7px; vertical-align: 1px;
+  animation: liteCalLive 1.6s ease-in-out infinite;
+}
+@keyframes liteCalLive { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.lite-cal-breaking-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.lite-cal-breaking-row strong { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.01em; }
+.lite-cal-actual--big { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+/* Hero variant: the base .lite-cal-nums is the week-row's right rail (column,
+   flex-end) — inherited into the hero card it stacked "expected / previous"
+   against the far edge, orphaned from the title they belong to. In a hero they
+   read inline, left, right under the event name. */
+.lite-cal-nums--hero { display: flex; flex-direction: row; align-items: baseline; justify-content: flex-start; gap: 14px; font-size: 0.88rem; margin-top: 2px; }
+.lite-cal-thesis { font-size: 0.95rem; line-height: 1.6; margin-top: 6px; max-width: 66ch; }
+.lite-root--glass .lite-cal-thesis { color: rgba(255, 255, 255, 0.9); }
+.lite-root--paper .lite-cal-thesis { color: #4b4b50; }
+
+/* The next-up card carries prose over the backdrop photo — the shared white
+   stat glass brightens on a bright image and 0.55-white subtext dies on it.
+   This one card gets the dark frost (the .lw-note recipe) + lifted subtext. */
+.lite-cal-next > span { font-size: 0.88rem; }
+
+/* Calendar toolbar: view toggle + the month/week pager. The pager label IS
+   the answer to "what month am I looking at" — it never abbreviates. */
+.lite-cal-toolrow { justify-content: flex-start; }
+.lite-cal-nav { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 3px; }
+.lite-cal-nav-btn {
+  width: 30px; height: 30px; border-radius: 50%; border: 0; cursor: pointer;
+  font-size: 1.05rem; line-height: 1; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; color: inherit;
+}
+.lite-cal-nav-btn:disabled { opacity: 0.3; cursor: default; }
+.lite-cal-nav-label { min-width: 128px; text-align: center; font-size: 0.86rem; font-weight: 700; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
+.lite-cal-nav-today { border: 0; cursor: pointer; border-radius: 999px; padding: 7px 14px; font-size: 0.8rem; font-weight: 700; background: transparent; color: inherit; }
+.lite-root--glass .lite-cal-nav { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.16); }
+.lite-root--glass .lite-cal-nav-btn { color: rgba(255, 255, 255, 0.75); }
+.lite-root--glass .lite-cal-nav-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); color: #fff; }
+.lite-root--glass .lite-cal-nav-label { color: #fff; }
+.lite-root--glass .lite-cal-nav-today { background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.18); color: #fff; }
+.lite-root--paper .lite-cal-nav { background: rgba(0, 0, 0, 0.05); border: 1px solid rgba(0, 0, 0, 0.08); }
+.lite-root--paper .lite-cal-nav-btn { color: #515154; }
+.lite-root--paper .lite-cal-nav-btn:hover:not(:disabled) { background: rgba(0, 0, 0, 0.06); color: #1d1d1f; }
+.lite-root--paper .lite-cal-nav-label { color: #1d1d1f; }
+.lite-root--paper .lite-cal-nav-today { background: rgba(0, 0, 0, 0.06); border: 1px solid rgba(0, 0, 0, 0.1); color: #1d1d1f; }
+
+/* cells belonging to the neighboring month in the grid */
+.lite-calgrid-cell.out { opacity: 0.38; }
+.lite-root--glass .lite-stat.lite-cal-next {
+  background: linear-gradient(160deg, rgba(10, 14, 24, 0.62) 0%, rgba(10, 14, 24, 0.48) 100%);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+.lite-root--glass .lite-cal-next em { color: rgba(255, 255, 255, 0.62); }
+.lite-root--glass .lite-cal-next > span { color: rgba(255, 255, 255, 0.85); }
+.lite-root--glass .lite-cal-next .lite-cal-nums { color: rgba(255, 255, 255, 0.78); }
+.lite-root--paper .lite-cal-next > span { color: #5b5b60; }
+/* ── TradingView mini charts (Today widgets + Alt Rotation indexes) ──
+   The iframe is TRANSPARENT (backgroundColor rgba(0,0,0,0)) so the chart sits
+   on Lite's own glass/paper panel instead of a dark slab. */
+.lite-tv-wrap { position: relative; border-radius: 12px; overflow: hidden; height: 100%; background: transparent; }
+.lite-tv { width: 100%; height: 100%; border: 0; display: block; background: transparent; color-scheme: normal; }
+.lite-tvpanel { display: flex; flex-direction: column; }
+.lite-tvpanel .lite-block-head { flex-wrap: wrap; row-gap: 8px; }
+/* Fit the chart to the widget: fill whatever height the grid row gives us. */
+.lite-tvpanel .lite-tv-wrap { flex: 1; min-height: 230px; }
+.lite-tv-expand {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border: none; border-radius: 8px; cursor: pointer;
+  background: rgba(140, 140, 155, 0.16); color: inherit; padding: 0;
+  transition: transform 0.16s ease;
+}
+.lite-tv-expand svg { width: 14px; height: 14px; }
+.lite-tv-expand:hover { transform: translateY(-1px); }
+.lite-root--glass .lite-tv-expand { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.lite-root--paper .lite-tv-expand { background: rgba(0, 0, 0, 0.06); color: #1d1d1f; }
+.lite-rot-ix { margin-bottom: 10px; flex-wrap: wrap; }
+
+/* Mini-fullscreen: a centered modal card over a scrim, not edge-to-edge.
+   Portaled to <body>, so every rule here is UNscoped (look classes on
+   .lite-root can't reach it) - the card carries its own light variant. */
+.lite-tvfull {
+  position: fixed; inset: 0; z-index: 12000;
+  background: rgba(6, 8, 12, 0.58);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.lite-tvfull-card {
+  display: flex; flex-direction: column;
+  width: min(1080px, 100%);
+  height: min(720px, 86vh);
+  border-radius: 22px;
+  padding: 18px 20px;
+  background: linear-gradient(165deg, rgba(24, 28, 38, 0.96) 0%, rgba(13, 16, 23, 0.97) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 32px 90px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+.lite-tvfull-card--light {
+  background: linear-gradient(165deg, #ffffff 0%, #f6f7fa 100%);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 32px 90px rgba(0, 0, 0, 0.28);
+  color: #1d1d1f;
+}
+.lite-tvfull-head { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+.lite-tvfull-head strong { font-size: 1.02rem; font-weight: 700; letter-spacing: -0.01em; margin-right: auto; }
+.lite-tvfull-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.lite-tvfull-seg { display: inline-flex; gap: 3px; padding: 3px; border-radius: 999px; background: rgba(140, 140, 155, 0.16); }
+.lite-tvfull-tab {
+  border: none; cursor: pointer; border-radius: 999px;
+  padding: 6px 12px; font-size: 0.76rem; font-weight: 700;
+  background: transparent; color: inherit; opacity: 0.7;
+}
+.lite-tvfull-tab:hover { opacity: 1; }
+.lite-tvfull-tab.active { opacity: 1; }
+.lite-tvfull-card:not(.lite-tvfull-card--light) .lite-tvfull-seg { background: rgba(255, 255, 255, 0.1); }
+.lite-tvfull-card:not(.lite-tvfull-card--light) .lite-tvfull-tab.active { background: rgba(255, 255, 255, 0.92); color: #0b0d13; }
+.lite-tvfull-card--light .lite-tvfull-seg { background: rgba(0, 0, 0, 0.05); }
+.lite-tvfull-card--light .lite-tvfull-tab.active { background: #111; color: #fff; }
+.lite-tvfull-card .lite-tv-wrap { flex: 1; min-height: 0; }
+.lite-tvfull-close {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border: none; border-radius: 50%; cursor: pointer;
+  background: rgba(140, 140, 155, 0.18); color: inherit; padding: 0;
+}
+.lite-tvfull-close svg { width: 15px; height: 15px; }
+
+@media (max-width: 640px) {
+  .lite-tvpanel .lite-tv-wrap { min-height: 200px; }
+  .lite-tvfull { padding: 10px; align-items: stretch; }
+  .lite-tvfull-card { width: 100%; height: 100%; max-height: none; border-radius: 18px; padding: 14px; }
+  .lite-tvfull-seg { flex-wrap: wrap; border-radius: 14px; }
+  .lite-tvfull-tab { padding: 6px 10px; font-size: 0.72rem; }
+}
+
+/* ── Themes: scrollbar tint picker ──────────────────────────────────────────
+   Swatch is a real pill at the shipped geometry (--sb-size / --sb-inset) so
+   the chip previews the actual bar rather than a generic colour dot. */
+.lite-sbtint-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* 🪤 These read `--text-secondary` (0.6 warm white) on a 3%-white chip — PRO
+   tokens on a PRO-black page. In LITE the page is a PHOTO and the chip is
+   effectively transparent, so over a bright frame "Rose" and "Ice" simply were
+   not there (founder 08-08: "this text hard to see"). Real chip, real hairline,
+   ink at 0.82: the label now carries its own contrast instead of borrowing the
+   backdrop's. */
+.lite-sbtint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 8px 10px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(245, 245, 247, 0.82);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--duration-fast, 150ms) var(--ease-out, ease),
+    border-color var(--duration-fast, 150ms) var(--ease-out, ease),
+    color var(--duration-fast, 150ms) var(--ease-out, ease);
+}
+
+.lite-sbtint:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.lite-sbtint.active {
+  background: rgba(255, 255, 255, 0.26);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+}
+
+.lite-sbtint-pill {
+  display: block;
+  width: 6px;
+  height: 26px;
+  border-radius: 9999px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.lite-root--paper .lite-sbtint,
+.lite-root--onlight .lite-sbtint {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.08);
+  color: rgba(15, 23, 42, 0.62);
+}
+
+.lite-root--paper .lite-sbtint.active,
+.lite-root--onlight .lite-sbtint.active {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.22);
+  box-shadow: 0 1px 5px rgba(15, 23, 42, 0.14);
+  color: #0f172a;
+}
+
+/* ── The globe's quick sheet ─────────────────────────────────────────────── */
+/* The portal wrapper is theme hooks ONLY — no box, no background, no layout. */
+.lite-portal { display: contents; }
+/* Above LITE's cinema (12000) and the body-level toast stack (10000). */
+.lite-tsheet-wrap { position: fixed; inset: 0; z-index: 12100; }
+.lite-tsheet-scrim { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.42); backdrop-filter: blur(2px); }
+.lite-tsheet {
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: min(460px, 94vw);
+  padding: 22px 22px calc(22px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: liteSheetIn 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes liteSheetIn { from { transform: translateX(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+.lite-tsheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.lite-tsheet-title { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
+.lite-tsheet-sub { font-size: 0.8rem; margin: 3px 0 0; opacity: 0.62; }
+.lite-tsheet-x { display: grid; place-items: center; width: 30px; height: 30px; flex: none; padding: 0; border: none; border-radius: 9px; background: transparent; color: inherit; cursor: pointer; }
+.lite-tsheet-x svg { width: 17px; height: 17px; }
+/* The drawer hosts the REAL ThemesView, so it has to neutralise that view's
+   page layout: no page header (the drawer has its own), one column instead of
+   the 12-col grid, and panels that are sections rather than floating cards —
+   a card inside a drawer is a plate on a plate. */
+.lite-tsheet-body { margin: 4px -4px 0; }
+.lite-tsheet-body .lite-view { gap: 4px; }
+.lite-tsheet-body .lite-view-head { display: none; }
+.lite-tsheet-body .lite-grid { grid-template-columns: 1fr; gap: 4px; }
+.lite-tsheet-body [class*='lite-span-'] { grid-column: 1 / -1; }
+.lite-tsheet-body .lite-panel {
+  padding: 14px 4px;
+  border-radius: 0;
+  background: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  border: none;
+  border-top: 1px solid rgba(127, 132, 148, 0.2);
+}
+.lite-tsheet-body .lite-grid:first-of-type .lite-panel:first-child { border-top: none; padding-top: 4px; }
+.lite-tsheet-body .lite-panel:hover { transform: none; }
+.lite-tsheet-body .lite-look-cards { grid-template-columns: 1fr; }
+.lite-tsheet-body .lite-themes-grid { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); }
+.lite-root--glass .lite-tsheet {
+  background: linear-gradient(160deg, rgba(20, 25, 34, 0.9) 0%, rgba(14, 18, 26, 0.94) 100%);
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+.lite-root--glass .lite-tsheet-x:hover { background: rgba(255, 255, 255, 0.1); }
+.lite-root--glass .lite-tsheet-all { background: rgba(255, 255, 255, 0.16); color: #fff; }
+.lite-root--glass .lite-tsheet-all:hover { background: rgba(255, 255, 255, 0.24); }
+.lite-root--paper .lite-tsheet {
+  background: #ffffff;
+  border-left: 1px solid rgba(15, 23, 42, 0.1);
+  color: #1d1d1f;
+  box-shadow: -18px 0 48px rgba(49, 61, 92, 0.14);
+}
+.lite-root--paper .lite-tsheet-x:hover { background: rgba(0, 0, 0, 0.05); }
+.lite-root--paper .lite-tsheet-all { background: #1d1d1f; color: #fff; }
+.lite-root--paper .lite-tsheet-all:hover { background: #000; }
+@media (max-width: 768px) {
+  .lite-tsheet {
+    top: auto; left: 0; right: 0;
+    width: auto;
+    max-height: 82vh;
+    border-radius: 20px 20px 0 0;
+    animation-name: liteSheetUp;
+  }
+  @keyframes liteSheetUp { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .lite-root--glass .lite-tsheet { border-left: none; border-top: 1px solid rgba(255, 255, 255, 0.12); }
+  .lite-root--paper .lite-tsheet { border-left: none; border-top: 1px solid rgba(15, 23, 42, 0.1); }
+}
+
+/* ── "Next 48 hours" panel (crypto Today + Stocks) ──
+   Ink rides `currentColor` + opacity so every look (glass / paper / onlight /
+   daylight) renders it with the panel's own ink — no per-look counterparts. */
+.lite-n48-lead { margin: 0 0 12px; font-size: 1.06rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1.4; }
+.lite-n48-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.lite-n48-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 9px 2px;
+  border-top: 1px solid rgba(127, 131, 140, 0.16);
+}
+.lite-n48-row:first-child { border-top: none; }
+.lite-n48-row--link { cursor: pointer; border-radius: 10px; }
+.lite-n48-row--link:hover { background: rgba(127, 131, 140, 0.1); }
+.lite-n48-when { display: flex; flex-direction: column; flex: 0 0 96px; min-width: 0; }
+.lite-n48-when strong { font-size: 0.86rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.lite-n48-when em { font-style: normal; font-size: 0.7rem; opacity: 0.5; font-variant-numeric: tabular-nums; }
+.lite-n48-main { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.lite-n48-main strong { font-size: 0.94rem; font-weight: 600; letter-spacing: -0.005em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lite-n48-main em { font-style: normal; font-size: 0.74rem; opacity: 0.55; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lite-n48-tag {
+  flex: 0 0 auto; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 999px; background: rgba(127, 131, 140, 0.14);
+}
+.lite-n48-tag--critical { background: rgba(239, 68, 68, 0.16); color: #f87171; }
+.lite-root--paper .lite-n48-tag--critical, .lite-root--onlight .lite-n48-tag--critical { color: #dc2626; }
+.lite-n48-tag--high { background: rgba(245, 158, 11, 0.15); color: #f0b03c; }
+.lite-root--paper .lite-n48-tag--high, .lite-root--onlight .lite-n48-tag--high { color: #b45309; }
+.lite-n48-tag--fed { background: rgba(245, 158, 11, 0.15); color: #f0b03c; }
+.lite-root--paper .lite-n48-tag--fed, .lite-root--onlight .lite-n48-tag--fed { color: #b45309; }
+.lite-n48-tag--earnings { background: rgba(16, 185, 129, 0.14); color: #34d399; }
+.lite-root--paper .lite-n48-tag--earnings, .lite-root--onlight .lite-n48-tag--earnings { color: #0f766e; }
+.lite-n48-deck { margin: 10px 0 0; font-size: 0.78rem; opacity: 0.6; }
+@media (max-width: 640px) {
+  .lite-n48-when { flex-basis: 74px; }
+  .lite-n48-when em { display: none; }
+  .lite-n48-main em { white-space: normal; }
+}
+
+/* n48 "On watch" — live prediction-market odds for the undated catalysts */
+.lite-n48-subhead {
+  margin: 14px 0 2px; font-size: 0.62rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.45;
+}
+.lite-n48-odds {
+  flex: 0 0 46px; font-size: 0.95rem; font-weight: 700;
+  font-variant-numeric: tabular-nums; letter-spacing: -0.01em;
+}
+.lite-n48-watch .lite-n48-main strong { font-weight: 500; font-size: 0.88rem; }
+.lite-n48-watch .lite-n48-main strong a { color: inherit; text-decoration: none; }
+.lite-n48-watch .lite-n48-main strong a:hover { text-decoration: underline; }
+/* tight (half-width) variant — the stocks brief pairing */
+.lite-n48--tight .lite-n48-when { flex-basis: 72px; }
+.lite-n48--tight .lite-n48-when em { display: none; }
+.lite-n48--tight .lite-n48-row { gap: 10px; }
+.lite-n48--tight .lite-n48-main em { white-space: normal; }
+/* the stocks brief+next48 pairing: the two cards stretch to ONE aligned row
+   (founder: "it must be aligned" — align-start left raw wallpaper under the
+   brief). The widget stays comparable in height by collapsing behind More. */
+.lite-n48-more {
+  margin-top: 10px; align-self: flex-start;
+  display: inline-flex; align-items: center; gap: 5px;
+  appearance: none; border: none; background: none; padding: 2px 0;
+  color: inherit; opacity: 0.6; cursor: pointer;
+  font-size: 0.78rem; font-weight: 600;
+}
+.lite-n48-more:hover { opacity: 1; }
+.lite-n48-more svg { width: 14px; height: 14px; transition: transform 0.15s; }
+.lite-n48-more.open svg { transform: rotate(180deg); }
+
+/* ── Research view header ──────────────────────────────────────────────────
+   Title + tagline on the left, Cinema on the right, one row. Desktop keeps
+   both lines; the mobile block trims it further (see lite-page.mobile.css). */
+.lite-view-head--rz {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lite-view-head--rz .lite-rz-headline { min-width: 0; margin-right: auto; }
+.lite-view-head--rz .lite-cinema-btn { flex-shrink: 0; }
+/* Back lives IN the header row here rather than on a line of its own - three
+   stacked rows for "where you came from", "where you are" and one action is a
+   lot of a phone screen to spend before any data (founder 2026-08-12). */
+.lite-back--inline { flex-shrink: 0; margin: 0; }
+
+/* ── ETF Flows: share + the mark on the chart ──────────────────────────
+   ChainROI (beta, 08-19): the flow picture travels — it should carry the
+   brand through a crop, and posting it should be one tap from reading it. */
+.lite-etf-chart {
+  position: relative;
+  width: 100%;
+  margin: 4px 0 12px;
+}
+.lite-etf-chart .lite-etf-scroll { margin: 0; }
+
+.lite-block-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.lite-etf-sharex { flex: 0 0 auto; }
+
+/* ── TradingView plot: a deliberate media card, not fake glass ──
+   The embed cannot go transparent (measured 2026-08-28: TradingView's dark
+   theme paints its own plot background and ignores backgroundColor in every
+   form). Pretending otherwise is what made the widgets read as a black hole
+   punched through the panel. Frame it instead: inset it from the panel edge,
+   round it, and give it a hairline so the dark plane reads as a screen the
+   panel is holding. */
+.lite-tvpanel .lite-tv-wrap {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.lite-root--paper .lite-tvpanel .lite-tv-wrap,
+.lite-root--daylight .lite-tvpanel .lite-tv-wrap {
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+/* ── Your wallpapers ── */
+.lite-wall-cell { position: relative; display: contents; }
+.lite-theme-swatch--add { cursor: pointer; }
+.lite-theme-swatch--add input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.lite-wall-add {
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(140, 140, 155, 0.45);
+  background: rgba(140, 140, 155, 0.1);
+}
+.lite-wall-add svg { width: 20px; height: 20px; opacity: 0.7; }
+/* The delete sits over its own swatch. Only on hover/focus — a row of × marks
+   turns a picker into a management screen. */
+.lite-wall-del {
+  position: absolute;
+  z-index: 2;
+  margin: 4px 0 0 4px;
+  width: 20px; height: 20px;
+  line-height: 1;
+  border-radius: 999px;
+  border: 0;
+  cursor: pointer;
+  opacity: 0;
+  color: #fff;
+  background: rgba(10, 10, 14, 0.72);
+  transition: opacity 140ms ease;
+}
+.lite-theme-swatch:hover + .lite-wall-del,
+.lite-wall-del:hover,
+.lite-wall-del:focus-visible { opacity: 1; }
+
+/* ── Research view: stage + surface (2026-09-04) ──────────────────────────
+   Rail of coins with their 24h move; then the STAGE - no card around the
+   chart, the price sits on the wallpaper in display type and the series
+   paints edge to edge beneath it; then one SURFACE, a single glass panel
+   whose sections are separated by hairlines instead of being boxed into a
+   stack of cards (the boxed version read as "the same page" - founder,
+   2026-09-04). Technicals collapse to a compact cell on the Overview; the
+   Technicals tab keeps the full block. */
+
+/* Rail */
+.lite-chips--rail {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  /* Room for the chip shadows inside the clip box; the margin gives the
+     padding back so the rail keeps its place in the column. */
+  padding: 10px 0;
+  margin: -10px 0;
+  -webkit-overflow-scrolling: touch;
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+}
+.lite-chips--rail::-webkit-scrollbar { display: none; }
+.lite-chip--rail { flex: none; gap: 8px; padding: 8px 13px 8px 10px; }
+.lite-chip--rail .lite-chip-logo { width: 18px; height: 18px; }
+.lite-chip-chg {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.lite-root--glass .lite-chip-chg.up { color: #6ee7a8; }
+.lite-root--glass .lite-chip-chg.down { color: #fca5a5; }
+.lite-root--paper .lite-chip-chg.up { color: #037b3e; }
+.lite-root--paper .lite-chip-chg.down { color: #d70015; }
+/* The paper active chip is ink on white - the day tints vanish on it. */
+.lite-root--paper .lite-chip.active .lite-chip-chg.up { color: #6ee7a8; }
+.lite-root--paper .lite-chip.active .lite-chip-chg.down { color: #fca5a5; }
+
+/* Stage */
+.lite-rz-stage { display: flex; flex-direction: column; margin-top: 6px; }
+.lite-rz-stage-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.lite-rz-stage-id {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.lite-rz-stage-logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+}
+.lite-rz-stage-name { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lite-rz-stage-sym {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.62;
+}
+.lite-rz-stage-rank {
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+.lite-rz-stage-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 28px;
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.lite-rz-stage-meta > span { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.lite-rz-stage-meta em {
+  font-style: normal;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+.lite-rz-stage-price {
+  margin: 10px 0 0;
+  font-size: clamp(2.1rem, 3.2vw, 2.9rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.lite-rz-stage-change {
+  margin: 6px 0 0;
+  font-size: 0.98rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.lite-rz-stage-chart { margin-top: 8px; }
+.lite-rz-stage .lite-chart-stage,
+.lite-rz-stage .lite-chart-empty { height: clamp(340px, 46vh, 520px); }
+.lite-rz-stage .lite-tv-embed { min-height: 430px; }
+.lite-rz-stage-tools { margin-top: 12px; }
+.lite-rz-stage-tools .lite-research-toggles { width: 100%; justify-content: space-between; }
+.lite-rz-stage .lite-perf { margin-top: 14px; }
+.lite-root--glass .lite-rz-stage-id,
+.lite-root--glass .lite-rz-stage-meta,
+.lite-root--glass .lite-rz-stage-price { color: #fff; text-shadow: 0 2px 20px rgba(0, 0, 0, 0.45); }
+.lite-root--glass .lite-rz-stage-change.up { color: #6ee7a8; }
+.lite-root--glass .lite-rz-stage-change.down { color: #fca5a5; }
+.lite-root--paper .lite-rz-stage-id,
+.lite-root--paper .lite-rz-stage-meta,
+.lite-root--paper .lite-rz-stage-price { color: #1d1d1f; }
+.lite-root--paper .lite-rz-stage-change.up { color: #037b3e; }
+.lite-root--paper .lite-rz-stage-change.down { color: #d70015; }
+.lite-root--paper .lite-rz-stage-logo { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); }
+
+/* Surface */
+.lite-rz-surface { padding: 0; overflow: hidden; }
+.lite-root--glass .lite-rz-surface { --rz-line: rgba(255, 255, 255, 0.1); }
+.lite-root--paper .lite-rz-surface { --rz-line: rgba(0, 0, 0, 0.07); }
+/* A page-wide surface has no business lifting on hover like a card does. */
+.lite-root--glass .lite-rz-surface:hover {
+  transform: none;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.34), 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.26);
+}
+.lite-root--paper .lite-rz-surface:hover {
+  transform: none;
+  box-shadow: 0 2px 6px rgba(49, 61, 92, 0.05), 0 20px 44px rgba(49, 61, 92, 0.09), inset 0 1px 0 #ffffff;
+}
+.lite-rz-row { display: grid; grid-template-columns: minmax(0, 1fr); }
+.lite-rz-row--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.lite-rz-row--3 { grid-template-columns: 1fr 1.25fr 1.1fr; }
+.lite-rz-row + .lite-rz-row { border-top: 1px solid var(--rz-line); }
+.lite-rz-row > .lite-rz-cell + .lite-rz-cell { border-left: 1px solid var(--rz-line); }
+.lite-rz-cell { padding: 24px 26px; min-width: 0; }
+.lite-rz-cell--stack { display: flex; flex-direction: column; }
+.lite-rz-sub + .lite-rz-sub { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--rz-line); }
+.lite-rz-cta.lite-research-cta { flex-direction: row; align-items: center; gap: 24px; }
+.lite-rz-cta .lite-eyebrow { margin: 0; flex: none; }
+.lite-rz-cta .lite-empty { flex: 1; margin: 0; }
+.lite-rz-cta .lite-pro-btn { flex: none; width: auto; padding: 12px 20px; }
+
+/* Right-column news: byline under the headline, not beside it */
+.lite-news-list--stack .lite-news-link { flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px 0; }
+.lite-news-list--stack .lite-news-link > .lite-news-meta { white-space: normal; flex-shrink: 1; }
+.lite-news-list--stack .lite-news-title { font-size: 0.94rem; margin-bottom: 0; }
+
+/* Technicals, compact (one cell of the Overview surface) */
+.lite-tech--compact .lite-tech-top { flex-direction: column; align-items: stretch; gap: 12px; margin-bottom: 0; }
+.lite-tech--compact .lite-vgauges { flex-direction: row; width: auto; }
+.lite-tech--compact .lite-vgauge { width: 150px; }
+.lite-tech--compact .lite-tech-read { font-size: 0.9rem; line-height: 1.5; margin-bottom: 14px; }
+.lite-tech--compact .lite-tech-grid--six { grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+.lite-tech--compact .lite-tech-item strong { font-size: 1rem; }
+.lite-tech--compact .lite-tech-rangeblock,
+.lite-tech--compact > .lite-social-note { display: none; }
+
+/* Odometer digits (stage price). Every glyph sits in a 1em line box, so the
+   static characters ($ , .) and the sliding digit columns share a baseline. */
+.lite-roll { display: inline-flex; align-items: flex-start; font-variant-numeric: tabular-nums; }
+.lite-roll-wrap { display: inline-block; vertical-align: top; height: 1em; overflow: hidden; }
+.lite-roll-col { display: flex; flex-direction: column; transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform; }
+.lite-roll-num,
+.lite-roll-ch { display: block; height: 1em; line-height: 1em; }
+@media (prefers-reduced-motion: reduce) {
+  .lite-roll-col { transition: none; }
+}

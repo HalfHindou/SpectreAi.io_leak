@@ -1,0 +1,819 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   VC INTEL HUB — Mobile (Smart Money mode of /ventures)
+
+   The hub ships a three-pane desktop layout (entity list | profile | feed)
+   inside glass panels. Below 768px that whole frame is wrong: nested cards,
+   20-24px blurs, 38px tap targets and a 6-col stat grid. This file collapses
+   it into the mobile language from `.claude/rules/mobile-design-system.md`:
+
+     §L2  panels dissolve — content floats on the void, no card-in-card
+     §L3  section headers = 11px uppercase labels
+     §L4  every toggle is a ghost capsule, active = soft fill + glow
+     §E3  entity/company lists become 60px token rows w/ indented hairlines
+     §F3  44px minimum tap targets
+     §H   blur budget: 8px max (the hub used 10/16/20/24px)
+     §L1  system font + tabular figures on every number
+
+   Scope: hosted inside `.mvn-page` (ventures mobile shell), which owns the
+   16px page gutter reset — so the hub paints its own gutter here and
+   full-bleed rails break out with -16px margins.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  /* ────────────────────────────────────────────
+     SCAFFOLDING — kill the 3-pane grid
+     ──────────────────────────────────────────── */
+
+  .vcih-root,
+  .vcih-root--with-universe {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-height: 0;
+    padding: 0 16px;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  }
+
+  /* `align-items: start` on the desktop grid would let each pane size to its
+     own content once stacked — the filter rails are wider than the phone, so
+     the panes must be forced back to the container width and allowed to shrink. */
+  .vcih-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 24px;
+    min-width: 0;
+  }
+
+  .vcih-left,
+  .vcih-center,
+  .vcih-right {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Panels dissolve (§L2) — no glass, no borders, no blur, no nesting */
+  .vcih-left,
+  .vcih-center,
+  .vcih-right,
+  .vcih-universe-section,
+  .vcih-root .vpf {
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .vcih-left {
+    position: static;
+    max-height: none;
+    gap: 14px;
+  }
+
+  .vcih-center { gap: 0; }
+  .vcih-right { gap: 12px; }
+
+  /* System font + tabular figures on every number (§L1) */
+  .vcih-aum,
+  .vcih-profile-stat-value,
+  .vcih-section-count,
+  .vcih-entity-count,
+  .vcih-token-chip-chg,
+  .vcih-token-chip-sym,
+  .vcih-root .smu-stat-value,
+  .vcih-root .smu-token-chg {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ────────────────────────────────────────────
+     SMART MONEY UNIVERSE — header + view rail
+     ──────────────────────────────────────────── */
+
+  .vcih-universe-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 0 0 12px;
+    background: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .vcih-universe-headline { flex: 1 1 auto; gap: 3px; }
+
+  .vcih-universe-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(245, 245, 247, 0.32);
+  }
+
+  .vcih-universe-sub { font-size: 11.5px; color: rgba(245, 245, 247, 0.4); }
+
+  /* View switcher: ghost-capsule rail that scrolls instead of wrapping (§L4) */
+  .vcih-universe-tabs {
+    order: 10;
+    flex: 1 1 100%;
+    display: flex;
+    gap: 6px;
+    padding: 0 16px 2px;
+    margin: 2px -16px 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .vcih-universe-tabs::-webkit-scrollbar { display: none; }
+
+  .vcih-universe-tab {
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 17px;
+    background: transparent;
+    color: rgba(245, 245, 247, 0.3);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .vcih-universe-tab--active {
+    background: rgba(255, 255, 255, 0.06);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    color: #f5f5f7;
+    box-shadow: 0 0 12px rgba(245, 245, 247, 0.06),
+                inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* Collapse toggle — 44px hit area, 30px glyph (§F3) */
+  .vcih-universe-toggle {
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    border: none;
+    color: rgba(245, 245, 247, 0.4);
+  }
+
+  .vcih-universe-body {
+    min-height: 0;
+    margin: 0 -16px;
+  }
+
+  /* ────────────────────────────────────────────
+     UNIVERSE SUB-VIEWS — Consensus / Bubbles / Sectors / Social
+     Their own breakpoints stop at 700-900px, leaving a dead band and
+     desktop density on phones. Normalise all four at 768.
+     ──────────────────────────────────────────── */
+
+  .vcih-root .smu-consensus,
+  .vcih-root .smu-bub-wrap,
+  .vcih-root .vss {
+    padding: 16px 16px 4px;
+    gap: 14px;
+  }
+
+  .vcih-root .smu-summary { grid-template-columns: repeat(2, 1fr); row-gap: 1px; }
+  .vcih-root .smu-cons-colhead { display: none; }
+  .vcih-root .smu-cons-row { grid-template-columns: 1fr; gap: 10px; }
+  .vcih-root .smu-col-stats { justify-content: flex-start; gap: 18px; }
+  .vcih-root .smu-tape { display: none; }
+
+  /* The column header is what told you which number was which, and it is the
+     first thing the stacked layout drops — so each figure carries its own
+     label instead of sitting in a bare row of three unlabelled numbers. */
+  .vcih-root .smu-stat-pool,
+  .vcih-root .smu-stat-backers,
+  .vcih-root .smu-stat-mcap {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    min-width: 0;
+    text-align: left;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .vcih-root .smu-stat-pool::before,
+  .vcih-root .smu-stat-backers::before,
+  .vcih-root .smu-stat-mcap::before {
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: rgba(245, 245, 247, 0.3);
+  }
+  .vcih-root .smu-stat-pool::before { content: 'Pool AUM'; }
+  .vcih-root .smu-stat-backers::before { content: 'Backers'; }
+  .vcih-root .smu-stat-mcap::before { content: 'MCap'; }
+
+  /* hover-only affordances never appear on touch */
+  .vcih-root .smu-cons-go { opacity: 1; transform: none; margin-left: auto; }
+
+  .vcih-root .smu-sectors-head { flex-direction: column; align-items: flex-start; }
+
+  /* Desktop encodes fund count as cell HEIGHT (inline `minHeight: 116 + n*6`),
+     which is a treemap idea: it only reads as information when the cells sit
+     side by side. Full-width on a phone it just spends ~190px of viewport per
+     sector on empty tint — and the count is already spelled out in the meta
+     line ("20 funds · $70.80B"). Let content set the height. */
+  .vcih-root .smu-sector-cell {
+    flex-basis: 100% !important;
+    min-height: 0 !important;
+    padding: 13px 14px;
+    border-radius: 12px;
+  }
+  .vcih-root .smu-sector-cell-perf { margin-top: 0; }
+
+  .vcih-root .vss-cols { grid-template-columns: 1fr; }
+  .vcih-root .vss-head { flex-direction: column; gap: 10px; }
+
+  /* Bubble canvas runs full-bleed inside the universe body, so its rounded
+     border would frame the screen edge — drop it and keep the paint. */
+  .vcih-root .smu-bub-wrap { padding: 12px 16px 16px; }
+  .vcih-root .vcb-canvas-wrap {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  /* zoom/reset controls were 30px (§F3 wants 44px) */
+  .vcih-root .vcb-controls { right: 8px; bottom: 8px; gap: 8px; }
+  .vcih-root .vcb-controls button {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 18px;
+  }
+
+  /* Sub-view panels lose their card chrome too — one surface, not three */
+  .vcih-root .vss-panel {
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+  }
+
+  .vcih-root .vss-title,
+  .vcih-root .vss-panel-head,
+  .vcih-root .smu-cons-title,
+  .vcih-root .smu-bub-title,
+  .vcih-root .via-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(245, 245, 247, 0.32);
+  }
+
+  /* ────────────────────────────────────────────
+     ENTITY BROWSER — search, filter rails, rows
+     ──────────────────────────────────────────── */
+
+  .vcih-search-wrap { width: 100%; }
+
+  .vcih-search,
+  input.vcih-search {
+    height: 44px;
+    padding: 0 40px 0 42px !important;
+    background: rgba(255, 255, 255, 0.025);
+    border: 0.5px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+
+  .vcih-search-icon { left: 15px; }
+
+  .vcih-search-clear {
+    right: 6px;
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Type + sector filters: scroll rails, never wrap into 3 stacked lines */
+  .vcih-type-tabs,
+  .vcih-sector-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding: 0 16px 2px;
+    margin: 0 -16px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .vcih-type-tabs::-webkit-scrollbar,
+  .vcih-sector-tabs::-webkit-scrollbar { display: none; }
+
+  .vcih-sector-tabs {
+    margin-top: 0;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .vcih-type-tab,
+  .vcih-sector-tab,
+  .vcih-sector-clear {
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding: 0 13px;
+    display: inline-flex;
+    align-items: center;
+    background: transparent;
+    border: none;
+    border-radius: 17px;
+    color: rgba(245, 245, 247, 0.3);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .vcih-type-tab--active,
+  .vcih-sector-tab--active {
+    background: rgba(255, 255, 255, 0.06);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    color: #f5f5f7;
+    box-shadow: 0 0 12px rgba(245, 245, 247, 0.06),
+                inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .vcih-entity-count {
+    padding: 0;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: rgba(245, 245, 247, 0.32);
+  }
+
+  /* 78 funds × 57px is 4400px of directory before the profile even starts, so
+     the list keeps an inner scroller — capped at half the viewport, with
+     overscroll contained so it never chains into the page (§D anti-wobble). */
+  .vcih-entity-list {
+    gap: 0;
+    padding-right: 0;
+    max-height: 50vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 92%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 0%, #000 92%, transparent 100%);
+  }
+  .vcih-entity-list::-webkit-scrollbar { display: none; }
+
+  /* Token List Row (§E3) — 60px, 36px logo, indented hairline separator */
+  .vcih-entity-row {
+    min-height: 60px;
+    gap: 12px;
+    padding: 10px 2px;
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    transform: none !important;
+  }
+
+  .vcih-entity-row:hover { background: none; border: none; }
+  .vcih-entity-row:active { background: rgba(255, 255, 255, 0.03); }
+
+  .vcih-entity-row::after {
+    content: '';
+    position: absolute;
+    left: 50px;
+    right: 0;
+    top: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .vcih-entity-row:first-child::after { display: none; }
+
+  .vcih-entity-row--active {
+    background: rgba(255, 255, 255, 0.03);
+    border: none;
+    box-shadow: none;
+  }
+  .vcih-entity-row--active::before { left: -2px; top: 10px; bottom: 10px; }
+
+  .vcih-entity-row .vcih-logo {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 10px !important;
+  }
+
+  /* The hub's micro-labels run down to 9px — below anything in the page's own
+     mvn- vocabulary (10px floor) and under the skill's 11px reading floor.
+     Pills and badges get the page's floor instead. */
+  .vcih-type-pill,
+  .vcih-tier-badge,
+  .vcih-stat-qual,
+  .vcih-stat-live,
+  .vcih-chip-tag,
+  .vcih-company-led {
+    font-size: 10px;
+  }
+  .vcih-type-pill { height: 18px; }
+
+  .vcih-entity-name { font-size: 15px; font-weight: 600; }
+  .vcih-entity-meta { margin-top: 3px; gap: 7px; }
+  .vcih-aum { font-size: 12px; color: rgba(245, 245, 247, 0.42); }
+
+  /* ────────────────────────────────────────────
+     PROFILE — header, 2×2 stats, tabs
+     ──────────────────────────────────────────── */
+
+  .vcih-profile-header {
+    padding: 0 0 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .vcih-profile-header::before { display: none; }
+
+  .vcih-profile-identity { gap: 12px; }
+
+  .vcih-profile-identity > .vcih-logo {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 12px !important;
+  }
+
+  .vcih-profile-name { font-size: 1.25rem; }
+  .vcih-profile-sub { flex-wrap: wrap; gap: 8px; }
+
+  /* Stat Card grid (§E4) — 2 columns, faint tint, label above value */
+  .vcih-profile-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .vcih-profile-stat {
+    padding: 11px 13px;
+    min-height: 72px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 0.5px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+  }
+  .vcih-profile-stat::after { display: none; }
+
+  .vcih-profile-stat-label {
+    font-size: 10.5px;
+    letter-spacing: 0.8px;
+    color: rgba(245, 245, 247, 0.4);
+  }
+
+  .vcih-profile-stat-value { font-size: 1.125rem; letter-spacing: -0.02em; }
+  .vcih-profile-stat-value--sm { font-size: 0.9375rem; }
+
+  .vcih-focus-tags { margin-top: 14px; }
+  .vcih-thesis { font-size: 13px; }
+
+  /* Profile tabs — ghost-capsule rail, 44px targets */
+  .vcih-tabs {
+    gap: 6px;
+    padding: 14px 16px 12px;
+    margin: 0 -16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .vcih-tabs::-webkit-scrollbar { display: none; }
+
+  .vcih-tab {
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 17px;
+    color: rgba(245, 245, 247, 0.3);
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .vcih-tab--active {
+    background: rgba(255, 255, 255, 0.06);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    color: #f5f5f7;
+    box-shadow: 0 0 12px rgba(245, 245, 247, 0.06),
+                inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+  }
+  .vcih-tab--active::after { display: none; }
+
+  .vcih-tab-content { padding: 18px 0 0; }
+
+  /* ────────────────────────────────────────────
+     PORTFOLIO — section heads, token chips, company rows
+     ──────────────────────────────────────────── */
+
+  .vcih-portfolio-source {
+    min-height: 32px;
+    padding: 0 10px;
+    font-size: 10.5px;
+  }
+
+  .vcih-section-head {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .vcih-section-title {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: rgba(245, 245, 247, 0.32);
+  }
+
+  .vcih-token-grid { gap: 6px; }
+
+  .vcih-token-chip {
+    min-height: 34px;
+    background: transparent;
+    border: 0.5px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* Portfolio companies read as rows on the void, not a card wall (§E3) */
+  .vcih-company-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .vcih-company-card {
+    position: relative;
+    min-height: 60px;
+    padding: 10px 2px;
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .vcih-company-card::after {
+    content: '';
+    position: absolute;
+    left: 48px;
+    right: 0;
+    top: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .vcih-company-card:first-child::after { display: none; }
+
+  .vcih-company-card--lead { border-color: transparent; }
+  .vcih-company-name { font-size: 15px; font-weight: 600; }
+  .vcih-company-meta { font-size: 11.5px; }
+
+  .vcih-focus-cards { gap: 6px; }
+  .vcih-focus-card { min-height: 34px; display: inline-flex; align-items: center; }
+
+  .vcih-tab-empty { padding: 24px 0; font-size: 13px; }
+  .vcih-phase-title { font-size: 16px; }
+  .vcih-phase-sub { font-size: 12.5px; }
+
+  /* AI analyst — purple/AI surface stays a card, but flattened (§L2 exception) */
+  .vcih-ai-card,
+  .vcih-root .vai {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .vcih-root .vai-grid { grid-template-columns: 1fr; }
+  .vcih-root .vai-tweets-list { grid-template-columns: 1fr; }
+  .vcih-root .vai-head--toggle { min-height: 44px; }
+  .vcih-ai-body { font-size: 13.5px; }
+
+  .vcih-root .vai-foot { gap: 16px 22px; }
+
+  /* `margin-left: auto` parks the focus block on the right once the footer
+     wraps; on a phone it reads as a stray floating column */
+  .vcih-root .vai-foot-focus {
+    margin-left: 0;
+    flex: 1 1 100%;
+  }
+
+  /* dashboards use the system face on mobile (§L1) */
+  .vcih-root .vai-foot-val {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ────────────────────────────────────────────
+     ACTIVITY / PULSE FEED
+     ──────────────────────────────────────────── */
+
+  .vcih-right-header { padding: 0 0 8px; }
+
+  .vcih-right-title,
+  .vcih-root .vpf-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(245, 245, 247, 0.32);
+  }
+
+  .vcih-feed,
+  .vcih-root .vpf-scroll {
+    overflow: visible;
+    max-height: none;
+    padding-right: 0;
+  }
+
+  .vcih-feed-item { min-height: 56px; padding: 10px 2px; }
+
+  .vcih-root .via-network-list { flex-wrap: wrap; }
+  .vcih-root .via-item { padding-left: 22px; }
+
+  /* ────────────────────────────────────────────
+     PERFORMANCE — blur budget (§H)
+     Nothing inside the hub may exceed 8px on mobile.
+     ──────────────────────────────────────────── */
+
+  .vcih-root [class*='vcih-'],
+  .vcih-root [class*='smu-'],
+  .vcih-root [class*='vss-'],
+  .vcih-root [class*='vpf-'],
+  .vcih-root [class*='vai-'] {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* ────────────────────────────────────────────
+     REDUCED MOTION
+     ──────────────────────────────────────────── */
+
+  @media (prefers-reduced-motion: reduce) {
+    .vcih-entity-row,
+    .vcih-tab,
+    .vcih-type-tab,
+    .vcih-sector-tab,
+    .vcih-universe-tab {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+
+  /* ────────────────────────────────────────────
+     DAY MODE — one override per custom colour above (§G)
+     Paired: global `.app.app-day-mode` + page-scoped `.ventures-page.day-mode`
+     ──────────────────────────────────────────── */
+
+  .app.app-day-mode .vcih-left,
+  .app.app-day-mode .vcih-center,
+  .app.app-day-mode .vcih-right,
+  .app.app-day-mode .vcih-universe-section,
+  .app.app-day-mode .vpf,
+  .app.app-day-mode .vss-panel,
+  .ventures-page.day-mode .vcih-left,
+  .ventures-page.day-mode .vcih-center,
+  .ventures-page.day-mode .vcih-right,
+  .ventures-page.day-mode .vcih-universe-section,
+  .ventures-page.day-mode .vpf,
+  .ventures-page.day-mode .vss-panel {
+    background: none;
+    border: none;
+    box-shadow: none;
+  }
+
+  .app.app-day-mode .vcih-universe-header,
+  .ventures-page.day-mode .vcih-universe-header {
+    background: none;
+    border-bottom-color: rgba(15, 23, 42, 0.08);
+  }
+
+  .app.app-day-mode .vcih-universe-title,
+  .app.app-day-mode .vcih-section-title,
+  .app.app-day-mode .vcih-right-title,
+  .app.app-day-mode .vpf-title,
+  .app.app-day-mode .vss-title,
+  .app.app-day-mode .vss-panel-head,
+  .app.app-day-mode .smu-cons-title,
+  .app.app-day-mode .smu-bub-title,
+  .app.app-day-mode .via-title,
+  .app.app-day-mode .vcih-entity-count,
+  .ventures-page.day-mode .vcih-universe-title,
+  .ventures-page.day-mode .vcih-section-title,
+  .ventures-page.day-mode .vcih-right-title,
+  .ventures-page.day-mode .vpf-title,
+  .ventures-page.day-mode .vss-title,
+  .ventures-page.day-mode .vss-panel-head,
+  .ventures-page.day-mode .smu-cons-title,
+  .ventures-page.day-mode .smu-bub-title,
+  .ventures-page.day-mode .via-title,
+  .ventures-page.day-mode .vcih-entity-count {
+    color: #94a3b8;
+  }
+
+  .app.app-day-mode .vcih-universe-sub,
+  .app.app-day-mode .vcih-aum,
+  .app.app-day-mode .vcih-company-meta,
+  .app.app-day-mode .vcih-profile-stat-label,
+  .ventures-page.day-mode .vcih-universe-sub,
+  .ventures-page.day-mode .vcih-aum,
+  .ventures-page.day-mode .vcih-company-meta,
+  .ventures-page.day-mode .vcih-profile-stat-label {
+    color: #64748b;
+  }
+
+  .app.app-day-mode .vcih-entity-name,
+  .app.app-day-mode .vcih-company-name,
+  .ventures-page.day-mode .vcih-entity-name,
+  .ventures-page.day-mode .vcih-company-name {
+    color: #0f172a;
+  }
+
+  /* 1px pseudo separators paint with background */
+  .app.app-day-mode .vcih-entity-row::after,
+  .app.app-day-mode .vcih-company-card::after,
+  .ventures-page.day-mode .vcih-entity-row::after,
+  .ventures-page.day-mode .vcih-company-card::after {
+    background: rgba(15, 23, 42, 0.07);
+  }
+
+  /* container hairlines are real borders */
+  .app.app-day-mode .vcih-section-head,
+  .app.app-day-mode .vcih-profile-header,
+  .app.app-day-mode .vcih-tabs,
+  .app.app-day-mode .vcih-sector-tabs,
+  .ventures-page.day-mode .vcih-section-head,
+  .ventures-page.day-mode .vcih-profile-header,
+  .ventures-page.day-mode .vcih-tabs,
+  .ventures-page.day-mode .vcih-sector-tabs {
+    border-color: rgba(15, 23, 42, 0.07);
+  }
+
+  .app.app-day-mode .vcih-entity-row--active,
+  .app.app-day-mode .vcih-entity-row:active,
+  .ventures-page.day-mode .vcih-entity-row--active,
+  .ventures-page.day-mode .vcih-entity-row:active {
+    background: rgba(15, 23, 42, 0.04);
+  }
+
+  .app.app-day-mode .vcih-type-tab,
+  .app.app-day-mode .vcih-sector-tab,
+  .app.app-day-mode .vcih-universe-tab,
+  .app.app-day-mode .vcih-tab,
+  .ventures-page.day-mode .vcih-type-tab,
+  .ventures-page.day-mode .vcih-sector-tab,
+  .ventures-page.day-mode .vcih-universe-tab,
+  .ventures-page.day-mode .vcih-tab {
+    background: transparent;
+    border: none;
+    color: #64748b;
+  }
+
+  .app.app-day-mode .vcih-type-tab--active,
+  .app.app-day-mode .vcih-sector-tab--active,
+  .app.app-day-mode .vcih-universe-tab--active,
+  .app.app-day-mode .vcih-tab--active,
+  .ventures-page.day-mode .vcih-type-tab--active,
+  .ventures-page.day-mode .vcih-sector-tab--active,
+  .ventures-page.day-mode .vcih-universe-tab--active,
+  .ventures-page.day-mode .vcih-tab--active {
+    background: #ffffff;
+    border: 0.5px solid rgba(15, 23, 42, 0.1);
+    color: #0f172a;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+  }
+
+  .app.app-day-mode .vcih-profile-stat,
+  .ventures-page.day-mode .vcih-profile-stat {
+    background: #ffffff;
+    border-color: rgba(15, 23, 42, 0.08);
+  }
+
+  .app.app-day-mode .vcih-token-chip,
+  .ventures-page.day-mode .vcih-token-chip {
+    background: #ffffff;
+    border-color: rgba(15, 23, 42, 0.08);
+  }
+
+  .app.app-day-mode .vcih-search,
+  .ventures-page.day-mode .vcih-search {
+    background: rgba(15, 23, 42, 0.03);
+    border-color: rgba(15, 23, 42, 0.1);
+    color: #0f172a;
+  }
+  .app.app-day-mode .vcih-search::placeholder,
+  .ventures-page.day-mode .vcih-search::placeholder { color: #94a3b8; }
+  .app.app-day-mode .vcih-search-icon,
+  .app.app-day-mode .vcih-universe-toggle,
+  .ventures-page.day-mode .vcih-search-icon,
+  .ventures-page.day-mode .vcih-universe-toggle { color: #64748b; }
+}

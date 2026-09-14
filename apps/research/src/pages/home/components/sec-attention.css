@@ -1,0 +1,565 @@
+/* SecAttention — Sectors tab, attention views (list + map).
+   Material over flat: every surface is a light-lifted translucency on the panel
+   ground, one hero number per view, colour only where it means direction. */
+
+.seca {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 18px 14px;
+}
+
+.seca-cap {
+  font-size: 10px;
+  font-weight: 590;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: rgba(245, 245, 247, 0.35);
+}
+
+.seca-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+/* Compact — the panel rail above already names this view, so the section drops
+   its own headline and keeps only the datestamp line. */
+.seca.is-compact { padding-top: 14px; }
+.seca.is-compact .seca-head { align-items: center; }
+.seca-head-id { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.seca-title { margin: 0; font-size: 1.55rem; font-weight: 640; letter-spacing: -0.028em; color: #f5f5f7; }
+.seca-head-right { display: flex; align-items: center; gap: 12px; }
+
+.seca-regime {
+  font-size: 0.75rem;
+  font-weight: 550;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+}
+.seca-regime.seca-tone-up { color: rgba(48, 209, 88, 0.85); }
+.seca-regime.seca-tone-down { color: rgba(255, 69, 58, 0.85); }
+.seca-regime.seca-tone-flat { color: rgba(245, 245, 247, 0.5); }
+
+/* Mode switch — the same pill the rest of the app uses, one size up. */
+.seca-modes {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.seca-mode {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.5);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 590;
+  cursor: pointer;
+  transition: background 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s;
+}
+.seca-mode:hover { color: rgba(245, 245, 247, 0.8); }
+.seca-mode.is-active {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+/* ── coin art ───────────────────────────────────────────────────────────── */
+.seca-stack { display: flex; align-items: center; flex-shrink: 0; }
+.seca-coin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #16161a;
+  box-shadow: 0 0 0 1.5px #0b0b0e, 0 1px 3px rgba(0, 0, 0, 0.5);
+  flex-shrink: 0;
+}
+.seca-coin img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.seca-coin-fallback { font-weight: 700; color: rgba(245, 245, 247, 0.7); letter-spacing: -0.02em; }
+
+.seca-runner-px {
+  margin-left: 6px;
+  font-weight: 590;
+  color: rgba(245, 245, 247, 0.45);
+}
+.seca-runner-px.is-up { color: rgba(48, 209, 88, 0.75); }
+.seca-runner-px.is-down { color: rgba(255, 69, 58, 0.7); }
+
+.seca-runner {
+  font-size: 0.7rem;
+  font-weight: 620;
+  font-variant-numeric: tabular-nums;
+  color: #30D158;
+  white-space: nowrap;
+}
+
+/* ── direction chip ─────────────────────────────────────────────────────── */
+.seca-chip {
+  font-variant-numeric: tabular-nums;
+  font-weight: 620;
+  letter-spacing: -0.01em;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.seca-chip--sm { font-size: 0.7rem; padding: 3px 9px; }
+.seca-chip--lg { font-size: 0.78rem; padding: 4px 11px; }
+.seca-chip--up { color: #30D158; background: rgba(48, 209, 88, 0.16); border: 0.5px solid rgba(48, 209, 88, 0.32); }
+.seca-chip--down { color: #FF453A; background: rgba(255, 69, 58, 0.13); border: 0.5px solid rgba(255, 69, 58, 0.26); }
+.seca-chip--flat,
+.seca-chip--new { color: rgba(245, 245, 247, 0.65); background: rgba(255, 255, 255, 0.07); border: 0.5px solid rgba(255, 255, 255, 0.12); }
+
+/* ── meters ─────────────────────────────────────────────────────────────── */
+.seca-meter-track {
+  position: relative;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+  display: block;
+}
+.seca-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.seca-meter-fill.seca-tone-up { background: linear-gradient(90deg, #30D158, rgba(48, 209, 88, 0.45)); box-shadow: 0 0 10px rgba(48, 209, 88, 0.3); }
+.seca-meter-fill.seca-tone-down { background: linear-gradient(90deg, rgba(255, 69, 58, 0.85), rgba(255, 69, 58, 0.35)); }
+.seca-meter-fill.seca-tone-flat,
+.seca-meter-fill.seca-tone-new { background: rgba(245, 245, 247, 0.4); }
+
+/* ── LIST ───────────────────────────────────────────────────────────────── */
+.seca-list { display: flex; flex-direction: column; gap: 8px; }
+
+.seca-hero {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  padding: 18px 22px;
+  border: none;
+  border-radius: 22px;
+  text-align: left;
+  font-family: inherit;
+  color: #f5f5f7;
+  cursor: pointer;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.025) 50%, rgba(255, 255, 255, 0.015) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 8px 30px rgba(0, 0, 0, 0.4);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.seca-hero.seca-tone-up { background: linear-gradient(150deg, rgba(48, 209, 88, 0.16) 0%, rgba(255, 255, 255, 0.05) 45%, rgba(255, 255, 255, 0.02) 100%); }
+.seca-hero.seca-tone-down { background: linear-gradient(150deg, rgba(255, 69, 58, 0.13) 0%, rgba(255, 255, 255, 0.045) 45%, rgba(255, 255, 255, 0.02) 100%); }
+.seca-hero:hover { transform: translateY(-1px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 12px 36px rgba(0, 0, 0, 0.48); }
+.seca-hero:active { transform: translateY(0); }
+
+.seca-hero-body { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+.seca-hero-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.seca-hero-name { font-size: 1.3rem; font-weight: 640; letter-spacing: -0.025em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seca-hero-sub { font-size: 0.8rem; color: rgba(245, 245, 247, 0.55); font-variant-numeric: tabular-nums; }
+.seca-hero-meter { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
+.seca-hero-meter .seca-meter-track { flex: 1; height: 6px; }
+
+.seca-hero-figure { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; padding-right: 2px; }
+.seca-hero-pct { font-size: 3rem; font-weight: 300; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.seca-hero-pct i { font-style: normal; font-size: 1.4rem; font-weight: 400; color: rgba(245, 245, 247, 0.42); }
+
+.seca-rows { display: flex; flex-direction: column; gap: 6px; }
+.seca-row {
+  display: grid;
+  /* The two right columns size from their own content — a fixed width here
+     was 2px under what the widest chip needs, so the multiplication sign got
+     drawn on top of the pill's border. */
+  grid-template-columns: auto minmax(0, 1fr) 120px auto auto auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 11px 18px;
+  border: none;
+  border-radius: 16px;
+  text-align: left;
+  font-family: inherit;
+  color: #f5f5f7;
+  cursor: pointer;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.018) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 1px 2px rgba(0, 0, 0, 0.35);
+  transition: background 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.seca-row:hover { background: linear-gradient(180deg, rgba(255, 255, 255, 0.075) 0%, rgba(255, 255, 255, 0.03) 100%); transform: translateY(-1px); }
+.seca-row-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.seca-row-name { font-size: 0.94rem; font-weight: 590; letter-spacing: -0.015em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seca-row-sub { font-size: 0.72rem; color: rgba(245, 245, 247, 0.42); font-variant-numeric: tabular-nums; }
+.seca-row-meter { width: 120px; }
+.seca-row-pct { font-size: 1.05rem; font-weight: 400; letter-spacing: -0.02em; text-align: right; font-variant-numeric: tabular-nums; color: rgba(245, 245, 247, 0.9); }
+.seca-row-pct i { font-style: normal; font-size: 0.7rem; margin-left: 1px; color: rgba(245, 245, 247, 0.4); }
+
+/* ── MAP ────────────────────────────────────────────────────────────────── */
+.seca-map { position: relative; width: 100%; }
+.seca-block {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 16px;
+  overflow: hidden;
+  text-align: left;
+  font-family: inherit;
+  color: #f5f5f7;
+  cursor: pointer;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.085) 0%, rgba(255, 255, 255, 0.03) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.11), 0 6px 20px rgba(0, 0, 0, 0.4);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s;
+}
+.seca-block.is-hero { border-radius: 20px; padding: 16px 18px; }
+.seca-block.seca-tone-up { background: linear-gradient(145deg, rgba(48, 209, 88, 0.24) 0%, rgba(48, 209, 88, 0.07) 45%, rgba(255, 255, 255, 0.03) 100%); }
+.seca-block.seca-tone-down { background: linear-gradient(145deg, rgba(255, 69, 58, 0.16) 0%, rgba(255, 69, 58, 0.05) 45%, rgba(255, 255, 255, 0.025) 100%); }
+.seca-block:hover { transform: translateY(-2px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 12px 28px rgba(0, 0, 0, 0.5); }
+
+.seca-block-head { display: flex; align-items: center; gap: 9px; min-width: 0; flex-wrap: wrap; }
+.seca-block.is-hero .seca-block-head { flex-direction: column; align-items: flex-start; gap: 10px; }
+.seca-block-name { font-size: 0.88rem; font-weight: 610; letter-spacing: -0.018em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.seca-block.is-hero .seca-block-name { font-size: 1.35rem; font-weight: 640; letter-spacing: -0.026em; }
+.seca-block-foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+.seca-block-pct { font-size: 1.1rem; font-weight: 300; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.seca-block.is-mid .seca-block-pct { font-size: 1.4rem; }
+.seca-block.is-hero .seca-block-pct { font-size: 3.4rem; }
+.seca-block-pct i { font-style: normal; font-size: 0.5em; color: rgba(245, 245, 247, 0.42); }
+.seca-block-sub { font-size: 0.72rem; color: rgba(245, 245, 247, 0.5); font-variant-numeric: tabular-nums; }
+
+/* ── foot + loading ─────────────────────────────────────────────────────── */
+.seca-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 4px; }
+.seca-foot-note { font-size: 0.7rem; color: rgba(245, 245, 247, 0.3); }
+
+.seca-skel { border-radius: 18px; background: rgba(255, 255, 255, 0.04); }
+.seca-skel-hero { height: 118px; }
+.seca-skel-rows { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.seca-skel-row { height: 54px; border-radius: 16px; }
+
+/* ── click affordance ───────────────────────────────────────────────────── */
+/* Every narrative opens. Without a mark saying so, the rows read as a static
+   board — which is exactly how the founder read them (08-18). */
+.seca-go {
+  display: flex;
+  align-items: center;
+  color: rgba(245, 245, 247, 0.28);
+  transition: color 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.seca-row:hover .seca-go { color: rgba(245, 245, 247, 0.75); transform: translateX(2px); }
+.seca-hero-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  font-size: 0.72rem;
+  font-weight: 560;
+  color: rgba(245, 245, 247, 0.42);
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+.seca-hero:hover .seca-hero-open { color: rgba(245, 245, 247, 0.85); }
+.seca-block { cursor: pointer; }
+
+/* ── DETAIL — one narrative, opened ─────────────────────────────────────── */
+.seca-detail { display: flex; flex-direction: column; gap: 14px; }
+
+.seca-detail-id { display: flex; align-items: center; gap: 14px; }
+.seca-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.75);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.seca-back:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.seca-detail-title { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+.seca-detail-name { font-size: 1.4rem; font-weight: 640; letter-spacing: -0.028em; color: #f5f5f7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seca-detail-figure { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; flex-shrink: 0; }
+.seca-detail-pct { font-size: 1.9rem; font-weight: 300; letter-spacing: -0.035em; line-height: 1; font-variant-numeric: tabular-nums; color: #f5f5f7; }
+.seca-detail-pct i { font-style: normal; font-size: 0.95rem; color: rgba(245, 245, 247, 0.42); }
+.seca-detail-pct.seca-tone-up { color: #30D158; }
+.seca-detail-pct.seca-tone-down { color: #FF453A; }
+.seca-detail-desc { margin: -4px 0 0; font-size: 0.86rem; line-height: 1.5; color: rgba(245, 245, 247, 0.55); max-width: 68ch; }
+
+.seca-detail-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
+.seca-stat { font-size: 0.78rem; color: rgba(245, 245, 247, 0.45); font-variant-numeric: tabular-nums; }
+.seca-stat b { font-weight: 620; color: rgba(245, 245, 247, 0.9); }
+
+.seca-names { display: flex; flex-direction: column; gap: 6px; }
+.seca-names-cap { margin-bottom: 2px; }
+.seca-name {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 14px;
+  text-align: left;
+  font-family: inherit;
+  color: #f5f5f7;
+  cursor: pointer;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.018) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 1px 2px rgba(0, 0, 0, 0.35);
+  transition: background 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.seca-name:hover { background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%); transform: translateY(-1px); }
+.seca-name-art { margin: 0; }
+.seca-name-id { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.seca-name-sym { font-size: 0.9rem; font-weight: 600; letter-spacing: -0.012em; }
+.seca-name-full { font-size: 0.72rem; color: rgba(245, 245, 247, 0.42); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seca-name-mentions { font-size: 0.8rem; font-weight: 560; color: rgba(245, 245, 247, 0.72); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.seca-name-mentions i { font-style: normal; font-weight: 400; color: rgba(245, 245, 247, 0.4); }
+.seca-name-mentions em { font-style: normal; font-weight: 400; color: rgba(245, 245, 247, 0.32); }
+.seca-name-px { font-size: 0.82rem; font-weight: 590; font-variant-numeric: tabular-nums; min-width: 54px; text-align: right; }
+.seca-name-px.is-up { color: #30D158; }
+.seca-name-px.is-down { color: #FF453A; }
+.seca-name-px.is-none { color: rgba(245, 245, 247, 0.25); }
+.seca-name-cap { font-size: 0.78rem; color: rgba(245, 245, 247, 0.42); font-variant-numeric: tabular-nums; min-width: 56px; text-align: right; }
+
+.seca-voices { display: flex; flex-direction: column; gap: 7px; }
+.seca-voices-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.seca-voice {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 0.5px solid rgba(255, 255, 255, 0.09);
+  font-size: 0.75rem;
+  color: rgba(245, 245, 247, 0.72);
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.seca-voice:hover { background: rgba(255, 255, 255, 0.11); color: #fff; }
+.seca-voice img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
+.seca-voice em { font-style: normal; font-variant-numeric: tabular-nums; color: rgba(245, 245, 247, 0.38); }
+
+.seca-empty {
+  padding: 26px 4px;
+  font-size: 0.85rem;
+  color: rgba(245, 245, 247, 0.35);
+}
+
+/* ── day mode ───────────────────────────────────────────────────────────── */
+.welcome-page.day-mode .seca-title,
+.app.app-day-mode .seca-title,
+.cc-fullview-overlay.day-mode .seca-title { color: #0f172a; }
+.welcome-page.day-mode .seca-cap,
+.app.app-day-mode .seca-cap,
+.cc-fullview-overlay.day-mode .seca-cap { color: rgba(15, 23, 42, 0.45); }
+.welcome-page.day-mode .seca-hero,
+.app.app-day-mode .seca-hero,
+.cc-fullview-overlay.day-mode .seca-hero,
+.welcome-page.day-mode .seca-row,
+.app.app-day-mode .seca-row,
+.cc-fullview-overlay.day-mode .seca-row,
+.welcome-page.day-mode .seca-block,
+.app.app-day-mode .seca-block,
+.cc-fullview-overlay.day-mode .seca-block {
+  color: #0f172a;
+  background: linear-gradient(150deg, #ffffff 0%, #f6f7f9 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 2px 10px rgba(15, 23, 42, 0.07);
+}
+.welcome-page.day-mode .seca-hero.seca-tone-up,
+.app.app-day-mode .seca-hero.seca-tone-up,
+.cc-fullview-overlay.day-mode .seca-hero.seca-tone-up,
+.welcome-page.day-mode .seca-block.seca-tone-up,
+.app.app-day-mode .seca-block.seca-tone-up,
+.cc-fullview-overlay.day-mode .seca-block.seca-tone-up {
+  background: linear-gradient(150deg, rgba(48, 209, 88, 0.16) 0%, #ffffff 60%);
+}
+.welcome-page.day-mode .seca-hero.seca-tone-down,
+.app.app-day-mode .seca-hero.seca-tone-down,
+.cc-fullview-overlay.day-mode .seca-hero.seca-tone-down,
+.welcome-page.day-mode .seca-block.seca-tone-down,
+.app.app-day-mode .seca-block.seca-tone-down,
+.cc-fullview-overlay.day-mode .seca-block.seca-tone-down {
+  background: linear-gradient(150deg, rgba(255, 69, 58, 0.12) 0%, #ffffff 60%);
+}
+.welcome-page.day-mode .seca-hero-sub,
+.app.app-day-mode .seca-hero-sub,
+.cc-fullview-overlay.day-mode .seca-hero-sub,
+.welcome-page.day-mode .seca-row-sub,
+.app.app-day-mode .seca-row-sub,
+.cc-fullview-overlay.day-mode .seca-row-sub,
+.welcome-page.day-mode .seca-block-sub,
+.app.app-day-mode .seca-block-sub,
+.cc-fullview-overlay.day-mode .seca-block-sub { color: rgba(15, 23, 42, 0.55); }
+.welcome-page.day-mode .seca-meter-track,
+.app.app-day-mode .seca-meter-track,
+.cc-fullview-overlay.day-mode .seca-meter-track { background: rgba(15, 23, 42, 0.08); }
+.welcome-page.day-mode .seca-modes,
+.app.app-day-mode .seca-modes,
+.cc-fullview-overlay.day-mode .seca-modes { background: rgba(15, 23, 42, 0.05); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6); }
+.welcome-page.day-mode .seca-mode,
+.app.app-day-mode .seca-mode,
+.cc-fullview-overlay.day-mode .seca-mode { color: rgba(15, 23, 42, 0.5); }
+.welcome-page.day-mode .seca-mode.is-active,
+.app.app-day-mode .seca-mode.is-active,
+.cc-fullview-overlay.day-mode .seca-mode.is-active { background: #ffffff; color: #0f172a; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12); }
+.welcome-page.day-mode .seca-coin,
+.app.app-day-mode .seca-coin,
+.cc-fullview-overlay.day-mode .seca-coin { box-shadow: 0 0 0 1.5px #ffffff, 0 1px 3px rgba(15, 23, 42, 0.18); }
+.welcome-page.day-mode .seca-row-pct,
+.app.app-day-mode .seca-row-pct,
+.cc-fullview-overlay.day-mode .seca-row-pct { color: #0f172a; }
+.welcome-page.day-mode .seca-chip--flat,
+.app.app-day-mode .seca-chip--flat,
+.cc-fullview-overlay.day-mode .seca-chip--flat,
+.welcome-page.day-mode .seca-chip--new,
+.app.app-day-mode .seca-chip--new,
+.cc-fullview-overlay.day-mode .seca-chip--new { color: rgba(15, 23, 42, 0.6); background: rgba(15, 23, 42, 0.05); border-color: rgba(15, 23, 42, 0.1); }
+.welcome-page.day-mode .seca-foot-note,
+.app.app-day-mode .seca-foot-note,
+.cc-fullview-overlay.day-mode .seca-foot-note { color: rgba(15, 23, 42, 0.35); }
+.welcome-page.day-mode .seca-regime.seca-tone-up,
+.app.app-day-mode .seca-regime.seca-tone-up,
+.cc-fullview-overlay.day-mode .seca-regime.seca-tone-up { color: #047857; }
+.welcome-page.day-mode .seca-regime.seca-tone-down,
+.app.app-day-mode .seca-regime.seca-tone-down,
+.cc-fullview-overlay.day-mode .seca-regime.seca-tone-down { color: #b91c1c; }
+.welcome-page.day-mode .seca-regime.seca-tone-flat,
+.app.app-day-mode .seca-regime.seca-tone-flat,
+.cc-fullview-overlay.day-mode .seca-regime.seca-tone-flat { color: rgba(15, 23, 42, 0.5); }
+.welcome-page.day-mode .seca-hero-pct i,
+.app.app-day-mode .seca-hero-pct i,
+.cc-fullview-overlay.day-mode .seca-hero-pct i,
+.welcome-page.day-mode .seca-row-pct i,
+.app.app-day-mode .seca-row-pct i,
+.cc-fullview-overlay.day-mode .seca-row-pct i,
+.welcome-page.day-mode .seca-block-pct i,
+.app.app-day-mode .seca-block-pct i,
+.cc-fullview-overlay.day-mode .seca-block-pct i { color: rgba(15, 23, 42, 0.4); }
+.welcome-page.day-mode .seca-runner-px,
+.app.app-day-mode .seca-runner-px,
+.cc-fullview-overlay.day-mode .seca-runner-px { color: rgba(15, 23, 42, 0.45); }
+.welcome-page.day-mode .seca-meter-fill.seca-tone-flat,
+.app.app-day-mode .seca-meter-fill.seca-tone-flat,
+.cc-fullview-overlay.day-mode .seca-meter-fill.seca-tone-flat,
+.welcome-page.day-mode .seca-meter-fill.seca-tone-new,
+.app.app-day-mode .seca-meter-fill.seca-tone-new,
+.cc-fullview-overlay.day-mode .seca-meter-fill.seca-tone-new { background: rgba(15, 23, 42, 0.35); }
+.welcome-page.day-mode .seca-mode:hover,
+.app.app-day-mode .seca-mode:hover,
+.cc-fullview-overlay.day-mode .seca-mode:hover { color: rgba(15, 23, 42, 0.8); }
+
+.welcome-page.day-mode .seca-detail-name,
+.app.app-day-mode .seca-detail-name,
+.cc-fullview-overlay.day-mode .seca-detail-name,
+.welcome-page.day-mode .seca-detail-pct,
+.app.app-day-mode .seca-detail-pct,
+.cc-fullview-overlay.day-mode .seca-detail-pct,
+.welcome-page.day-mode .seca-name-sym,
+.app.app-day-mode .seca-name-sym,
+.cc-fullview-overlay.day-mode .seca-name-sym { color: #0f172a; }
+.welcome-page.day-mode .seca-detail-desc,
+.app.app-day-mode .seca-detail-desc,
+.cc-fullview-overlay.day-mode .seca-detail-desc,
+.welcome-page.day-mode .seca-name-mentions,
+.app.app-day-mode .seca-name-mentions,
+.cc-fullview-overlay.day-mode .seca-name-mentions { color: rgba(15, 23, 42, 0.62); }
+.welcome-page.day-mode .seca-stat b,
+.app.app-day-mode .seca-stat b,
+.cc-fullview-overlay.day-mode .seca-stat b { color: #0f172a; }
+.welcome-page.day-mode .seca-stat,
+.app.app-day-mode .seca-stat,
+.cc-fullview-overlay.day-mode .seca-stat,
+.welcome-page.day-mode .seca-name-full,
+.app.app-day-mode .seca-name-full,
+.cc-fullview-overlay.day-mode .seca-name-full,
+.welcome-page.day-mode .seca-name-cap,
+.app.app-day-mode .seca-name-cap,
+.cc-fullview-overlay.day-mode .seca-name-cap,
+.welcome-page.day-mode .seca-hero-open,
+.app.app-day-mode .seca-hero-open,
+.cc-fullview-overlay.day-mode .seca-hero-open,
+.welcome-page.day-mode .seca-go,
+.app.app-day-mode .seca-go,
+.cc-fullview-overlay.day-mode .seca-go { color: rgba(15, 23, 42, 0.45); }
+.welcome-page.day-mode .seca-name,
+.app.app-day-mode .seca-name,
+.cc-fullview-overlay.day-mode .seca-name {
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), 0 0 0 0.5px rgba(15, 23, 42, 0.06);
+}
+.welcome-page.day-mode .seca-name:hover,
+.app.app-day-mode .seca-name:hover,
+.cc-fullview-overlay.day-mode .seca-name:hover { background: #ffffff; box-shadow: 0 6px 18px rgba(15, 23, 42, 0.1), 0 0 0 0.5px rgba(15, 23, 42, 0.1); }
+.welcome-page.day-mode .seca-back,
+.app.app-day-mode .seca-back,
+.cc-fullview-overlay.day-mode .seca-back,
+.welcome-page.day-mode .seca-voice,
+.app.app-day-mode .seca-voice,
+.cc-fullview-overlay.day-mode .seca-voice {
+  background: rgba(15, 23, 42, 0.045);
+  border-color: rgba(15, 23, 42, 0.08);
+  color: rgba(15, 23, 42, 0.72);
+}
+
+/* Day-mode: these three live inside a dark-only colour and were white-on-white
+   in the light panel (the mentions tail and the % glyph both vanished). */
+.welcome-page.day-mode .seca-name-mentions i,
+.app.app-day-mode .seca-name-mentions i,
+.cc-fullview-overlay.day-mode .seca-name-mentions i,
+.welcome-page.day-mode .seca-detail-pct i,
+.app.app-day-mode .seca-detail-pct i,
+.cc-fullview-overlay.day-mode .seca-detail-pct i { color: rgba(15, 23, 42, 0.45); }
+.welcome-page.day-mode .seca-name-mentions em,
+.app.app-day-mode .seca-name-mentions em,
+.cc-fullview-overlay.day-mode .seca-name-mentions em,
+.welcome-page.day-mode .seca-voice em,
+.app.app-day-mode .seca-voice em,
+.cc-fullview-overlay.day-mode .seca-voice em,
+.welcome-page.day-mode .seca-name-px.is-none,
+.app.app-day-mode .seca-name-px.is-none,
+.cc-fullview-overlay.day-mode .seca-name-px.is-none { color: rgba(15, 23, 42, 0.32); }
+
+.welcome-page.day-mode .seca-empty,
+.app.app-day-mode .seca-empty,
+.cc-fullview-overlay.day-mode .seca-empty { color: rgba(15, 23, 42, 0.4); }
+
+/* ── mobile ─────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .seca { padding: 14px 12px 12px; gap: 12px; }
+  .seca-title { font-size: 1.25rem; }
+  .seca-head { align-items: center; }
+  .seca-regime { display: none; }
+  .seca-hero { flex-wrap: wrap; gap: 12px; padding: 14px 15px; border-radius: 18px; }
+  .seca-hero-body { flex-basis: 100%; order: 3; }
+  .seca-hero-name { font-size: 1.1rem; }
+  .seca-hero-pct { font-size: 2.2rem; }
+  .seca-hero-figure { margin-left: auto; }
+  .seca-row { grid-template-columns: auto minmax(0, 1fr) auto auto auto; gap: 9px; padding: 10px 13px; }
+  /* one line each — "947 mentions · 44 names" wrapping to a second line made
+     every row a different height */
+  .seca-row-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .seca-row-meter { display: none; }
+  .seca-row-pct { font-size: 0.95rem; }
+  .seca-map { aspect-ratio: 1 / 1.15 !important; }
+  .seca-block { padding: 10px 11px; border-radius: 13px; }
+  .seca-block.is-hero .seca-block-pct { font-size: 2.2rem; }
+  .seca-block.is-hero .seca-block-name { font-size: 1.05rem; }
+  .seca-foot { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .seca-detail-name { font-size: 1.12rem; }
+  .seca-detail-pct { font-size: 1.5rem; }
+  .seca-detail-desc { font-size: 0.8rem; }
+  .seca-name { grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 10px; padding: 9px 12px; }
+  .seca-name-mentions,
+  .seca-name-cap { display: none; }
+  .seca-hero-open { font-size: 0.68rem; }
+}

@@ -1,0 +1,323 @@
+/* MobileAlertSheet - bottom sheet, prefix mals- (mas- is already MobileAgentSheet).
+   Spectre cinematic system: glass surface, segmented controls (transparent
+   buttons inside one subtle strip, active = white lift), section label rows,
+   warm-white primary CTA, tabular numerals on every figure. */
+
+/* `touch-action: none` over the whole overlay: the sheet has no scrollable
+   content, so nothing here needs the browser's pan - and leaving it enabled
+   let Chrome/Safari read the dismiss drag as a page pull and fire their own
+   pull-to-refresh (page reloaded instead of the sheet closing). JS touch
+   events still fire, so the drag-to-dismiss below is unaffected. */
+.mals-backdrop {
+  position: fixed; inset: 0; z-index: 1200;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex; align-items: flex-end;
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+.mals-sheet {
+  width: 100%;
+  background: rgba(12, 12, 14, 0.94);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  padding: 8px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; gap: 12px;
+  animation: malsUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes malsUp { from { transform: translateY(24px); opacity: 0 } to { transform: none; opacity: 1 } }
+
+/* Drag-to-dismiss hit region. The bar itself is only 4px tall - the padded
+   wrapper is what the thumb actually lands on. `none` (not `pan-y`) so the
+   browser never claims the gesture, per the backdrop note above. */
+.mals-grabber-region {
+  flex: 0 0 auto;
+  display: flex; justify-content: center;
+  padding: 2px 0 6px;
+  margin: -2px -16px -4px;
+  touch-action: none;
+  cursor: grab;
+}
+.mals-grabber {
+  width: 36px; height: 4px; border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.mals-head {
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 -16px; padding: 0 16px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.mals-tok-logo {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.04);
+}
+.mals-tok-logo--fb {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600; text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.7);
+  background: rgba(255, 255, 255, 0.06);
+}
+.mals-head-col { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.mals-title {
+  font-size: 14.5px; font-weight: 650; letter-spacing: -0.01em;
+  color: #f5f5f7;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mals-head-sub {
+  font-size: 10.5px; font-weight: 500;
+  color: rgba(245, 245, 247, 0.4);
+  white-space: nowrap;
+}
+.mals-current {
+  margin-left: auto; flex-shrink: 0;
+  display: flex; align-items: baseline; gap: 5px;
+  padding: 5px 9px; border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  white-space: nowrap;
+}
+.mals-current i {
+  font-style: normal;
+  font-size: 9px; font-weight: 600; letter-spacing: 0.08em;
+  color: rgba(245, 245, 247, 0.38);
+}
+.mals-current b {
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px; font-weight: 650;
+  color: rgba(245, 245, 247, 0.85);
+}
+.mals-close {
+  background: none; border: none; color: rgba(255, 255, 255, 0.35);
+  padding: 6px; margin-right: -6px; display: flex;
+  transition: color 0.2s ease;
+}
+.mals-close:active { color: #f5f5f7; }
+
+/* ── Segmented controls: one subtle strip, transparent buttons, active lifts ── */
+.mals-toggle {
+  display: flex; gap: 3px; padding: 3px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.mals-toggle-btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;
+  padding: 8px 0; border-radius: 9px;
+  font-size: 13px; font-weight: 600;
+  background: none; border: none;
+  color: rgba(255, 255, 255, 0.35);
+  transition: color 0.2s ease, background 0.2s ease;
+  white-space: nowrap;
+}
+.mals-toggle-btn svg { opacity: 0.5; transition: opacity 0.2s ease; }
+.mals-toggle-btn.active {
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.10);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+.mals-toggle-btn.active svg { opacity: 1; }
+/* Market semantics on direction pills - color only when active */
+.mals-toggle-btn--up.active {
+  color: var(--up, #34E89E);
+  background: rgba(52, 232, 158, 0.10);
+}
+.mals-toggle-btn--down.active {
+  color: var(--down, #FF5169);
+  background: rgba(255, 81, 105, 0.10);
+}
+
+/* Type selector keeps full width; mini variant hugs its content in label rows */
+.mals-toggle--mini { flex: 0 0 auto; }
+.mals-toggle--mini .mals-toggle-btn { flex: 0 0 auto; padding: 6px 14px; font-size: 12px; }
+
+/* ── Section rows: uppercase label left, control right ── */
+.mals-seg { display: flex; flex-direction: column; gap: 6px; }
+.mals-seg--row {
+  flex-direction: row; align-items: center; justify-content: space-between;
+  min-height: 36px;
+}
+.mals-seg-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* ── Target input ── */
+.mals-input-wrap {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px; padding: 0 14px;
+  transition: border-color 0.2s ease;
+}
+.mals-input-wrap:focus-within { border-color: rgba(255, 255, 255, 0.14); }
+.mals-input-prefix { font-size: 14px; font-weight: 600; color: rgba(255, 255, 255, 0.35); }
+.mals-input {
+  flex: 1; background: none; border: none; outline: none;
+  color: #f5f5f7; font-size: 17px; font-weight: 600;
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  padding: 13px 0;
+}
+.mals-input::placeholder { color: rgba(255, 255, 255, 0.25); font-weight: 500; font-family: var(--font-body); }
+.mals-hint {
+  font-size: 12px;
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.40);
+}
+.mals-hint b { font-weight: 600; }
+.mals-hint b.up { color: var(--up, #34E89E); }
+.mals-hint b.down { color: var(--down, #FF5169); }
+.mals-error { font-size: 12px; color: var(--bear, #EF4444); }
+.mals-created { font-size: 12px; color: var(--bull, #10B981); }
+
+/* ── Preset chips ── */
+.mals-presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.mals-preset {
+  padding: 6px 13px; border-radius: 9999px;
+  font-size: 12px; font-weight: 600;
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.55);
+  transition: color 0.2s ease, background 0.2s ease;
+}
+/* Faded market tint - reads as direction without shouting */
+.mals-preset--up { color: rgba(52, 232, 158, 0.65); }
+.mals-preset--down { color: rgba(255, 81, 105, 0.65); }
+.mals-preset:active { background: rgba(255, 255, 255, 0.12); color: #f5f5f7; }
+.mals-preset.active {
+  background: rgba(255, 255, 255, 0.10);
+  color: #f5f5f7;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+/* ── Primary CTA ── */
+.mals-create {
+  padding: 14px 0; border-radius: 12px; border: none;
+  background: #f5f5f7; color: #09090b;
+  font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.10);
+  transition: opacity 0.2s ease, transform 0.15s ease;
+}
+.mals-create:active { transform: translateY(1px); }
+.mals-create:disabled { opacity: 0.35; box-shadow: none; }
+
+.mals-push-btn {
+  width: 100%;
+  padding: 9px 0; border-radius: 10px; font-size: 13px; font-weight: 600;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.mals-push-btn:active { background: rgba(255, 255, 255, 0.10); color: #f5f5f7; }
+.mals-push-btn:disabled { opacity: 0.5; }
+.mals-push-hint { font-size: 12px; line-height: 1.4; color: rgba(255, 255, 255, 0.40); }
+.mals-push-hint--on { color: var(--bull, #10B981); }
+
+/* ── Active alerts ── */
+.mals-active { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+.mals-active-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.45);
+}
+.mals-active-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 8px 9px 12px; border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.mals-arr {
+  display: flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 7px; flex-shrink: 0;
+}
+.mals-arr.up { color: var(--bull, #10B981); background: rgba(16, 185, 129, 0.08); }
+.mals-arr.down { color: var(--bear, #EF4444); background: rgba(239, 68, 68, 0.08); }
+.mals-arr.both { color: rgba(255, 255, 255, 0.65); background: rgba(255, 255, 255, 0.06); }
+.mals-arr-glyph { font-size: 11px; font-weight: 700; }
+.mals-active-cond {
+  font-size: 13px; font-weight: 600;
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  color: #f5f5f7;
+}
+.mals-active-rep { color: rgba(255, 255, 255, 0.35); flex-shrink: 0; }
+.mals-active-paused {
+  font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.35);
+}
+.mals-active-spacer { flex: 1; }
+.mals-active-edit, .mals-active-del {
+  background: none; border: none; color: rgba(255, 255, 255, 0.35);
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+.mals-active-edit:active, .mals-active-del:active {
+  color: #f5f5f7; background: rgba(255, 255, 255, 0.06);
+}
+.mals-active-row--editing { border-color: rgba(255, 255, 255, 0.18); }
+.mals-active-row--paused .mals-arr,
+.mals-active-row--paused .mals-active-cond { opacity: 0.5; }
+.mals-cancel {
+  background: none; border: none;
+  font-size: 12px; font-weight: 600; color: rgba(255, 255, 255, 0.45);
+  transition: color 0.2s ease;
+}
+.mals-cancel:active { color: #f5f5f7; }
+
+/* ── Day mode (trading = body.theme-light, NOT .app-day-mode) ── */
+body.theme-light .mals-sheet {
+  background: rgba(255, 255, 255, 0.94);
+  border-top-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.60);
+}
+body.theme-light .mals-grabber { background: rgba(0, 0, 0, 0.14); }
+body.theme-light .mals-head { border-bottom-color: rgba(0, 0, 0, 0.06); }
+body.theme-light .mals-tok-logo { background: rgba(0, 0, 0, 0.04); }
+body.theme-light .mals-tok-logo--fb { background: rgba(0, 0, 0, 0.06); color: rgba(17, 17, 19, 0.6); }
+body.theme-light .mals-title { color: #111113; }
+body.theme-light .mals-head-sub { color: rgba(17, 17, 19, 0.45); }
+body.theme-light .mals-current { background: rgba(0, 0, 0, 0.03); border-color: rgba(0, 0, 0, 0.06); }
+body.theme-light .mals-current i { color: rgba(17, 17, 19, 0.4); }
+body.theme-light .mals-current b { color: rgba(17, 17, 19, 0.85); }
+body.theme-light .mals-close { color: rgba(17, 17, 19, 0.35); }
+body.theme-light .mals-close:active { color: #111113; }
+body.theme-light .mals-toggle { background: rgba(0, 0, 0, 0.03); border-color: rgba(0, 0, 0, 0.06); }
+body.theme-light .mals-toggle-btn { color: rgba(17, 17, 19, 0.40); }
+body.theme-light .mals-toggle-btn.active { color: #111113; background: rgba(0, 0, 0, 0.07); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08); }
+body.theme-light .mals-toggle-btn--up.active { color: #059669; background: rgba(5, 150, 105, 0.10); }
+body.theme-light .mals-toggle-btn--down.active { color: #dc2626; background: rgba(220, 38, 38, 0.10); }
+body.theme-light .mals-seg-label, body.theme-light .mals-active-label { color: rgba(17, 17, 19, 0.45); }
+body.theme-light .mals-input-wrap { background: rgba(0, 0, 0, 0.02); border-color: rgba(0, 0, 0, 0.08); }
+body.theme-light .mals-input-wrap:focus-within { border-color: rgba(0, 0, 0, 0.20); }
+body.theme-light .mals-input { color: #111113; }
+body.theme-light .mals-input::placeholder { color: rgba(17, 17, 19, 0.30); }
+body.theme-light .mals-input-prefix { color: rgba(17, 17, 19, 0.35); }
+body.theme-light .mals-hint, body.theme-light .mals-push-hint { color: rgba(17, 17, 19, 0.45); }
+body.theme-light .mals-hint b.up { color: #059669; }
+body.theme-light .mals-hint b.down { color: #dc2626; }
+body.theme-light .mals-push-hint--on { color: #059669; }
+body.theme-light .mals-preset { background: rgba(0, 0, 0, 0.03); border-color: rgba(0, 0, 0, 0.08); color: rgba(17, 17, 19, 0.55); }
+body.theme-light .mals-preset--up { color: rgba(5, 150, 105, 0.7); }
+body.theme-light .mals-preset--down { color: rgba(220, 38, 38, 0.7); }
+body.theme-light .mals-preset:active { background: rgba(0, 0, 0, 0.08); color: #111113; }
+body.theme-light .mals-preset.active { background: rgba(0, 0, 0, 0.07); color: #111113; border-color: rgba(0, 0, 0, 0.14); }
+body.theme-light .mals-create { background: #111113; color: #ffffff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
+body.theme-light .mals-push-btn { background: rgba(0, 0, 0, 0.04); color: rgba(17, 17, 19, 0.70); border-color: rgba(0, 0, 0, 0.06); }
+body.theme-light .mals-active-row { background: rgba(0, 0, 0, 0.02); border-color: rgba(0, 0, 0, 0.05); }
+body.theme-light .mals-active-row--editing { border-color: rgba(0, 0, 0, 0.20); }
+body.theme-light .mals-active-cond { color: #111113; }
+body.theme-light .mals-arr.both { color: rgba(17, 17, 19, 0.60); background: rgba(0, 0, 0, 0.05); }
+body.theme-light .mals-active-rep, body.theme-light .mals-active-paused { color: rgba(17, 17, 19, 0.35); }
+body.theme-light .mals-active-edit, body.theme-light .mals-active-del { color: rgba(17, 17, 19, 0.35); }
+body.theme-light .mals-active-edit:active, body.theme-light .mals-active-del:active { color: #111113; background: rgba(0, 0, 0, 0.05); }
+body.theme-light .mals-cancel { color: rgba(17, 17, 19, 0.45); }
+body.theme-light .mals-cancel:active { color: #111113; }

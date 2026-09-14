@@ -1,0 +1,1425 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   VC Intel Hub — Smart Money surface
+   Three-panel layout, Apple cinematic glass, matches ventures-page.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.vcih-root {
+  display: grid;
+  grid-template-columns: 260px 1fr 300px;
+  gap: 16px;
+  min-height: calc(100vh - 200px);
+  padding: 0;
+  color: var(--text-primary);
+}
+
+/* With the Smart Money Universe on top, the root becomes a vertical stack and
+   the 3-pane browse layout drops to its own grid below. */
+.vcih-root--with-universe {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+.vcih-grid {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr) 416px;
+  gap: 18px;
+  align-items: start; /* lets the sidebars stick while the centre flows */
+}
+@media (max-width: 1280px) {
+  .vcih-grid { grid-template-columns: 220px minmax(0, 1fr) 340px; }
+}
+@media (max-width: 1040px) {
+  .vcih-grid { grid-template-columns: 1fr; }
+}
+
+/* ═══ LEFT PANEL · Entity List ═══ */
+
+.vcih-left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+  /* sticky → re-composites its backdrop every scroll frame; keep the blur light */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  padding: 16px 12px;
+  position: sticky;
+  top: 12px;
+  max-height: calc(100vh - 24px);
+}
+
+.vcih-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.vcih-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(245, 245, 247, 0.45);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.vcih-search,
+input.vcih-search {
+  width: 100%;
+  padding: 10px 32px 10px 38px !important;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 12.5px;
+  font-family: var(--font-body);
+  outline: none;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.vcih-search::placeholder {
+  color: rgba(245, 245, 247, 0.3);
+}
+
+.vcih-search:focus {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.vcih-search-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: rgba(245, 245, 247, 0.4);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.vcih-search-clear:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+}
+
+.vcih-type-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 2px;
+}
+
+.vcih-type-tab {
+  padding: 5px 9px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  color: rgba(245, 245, 247, 0.55);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-body);
+}
+
+.vcih-type-tab:hover {
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.vcih-type-tab--active {
+  background: rgba(245, 245, 247, 0.08);
+  border-color: rgba(245, 245, 247, 0.2);
+  color: var(--text-primary);
+}
+
+.vcih-sector-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 2px 0;
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.vcih-sector-tab {
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+  color: rgba(245, 245, 247, 0.5);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-body);
+}
+
+.vcih-sector-tab:hover {
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.vcih-sector-tab--active {
+  background: rgba(245, 245, 247, 0.1);
+  border-color: rgba(245, 245, 247, 0.25);
+  color: var(--text-primary);
+}
+
+.vcih-sector-clear {
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  color: rgba(245, 245, 247, 0.4);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.2s;
+  font-family: var(--font-body);
+}
+
+.vcih-sector-clear:hover {
+  color: var(--text-primary);
+}
+
+.vcih-entity-count {
+  padding: 2px 6px;
+  font-size: 10px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.35);
+  font-weight: 600;
+}
+
+.vcih-entity-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 2px;
+}
+
+.vcih-entity-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.vcih-entity-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+}
+
+.vcih-entity-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 10px 11px 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vcih-entity-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 2px;
+  border-radius: 0 2px 2px 0;
+  background: transparent;
+  transition: background 0.2s;
+}
+
+.vcih-entity-row:hover {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 255, 255, 0.05);
+  transform: translateX(1px);
+}
+
+.vcih-entity-row--active {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.075) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.vcih-entity-row--active::before {
+  background: linear-gradient(180deg, #f5f5f7 0%, rgba(245, 245, 247, 0.2) 100%);
+}
+
+.vcih-entity-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.vcih-entity-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.1px;
+}
+
+.vcih-entity-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  min-width: 0;
+}
+
+.vcih-type-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 6px;
+  border-radius: 9999px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 245, 247, 0.5);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.vcih-type-pill--lg {
+  height: 22px;
+  padding: 0 10px;
+  font-size: 10px;
+}
+
+.vcih-aum {
+  font-size: 10px;
+  color: rgba(245, 245, 247, 0.4);
+  font-family: var(--font-mono);
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.vcih-tier-dot {
+  flex: 0 0 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.vcih-empty {
+  padding: 24px 12px;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.4);
+}
+
+/* ═══ CENTER PANEL · Profile ═══ */
+
+.vcih-center {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-xl);
+  overflow: hidden; /* clip the rounded corners only — content height is natural now */
+}
+
+.vcih-center--empty {
+  align-items: center;
+  justify-content: center;
+}
+
+.vcih-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 340px;
+  padding: 48px 24px;
+  text-align: center;
+  color: rgba(245, 245, 247, 0.5);
+}
+
+.vcih-empty-state svg {
+  color: rgba(245, 245, 247, 0.18);
+}
+
+.vcih-empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.vcih-empty-sub {
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.45);
+}
+
+.vcih-profile-header {
+  position: relative;
+  padding: 28px 28px 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.vcih-profile-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(800px 220px at 10% 0%, rgba(255, 255, 255, 0.05) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.vcih-profile-header > * {
+  position: relative;
+}
+
+.vcih-profile-identity {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.vcih-profile-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.vcih-profile-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  line-height: 1.15;
+}
+
+.vcih-tier-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 9999px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.vcih-tier-badge--gold {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(245, 158, 11, 0.04) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+}
+
+.vcih-profile-sub {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.vcih-profile-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.55);
+  text-decoration: none;
+  transition: color 0.2s;
+  font-family: var(--font-mono);
+}
+
+.vcih-profile-link:hover {
+  color: var(--text-primary);
+}
+
+.vcih-profile-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.vcih-profile-stat {
+  position: relative;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.045);
+  border-radius: 12px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.vcih-profile-stat::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+}
+
+.vcih-profile-stat:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border-color: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.vcih-profile-stat-label {
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.4);
+  font-weight: 600;
+}
+
+.vcih-profile-stat-value {
+  margin-top: 6px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.vcih-profile-stat-value--sm {
+  font-size: 0.8125rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Live-vs-estimated qualifiers on the stat labels. "est." = static seed,
+   "live" = derived from the fundraising graph. */
+.vcih-stat-qual,
+.vcih-stat-live {
+  font-size: 0.5625rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  padding: 1px 5px;
+  border-radius: 9999px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.vcih-stat-qual {
+  color: rgba(245, 245, 247, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+}
+.vcih-stat-live {
+  color: var(--bull);
+  background: rgba(16, 185, 129, 0.12);
+}
+
+/* Recency dot on the "last active" tile — VC cadence, not price cadence. */
+.vcih-recency-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+  background: rgba(245, 245, 247, 0.25);
+}
+.vcih-recency-dot--fresh {
+  background: var(--bull);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.55);
+}
+.vcih-recency-dot--slowing { background: var(--amber, #F59E0B); }
+.vcih-recency-dot--dormant { background: rgba(245, 245, 247, 0.25); }
+
+.vcih-focus-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.vcih-focus-tag {
+  padding: 3px 9px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.7);
+  letter-spacing: 0.1px;
+}
+
+.vcih-thesis {
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.6);
+  max-width: 68ch;
+}
+
+.vcih-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 12px 24px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.vcih-tab {
+  position: relative;
+  padding: 10px 14px 12px;
+  background: transparent;
+  border: none;
+  color: rgba(245, 245, 247, 0.5);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: color 0.2s;
+  font-family: var(--font-body);
+}
+
+.vcih-tab:hover {
+  color: rgba(245, 245, 247, 0.8);
+}
+
+.vcih-tab--active {
+  color: var(--text-primary);
+}
+
+.vcih-tab--active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 14px;
+  right: 14px;
+  height: 1.5px;
+  background: var(--text-primary);
+  border-radius: 1px;
+}
+
+.vcih-tab-content {
+  flex: 1;
+  padding: 22px 30px 30px; /* no inner scroll — the page scrolls naturally */
+}
+
+.vcih-tab-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.vcih-tab-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+}
+
+/* ═══ Portfolio Tab ═══ */
+
+.vcih-portfolio-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 9999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: rgba(245, 245, 247, 0.45);
+  text-transform: uppercase;
+}
+
+.vcih-source-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(245, 245, 247, 0.45);
+  animation: vcih-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes vcih-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* "live prices" pill appended to the source line when the /v1/prices overlay
+   is warm — signals the seed list is now price-annotated in real time. */
+.vcih-source-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 8px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--bull);
+}
+.vcih-source-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--bull);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.55);
+  animation: vcih-pulse 2.4s ease-in-out infinite;
+}
+
+.vcih-portfolio-section {
+  margin-bottom: 30px;
+}
+
+.vcih-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.vcih-section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.45);
+}
+
+.vcih-section-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 18px;
+  padding: 0 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.7);
+  font-variant-numeric: tabular-nums;
+}
+
+.vcih-token-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.vcih-token-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px 5px 5px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  letter-spacing: -0.005em;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vcih-token-chip:hover {
+  background: rgba(255, 255, 255, 0.055);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.vcih-token-chip-logo {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.vcih-token-chip-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.7);
+  flex-shrink: 0;
+}
+
+.vcih-token-chip-sym {
+  letter-spacing: 0.1px;
+}
+
+/* Live 24h change badge on a holding chip (from /v1/prices). */
+.vcih-token-chip-chg {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.vcih-token-chip-chg--up {
+  color: var(--bull-bright);
+  background: rgba(16, 185, 129, 0.14);
+}
+.vcih-token-chip-chg--down {
+  color: var(--bear-bright, #F87171);
+  background: rgba(239, 68, 68, 0.14);
+}
+
+/* NEW / since tags on token holdings */
+.vcih-token-chip--new {
+  border-color: rgba(52, 211, 153, 0.35);
+  background: rgba(52, 211, 153, 0.07);
+}
+.vcih-chip-tag {
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--bull-bright);
+  background: rgba(52, 211, 153, 0.16);
+  border-radius: 4px;
+  padding: 1px 4px;
+  margin-left: 1px;
+}
+.vcih-chip-since {
+  font-size: 9.5px;
+  font-family: var(--font-mono);
+  color: rgba(245, 245, 247, 0.4);
+  margin-left: 1px;
+}
+
+.vcih-company-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.vcih-company-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 15px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.018) 55%, rgba(0, 0, 0, 0.12) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.vcih-company-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.18);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.025) 55%, rgba(0, 0, 0, 0.1) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 10px 24px rgba(0, 0, 0, 0.35), 0 0 22px rgba(255, 255, 255, 0.06);
+}
+
+.vcih-company-card:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.018) 100%);
+  border-color: rgba(255, 255, 255, 0.09);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.vcih-company-logo-wrap {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vcih-company-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vcih-company-logo--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.7);
+  letter-spacing: -0.3px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+}
+
+.vcih-company-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.vcih-company-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.vcih-company-led {
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #ffd479;
+  background: rgba(255, 200, 90, 0.14);
+  border: 1px solid rgba(255, 200, 90, 0.28);
+  border-radius: 4px;
+  padding: 1px 4px;
+  flex: 0 0 auto;
+}
+.vcih-company-card--lead { border-color: rgba(255, 200, 90, 0.22); }
+
+.vcih-company-meta {
+  margin-top: 3px;
+  font-size: 10px;
+  color: rgba(245, 245, 247, 0.5);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.vcih-focus-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vcih-focus-card {
+  padding: 8px 14px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.018) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.78);
+  letter-spacing: 0.2px;
+}
+
+/* ═══ Placeholder tabs ═══ */
+
+.vcih-tab-empty {
+  padding: 32px 0;
+  font-size: 13px;
+  color: rgba(245, 245, 247, 0.5);
+  line-height: 1.6;
+}
+
+.vcih-tab-empty code {
+  padding: 1px 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-primary);
+}
+
+.vcih-tab-phase {
+  max-width: 620px;
+}
+
+.vcih-phase-label {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: rgba(245, 245, 247, 0.5);
+  text-transform: uppercase;
+}
+
+.vcih-phase-title {
+  margin-bottom: 8px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+.vcih-phase-sub {
+  margin: 0 0 20px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.vcih-phase-preview {
+  margin-top: 16px;
+}
+
+.vcih-phase-preview-label {
+  margin-bottom: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  color: rgba(245, 245, 247, 0.4);
+  text-transform: uppercase;
+}
+
+/* ═══ AI Signal Card ═══ */
+
+.vcih-ai-card {
+  padding: 20px 24px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+}
+
+.vcih-ai-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: rgba(245, 245, 247, 0.5);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.vcih-ai-body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: rgba(245, 245, 247, 0.85);
+  font-style: italic;
+}
+
+.vcih-ai-body strong {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-style: normal;
+}
+
+.vcih-ai-footer {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.4);
+  letter-spacing: 0.1px;
+}
+
+/* ═══ RIGHT PANEL · Activity Feed ═══ */
+
+.vcih-right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  padding: 16px 12px;
+  max-height: calc(100vh - 200px);
+}
+
+.vcih-right-header {
+  padding: 2px 6px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.vcih-right-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.1px;
+}
+
+.vcih-right-sub {
+  margin-top: 3px;
+  font-size: 10px;
+  color: rgba(245, 245, 247, 0.4);
+  letter-spacing: 0.2px;
+}
+
+.vcih-feed {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 2px;
+}
+
+.vcih-feed::-webkit-scrollbar {
+  width: 4px;
+}
+
+.vcih-feed::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+}
+
+.vcih-feed-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px 9px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vcih-feed-item:hover {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px);
+}
+
+.vcih-feed-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.vcih-feed-entity {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.005em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vcih-feed-action {
+  margin-top: 2px;
+  font-size: 0.6875rem;
+  color: rgba(245, 245, 247, 0.55);
+  line-height: 1.4;
+}
+
+.vcih-feed-meta {
+  margin-top: 6px;
+}
+
+.vcih-feed-src {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.4);
+}
+
+/* ═══ Logo ═══ */
+
+.vcih-logo {
+  flex-shrink: 0;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.vcih-logo--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(245, 245, 247, 0.8);
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+/* ═══ Responsive — drops side panels as width shrinks ═══ */
+
+/* ≤1400 — drop the Activity Feed (right column). 2 cols: entity list + detail */
+@media (max-width: 1400px) {
+  .vcih-root {
+    grid-template-columns: 260px 1fr;
+  }
+  .vcih-right {
+    display: none;
+  }
+}
+
+/* ≤1100 — stack to a single column. Entity list becomes a scrollable strip
+   above the detail panel so the user still has access to the picker. */
+@media (max-width: 1100px) {
+  .vcih-root {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+  .vcih-left {
+    max-height: 360px;
+  }
+  .vcih-center {
+    max-height: none;
+  }
+  .vcih-profile-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ═══ Day mode ═══ */
+
+.app.app-day-mode .vcih-left,
+.app.app-day-mode .vcih-center,
+.app.app-day-mode .vcih-right {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  color: #0f172a;
+}
+
+.app.app-day-mode .vcih-entity-row:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.app.app-day-mode .vcih-entity-row--active {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.app.app-day-mode .vcih-entity-name,
+.app.app-day-mode .vcih-profile-name,
+.app.app-day-mode .vcih-profile-stat-value,
+.app.app-day-mode .vcih-company-name,
+.app.app-day-mode .vcih-tab--active,
+.app.app-day-mode .vcih-section-title,
+.app.app-day-mode .vcih-feed-entity {
+  color: #0f172a;
+}
+
+.app.app-day-mode .vcih-search {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #0f172a;
+}
+
+.app.app-day-mode .vcih-profile-header {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.app.app-day-mode .vcih-tabs {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.app.app-day-mode .vcih-tab--active::after {
+  background: #0f172a;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SMART MONEY UNIVERSE · shell (header / tabs / collapse) for the top section
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.vcih-universe-section {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.012) 100%),
+    rgba(9, 9, 11, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-xl);
+  /* Lighter blur: this section wraps the continuously-repainting bubble canvas,
+     and its bg is near-opaque, so a heavy backdrop blur re-composited every
+     scroll frame was pure cost for ~no visual gain. */
+  backdrop-filter: blur(10px) saturate(160%);
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+.vcih-universe-header {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.vcih-universe-headline { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.vcih-universe-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+.vcih-universe-sub { font-size: 11px; color: rgba(245, 245, 247, 0.45); letter-spacing: -0.005em; }
+
+.vcih-universe-tabs {
+  display: inline-flex;
+  padding: 4px;
+  gap: 2px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.012) 100%),
+    rgba(9, 9, 11, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.vcih-universe-tab {
+  padding: 7px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  color: rgba(245, 245, 247, 0.55);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: color 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              background 280ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.vcih-universe-tab:hover { color: var(--text-primary); }
+.vcih-universe-tab--active {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.04) 100%);
+  color: var(--text-primary);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+    0 4px 14px rgba(0, 0, 0, 0.28);
+}
+
+.vcih-universe-toggle {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 9999px;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.vcih-universe-toggle:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.vcih-universe-body { position: relative; min-height: 360px; }
+
+@media (max-width: 1100px) {
+  .vcih-universe-header { grid-template-columns: 1fr auto; row-gap: 10px; }
+  .vcih-universe-tabs { grid-column: 1 / -1; }
+}
+
+/* Day-mode shell */
+.app.app-day-mode .vcih-universe-section {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+.app.app-day-mode .vcih-universe-header { background: #f8f9fa; border-bottom-color: rgba(0, 0, 0, 0.06); }
+.app.app-day-mode .vcih-universe-sub { color: #475569; }
+.app.app-day-mode .vcih-universe-tab { color: #475569; }
+.app.app-day-mode .vcih-universe-tab--active { background: #0f172a; color: #ffffff; box-shadow: none; }
+
+/* ═══ Universe lazy-load skeleton ═══
+   Replaces the old "Loading universe…" text (design-system §K: shimmer only,
+   never loading copy). Sized to roughly hold the universe body's height so the
+   entity browser below does not jump when the view resolves. */
+
+.vcih-universe-skel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px 18px;
+  min-height: 220px;
+}
+
+.vcih-skel-line {
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent 100%);
+  background-size: 200% 100%;
+  animation: vcih-skel-shimmer 2s infinite;
+}
+
+.vcih-skel-line--head { height: 22px; width: 45%; }
+.vcih-skel-line--short { width: 62%; }
+
+@keyframes vcih-skel-shimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: -200% 50%; }
+}
+
+.app.app-day-mode .vcih-skel-line {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(15, 23, 42, 0.07) 50%,
+    transparent 100%);
+  background-size: 200% 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vcih-skel-line { animation: none; background: rgba(255, 255, 255, 0.04); }
+  .app.app-day-mode .vcih-skel-line { background: rgba(15, 23, 42, 0.05); }
+}

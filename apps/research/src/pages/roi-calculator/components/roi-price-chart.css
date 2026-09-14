@@ -1,0 +1,372 @@
+/* RoiPriceChart — token price-history area chart for the ROI analysis column.
+   Matches the Time Machine / Market Cap Compare visual language. */
+.rpc {
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rpc-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.rpc-head__left { min-width: 0; }
+.rpc-head__eyebrow {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  margin-bottom: 8px;
+}
+.rpc-head__title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-family: 'SF Pro Display', -apple-system, Inter, sans-serif;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary, #f5f5f7);
+  margin: 0;
+  line-height: 1.2;
+}
+.rpc-head__chg {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.rpc-head__chg.is-up { color: var(--bull, #10b981); }
+.rpc-head__chg.is-down { color: var(--bear, #ef4444); }
+
+/* Range toggle */
+.rpc-ranges {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 9px;
+  flex-shrink: 0;
+}
+.rpc-range {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 4px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.rpc-range:hover { color: var(--text-secondary, rgba(245, 245, 247, 0.7)); }
+.rpc-range.is-active {
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--text-primary, #f5f5f7);
+}
+
+/* Canvas */
+.rpc-canvas-wrap {
+  position: relative;
+  width: 100%;
+  height: 200px;
+}
+.rpc-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Hover crosshair + dot + tooltip — all glide together with the cursor */
+.rpc-crosshair {
+  position: absolute;
+  top: 6px;
+  bottom: 12px;
+  width: 1px;
+  background: rgba(245, 245, 247, 0.18);
+  pointer-events: none;
+  transform: translateX(-0.5px);
+  transition: left 0.08s ease-out;
+}
+.rpc-hover-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-primary, #f5f5f7);
+  box-shadow: 0 0 0 3px rgba(245, 245, 247, 0.12);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: left 0.08s ease-out, top 0.08s ease-out;
+}
+.rpc-tooltip {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 96px;
+  padding: 6px 9px;
+  background: rgba(18, 18, 20, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  pointer-events: none;
+  transition: left 0.08s ease-out, top 0.08s ease-out;
+}
+.rpc-tooltip__price {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #f5f5f7);
+}
+.rpc-tooltip__date {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+}
+
+/* X-axis date ticks — absolutely positioned so each aligns with its data point */
+.rpc-xaxis {
+  position: relative;
+  height: 13px;
+  margin-top: 7px;
+}
+.rpc-xaxis__tick {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+}
+
+/* Footer stats */
+.rpc-foot {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+.rpc-foot__item { display: flex; flex-direction: column; gap: 2px; }
+.rpc-foot__label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+}
+.rpc-foot__val {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.72));
+}
+
+/* Skeleton */
+/* ── Loading state: clean shimmer skeleton ── */
+.rpc-loader {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.012) 100%);
+}
+.rpc-loader__grid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.035);
+}
+.rpc-loader__grid:nth-child(1) { top: 25%; }
+.rpc-loader__grid:nth-child(2) { top: 50%; }
+.rpc-loader__grid:nth-child(3) { top: 75%; }
+.rpc-loader__shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.08) 50%, transparent 62%);
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  animation: rpc-loader-shimmer 1.5s ease-in-out infinite;
+}
+@keyframes rpc-loader-shimmer {
+  0% { background-position: 180% 0; }
+  100% { background-position: -80% 0; }
+}
+
+/* Header % chip placeholder while loading */
+.rpc-head__chg-skel {
+  display: inline-block;
+  width: 46px;
+  height: 13px;
+  border-radius: 5px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.12) 50%, rgba(255, 255, 255, 0.05) 100%);
+  background-size: 200% 100%;
+  animation: rpc-chip-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes rpc-chip-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rpc-loader__shimmer,
+  .rpc-head__chg-skel { animation: none; }
+}
+
+/* ── Day mode ── */
+.rpc--day .rpc { border-top-color: rgba(0, 0, 0, 0.07); }
+.rpc--day .rpc-head__title { color: #0f172a; }
+.rpc--day .rpc-head__eyebrow { color: #94a3b8; }
+.rpc--day .rpc-ranges {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+.rpc--day .rpc-range { color: #64748b; }
+.rpc--day .rpc-range:hover { color: #334155; }
+.rpc--day .rpc-range.is-active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.rpc--day .rpc-crosshair { background: rgba(15, 23, 42, 0.2); }
+.rpc--day .rpc-hover-dot {
+  background: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
+}
+.rpc--day .rpc-tooltip {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+.rpc--day .rpc-tooltip__price { color: #0f172a; }
+.rpc--day .rpc-tooltip__date { color: #64748b; }
+.rpc--day .rpc-loader {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.04) 0%, rgba(15, 23, 42, 0.015) 100%);
+}
+.rpc--day .rpc-loader__grid { background: rgba(15, 23, 42, 0.05); }
+.rpc--day .rpc-loader__shimmer {
+  background: linear-gradient(105deg, transparent 38%, rgba(15, 23, 42, 0.06) 50%, transparent 62%);
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+}
+.rpc--day .rpc-head__chg-skel {
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0.05) 0%, rgba(15, 23, 42, 0.1) 50%, rgba(15, 23, 42, 0.05) 100%);
+  background-size: 200% 100%;
+}
+.rpc--day .rpc-foot { border-top-color: rgba(0, 0, 0, 0.06); }
+.rpc--day .rpc-foot__label { color: #94a3b8; }
+.rpc--day .rpc-foot__val { color: #334155; }
+.rpc--day .rpc-xaxis__tick { color: #94a3b8; }
+
+/* Mobile */
+@media (max-width: 768px) {
+  .rpc-canvas-wrap { height: 170px; }
+  .rpc-head { flex-direction: column; gap: 10px; }
+  .rpc-foot { gap: 18px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Day mode — ancestor-scoped overrides (dual selector)
+   Holds whether the widget carries the `dayMode` prop (root gets
+   `.roi-calculator.day-mode`) or is portaled into `.app.app-day-mode`.
+   Mirrors the `.rpc--day` prop-driven block above. Bull/bear chip
+   colors (is-up/is-down) read fine on light and are left untouched.
+   The canvas line/area fills are JS-drawn (draw() hardcodes
+   bull/bear, never reads dayMode) so they need no CSS override.
+   ══════════════════════════════════════════════════════════════════ */
+
+.app.app-day-mode .rpc,
+.roi-calculator.day-mode .rpc { border-top-color: rgba(0, 0, 0, 0.07); }
+.app.app-day-mode .rpc-head__title,
+.roi-calculator.day-mode .rpc-head__title { color: #0f172a; }
+.app.app-day-mode .rpc-head__eyebrow,
+.roi-calculator.day-mode .rpc-head__eyebrow { color: rgba(15, 23, 42, 0.45); }
+
+/* Range toggle */
+.app.app-day-mode .rpc-ranges,
+.roi-calculator.day-mode .rpc-ranges {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+.app.app-day-mode .rpc-range,
+.roi-calculator.day-mode .rpc-range { color: #64748b; }
+.app.app-day-mode .rpc-range:hover,
+.roi-calculator.day-mode .rpc-range:hover { color: #334155; }
+.app.app-day-mode .rpc-range.is-active,
+.roi-calculator.day-mode .rpc-range.is-active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+/* Crosshair + hover dot + tooltip */
+.app.app-day-mode .rpc-crosshair,
+.roi-calculator.day-mode .rpc-crosshair { background: rgba(15, 23, 42, 0.2); }
+.app.app-day-mode .rpc-hover-dot,
+.roi-calculator.day-mode .rpc-hover-dot {
+  background: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
+}
+.app.app-day-mode .rpc-tooltip,
+.roi-calculator.day-mode .rpc-tooltip {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+}
+.app.app-day-mode .rpc-tooltip__price,
+.roi-calculator.day-mode .rpc-tooltip__price { color: #0f172a; }
+.app.app-day-mode .rpc-tooltip__date,
+.roi-calculator.day-mode .rpc-tooltip__date { color: #64748b; }
+
+/* X-axis ticks */
+.app.app-day-mode .rpc-xaxis__tick,
+.roi-calculator.day-mode .rpc-xaxis__tick { color: rgba(15, 23, 42, 0.45); }
+
+/* Footer */
+.app.app-day-mode .rpc-foot,
+.roi-calculator.day-mode .rpc-foot { border-top-color: rgba(0, 0, 0, 0.06); }
+.app.app-day-mode .rpc-foot__label,
+.roi-calculator.day-mode .rpc-foot__label { color: rgba(15, 23, 42, 0.45); }
+.app.app-day-mode .rpc-foot__val,
+.roi-calculator.day-mode .rpc-foot__val { color: #334155; }
+
+/* Skeleton — white shimmer is invisible on light, flip to dark tint */
+.app.app-day-mode .rpc-loader,
+.roi-calculator.day-mode .rpc-loader {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.04) 0%, rgba(15, 23, 42, 0.015) 100%);
+}
+.app.app-day-mode .rpc-loader__grid,
+.roi-calculator.day-mode .rpc-loader__grid { background: rgba(15, 23, 42, 0.05); }
+.app.app-day-mode .rpc-loader__shimmer,
+.roi-calculator.day-mode .rpc-loader__shimmer {
+  background: linear-gradient(105deg, transparent 38%, rgba(15, 23, 42, 0.06) 50%, transparent 62%);
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+}
+.app.app-day-mode .rpc-head__chg-skel,
+.roi-calculator.day-mode .rpc-head__chg-skel {
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0.05) 0%, rgba(15, 23, 42, 0.1) 50%, rgba(15, 23, 42, 0.05) 100%);
+  background-size: 200% 100%;
+}

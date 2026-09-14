@@ -1,0 +1,816 @@
+/* ROI Calculator – Spectre design only (tokens, no generic purple/glow) */
+.roi-calculator {
+  position: fixed;
+  inset: 0;
+  z-index: 100050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6);
+  box-sizing: border-box;
+}
+
+.roi-calculator.roi-calculator-embedded {
+  position: relative;
+  inset: auto;
+  z-index: 0;
+  display: block;
+  padding: 0;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.roi-calculator.roi-calculator-embedded .roi-calculator-glass {
+  max-height: none;
+  overflow: visible;
+  max-width: 100%;
+}
+
+/* ── Embedded (full-page) two-column dashboard ──
+   The modal stays a narrow popover; the /roi-calculator page spreads the
+   inputs (left) and the analysis — comparison + time machine — (right). */
+.roi-cic-main { min-width: 0; }
+.roi-cic-side { min-width: 0; }
+
+/* The analysis sections (.mcc / .tm) carry their own top separator; drop it on
+   the first one when it leads its own column so there's no orphan rule. */
+.roi-cic-side > :first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+@media (min-width: 1025px) {
+  .roi-calculator.roi-calculator-embedded .roi-calculator-body {
+    display: grid;
+    grid-template-columns: minmax(340px, 400px) 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+  /* No analysis yet (no coin selected) → keep the lone input column tidy. */
+  .roi-calculator.roi-calculator-embedded .roi-calculator-body:not(:has(.roi-cic-side)) {
+    display: block;
+  }
+  .roi-calculator.roi-calculator-embedded .roi-calculator-body:not(:has(.roi-cic-side)) .roi-cic-main {
+    max-width: 460px;
+  }
+  /* The left input column sticks while the taller analysis column scrolls. */
+  .roi-calculator.roi-calculator-embedded .roi-cic-main {
+    position: sticky;
+    top: 16px;
+  }
+}
+
+.roi-calculator-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Main panel – Spectre glassmorphism (exact welcome-widget-glass) */
+.roi-calculator-glass {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 440px;
+  min-height: 320px;
+  max-height: 90vh;
+  overflow-y: auto;
+  font-family: var(--font-glass, var(--font-body));
+  border-radius: 24px;
+  background: linear-gradient(168deg, #07060a 0%, #09080d 35%, #040306 70%, #020103 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 0 24px -8px rgba(255, 255, 255, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 8px 24px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: box-shadow var(--duration-base) ease, border-color var(--duration-base) ease;
+}
+
+.roi-calculator-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-5) var(--sp-6);
+  border-bottom: 1px solid var(--glass-border-neumorphic);
+}
+
+.roi-calculator-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  font-family: var(--font-glass);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Title icon in glass ring (match welcome-widget-avatar-ring) */
+.roi-calculator-title-icon-ring {
+  flex-shrink: 0;
+  padding: 3px;
+  border-radius: var(--glass-radius-circle);
+  background: var(--glass-charcoal);
+  border: 1px solid var(--glass-border-neumorphic);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    0 4px 12px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.roi-calculator-title-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--text-muted);
+}
+
+.roi-calculator-title-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Close button – glass circle (match welcome-widget avatar ring style) */
+.roi-calculator-close {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--glass-charcoal-light, #222228);
+  border: 1px solid var(--glass-border-neumorphic);
+  border-radius: var(--glass-radius-circle);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow-soft);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: box-shadow var(--duration-base) var(--ease-in-out), border-color var(--duration-base), color var(--duration-base), background var(--duration-base);
+}
+
+.roi-calculator-close:hover {
+  background: var(--bg-hover);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: var(--text-primary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), var(--glass-shadow-bottom);
+}
+
+.roi-calculator-close svg {
+  width: 20px;
+  height: 20px;
+}
+
+.roi-calculator-body {
+  padding: var(--sp-6);
+}
+
+.roi-calculator-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: var(--sp-2);
+  font-family: var(--font-glass);
+}
+
+/* Search – glass field (match fear-greed-timeframe-btn / pill) */
+.roi-calculator-search-wrap {
+  position: relative;
+  margin-bottom: var(--sp-5);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  font-family: var(--font-glass);
+  transition: border-color var(--duration-base) var(--ease-in-out), box-shadow var(--duration-base) var(--ease-in-out);
+}
+
+.roi-calculator-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: var(--text-muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.roi-calculator-search-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.roi-calculator-input {
+  width: 100%;
+  padding: 12px 14px 12px 44px;
+  font-size: 0.9375rem;
+  font-family: var(--font-glass), inherit;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  outline: none;
+}
+
+.roi-calculator-input::placeholder {
+  color: var(--text-muted);
+}
+
+.roi-calculator-search-wrap:focus-within {
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.roi-calculator-input:focus {
+  outline: none;
+}
+
+.roi-calculator-suggestions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + var(--sp-1));
+  margin: 0;
+  padding: 6px 0;
+  list-style: none;
+  border-radius: var(--radius-md);
+  background: linear-gradient(168deg, #0a0a0e 0%, #0c0c10 100%);
+  border: 1px solid var(--glass-border-neumorphic);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    var(--shadow-md);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 10;
+  font-family: var(--font-glass);
+}
+
+.roi-calculator-suggestion-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.roi-calculator-suggestion-item:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+}
+
+.roi-calculator-suggestion-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.roi-calculator-suggestion-symbol {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+.roi-calculator-loading,
+.roi-calculator-muted {
+  margin: 0 0 var(--sp-5);
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+  font-family: var(--font-glass);
+}
+
+.roi-calculator-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-5);
+}
+
+/* Stat cards – fear-greed-factor-card glass */
+.roi-calculator-stat {
+  padding: var(--sp-5);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, #0c0c10 0%, #08080c 100%);
+  border: 1px solid var(--glass-border-neumorphic);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 3px 10px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  font-family: var(--font-glass);
+  transition: box-shadow var(--duration-base) ease, border-color var(--duration-base) ease;
+}
+
+.roi-calculator-stat-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.roi-calculator-stat-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.roi-calculator-stat-mcap,
+.roi-calculator-stat-date {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+/* ROI line – Spectre sentiment pill style (accent pill, no glow, no purple) */
+.roi-calculator-roi-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-4) var(--sp-5);
+  margin-bottom: var(--sp-6);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  font-family: var(--font-glass);
+}
+
+.roi-calculator-roi-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.roi-calculator-roi-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Amount header — label + USD/TOKEN toggle on the same row */
+.roi-calculator-amount-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-2);
+}
+
+.roi-calculator-amount-header .roi-calculator-label {
+  margin-bottom: 0;
+}
+
+.roi-calculator-unit-toggle {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.roi-calculator-unit-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 4px 10px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: var(--font-glass);
+  transition: color var(--duration-base) var(--ease-in-out), background var(--duration-base) var(--ease-in-out);
+}
+
+.roi-calculator-unit-btn:hover:not(:disabled):not(.is-active) {
+  color: var(--text-primary);
+}
+
+.roi-calculator-unit-btn.is-active {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.05) 100%);
+  color: var(--text-primary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.roi-calculator-unit-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Amount input – same pill as search (no purple focus) */
+.roi-calculator-amount {
+  width: 100%;
+  padding: 14px var(--sp-4);
+  margin-bottom: var(--sp-5);
+  font-size: 1rem;
+  font-family: var(--font-glass), inherit;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  outline: none;
+  transition: border-color var(--duration-base) var(--ease-in-out), box-shadow var(--duration-base) var(--ease-in-out);
+}
+
+.roi-calculator-amount:focus {
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.roi-calculator-amount::placeholder {
+  color: var(--text-muted);
+}
+
+/* Hide native number-input spinners */
+.roi-calculator-amount::-webkit-outer-spin-button,
+.roi-calculator-amount::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.roi-calculator-amount {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Converted-value hint under the amount input */
+.roi-calculator-amount-hint {
+  margin-top: calc(var(--sp-5) * -1 + 2px);
+  margin-bottom: var(--sp-4);
+  padding: 0 2px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-glass);
+}
+
+/* Result card – fear-greed-factor-card glass */
+.roi-calculator-result {
+  padding: var(--sp-5);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, #0c0c10 0%, #08080c 100%);
+  border: 1px solid var(--glass-border-neumorphic);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 3px 10px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  font-family: var(--font-glass);
+  transition: box-shadow var(--duration-base) ease, border-color var(--duration-base) ease;
+}
+
+.roi-calculator-result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.roi-calculator-result-row-ath {
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--glass-border-neumorphic);
+}
+
+.roi-calculator-result-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.roi-calculator-result-amount {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.roi-calculator-result-row-sub {
+  margin-top: calc(var(--sp-3) * -1 + 2px);
+}
+
+.roi-calculator-result-sub {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.roi-calculator-result-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--bull-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+.roi-calculator-result-pct {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--bull);
+  margin-top: var(--sp-1);
+}
+
+.roi-calculator-whatif {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--glass-border-neumorphic);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* ============================================================
+   DAY MODE
+   Project standard (design-system.md §H): #ffffff cards,
+   rgba(0,0,0,0.08) borders, #0f172a primary, #475569 secondary.
+   Every override uses BOTH selectors so the widget works either
+   as a portal (modal, app root has class) or standalone w/ prop.
+   ============================================================ */
+
+/* Scrim */
+.app.app-day-mode .roi-calculator-scrim,
+.roi-calculator.day-mode .roi-calculator-scrim {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+/* Glass panel */
+.app.app-day-mode .roi-calculator-glass,
+.roi-calculator.day-mode .roi-calculator-glass {
+  background: #ffffff;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 4px 24px rgba(0, 0, 0, 0.06);
+}
+
+/* Header border */
+.app.app-day-mode .roi-calculator-header,
+.roi-calculator.day-mode .roi-calculator-header {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+/* Title + icon ring */
+.app.app-day-mode .roi-calculator-title,
+.roi-calculator.day-mode .roi-calculator-title {
+  color: #0f172a;
+  text-shadow: none;
+}
+
+.app.app-day-mode .roi-calculator-title-icon-ring,
+.roi-calculator.day-mode .roi-calculator-title-icon-ring {
+  background: #f1f5f9;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.app.app-day-mode .roi-calculator-title-icon,
+.roi-calculator.day-mode .roi-calculator-title-icon {
+  color: #475569;
+}
+
+/* Close button */
+.app.app-day-mode .roi-calculator-close,
+.roi-calculator.day-mode .roi-calculator-close {
+  background: #f1f5f9;
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #475569;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.app.app-day-mode .roi-calculator-close:hover,
+.roi-calculator.day-mode .roi-calculator-close:hover {
+  background: #e2e8f0;
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #0f172a;
+}
+
+/* Section label */
+.app.app-day-mode .roi-calculator-label,
+.roi-calculator.day-mode .roi-calculator-label {
+  color: #64748b;
+}
+
+/* Search field */
+.app.app-day-mode .roi-calculator-search-wrap,
+.roi-calculator.day-mode .roi-calculator-search-wrap {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: none;
+}
+
+.app.app-day-mode .roi-calculator-search-wrap:focus-within,
+.roi-calculator.day-mode .roi-calculator-search-wrap:focus-within {
+  border-color: rgba(0, 0, 0, 0.18);
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.06);
+}
+
+.app.app-day-mode .roi-calculator-search-icon,
+.roi-calculator.day-mode .roi-calculator-search-icon {
+  color: #94a3b8;
+}
+
+.app.app-day-mode .roi-calculator-input,
+.roi-calculator.day-mode .roi-calculator-input {
+  color: #0f172a;
+}
+
+.app.app-day-mode .roi-calculator-input::placeholder,
+.roi-calculator.day-mode .roi-calculator-input::placeholder {
+  color: #94a3b8;
+}
+
+/* Suggestions dropdown */
+.app.app-day-mode .roi-calculator-suggestions,
+.roi-calculator.day-mode .roi-calculator-suggestions {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.app.app-day-mode .roi-calculator-suggestion-item:hover,
+.roi-calculator.day-mode .roi-calculator-suggestion-item:hover {
+  background: #f1f5f9;
+}
+
+.app.app-day-mode .roi-calculator-suggestion-name,
+.roi-calculator.day-mode .roi-calculator-suggestion-name {
+  color: #0f172a;
+}
+
+.app.app-day-mode .roi-calculator-suggestion-symbol,
+.roi-calculator.day-mode .roi-calculator-suggestion-symbol {
+  color: #64748b;
+}
+
+/* Loading / muted text */
+.app.app-day-mode .roi-calculator-loading,
+.app.app-day-mode .roi-calculator-muted,
+.roi-calculator.day-mode .roi-calculator-loading,
+.roi-calculator.day-mode .roi-calculator-muted {
+  color: #64748b;
+}
+
+/* Stat cards */
+.app.app-day-mode .roi-calculator-stat,
+.roi-calculator.day-mode .roi-calculator-stat {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.app.app-day-mode .roi-calculator-stat-label,
+.roi-calculator.day-mode .roi-calculator-stat-label {
+  color: #64748b;
+}
+
+.app.app-day-mode .roi-calculator-stat-value,
+.roi-calculator.day-mode .roi-calculator-stat-value {
+  color: #0f172a;
+}
+
+.app.app-day-mode .roi-calculator-stat-mcap,
+.app.app-day-mode .roi-calculator-stat-date,
+.roi-calculator.day-mode .roi-calculator-stat-mcap,
+.roi-calculator.day-mode .roi-calculator-stat-date {
+  color: #94a3b8;
+}
+
+/* ROI line */
+.app.app-day-mode .roi-calculator-roi-line,
+.roi-calculator.day-mode .roi-calculator-roi-line {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.app.app-day-mode .roi-calculator-roi-label,
+.roi-calculator.day-mode .roi-calculator-roi-label {
+  color: #475569;
+}
+
+.app.app-day-mode .roi-calculator-roi-value,
+.roi-calculator.day-mode .roi-calculator-roi-value {
+  color: #0f172a;
+}
+
+/* USD/TOKEN toggle */
+.app.app-day-mode .roi-calculator-unit-toggle,
+.roi-calculator.day-mode .roi-calculator-unit-toggle {
+  background: #f1f5f9;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: none;
+}
+
+.app.app-day-mode .roi-calculator-unit-btn,
+.roi-calculator.day-mode .roi-calculator-unit-btn {
+  color: #64748b;
+}
+
+.app.app-day-mode .roi-calculator-unit-btn:hover:not(:disabled):not(.is-active),
+.roi-calculator.day-mode .roi-calculator-unit-btn:hover:not(:disabled):not(.is-active) {
+  color: #0f172a;
+}
+
+.app.app-day-mode .roi-calculator-unit-btn.is-active,
+.roi-calculator.day-mode .roi-calculator-unit-btn.is-active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Converted-value hint */
+.app.app-day-mode .roi-calculator-amount-hint,
+.roi-calculator.day-mode .roi-calculator-amount-hint {
+  color: #64748b;
+}
+
+/* Result tokens sub-row */
+.app.app-day-mode .roi-calculator-result-sub,
+.roi-calculator.day-mode .roi-calculator-result-sub {
+  color: #64748b;
+}
+
+/* Amount input */
+.app.app-day-mode .roi-calculator-amount,
+.roi-calculator.day-mode .roi-calculator-amount {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: none;
+  color: #0f172a;
+}
+
+.app.app-day-mode .roi-calculator-amount:focus,
+.roi-calculator.day-mode .roi-calculator-amount:focus {
+  border-color: rgba(0, 0, 0, 0.18);
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.06);
+}
+
+.app.app-day-mode .roi-calculator-amount::placeholder,
+.roi-calculator.day-mode .roi-calculator-amount::placeholder {
+  color: #94a3b8;
+}
+
+/* Result card */
+.app.app-day-mode .roi-calculator-result,
+.roi-calculator.day-mode .roi-calculator-result {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.app.app-day-mode .roi-calculator-result-row-ath,
+.roi-calculator.day-mode .roi-calculator-result-row-ath {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+.app.app-day-mode .roi-calculator-result-label,
+.roi-calculator.day-mode .roi-calculator-result-label {
+  color: #64748b;
+}
+
+.app.app-day-mode .roi-calculator-result-amount,
+.roi-calculator.day-mode .roi-calculator-result-amount {
+  color: #0f172a;
+}
+
+/* Bull/bear colors stay identical in day mode — semantic */
+.app.app-day-mode .roi-calculator-result-value,
+.roi-calculator.day-mode .roi-calculator-result-value {
+  color: var(--bull, #059669);
+}
+
+.app.app-day-mode .roi-calculator-result-pct,
+.roi-calculator.day-mode .roi-calculator-result-pct {
+  color: var(--bull, #059669);
+}

@@ -1,0 +1,745 @@
+/* WatchlistAnalysisPanel — single panel, four modules. Layered over the
+   existing watchlists glass surface, so the cards here use a lighter glass
+   variant to read on top. */
+
+.wla-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 18px;
+  /* Background wash differentiates the analysis surface from the table
+     view sitting above it. Faint radial glow at the top mimics the rest
+     of the cinema palette without paying for backdrop-filter. */
+  padding: 6px 0 32px;
+  background:
+    radial-gradient(120% 60% at 50% -10%, rgba(245, 245, 247, 0.018), transparent 60%);
+}
+
+/* Universal muted-cell helper for missing-data rows (e.g. 7d unknown). */
+.wla-muted { color: var(--text-muted); opacity: 0.7; }
+
+/* Big number tile — used inside cards for headline stats. */
+.wla-bignum {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.wla-bignum-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.wla-bignum-value {
+  font-family: var(--font-mono);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.wla-empty-state {
+  padding: 64px 32px;
+  text-align: center;
+  color: var(--text-tertiary);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+/* ─── Card shell ──────────────────────────────────────────────────────── */
+/* Lifted off the page with a top-edge highlight, a soft radial wash, and
+   an outer shadow that gives the card real depth instead of feeling like
+   a flat dark rectangle. Hover bumps the highlight + adds an inner glow. */
+.wla-card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.018) 0%, rgba(255, 255, 255, 0.004) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    0 1px 2px rgba(0, 0, 0, 0.28);
+  transition: border-color 0.22s var(--ease-out);
+}
+.wla-card:hover {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.wla-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+}
+
+.wla-card-title {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wla-card-meta {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ─── Composition + Pulse row ─────────────────────────────────────────── */
+.wla-top-row {
+  display: grid;
+  grid-template-columns: minmax(380px, 1.4fr) minmax(320px, 1fr);
+  gap: 14px;
+}
+@media (max-width: 1100px) {
+  .wla-top-row { grid-template-columns: 1fr; }
+}
+
+/* Composition donut — bigger SVG, soft glow behind it. */
+.wla-composition-body {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 20px;
+  align-items: center;
+}
+.wla-composition .wla-donut {
+  width: 180px;
+  height: 180px;
+  filter: drop-shadow(0 6px 24px rgba(0, 0, 0, 0.35));
+}
+/* Legacy alias kept so any old class names that haven't been swept still
+   pick up the same layout. */
+.wla-allocation-body {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+/* Cap-tier bars row under the donut */
+.wla-cap-tiers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+.wla-cap-tier { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.wla-cap-tier-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+.wla-cap-tier-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.wla-cap-tier-sublabel {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+.wla-cap-tier-bar {
+  height: 5px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.wla-cap-tier-fill { height: 100%; transition: width 0.4s var(--ease-out); }
+.wla-cap-tier-stats {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+}
+.wla-cap-tier-pct { color: var(--text-primary); }
+
+/* Pulse stats grid */
+.wla-pulse-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.wla-pulse-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0.01));
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.035);
+  transition: border-color 0.18s var(--ease-out), transform 0.18s var(--ease-out);
+}
+.wla-pulse-stat:hover {
+  border-color: rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
+}
+.wla-pulse-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.wla-pulse-value {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.wla-pulse-value .bull { color: var(--bull); }
+.wla-pulse-value .bear { color: var(--bear); }
+.wla-pulse-sep { color: var(--text-muted); font-weight: 400; }
+
+/* Portfolio card (gated CTA) */
+.wla-portfolio-empty .wla-portfolio-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.wla-portfolio-cta-copy {
+  font-size: 0.82rem;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+  flex: 1;
+  min-width: 240px;
+}
+.wla-portfolio-cta-copy em {
+  font-style: italic;
+  color: var(--text-secondary);
+}
+.wla-portfolio-cta-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.wla-btn-primary,
+.wla-btn-secondary {
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.18s var(--ease-out);
+  font-family: var(--font-body);
+}
+.wla-btn-primary {
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f5f5f7;
+}
+.wla-btn-primary:hover {
+  background: linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08));
+  transform: translateY(-1px);
+}
+.wla-btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+}
+.wla-btn-secondary:hover {
+  border-color: var(--border-strong);
+  color: #f5f5f7;
+}
+
+.wla-portfolio-totals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.wla-portfolio-total {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+}
+.wla-portfolio-total-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.wla-portfolio-total-value {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.wla-portfolio-total-value.bull { color: var(--bull); }
+.wla-portfolio-total-value.bear { color: var(--bear); }
+.wla-donut {
+  width: 160px;
+  height: 160px;
+  display: block;
+  margin: 0 auto;
+}
+.wla-donut-total {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  fill: var(--text-primary);
+}
+.wla-donut-sub {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  fill: var(--text-muted);
+}
+
+.wla-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.wla-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+}
+.wla-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.wla-legend-label {
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+.wla-legend-pct {
+  font-family: var(--font-mono);
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+}
+
+/* Allocation grouping tabs */
+.wla-tab-row {
+  display: flex;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  padding: 2px;
+  border: 1px solid var(--border-subtle);
+}
+.wla-tab {
+  padding: 4px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: rgba(245, 245, 247, 0.4);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+.wla-tab:hover { color: rgba(245, 245, 247, 0.75); }
+.wla-tab.active {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5f5f7;
+}
+
+/* Suggestions — grid of cards, no AI-colored side bars. Each card is the
+   same shade; we differentiate kind with a subtle icon-prefixed dot in the
+   title row (warn / info / ok) instead of the colored left bar. */
+.wla-sugg-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+.wla-sugg-item {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border-subtle);
+  transition: border-color 0.18s var(--ease-out);
+}
+.wla-sugg-item:hover {
+  border-color: var(--border-default);
+  background: rgba(255, 255, 255, 0.035);
+}
+.wla-sugg-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.wla-sugg-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-muted);
+}
+.wla-sugg-warn .wla-sugg-dot { background: #F59E0B; }
+.wla-sugg-info .wla-sugg-dot { background: #06B6D4; }
+.wla-sugg-ok   .wla-sugg-dot { background: #10B981; }
+.wla-sugg-body {
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+
+/* ─── Movers / Flatlines / Coiling row ────────────────────────────────── */
+.wla-movers-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+/* Two-up variant — when Coiling hides because there's no 7d data to back it,
+   Moving + Flatlines should fill the row instead of leaving a hole. */
+.wla-movers-row.wla-movers-row--two {
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (max-width: 980px) {
+  .wla-movers-row,
+  .wla-movers-row.wla-movers-row--two { grid-template-columns: 1fr; }
+}
+
+/* ─── Performance scoreboard ──────────────────────────────────────── */
+.wla-scoreboard-cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+@media (max-width: 980px) {
+  .wla-scoreboard-cols { grid-template-columns: 1fr; }
+}
+.wla-scoreboard-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.wla-scoreboard-sublabel {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.wla-row-mom { grid-template-columns: minmax(48px, auto) 1fr; }
+
+/* Composition stats row — HHI / top-holding / top-3 / diversity */
+.wla-comp-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+@media (max-width: 1100px) {
+  .wla-comp-stats { grid-template-columns: repeat(2, 1fr); }
+}
+.wla-comp-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.008));
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.wla-comp-stat-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.wla-comp-stat-value {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.wla-comp-stat-value.bull { color: var(--bull); }
+.wla-comp-stat-value.bear { color: var(--bear); }
+.wla-comp-stat-value.neutral { color: #F59E0B; }
+.wla-comp-stat-tag {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+/* ─── X-Dash connection pill ──────────────────────────────────────── */
+.wla-xdash-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: 9999px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.02);
+}
+.wla-xdash-pill .wla-xdash-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+.wla-xdash-pill.live {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.06);
+  color: var(--bull);
+}
+.wla-xdash-pill.live .wla-xdash-dot {
+  background: var(--bull);
+  box-shadow: 0 0 6px var(--bull);
+}
+.wla-xdash-pill.empty {
+  color: var(--text-muted);
+}
+
+/* ─── Team activity + Mention pulse row ───────────────────────────────── */
+.wla-activity-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 980px) {
+  .wla-activity-row { grid-template-columns: 1fr; }
+}
+
+/* Row primitives shared across modules */
+.wla-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+/* Long lists (every watchlist token in the activity columns) — scroll
+   internally so the panel as a whole doesn't blow out. */
+.wla-list-scroll {
+  max-height: 540px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.wla-list-scroll::-webkit-scrollbar { width: 4px; }
+.wla-list-scroll::-webkit-scrollbar-track { background: transparent; }
+.wla-list-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.05); border-radius: 2px; }
+.wla-list-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.12); }
+.wla-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background 0.15s var(--ease-out);
+}
+.wla-row:hover { background: rgba(255, 255, 255, 0.025); }
+.wla-row-3col {
+  grid-template-columns: minmax(40px, auto) 1fr auto;
+}
+/* Movers / Flatlines / Coiling rows: sym | vol-share | 7d% | 24h% */
+.wla-row-rich {
+  grid-template-columns: minmax(48px, auto) minmax(56px, auto) minmax(56px, auto) auto;
+  gap: 10px;
+}
+/* Mention-pulse row: sym | spark | total */
+.wla-row-pulse {
+  grid-template-columns: minmax(48px, auto) 1fr auto;
+  gap: 10px;
+}
+.wla-row-spark {
+  width: 56px;
+  height: 14px;
+  opacity: 0.85;
+}
+.wla-row-spark-empty {
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+}
+.wla-muted { color: var(--text-muted) !important; font-style: italic; }
+.wla-row-meta.bull { color: var(--bull); }
+.wla-row-meta.bear { color: var(--bear); }
+.wla-row-sym {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  letter-spacing: 0.01em;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.85));
+}
+.wla-row-chg {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-align: right;
+}
+.wla-row-chg.bull { color: var(--bull); }
+.wla-row-chg.bear { color: var(--bear); }
+.wla-row-meta {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.wla-empty {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  padding: 12px 4px;
+}
+
+/* ─── Day mode ────────────────────────────────────────────────────────── */
+.watchlists-page.day-mode .wla-card {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+.watchlists-page.day-mode .wla-card-title { color: #0f172a; }
+.watchlists-page.day-mode .wla-card-meta,
+.watchlists-page.day-mode .wla-row-meta,
+.watchlists-page.day-mode .wla-legend-pct { color: #94a3b8; }
+.watchlists-page.day-mode .wla-row:hover { background: rgba(15, 23, 42, 0.03); }
+.watchlists-page.day-mode .wla-row-sym { color: #1e293b; }
+.watchlists-page.day-mode .wla-row-chg { color: #64748b; }
+.watchlists-page.day-mode .wla-row-chg.bull { color: #059669; }
+.watchlists-page.day-mode .wla-row-chg.bear { color: #dc2626; }
+.watchlists-page.day-mode .wla-tab {
+  color: #94a3b8;
+}
+.watchlists-page.day-mode .wla-tab.active {
+  background: rgba(15, 23, 42, 0.06);
+  color: #0f172a;
+}
+.watchlists-page.day-mode .wla-tab-row {
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.06);
+}
+.watchlists-page.day-mode .wla-donut-total { fill: #0f172a; }
+.watchlists-page.day-mode .wla-donut-sub { fill: #94a3b8; }
+.watchlists-page.day-mode .wla-legend-label { color: #334155; }
+.watchlists-page.day-mode .wla-sugg-item { background: rgba(15, 23, 42, 0.03); }
+.watchlists-page.day-mode .wla-sugg-title { color: #0f172a; }
+.watchlists-page.day-mode .wla-sugg-body { color: #475569; }
+.watchlists-page.day-mode .wla-empty-state {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.08);
+  color: #64748b;
+}
+
+/* Day-mode for new modules */
+.watchlists-page.day-mode .wla-cap-tier-label { color: #0f172a; }
+.watchlists-page.day-mode .wla-cap-tier-sublabel { color: #94a3b8; }
+.watchlists-page.day-mode .wla-cap-tier-bar { background: rgba(15, 23, 42, 0.06); }
+.watchlists-page.day-mode .wla-cap-tier-stats { color: #64748b; }
+.watchlists-page.day-mode .wla-cap-tier-pct { color: #0f172a; }
+.watchlists-page.day-mode .wla-cap-tiers { border-top-color: rgba(15, 23, 42, 0.08); }
+
+.watchlists-page.day-mode .wla-pulse-stat { background: rgba(15, 23, 42, 0.03); }
+.watchlists-page.day-mode .wla-pulse-label { color: #94a3b8; }
+.watchlists-page.day-mode .wla-pulse-value { color: #0f172a; }
+.watchlists-page.day-mode .wla-pulse-sep { color: #cbd5e1; }
+.watchlists-page.day-mode .wla-pulse-value .bull { color: #059669; }
+.watchlists-page.day-mode .wla-pulse-value .bear { color: #dc2626; }
+
+.watchlists-page.day-mode .wla-portfolio-cta-copy { color: #475569; }
+.watchlists-page.day-mode .wla-portfolio-cta-copy em { color: #0f172a; }
+.watchlists-page.day-mode .wla-btn-primary {
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  border-color: #0f172a;
+  color: #ffffff;
+}
+.watchlists-page.day-mode .wla-btn-primary:hover {
+  background: linear-gradient(135deg, #1e293b, #334155);
+}
+.watchlists-page.day-mode .wla-btn-secondary {
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #475569;
+}
+.watchlists-page.day-mode .wla-btn-secondary:hover {
+  border-color: rgba(15, 23, 42, 0.24);
+  color: #0f172a;
+}
+.watchlists-page.day-mode .wla-portfolio-total { background: rgba(15, 23, 42, 0.03); }
+.watchlists-page.day-mode .wla-portfolio-total-label { color: #94a3b8; }
+.watchlists-page.day-mode .wla-portfolio-total-value { color: #0f172a; }
+.watchlists-page.day-mode .wla-portfolio-total-value.bull { color: #059669; }
+.watchlists-page.day-mode .wla-portfolio-total-value.bear { color: #dc2626; }
+.watchlists-page.day-mode .wla-row-meta.bull { color: #059669; }
+.watchlists-page.day-mode .wla-row-meta.bear { color: #dc2626; }
+.watchlists-page.day-mode .wla-muted { color: #94a3b8 !important; }
+.watchlists-page.day-mode .wla-scoreboard-sublabel { color: #94a3b8; }
+.watchlists-page.day-mode .wla-xdash-pill {
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.06);
+}
+.watchlists-page.day-mode .wla-xdash-pill.live {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(5, 150, 105, 0.3);
+  color: #059669;
+}
+.watchlists-page.day-mode .wla-sugg-item {
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+.watchlists-page.day-mode .wla-sugg-item:hover {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.12);
+}
+.watchlists-page.day-mode .wla-comp-stats { border-top-color: rgba(15, 23, 42, 0.08); }
+.watchlists-page.day-mode .wla-comp-stat {
+  background: linear-gradient(180deg, rgba(15,23,42,0.04), rgba(15,23,42,0.015));
+  border-color: rgba(15, 23, 42, 0.08);
+}
+.watchlists-page.day-mode .wla-comp-stat-label { color: #94a3b8; }
+.watchlists-page.day-mode .wla-comp-stat-value { color: #0f172a; }
+.watchlists-page.day-mode .wla-comp-stat-tag { color: #64748b; }
+.watchlists-page.day-mode .wla-comp-stat-value.bull { color: #059669; }
+.watchlists-page.day-mode .wla-comp-stat-value.bear { color: #dc2626; }

@@ -1,0 +1,369 @@
+/* ============================================================
+   ShortsViewer — full-screen vertical shorts viewer (sv-)
+   Clean glass chrome, smooth paging, legible meta overlay.
+   ============================================================ */
+
+.sv-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: sv-fade-in 0.25s var(--ease-out) both;
+}
+
+/* dim backdrop — closes on click */
+.sv-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 5, 7, 0.9);
+  backdrop-filter: blur(28px) saturate(120%);
+  -webkit-backdrop-filter: blur(28px) saturate(120%);
+}
+
+@keyframes sv-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── Close ── */
+.sv-close {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.75);
+  cursor: pointer;
+  transition: all var(--duration-base) var(--ease-out);
+}
+.sv-close:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: var(--border-accent);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+/* ── Counter ── */
+.sv-counter {
+  position: absolute;
+  top: 30px;
+  left: 28px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(245, 245, 247, 0.5);
+  letter-spacing: 0.01em;
+}
+.sv-counter-cur { color: #f5f5f7; font-weight: 600; }
+.sv-counter-sep { opacity: 0.4; }
+
+/* ── Nav arrows ── */
+.sv-nav {
+  position: absolute;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sv-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.75);
+  cursor: pointer;
+  transition: all var(--duration-base) var(--ease-out);
+}
+.sv-nav-btn:hover:not(.disabled) {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: var(--border-accent);
+  color: #fff;
+  transform: translateY(-1px);
+}
+.sv-nav-btn.disabled {
+  opacity: 0.28;
+  cursor: default;
+}
+
+/* ── Player ── */
+.sv-player-wrap {
+  position: relative;
+  z-index: 5;
+  width: min(384px, 86vw);
+  height: min(683px, 86vh);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  background: #000;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 30px 90px rgba(0, 0, 0, 0.6),
+    0 8px 24px rgba(0, 0, 0, 0.4);
+}
+.sv-player {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* thumbnail backdrop behind the iframe — fills the player so a
+   blocked YouTube embed still shows the short's artwork */
+.sv-art-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(12px) brightness(0.55);
+  transform: scale(1.08);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.sv-iframe {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+.sv-fallback-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sv-no-video {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #111;
+}
+
+/* ── Page transitions ── */
+.sv-enter { animation: sv-slide-in 0.3s var(--ease-out) both; }
+.sv-exit-up { animation: sv-slide-out-up 0.25s var(--ease-out) both; }
+.sv-exit-down { animation: sv-slide-out-down 0.25s var(--ease-out) both; }
+
+@keyframes sv-slide-in {
+  from { opacity: 0; transform: translateY(28px) scale(0.965); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes sv-slide-out-up {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(-56px) scale(0.945); }
+}
+@keyframes sv-slide-out-down {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(56px) scale(0.945); }
+}
+
+/* ── Info overlay (bottom of video) ── */
+.sv-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  padding: 56px 20px 22px;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(5, 5, 7, 0) 0%,
+    rgba(5, 5, 7, 0.72) 58%,
+    rgba(5, 5, 7, 0.92) 100%
+  );
+}
+.sv-title {
+  margin: 0 0 9px;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: #fff;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.sv-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: rgba(245, 245, 247, 0.58);
+  font-variant-numeric: tabular-nums;
+}
+.sv-channel { font-weight: 600; color: rgba(245, 245, 247, 0.82); }
+.sv-meta .sv-channel + .sv-views::before,
+.sv-meta .sv-views + .sv-date::before,
+.sv-meta .sv-channel + .sv-date::before {
+  content: '\00b7';
+  margin-right: 8px;
+  color: rgba(245, 245, 247, 0.3);
+}
+
+/* ── Keyboard hint ── */
+.sv-hint {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.6875rem;
+  color: rgba(245, 245, 247, 0.32);
+  pointer-events: none;
+  animation: sv-hint-fade 0.4s 2s both;
+}
+.sv-hint kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 5px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: rgba(245, 245, 247, 0.5);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-xs);
+}
+@keyframes sv-hint-fade {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* ── "Watch on YouTube" fallback CTA ──
+   Docked bottom-center of the video area in YouTube red so it's
+   impossible to miss when the embed is blocked. Ignored visually
+   if the video plays. */
+.sv-open-yt {
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: var(--radius-full);
+  background: #FF0033;
+  border: none;
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  cursor: pointer;
+  z-index: 6;
+  box-shadow: 0 6px 20px rgba(255, 0, 51, 0.32), 0 2px 6px rgba(0, 0, 0, 0.4);
+  transition: transform 140ms var(--ease-out), box-shadow 160ms var(--ease-out), background 160ms var(--ease-out);
+}
+.sv-open-yt svg { flex-shrink: 0; }
+.sv-open-yt:hover {
+  background: #E6002E;
+  box-shadow: 0 8px 26px rgba(255, 0, 51, 0.42), 0 3px 8px rgba(0, 0, 0, 0.45);
+  transform: translateX(-50%) translateY(-1px);
+}
+.sv-open-yt:active {
+  transform: translateX(-50%) scale(0.97);
+}
+
+/* ============================================================
+   Day mode
+   ============================================================ */
+.sv-overlay.day-mode .sv-backdrop { background: rgba(248, 249, 250, 0.92); }
+.sv-overlay.day-mode .sv-close,
+.sv-overlay.day-mode .sv-nav-btn {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: rgba(15, 23, 42, 0.55);
+}
+.sv-overlay.day-mode .sv-close:hover,
+.sv-overlay.day-mode .sv-nav-btn:hover:not(.disabled) {
+  background: rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.2);
+  color: #0f172a;
+}
+.sv-overlay.day-mode .sv-counter { color: rgba(15, 23, 42, 0.45); }
+.sv-overlay.day-mode .sv-counter-cur { color: #0f172a; }
+.sv-overlay.day-mode .sv-player-wrap {
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 30px 90px rgba(0, 0, 0, 0.15),
+    0 8px 24px rgba(0, 0, 0, 0.1);
+}
+.sv-overlay.day-mode .sv-hint { color: rgba(15, 23, 42, 0.3); }
+.sv-overlay.day-mode .sv-hint kbd {
+  color: rgba(15, 23, 42, 0.45);
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+.app.app-day-mode .sv-open-yt {
+  box-shadow: 0 6px 20px rgba(255, 0, 51, 0.28), 0 2px 6px rgba(15, 23, 42, 0.15);
+}
+/* info overlay stays light-on-dark — it sits over the video frame */
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 768px) {
+  .sv-player-wrap {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    border-radius: 0;
+  }
+  .sv-nav { right: 12px; gap: 8px; }
+  .sv-nav-btn { width: 40px; height: 40px; }
+  .sv-close { top: 12px; right: 12px; width: 38px; height: 38px; }
+  .sv-counter { top: 18px; left: 16px; }
+  .sv-info { padding: 44px 16px 18px; }
+  .sv-hint { display: none; }
+  .sv-open-yt {
+    bottom: 84px;
+    height: 34px;
+    padding: 0 14px;
+    font-size: 12px;
+  }
+  .sv-open-yt svg { width: 13px; height: 13px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sv-overlay,
+  .sv-enter, .sv-exit-up, .sv-exit-down,
+  .sv-hint { animation: none; }
+}

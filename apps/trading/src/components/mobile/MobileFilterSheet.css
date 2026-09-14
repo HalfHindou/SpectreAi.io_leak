@@ -1,0 +1,507 @@
+/* ============================================
+   MobileFilterSheet — transactions filter bottom sheet.
+   Prefix: mfs-  (mirrors mis-/mss- sheet UX)
+   ============================================ */
+
+.mfs-root {
+  position: fixed;
+  inset: 0;
+  /* Above the Spectre Agent FAB (z 5000) - it floated over the sheet footer. */
+  z-index: 5100;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+.mfs-root > * { pointer-events: auto; }
+
+.mfs-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  border: none;
+  cursor: pointer;
+  animation: mfsBackdropIn 0.22s var(--ease-out) both;
+}
+@keyframes mfsBackdropIn { from { opacity: 0; } to { opacity: 1; } }
+
+.mfs-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  /* `vh` on iOS is the LARGE viewport (browser chrome hidden), so a
+     bottom-anchored 88vh sheet is taller than what is actually on screen and
+     its top - grabber, "Filters", the close X - slides up UNDER the URL bar.
+     `svh` is the small viewport, i.e. the height with the chrome showing, so
+     the header stays reachable whatever the toolbars are doing. The `vh` line
+     stays as the fallback for browsers without svh. */
+  max-height: 88vh;
+  max-height: 88svh;
+  background: var(--ob-surface-1);
+  border-top-left-radius: var(--r-lg);
+  border-top-right-radius: var(--r-lg);
+  border-top: 1px solid var(--glass-border-lit);
+  box-shadow: var(--shadow-3);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  animation: mfsSheetIn var(--dur-base) var(--ease-out) both;
+  will-change: transform;
+}
+@keyframes mfsSheetIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+/* `none`, not `pan-y`: pan-y still let the browser read the dismiss drag as a
+   page pull and fire its own pull-to-refresh (the page reloaded instead of the
+   sheet closing). We own this gesture outright - JS touch events fire either
+   way. The strip used to be 18px tall - a miss on a phone, so the drag never
+   started; the header is a drag surface too now. */
+.mfs-grabber-region {
+  flex: 0 0 auto;
+  padding: 12px 0 8px;
+  display: flex;
+  justify-content: center;
+  touch-action: none;
+  cursor: grab;
+}
+.mfs-grabber {
+  width: 44px;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--glass-highlight);
+}
+
+.mfs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px 12px;
+  border-bottom: 1px solid var(--glass-border);
+  touch-action: none;
+}
+.mfs-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-1);
+  margin: 0;
+  letter-spacing: -0.005em;
+}
+/* How many filters the draft carries — a badge reads faster than "· 3". */
+.mfs-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--accent) 18%, var(--glass-fill));
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--glass-border));
+  color: var(--text-1);
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.mfs-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  color: var(--text-1);
+  cursor: pointer;
+  transition: background-color var(--dur-base) var(--ease-out);
+}
+.mfs-close-btn:active { background: var(--glass-fill-hover); }
+
+/* Kill the browser's double-tap-zoom wait (~300ms) on every control in the
+   sheet. The app viewport is zoomable (no maximum-scale), so without this a
+   tap on Close is held back while the browser waits for a possible second
+   tap - it read as the sheet taking seconds to dismiss. Same treatment the
+   maker sheet (mmk-) already got. */
+.mfs-close-btn,
+.mfs-backdrop,
+.mfs-btn,
+.mfs-seg-btn,
+.mfs-toggle-opt,
+.mfs-preset,
+.mfs-unit,
+.mfs-maker,
+.mfs-clear,
+.mfs-more {
+  touch-action: manipulation;
+}
+
+.mfs-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  /* Don't chain the scroll to the page at either end - overscrolling at the
+     top is what triggers the browser's pull-to-refresh. */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px 16px 8px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Hairline between sections so the six stacked groups read as separate
+   blocks instead of one long column of inputs. */
+.mfs-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--glass-border);
+}
+.mfs-section:last-child { padding-bottom: 0; border-bottom: none; }
+/* opened via a per-column header funnel → brief pulse so the jumped-to filter
+   is obvious. Uses a box-shadow ring (compositor-friendly, no reflow). */
+.mfs-section--flash {
+  animation: mfsSectionFlash 1.1s ease;
+  border-radius: 10px;
+}
+@keyframes mfsSectionFlash {
+  0%   { box-shadow: 0 0 0 0 rgba(245, 245, 247, 0); }
+  25%  { box-shadow: 0 0 0 2px rgba(245, 245, 247, 0.18); background: rgba(255, 255, 255, 0.03); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 245, 247, 0); background: transparent; }
+}
+body.theme-light .mfs-section--flash {
+  animation-name: mfsSectionFlashDay;
+}
+@keyframes mfsSectionFlashDay {
+  0%   { box-shadow: 0 0 0 0 rgba(15, 23, 42, 0); }
+  25%  { box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.16); background: rgba(0, 0, 0, 0.03); }
+  100% { box-shadow: 0 0 0 0 rgba(15, 23, 42, 0); background: transparent; }
+}
+
+.mfs-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.mfs-label--active { color: var(--text-1); }
+.mfs-label-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+.mfs-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 28px;
+}
+.mfs-label-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+/* Per-section escape hatch: drop one filter without nuking the rest. */
+.mfs-clear {
+  padding: 4px 2px;
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mfs-clear:active { color: var(--text-1); }
+
+/* Type segmented control */
+.mfs-seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.mfs-seg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-pill);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out);
+}
+.mfs-seg-btn--active {
+  background: color-mix(in srgb, var(--accent) 14%, var(--glass-fill));
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--glass-border));
+  color: var(--text-1);
+}
+.mfs-seg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* Price/MCap & Amount/% mini toggle — tight rounded-rect segmented control */
+.mfs-toggle {
+  display: inline-flex;
+  padding: 2px;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+}
+.mfs-toggle-opt {
+  padding: 5px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mfs-toggle-opt.active {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--text-1);
+}
+
+/* Range inputs. The two fields are equal-width flex children; the
+   currency sign is an adornment INSIDE the box (as a sibling it made the
+   Min field visibly narrower than Max). */
+.mfs-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mfs-field {
+  position: relative;
+  display: block;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.mfs-field-prefix {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-num-chip);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-4, rgba(245, 245, 247, 0.3));
+  pointer-events: none;
+}
+.mfs-field--prefixed .mfs-input { padding-left: 26px; }
+.mfs-range-dash { color: var(--text-3); flex: 0 0 auto; }
+.mfs-input {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  padding: 11px 12px;
+  background: var(--ob-surface-2, rgba(0, 0, 0, 0.25));
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--text-1);
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  /* 16px floor - anything smaller makes iOS Safari zoom the sheet on focus. */
+  font-size: 16px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.mfs-input::placeholder { color: var(--text-4, rgba(245, 245, 247, 0.3)); }
+.mfs-input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--glass-border));
+}
+.mfs-input--full { width: 100%; }
+/* hide number spinners */
+.mfs-input::-webkit-outer-spin-button,
+.mfs-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.mfs-input[type=number] { -moz-appearance: textfield; }
+
+.mfs-units { display: flex; gap: 6px; }
+.mfs-unit {
+  padding: 5px 12px;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  border-radius: 7px;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.mfs-unit.active {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--glass-border));
+  color: var(--text-1);
+}
+
+/* USD quick floors — the "show me the whales" shortcut. */
+.mfs-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.mfs-preset {
+  padding: 6px 12px;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-pill);
+  color: var(--text-3);
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out);
+}
+.mfs-preset.active {
+  background: color-mix(in srgb, var(--accent) 14%, var(--glass-fill));
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--glass-border));
+  color: var(--text-1);
+}
+
+/* Top makers quick list */
+.mfs-makers { display: flex; flex-direction: column; gap: 4px; }
+.mfs-more {
+  align-self: flex-start;
+  padding: 8px 2px;
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mfs-more:active { color: var(--text-1); }
+.mfs-maker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.mfs-maker.active {
+  background: color-mix(in srgb, var(--accent) 14%, var(--glass-fill));
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--glass-border));
+}
+.mfs-maker-addr {
+  font-family: var(--font-num-chip);
+  font-size: 13px;
+  color: var(--text-1);
+}
+.mfs-maker-count {
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+/* Footer actions */
+.mfs-footer {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--glass-border);
+}
+.mfs-btn {
+  flex: 1 1 0;
+  padding: 13px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity var(--dur-micro) var(--ease-out);
+}
+.mfs-btn--ghost {
+  flex: 0 0 38%;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  color: var(--text-2);
+}
+.mfs-btn--primary {
+  background: var(--text-1);
+  border: 1px solid var(--text-1);
+  color: var(--ob-surface-1, #0a0b0d);
+}
+.mfs-btn:active { opacity: 0.85; }
+.mfs-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Day mode. NOTE: the trading app toggles `body.theme-light` — the sheet
+   previously styled `.app.app-day-mode`, a class this app never sets, so
+   light mode rendered a dark sheet over a white page. */
+body.theme-light .mfs-backdrop { background: rgba(0, 0, 0, 0.35); }
+body.theme-light .mfs-sheet {
+  background: #ffffff;
+  border-top-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.18);
+}
+body.theme-light .mfs-title { color: #0f172a; }
+body.theme-light .mfs-header,
+body.theme-light .mfs-footer,
+body.theme-light .mfs-section { border-color: rgba(0, 0, 0, 0.07); }
+body.theme-light .mfs-label { color: rgba(15, 23, 42, 0.55); }
+body.theme-light .mfs-label--active { color: #0f172a; }
+body.theme-light .mfs-clear,
+body.theme-light .mfs-more,
+body.theme-light .mfs-range-dash,
+body.theme-light .mfs-maker-count { color: rgba(15, 23, 42, 0.55); }
+body.theme-light .mfs-input {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #0f172a;
+}
+body.theme-light .mfs-field-prefix { color: rgba(15, 23, 42, 0.4); }
+body.theme-light .mfs-seg-btn,
+body.theme-light .mfs-preset,
+body.theme-light .mfs-unit,
+body.theme-light .mfs-maker,
+body.theme-light .mfs-toggle,
+body.theme-light .mfs-btn--ghost {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: rgba(15, 23, 42, 0.7);
+}
+body.theme-light .mfs-toggle-opt { color: rgba(15, 23, 42, 0.55); }
+body.theme-light .mfs-seg-btn--active,
+body.theme-light .mfs-preset.active,
+body.theme-light .mfs-unit.active,
+body.theme-light .mfs-maker.active,
+body.theme-light .mfs-toggle-opt.active {
+  background: rgba(15, 23, 42, 0.08);
+  border-color: rgba(15, 23, 42, 0.18);
+  color: #0f172a;
+}
+body.theme-light .mfs-close-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: rgba(15, 23, 42, 0.85);
+}
+body.theme-light .mfs-grabber { background: rgba(0, 0, 0, 0.18); }
+body.theme-light .mfs-btn--primary {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+body.theme-light .mfs-maker-addr { color: #0f172a; }
+body.theme-light .mfs-count {
+  background: rgba(15, 23, 42, 0.08);
+  border-color: rgba(15, 23, 42, 0.18);
+  color: #0f172a;
+}
+body.theme-light .mfs-label-dot { background: #0f172a; }

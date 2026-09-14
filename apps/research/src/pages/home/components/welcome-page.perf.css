@@ -1,0 +1,38 @@
+/**
+ * Welcome-page performance overrides.
+ *
+ * The welcome page held ~99% CPU at idle: ~20 perpetual decorative CSS
+ * animations forced the glassy DOM (82 backdrop-filters) to recomposite +
+ * re-sample every frame. Measured: disabling these animations drops CPU
+ * 99% -> ~68% (glass kept). Loading skeletons keep their shimmer (transient,
+ * only during fetch); the activity-feed marquee is kept (functional scroll);
+ * entrance/hover transitions are untouched. Only the continuous decorative
+ * loops are stopped here.
+ *
+ * Loaded after welcome-page.css (import in welcome-page.jsx) so it wins.
+ */
+
+/* Full-viewport ambient "breathe" on the page root pseudo — the single biggest
+   cost: a full-screen layer animating opacity forces every overlapping glass
+   surface to re-sample each frame. */
+.welcome-page:not(.cinema-mode)::before {
+  animation: none !important;
+}
+
+/* Perpetual decorative pulses / shimmers / shine-sweeps on always-visible
+   elements (box-shadow / background-position / left animations are the
+   expensive ones — paint + layout every frame). */
+.welcome-page .welcome-breaking-banner__dot,
+.welcome-page .status-dot,
+.welcome-page .hero-title,
+.welcome-page .market-overview::after,
+.welcome-page .welcome-market-ai-live::before,
+.welcome-page .welcome-widget-us-market-indicator.is-open,
+.welcome-page .live-dot,
+.welcome-page .alpha-pulse,
+.welcome-page .alpha-new-indicator,
+.welcome-page .token-card-head-tag-live,
+.welcome-page .winner-badge,
+.welcome-page .compare-bar-fill::after {
+  animation: none !important;
+}

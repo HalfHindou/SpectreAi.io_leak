@@ -1,0 +1,122 @@
+/* The update offer.
+   Sits ABOVE the mobile tab bar and clear of the home indicator — an update is
+   the least urgent thing on screen and must never cover a control. */
+
+.aub {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--m-bottom-nav-h, 56px) + env(safe-area-inset-bottom, 0px) + 12px);
+  z-index: 1200;
+  max-width: min(420px, calc(100vw - 24px));
+  pointer-events: none;
+  animation: aubIn 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.aub__inner {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 6px 6px 12px;
+  border-radius: 13px;
+  background: rgba(18, 18, 22, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  /* One small blurred surface, not a full-width sheet — cheap to composite. */
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* The same cyan the tab light and the Mission Control chip use, so a system
+   message still reads as this product rather than as a browser notice. */
+.aub__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6ee7ff;
+  box-shadow: 0 0 8px rgba(110, 231, 255, 0.7);
+  flex: 0 0 auto;
+}
+
+.aub__text {
+  font-size: 12.5px;
+  font-weight: 540;
+  color: rgba(245, 245, 247, 0.86);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aub__action {
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.12);
+  color: #f7f7fa;
+  font-size: 12.5px;
+  font-weight: 640;
+  cursor: pointer;
+  transition: background 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.aub__action:hover { background: rgba(255, 255, 255, 0.18); }
+.aub__action:disabled { opacity: 0.6; cursor: default; }
+
+.aub__close {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  border-radius: 9px;
+  color: rgba(245, 245, 247, 0.45);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.aub__close:hover { color: rgba(245, 245, 247, 0.8); background: rgba(255, 255, 255, 0.06); }
+
+@keyframes aubIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aub { animation: none; }
+}
+
+/* Desktop: out of the centre, into the corner where system messages live. */
+@media (min-width: 769px) {
+  .aub {
+    left: auto;
+    right: 20px;
+    bottom: 20px;
+    transform: none;
+    animation-name: aubInDesktop;
+  }
+  @keyframes aubInDesktop {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* ── day mode ── */
+.app.app-day-mode .aub__inner {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.app.app-day-mode .aub__text { color: #0f172a; }
+.app.app-day-mode .aub__dot { background: #0ea5e9; box-shadow: 0 0 8px rgba(14, 165, 233, 0.5); }
+.app.app-day-mode .aub__action {
+  background: #101014;
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #fbfbfd;
+}
+.app.app-day-mode .aub__action:hover { background: #26262c; }
+.app.app-day-mode .aub__close { color: #64748b; }
+.app.app-day-mode .aub__close:hover { color: #0f172a; background: rgba(15, 23, 42, 0.06); }

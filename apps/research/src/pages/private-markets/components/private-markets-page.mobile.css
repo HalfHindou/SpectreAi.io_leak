@@ -1,0 +1,1549 @@
+/**
+ * Private Markets — mobile.
+ *
+ * Two layers:
+ *   1. The detail bottom-sheet (<= 900px) — shared by the deal feed and the
+ *      pre-IPO roster via .pm-profile-panel. Unchanged shape.
+ *   2. The phone pass (<= 768px), scoped under `.pm-page.pm-mobile` — the class
+ *      the page sets from the isMobile prop, so this is JSX-gated, not a bare
+ *      media query. Follows mobile-design-system.md §L/§M and mobile-crypto-ux:
+ *      content on void, rows not cards, 11px uppercase labels, system-font
+ *      tabular numbers, ghost-capsule pills, blur <= 8px, 44px targets.
+ *
+ * 🪤 The sub-tabs (pre-ipo, spotlight, compare, how-to-buy, accelerators) are
+ * LAZY chunks: their own stylesheets land after this one and win every
+ * same-specificity tie. Every override below carries the `.pm-mobile` root so
+ * it outranks them regardless of load order.
+ *
+ * 🪤 app-store-ready.css gives every <a>/<button> `min-height: 38px` on mobile.
+ * Inside a height-capped flex column (the coverage panels, the hero tweet
+ * rail) that min-height REPLACES the `min-content` floor flex items normally
+ * have, so tweet anchors shrink to 38px and their text collapses to 0px —
+ * the "overlapping tweets" on the spotlight. `flex-shrink: 0` on those lists
+ * is the fix; the rows scroll instead of crushing.
+ */
+
+/* Hide drag handle on desktop (only used in mobile bottom-sheet). */
+.pm-profile-handle { display: none; }
+/* Backdrop only renders on mobile — fully hidden by default. */
+.pm-profile-backdrop { display: none; }
+
+@media (max-width: 900px) {
+  .pm-body-with-profile {
+    grid-template-columns: 1fr;
+  }
+
+  /* ── Backdrop scrim ───────────────────────────────────────────── */
+  .pm-profile-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 999990;
+    background: rgba(0, 0, 0, 0.65);
+    -webkit-tap-highlight-color: transparent;
+    animation: pmBackdropFade 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* ── Bottom sheet — matches mission-control-sheet pattern ────── */
+  .pm-profile-panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    z-index: 999991;
+    max-height: 92dvh;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(
+      180deg,
+      rgba(16, 16, 18, 0.985) 0%,
+      rgba(9, 9, 11, 0.995) 100%
+    );
+    backdrop-filter: blur(8px) saturate(150%);
+    -webkit-backdrop-filter: blur(8px) saturate(150%);
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: none;
+    box-shadow:
+      0 -8px 40px rgba(0, 0, 0, 0.5),
+      0 -2px 10px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    animation: pmSheetUp 320ms cubic-bezier(0.32, 0.72, 0, 1);
+    overscroll-behavior: contain;
+  }
+
+  /* The inner glass-card scrolls; rounded corners come from the panel above. */
+  .pm-profile {
+    border-radius: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: 0 var(--sp-3)
+      calc(env(safe-area-inset-bottom, 0px) + var(--m-bottom-nav-h, 76px) + 16px);
+    animation: none;
+  }
+
+  /* Drag handle at the top of the sheet. */
+  .pm-profile-handle {
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.20);
+    margin: 8px auto 12px;
+    flex-shrink: 0;
+  }
+
+  /* Close button stays absolute but sits clear of the handle. */
+  .pm-profile-close {
+    top: var(--sp-2);
+    right: var(--sp-2);
+  }
+
+  @keyframes pmSheetUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  @keyframes pmBackdropFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Day-mode overrides for the sheet chrome. */
+  .app.app-day-mode .pm-profile-backdrop {
+    background: rgba(0, 0, 0, 0.35);
+  }
+  .app.app-day-mode .pm-profile-panel {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(248, 249, 250, 0.99) 100%
+    );
+    border-color: rgba(0, 0, 0, 0.06);
+    box-shadow:
+      0 -8px 40px rgba(0, 0, 0, 0.12),
+      0 -2px 10px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+  .app.app-day-mode .pm-profile-handle {
+    background: rgba(0, 0, 0, 0.15);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pm-profile-panel,
+    .pm-profile-backdrop {
+      animation: none;
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PHONE PASS — .pm-page.pm-mobile
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── Scaffold ──────────────────────────────────────────────────────── */
+  .pm-page.pm-mobile {
+    max-width: 100% !important;
+    padding: calc(var(--m-header-h, 52px) + env(safe-area-inset-top, 0px) + 12px) 0
+      calc(var(--m-bottom-nav-h, 76px) + env(safe-area-inset-bottom, 0px) + 24px) !important;
+    overflow-x: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  }
+
+  /* Every number on the phone: system sans, tabular figures. */
+  .pm-mobile .mono,
+  .pm-mobile .pm-stat-value,
+  .pm-mobile .pm-deal-amount,
+  .pm-mobile .pm-deal-val,
+  .pm-mobile .pm-deal-round-badge,
+  .pm-mobile .pm-profile-stat-value,
+  .pm-mobile .pi-card-val,
+  .pm-mobile .pi-card-mult,
+  .pm-mobile .pi-hero-stat-value,
+  .pm-mobile .pi-hero-price,
+  .pm-mobile .pi-hero-chg,
+  .pm-mobile .pi-chart-sym,
+  .pm-mobile .pi-profile-stat-value,
+  .pm-mobile .pi-profile-quote-price,
+  .pm-mobile .pi-profile-quote-chg,
+  .pm-mobile .pi-pred-prob,
+  .pm-mobile .cs-stats dd,
+  .pm-mobile .cs-rounds td,
+  .pm-mobile .pmc__table td,
+  .pm-mobile .pm-accel-source-badge,
+  .pm-mobile .pm-accel-crypto-pill {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif !important;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Header → hero + 2-col stat grid ───────────────────────────────── */
+  .pm-mobile .pm-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 0 16px 14px;
+    margin: 0;
+    border-bottom: none;
+  }
+  .pm-mobile .pm-header-eyebrow { margin-bottom: 8px; }
+  .pm-mobile .pm-header-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+    margin: 0 0 6px;
+    background: none;
+    -webkit-text-fill-color: #f5f5f7;
+    color: #f5f5f7;
+  }
+  .pm-mobile .pm-header-sub {
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: rgba(245, 245, 247, 0.45);
+    max-width: none;
+  }
+  .pm-mobile .pm-header-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+    /* The desktop stat strip is a glass box; on the phone the tinted stat
+       tiles ARE the surface, so the wrapper dissolves. */
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .pm-mobile .pm-stat {
+    min-width: 0;
+    gap: 4px;
+    justify-content: center;
+    padding: 12px 14px;
+    min-height: 68px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+  }
+  .pm-mobile .pm-stat .caption {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(245, 245, 247, 0.35);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pm-mobile .pm-stat-value,
+  .pm-mobile .pm-stat-value.mono {
+    font-size: 1.375rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pm-mobile .pm-refresh {
+    grid-column: 1 / -1;
+    align-self: stretch;
+    min-height: 44px;
+    padding: 0 16px;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 22px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: rgba(245, 245, 247, 0.7);
+    box-shadow: none;
+    transform: none !important;
+  }
+
+  /* ── Tab bar → ghost-capsule rail (L4) ─────────────────────────────── */
+  .pm-mobile .pm-tabs {
+    width: auto;
+    max-width: none;
+    margin: 0 0 6px;
+    padding: 2px 16px 10px;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+  }
+  .pm-mobile .pm-tabs::-webkit-scrollbar { display: none; }
+  .pm-mobile .pm-tab {
+    flex-shrink: 0;
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 20px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: rgba(245, 245, 247, 0.35);
+    background: transparent;
+    border: 0.5px solid transparent;
+    box-shadow: none;
+    white-space: nowrap;
+  }
+  .pm-mobile .pm-tab-active {
+    color: #f5f5f7;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 12px rgba(245, 245, 247, 0.06), inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* ── Filter bar → void, 2x2 selects at 44px ────────────────────────── */
+  .pm-mobile .pm-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    margin: 0 0 4px;
+    padding: 2px 16px 12px;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    position: relative;
+    z-index: 50;
+    transform: none !important;
+  }
+  .pm-mobile .pm-filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    position: relative;
+  }
+  .pm-mobile .pm-filter { min-width: 0; gap: 4px; }
+  .pm-mobile .pm-filter-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .pm-mobile .pm-select { position: relative; }
+  /* (0,4,0): the global touch rule is `button:not(.x *):not(.y *)` = (0,3,1)
+     and would otherwise pin the trigger at 38px. */
+  .pm-page.pm-mobile .pm-select .pm-select-trigger {
+    min-height: 44px;
+    padding: 0 32px 0 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  .pm-mobile .pm-select-menu {
+    left: 0;
+    right: 0;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    max-height: 260px;
+    border-radius: 12px;
+    backdrop-filter: blur(8px) saturate(150%);
+    -webkit-backdrop-filter: blur(8px) saturate(150%);
+    z-index: 60;
+  }
+  .pm-mobile .pm-select-option { min-height: 44px; }
+
+  /* ── Feeds → rows on void ──────────────────────────────────────────── */
+  .pm-mobile .pm-body { display: block; }
+  .pm-mobile .pm-feed { min-width: 0; }
+  .pm-mobile .pm-feed-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* Deal row (two lines, ~64px):
+       [logo]  Company           SERIES C          $550M
+               SECTOR                             @ $3.2B
+               led by a16z                TECHCRUNCH · 23h   */
+  .pm-mobile .pm-deal-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "logo company badge amount"
+      "logo lead    lead  footer";
+    column-gap: 10px;
+    row-gap: 2px;
+    align-items: center;
+    min-height: 64px;
+    padding: 10px 16px;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    animation: none;
+    transform: none !important;
+    user-select: none;
+  }
+  .pm-mobile .pm-deal-card::after {
+    content: '';
+    position: absolute;
+    left: 62px;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .pm-mobile .pm-feed-grid > .pm-deal-card:last-child::after { display: none; }
+  .pm-mobile .pm-deal-card:active { background: rgba(255, 255, 255, 0.03) !important; }
+  .pm-mobile .pm-deal-card-active { background: rgba(255, 255, 255, 0.03) !important; }
+  .pm-mobile .pm-deal-top { display: contents; }
+  .pm-mobile .pm-deal-logo {
+    grid-area: logo;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    box-shadow: none;
+  }
+  .pm-mobile .pm-deal-logo-fallback { font-size: 1rem; }
+  .pm-mobile .pm-deal-logo .pm-logo__mono { font-size: 0.9375rem; }
+  .pm-mobile .pm-deal-company { grid-area: company; min-width: 0; }
+  .pm-mobile .pm-deal-name {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+    margin: 0;
+  }
+  .pm-mobile .pm-deal-sector {
+    font-size: 11px;
+    line-height: 1.3;
+    letter-spacing: 0.04em;
+    color: rgba(245, 245, 247, 0.4);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pm-mobile .pm-deal-round-badge {
+    grid-area: badge;
+    justify-self: end;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 3px 6px;
+    letter-spacing: 0.04em;
+  }
+  .pm-mobile .pm-deal-amount-row {
+    grid-area: amount;
+    justify-self: end;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-wrap: nowrap;
+    gap: 1px;
+  }
+  .pm-mobile .pm-deal-amount,
+  .pm-mobile .pm-deal-amount.mono {
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  .pm-mobile .pm-deal-val,
+  .pm-mobile .pm-deal-val.mono {
+    font-size: 11px;
+    color: rgba(245, 245, 247, 0.45);
+    white-space: nowrap;
+  }
+  .pm-mobile .pm-deal-headline { display: none; }
+  .pm-mobile .pm-deal-lead {
+    grid-area: lead;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    min-height: 16px;
+  }
+  .pm-mobile .pm-deal-lead-label {
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: rgba(245, 245, 247, 0.3);
+  }
+  .pm-mobile .pm-deal-lead-name {
+    font-size: 12px;
+    color: rgba(245, 245, 247, 0.55);
+  }
+  .pm-mobile .pm-deal-footer {
+    grid-area: footer;
+    justify-self: end;
+    justify-content: flex-end;
+    gap: 6px;
+    padding: 0;
+    border: none;
+    min-width: 0;
+    line-height: 1.2;
+  }
+  .pm-mobile .pm-deal-source {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: rgba(245, 245, 247, 0.35);
+    white-space: nowrap;
+  }
+  .pm-mobile .pm-deal-date {
+    font-size: 11px;
+    color: rgba(245, 245, 247, 0.4);
+    white-space: nowrap;
+  }
+  .pm-mobile .pm-deal-date::before {
+    content: '·';
+    margin-right: 6px;
+    color: rgba(245, 245, 247, 0.2);
+  }
+
+  /* Skeleton rows keep a stacked shape (their children are not the row's). */
+  .pm-mobile .pm-skel-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px;
+    min-height: 64px;
+  }
+  .pm-mobile .pm-skel-card .pm-deal-top { display: flex; align-items: center; }
+  .pm-mobile .pm-skel-card .pm-skel-line-xl { display: none; }
+  .pm-mobile .pm-skel-card .pm-deal-footer { justify-content: space-between; padding-left: 46px; }
+  .pm-mobile .pm-feed-sentinel { height: 1px; }
+
+  /* Empty / error state */
+  .pm-mobile .pm-empty {
+    padding: 36px 16px;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .pm-mobile .pm-empty .display-sm { font-size: 1.125rem; }
+  .pm-mobile .pm-empty-message { font-size: 0.8125rem; }
+
+  /* Bottom-sheet chrome: 44px close, tabular stats. */
+  .pm-mobile .pm-profile-close {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .pm-mobile .pm-profile-name,
+  .pm-mobile .pi-profile-name { font-size: 1.375rem; }
+  .pm-mobile .pm-profile-stat-row,
+  .pm-mobile .pi-profile-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    border: none;
+    padding: 0;
+  }
+  .pm-mobile .pm-profile-stat,
+  .pm-mobile .pi-profile-stat {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    padding: 10px 12px;
+    min-width: 0;
+  }
+  .pm-mobile .pm-profile-stat .caption,
+  .pm-mobile .pi-profile-stat .caption {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .pm-mobile .pm-profile-stat-value,
+  .pm-mobile .pm-profile-stat-value.mono,
+  .pm-mobile .pi-profile-stat-value,
+  .pm-mobile .pi-profile-stat-value.mono { font-size: 1.125rem; font-weight: 700; }
+  .pm-mobile .pm-profile-source-link { min-height: 44px; }
+  /* Same flex-shrink trap as the panels, inside the sheet's news rail. */
+  .pm-mobile .pi-profile-tweets > * { flex-shrink: 0; }
+
+  /* ── Pre-IPO tab ───────────────────────────────────────────────────── */
+  .pm-mobile .pi-tab { gap: 6px; }
+
+  /* Hero: content floats on void, banner/scrim/glow gone (no gradient hero). */
+  .pm-mobile .pi-hero {
+    padding: 4px 16px 16px;
+    gap: 16px;
+    overflow: visible;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .pm-mobile .pi-hero-banner,
+  .pm-mobile .pi-hero-scrim,
+  .pm-mobile .pi-hero-glow { display: none; }
+  .pm-mobile .pi-hero-cols { grid-template-columns: 1fr; gap: 16px; }
+  .pm-mobile .pi-hero-main { gap: 12px; }
+  .pm-mobile .pi-hero-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: rgba(245, 245, 247, 0.4);
+  }
+  .pm-mobile .pi-hero-brand { gap: 12px; }
+  .pm-mobile .pi-logo-hero { width: 48px; height: 48px; border-radius: 12px; }
+  .pm-mobile .pi-logo-hero .pm-logo__mono { font-size: 1.25rem; }
+  .pm-mobile .pi-hero-title {
+    font-size: 1.75rem;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+  }
+  .pm-mobile .pi-hero-sub {
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: rgba(245, 245, 247, 0.45);
+  }
+  .pm-mobile .pi-hero-ticker {
+    flex-wrap: wrap;
+    row-gap: 6px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    max-width: 100%;
+  }
+  .pm-mobile .pi-hero-quote { padding-right: 0; border-right: none; }
+  .pm-mobile .pi-hero-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .pm-mobile .pi-hero-stat {
+    min-width: 0;
+    padding: 12px 14px;
+    min-height: 64px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+  }
+  .pm-mobile .pi-hero-stat .caption {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(245, 245, 247, 0.35);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pm-mobile .pi-hero-stat-value,
+  .pm-mobile .pi-hero-stat-value.mono {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pm-mobile .pi-hero-backers { min-width: 0; }
+  .pm-mobile .pi-hero-backers-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .pm-mobile .pi-hero-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+    margin: 0 -16px;
+    padding: 2px 16px;
+  }
+  .pm-mobile .pi-hero-chips::-webkit-scrollbar { display: none; }
+  .pm-mobile .pi-chip { flex-shrink: 0; min-height: 32px; display: inline-flex; align-items: center; }
+  .pm-mobile .pi-hero-cta {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+    font-weight: 600;
+    transform: none !important;
+  }
+
+  /* Live X rail: a labelled section, tweets as hairline rows. */
+  .pm-mobile .pi-hero-feed {
+    padding: 12px 0 0;
+    background: transparent !important;
+    border: none !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .pm-mobile .pi-hero-feed-head { padding: 0 0 4px; }
+  .pm-mobile .pi-hero-feed-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .pm-mobile .pi-hero-feed-src { font-size: 10px; }
+  .pm-mobile .pi-hero-feed-scroll {
+    max-height: 380px;
+    gap: 0;
+    padding: 0;
+    overscroll-behavior: contain;
+  }
+  .pm-mobile .pi-hero-feed-scroll > *,
+  .pm-mobile .pi-panel-body > * { flex-shrink: 0; }
+  .pm-mobile .pi-tweet {
+    padding: 12px 0;
+    gap: 6px;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .pm-mobile .pi-tweet:last-child { border-bottom: none !important; }
+  .pm-mobile .pi-tweet-text { font-size: 0.8125rem; -webkit-line-clamp: 4; }
+
+  /* Live chart: 2-row toolbar (§D) — symbol row, then a timeframe rail. */
+  .pm-mobile .pi-chart {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .pm-mobile .pi-chart-head {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 0;
+    border-bottom: none;
+  }
+  .pm-mobile .pi-chart-title { flex: 1 1 100%; }
+  .pm-mobile .pi-chart-src { display: none; }
+  .pm-mobile .pi-chart-tfs {
+    flex: 1 1 100%;
+    display: flex;
+    gap: 4px;
+  }
+  .pm-mobile .pi-chart-tf {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 36px;
+    padding: 0 6px;
+    font-size: 12px;
+    border-radius: 10px;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .pm-mobile .pi-chart-tf-active {
+    color: #f5f5f7;
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+  }
+  .pm-mobile .pi-chart-frame {
+    height: 260px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+  }
+  .pm-mobile .pi-hero-chart-wrap { margin-top: 4px; }
+
+  /* Live coverage: stacked panels, 11px labels. */
+  .pm-mobile .pi-coverage { gap: 8px; padding: 8px 16px 0; }
+  .pm-mobile .pi-coverage-head { gap: 4px 8px; }
+  .pm-mobile .pi-coverage-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .pm-mobile .pi-coverage-sub { font-size: 11px; flex-basis: 100%; }
+  .pm-mobile .pi-coverage-grid { grid-template-columns: 1fr; gap: 8px; }
+  .pm-mobile .pi-coverage-grid > .pi-panel-news { grid-column: auto; }
+  .pm-mobile .pi-panel {
+    max-height: 380px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transform: none !important;
+  }
+  .pm-mobile .pi-panel-head { padding: 12px 14px 8px; border-bottom: none; }
+  .pm-mobile .pi-panel-title { font-size: 0.875rem; }
+  .pm-mobile .pi-panel-body { padding: 0 14px 12px; gap: 0; }
+  .pm-mobile .pi-panel-body .pi-tweet { padding: 10px 0; }
+  .pm-mobile .pi-news-row { padding: 2px 0 6px; }
+  .pm-mobile .pi-news-head { min-height: 44px; }
+  .pm-mobile .pi-news-headline { font-size: 0.875rem; font-weight: 600; }
+  .pm-mobile .pi-pred-card { padding: 10px 0; }
+  .pm-mobile .pi-pred-q { font-size: 0.875rem; }
+
+  /* Toolbar → void: 3 stats, chip rail, search + sort at 44px. */
+  .pm-mobile .pi-toolbar {
+    flex-direction: column;
+    /* 🪤 Desktop sets flex-wrap: wrap. A WRAPPING column container sizes each
+       line to its widest item's intrinsic width, so the chip rail (944px of
+       chips) blew the whole toolbar past the viewport. Single line only. */
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 10px;
+    padding: 8px 16px 4px;
+    position: relative;
+    z-index: 50;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transform: none !important;
+  }
+  .pm-mobile .pi-toolbar-stats,
+  .pm-mobile .pm-accel-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .pm-mobile .pi-toolbar-stats .pm-stat-value,
+  .pm-mobile .pi-toolbar-stats .pm-stat-value.mono,
+  .pm-mobile .pm-accel-stats .pm-stat-value,
+  .pm-mobile .pm-accel-stats .pm-stat-value.mono { font-size: 1.125rem; }
+  .pm-mobile .pi-toolbar-controls {
+    flex-direction: column;
+    flex-wrap: nowrap; /* same wrapping-column trap as .pi-toolbar */
+    align-items: stretch;
+    gap: 8px;
+    justify-content: flex-start;
+    min-width: 0;
+  }
+  .pm-mobile .pi-sector-chips {
+    min-width: 0;
+    width: auto;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+    margin: 0 -16px;
+    padding: 2px 16px;
+    gap: 6px;
+  }
+  .pm-mobile .pi-sector-chips::-webkit-scrollbar { display: none; }
+  .pm-mobile .pi-chip-btn {
+    flex-shrink: 0;
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: 18px;
+    border-color: transparent;
+    color: rgba(245, 245, 247, 0.35);
+    font-size: 12px;
+  }
+  .pm-mobile .pi-chip-btn-active {
+    color: #f5f5f7;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 12px rgba(245, 245, 247, 0.06), inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+  }
+  .pm-mobile .pi-toolbar-right {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    width: 100%;
+  }
+  /* Specificity note: app-store-ready.css styles `label:not(...)` at (0,2,1)
+     and `input[type="text"]:not(...)` at (0,3,1); these carry the toolbar
+     ancestor so the search sits at 44px instead of 60px. */
+  .pm-mobile .pi-toolbar .pi-search {
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 0 0 12px;
+    margin: 0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+  }
+  .pm-mobile .pi-toolbar .pi-search input[type="text"] {
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    padding: 0 10px 0 8px;
+    border-radius: 0;
+    font-size: 16px;
+  }
+  .pm-mobile .pi-sort-select { min-width: 132px; }
+  .pm-mobile .pi-asof {
+    padding: 0 16px;
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.45;
+    color: rgba(245, 245, 247, 0.35);
+  }
+
+  /* Roster row:
+       [logo]  OpenAI                            $300B  25×
+               IPO RUMORED  Series F · 4mo · SoftBank  [→]   */
+  .pm-mobile .pi-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding-top: 4px;
+  }
+  .pm-mobile .pi-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "logo id   val"
+      "logo foot pill";
+    column-gap: 10px;
+    row-gap: 4px;
+    align-items: center;
+    min-height: 64px;
+    padding: 10px 56px 10px 16px;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    animation: none;
+    transform: none !important;
+    contain-intrinsic-size: auto 68px;
+  }
+  .pm-mobile .pi-card::after {
+    content: '';
+    position: absolute;
+    left: 62px;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .pm-mobile .pi-grid > .pi-card:last-child::after { display: none; }
+  .pm-mobile .pi-card:active,
+  .pm-mobile .pi-card-active { background: rgba(255, 255, 255, 0.03) !important; }
+  .pm-mobile .pi-card-live::after { background: rgba(16, 185, 129, 0.18); }
+  .pm-mobile .pi-card-top { display: contents; }
+  .pm-mobile .pi-card .pi-logo-md {
+    grid-area: logo;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+  .pm-mobile .pi-card .pi-logo-md .pm-logo__mono { font-size: 0.9375rem; }
+  .pm-mobile .pi-card-id { grid-area: id; min-width: 0; }
+  .pm-mobile .pi-card-name {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+    margin: 0;
+  }
+  .pm-mobile .pi-card-sector {
+    font-size: 11px;
+    line-height: 1.3;
+    letter-spacing: 0.04em;
+    color: rgba(245, 245, 247, 0.4);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pm-mobile .pi-card .pi-status-pill {
+    grid-area: pill;
+    justify-self: end;
+    align-self: center;
+    font-size: 10px;
+    line-height: 1;
+    padding: 3px 6px;
+    white-space: nowrap;
+  }
+  .pm-mobile .pi-card-val-row {
+    grid-area: val;
+    justify-self: end;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .pm-mobile .pi-card-val,
+  .pm-mobile .pi-card-val.mono {
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  .pm-mobile .pi-card-mult {
+    font-size: 11px;
+    padding: 0;
+    background: transparent;
+    border: none;
+  }
+  .pm-mobile .pi-card-spark-wrap { display: none; }
+  .pm-mobile .pi-card-foot {
+    grid-area: foot;
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 0;
+    border: none;
+    min-width: 0;
+    line-height: 1.2;
+  }
+  .pm-mobile .pi-card-round { font-size: 11px; color: rgba(245, 245, 247, 0.55); flex-shrink: 0; }
+  .pm-mobile .pi-card-investors {
+    font-size: 11px;
+    max-width: none;
+    text-align: left;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .pm-mobile .pi-card-investors::before {
+    content: '·';
+    margin-right: 6px;
+    color: rgba(245, 245, 247, 0.2);
+  }
+  /* The "Full page" link becomes the row's trailing chevron: 44px target,
+     icon only (the aria-label carries the words). */
+  .pm-mobile .pi-card-open {
+    position: absolute !important;
+    right: 8px;
+    bottom: auto;
+    top: 50%;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    margin: -22px 0 0;
+    padding: 0;
+    opacity: 1 !important;
+    transform: none !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0;
+    line-height: 0;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .pm-mobile .pi-card-open svg { width: 14px; height: 14px; }
+  .pm-mobile .pi-card-open:active { background: rgba(255, 255, 255, 0.06); color: #f5f5f7; }
+  /* Skeleton roster keeps a stacked shape. */
+  .pm-mobile .pi-skel-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px;
+  }
+  .pm-mobile .pi-skel-card .pi-card-top { display: flex; align-items: center; }
+  .pm-mobile .pi-skel-card .pi-skel-line-xl { display: none; }
+
+  /* ── Company spotlight (tab + /private-markets/:slug) ─────────────── */
+  .pm-mobile .cs-page { gap: 8px; }
+  .pm-mobile .cs-crumb { padding: 0 16px; }
+  .pm-mobile .cs-crumb-back { min-height: 44px; }
+  .pm-mobile .cs-head,
+  .pm-mobile .cs-section,
+  .pm-mobile .cs-missing {
+    padding: 8px 16px 16px;
+    overflow: visible;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transform: none !important;
+  }
+  .pm-mobile .cs-section {
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+    gap: 12px;
+  }
+  .pm-mobile .cs-head-main { gap: 12px; }
+  .pm-mobile .cs-eventtag { font-size: 10px; letter-spacing: 0.12em; padding: 4px 10px; }
+  .pm-mobile .cs-brand { gap: 12px; }
+  .pm-mobile .cs-name { font-size: 1.75rem; letter-spacing: -0.03em; }
+  .pm-mobile .cs-meta { font-size: 0.75rem; color: rgba(245, 245, 247, 0.45); }
+  .pm-mobile .cs-blurb { font-size: 0.875rem; line-height: 1.5; color: rgba(245, 245, 247, 0.6); }
+  .pm-mobile .cs-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 4px 0 0;
+    margin: 0;
+  }
+  .pm-mobile .cs-stats > div {
+    min-width: 0;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+  }
+  .pm-mobile .cs-stats dt {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(245, 245, 247, 0.35);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pm-mobile .cs-stats dd {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 4px 0 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pm-mobile .cs-stat-note {
+    font-size: 11px;
+    color: rgba(245, 245, 247, 0.4);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pm-mobile .cs-links {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+    margin: 0 -16px;
+    padding: 2px 16px;
+    gap: 8px;
+  }
+  .pm-mobile .cs-links::-webkit-scrollbar { display: none; }
+  .pm-mobile .cs-link { flex-shrink: 0; min-height: 40px; }
+  .pm-mobile .cs-timing { flex-shrink: 0; white-space: nowrap; }
+  .pm-mobile .cs-section-head { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .pm-mobile .cs-section-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .pm-mobile .cs-section-head h2 { font-size: 1.125rem; letter-spacing: -0.02em; }
+  .pm-mobile .cs-section-note { font-size: 11px; }
+  .pm-mobile .cs-rounds-wrap {
+    margin: 0 -16px;
+    padding: 0 16px;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+  }
+  .pm-mobile .cs-rounds { min-width: 460px; }
+  .pm-mobile .cs-rounds th { font-size: 10px; padding: 0 10px 8px; }
+  .pm-mobile .cs-rounds td { font-size: 0.8125rem; padding: 10px; }
+  .pm-mobile .cs-investors { gap: 6px; }
+  .pm-mobile .cs-investors li { min-height: 36px; font-size: 0.75rem; }
+  .pm-mobile .cs-rails { display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 0 16px; }
+  .pm-mobile .cs-rails > * { width: 100%; max-width: none; }
+  .pm-mobile .cs-rail-age { font-size: 11px; }
+  .pm-mobile .cs-market { padding: 10px 0; border-radius: 0; background: transparent; border: none; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+  .pm-mobile .cs-market:last-child { border-bottom: none; }
+  .pm-mobile .cs-market-q { font-size: 0.8125rem; }
+  .pm-mobile .cs-market-outcomes { gap: 10px; }
+  .pm-mobile .cs-provenance { padding: 0 16px; font-size: 11px; }
+  .pm-mobile .cs-missing { align-items: flex-start; text-align: left; padding-top: 24px; }
+
+  /* Compare (tab + embedded on the spotlight) */
+  .pm-mobile .pmc {
+    padding: 16px 16px 8px;
+    gap: 12px;
+    margin: 0;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transform: none !important;
+  }
+  .pm-mobile .pmc--embedded { border-top: 1px solid rgba(255, 255, 255, 0.05) !important; }
+  .pm-mobile .pmc__head { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .pm-mobile .pmc__head h3 { font-size: 1.125rem; letter-spacing: -0.02em; }
+  .pm-mobile .pmc__sub { font-size: 0.8125rem; }
+  .pm-mobile .pmc__axis { align-self: stretch; display: flex; }
+  .pm-mobile .pmc__seg { flex: 1 1 0; min-height: 40px; padding: 0 10px; font-size: 12px; }
+  .pm-mobile .pmc__picks { gap: 6px; }
+  .pm-mobile .pmc__chip { min-height: 40px; }
+  .pm-mobile .pmc__chip button { width: 28px; height: 28px; min-height: 0; }
+  .pm-mobile .pmc__search { flex: 1 1 100%; }
+  .pm-mobile .pmc__search input {
+    width: 100%;
+    min-height: 44px;
+    border-radius: 12px;
+    font-size: 16px;
+  }
+  .pm-mobile .pmc__results button { min-height: 44px; }
+  .pm-mobile .pmc__chart {
+    padding: 8px 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+  }
+  .pm-mobile .pmc__table-wrap {
+    margin: 0 -16px;
+    padding: 0 16px;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+  }
+  .pm-mobile .pmc__table { min-width: 520px; }
+  .pm-mobile .pmc__table th,
+  .pm-mobile .pmc__table td { padding: 10px 10px; font-size: 0.8125rem; }
+  .pm-mobile .pmc__shared h4 {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(245, 245, 247, 0.35);
+  }
+  .pm-mobile .pmc__shared ul { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pm-mobile .pmc__shared li { padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.02); border: none; }
+
+  /* How to buy (spotlight foot) */
+  .pm-mobile .htb {
+    padding: 16px 16px 8px;
+    gap: 12px;
+    background: transparent !important;
+    border: none !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transform: none !important;
+  }
+  .pm-mobile .htb__head h3 { font-size: 1.125rem; letter-spacing: -0.02em; }
+  .pm-mobile .htb__sub { font-size: 0.8125rem; }
+  .pm-mobile .htb__route { padding: 12px 14px; border-radius: 12px; background: rgba(255, 255, 255, 0.02); border: none; }
+  .pm-mobile .htb__route p { font-size: 0.8125rem; }
+  .pm-mobile .htb__tag { min-height: 28px; font-size: 10px; }
+  .pm-mobile .htb__tickers li,
+  .pm-mobile .htb__venues li { flex: 1 1 100%; padding: 10px 12px; }
+  .pm-mobile .htb__venues { grid-template-columns: 1fr; gap: 6px; }
+  .pm-mobile .htb__venues a { min-height: 44px; display: inline-flex; align-items: center; }
+  .pm-mobile .htb__disclaimer { font-size: 11px; }
+
+  /* ── Accelerators ─────────────────────────────────────────────────── */
+  .pm-mobile .pm-accel-section { gap: 6px; }
+  .pm-mobile .pm-accel-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 4px 16px 8px;
+    position: relative;
+    z-index: 50;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transform: none !important;
+  }
+  .pm-mobile .pm-accel-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "search select"
+      "toggle toggle";
+    gap: 8px;
+    align-items: stretch;
+    position: relative;
+  }
+  .pm-mobile .pm-accel-toggle {
+    grid-area: toggle;
+    align-self: start;
+    min-height: 44px;
+    padding: 0;
+    gap: 10px;
+    font-size: 0.8125rem;
+  }
+  .pm-mobile .pm-accel-toggle input[type="checkbox"] { width: 22px; height: 22px; border-radius: 6px; }
+  .pm-mobile .pm-accel-toggle input[type="checkbox"]:checked::after { left: 7px; top: 3px; width: 6px; height: 11px; }
+  .pm-mobile .pm-accel-select { grid-area: select; min-width: 132px; width: auto; }
+  .pm-mobile .pm-accel-search {
+    grid-area: search;
+    order: -1;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    font-size: 16px;
+  }
+
+  /* Startup row:
+       [logo]  Instinct                        YC · CRYPTO
+               Trade your instinct
+               Active · 5 ppl                          [↗]  */
+  .pm-mobile .pm-accel-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "identity badges"
+      "one      one"
+      "foot     foot";
+    column-gap: 8px;
+    row-gap: 2px;
+    align-items: center;
+    min-height: 64px;
+    padding: 10px 16px;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    animation: none;
+    transform: none !important;
+  }
+  .pm-mobile .pm-accel-card::after {
+    content: '';
+    position: absolute;
+    left: 62px;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .pm-mobile .pm-feed-grid > .pm-accel-card:last-child::after { display: none; }
+  .pm-mobile .pm-accel-card:active { background: rgba(255, 255, 255, 0.03) !important; }
+  .pm-mobile .pm-accel-badges { grid-area: badges; align-self: start; gap: 4px; }
+  .pm-mobile .pm-accel-source-badge,
+  .pm-mobile .pm-accel-crypto-pill { font-size: 9px; padding: 2px 7px; letter-spacing: 0.06em; }
+  .pm-mobile .pm-accel-identity { grid-area: identity; gap: 10px; min-width: 0; }
+  .pm-mobile .pm-accel-logo { width: 36px; height: 36px; border-radius: 10px; box-shadow: none; }
+  .pm-mobile .pm-accel-logo-fallback { font-size: 1rem; }
+  .pm-mobile .pm-accel-name {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+    margin: 0;
+  }
+  .pm-mobile .pm-accel-batch { font-size: 11px; line-height: 1.3; letter-spacing: 0.04em; color: rgba(245, 245, 247, 0.4); }
+  .pm-mobile .pm-accel-oneliner {
+    grid-area: one;
+    padding-left: 46px;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: rgba(245, 245, 247, 0.5);
+    -webkit-line-clamp: 1;
+  }
+  .pm-mobile .pm-accel-footer {
+    grid-area: foot;
+    padding: 0 0 0 46px;
+    border: none;
+    margin: 0;
+  }
+  .pm-mobile .pm-accel-chip { font-size: 10px; line-height: 1.2; padding: 2px 7px; background: transparent; }
+  .pm-mobile .pm-accel-oneliner { margin-top: 2px; }
+  .pm-mobile .pm-accel-link { width: 24px; height: 24px; }
+
+  /* ── Reduced motion ───────────────────────────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    .pm-mobile .pm-tab,
+    .pm-mobile .pi-chip-btn,
+    .pm-mobile .pm-deal-card,
+    .pm-mobile .pi-card,
+    .pm-mobile .pm-accel-card { transition: none !important; animation: none !important; }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DAY MODE — paired: global `.app.app-day-mode` + the page's own `pm-day`
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .app.app-day-mode .pm-mobile .pm-header-title,
+  .pm-mobile.pm-day .pm-header-title { -webkit-text-fill-color: #0f172a; color: #0f172a; }
+
+  .app.app-day-mode .pm-mobile .pm-header-sub,
+  .pm-mobile.pm-day .pm-header-sub,
+  .app.app-day-mode .pm-mobile .pi-hero-sub,
+  .pm-mobile.pm-day .pi-hero-sub,
+  .app.app-day-mode .pm-mobile .cs-meta,
+  .pm-mobile.pm-day .cs-meta,
+  .app.app-day-mode .pm-mobile .pi-asof,
+  .pm-mobile.pm-day .pi-asof { color: #64748b; }
+
+  .app.app-day-mode .pm-mobile .pm-stat,
+  .pm-mobile.pm-day .pm-stat,
+  .app.app-day-mode .pm-mobile .pi-hero-stat,
+  .pm-mobile.pm-day .pi-hero-stat,
+  .app.app-day-mode .pm-mobile .cs-stats > div,
+  .pm-mobile.pm-day .cs-stats > div,
+  .app.app-day-mode .pm-mobile .pm-profile-stat,
+  .pm-mobile.pm-day .pm-profile-stat,
+  .app.app-day-mode .pm-mobile .pi-profile-stat,
+  .pm-mobile.pm-day .pi-profile-stat,
+  .app.app-day-mode .pm-mobile .pi-panel,
+  .pm-mobile.pm-day .pi-panel,
+  .app.app-day-mode .pm-mobile .pmc__shared li,
+  .pm-mobile.pm-day .pmc__shared li,
+  .app.app-day-mode .pm-mobile .htb__route,
+  .pm-mobile.pm-day .htb__route { background: rgba(15, 23, 42, 0.035) !important; }
+
+  .app.app-day-mode .pm-mobile .pm-stat .caption,
+  .pm-mobile.pm-day .pm-stat .caption,
+  .app.app-day-mode .pm-mobile .pi-hero-stat .caption,
+  .pm-mobile.pm-day .pi-hero-stat .caption,
+  .app.app-day-mode .pm-mobile .cs-stats dt,
+  .pm-mobile.pm-day .cs-stats dt,
+  .app.app-day-mode .pm-mobile .pm-profile-stat .caption,
+  .pm-mobile.pm-day .pm-profile-stat .caption,
+  .app.app-day-mode .pm-mobile .pi-profile-stat .caption,
+  .pm-mobile.pm-day .pi-profile-stat .caption,
+  .app.app-day-mode .pm-mobile .pm-filter-label,
+  .pm-mobile.pm-day .pm-filter-label,
+  .app.app-day-mode .pm-mobile .pi-hero-backers-label,
+  .pm-mobile.pm-day .pi-hero-backers-label,
+  .app.app-day-mode .pm-mobile .pi-hero-feed-title,
+  .pm-mobile.pm-day .pi-hero-feed-title,
+  .app.app-day-mode .pm-mobile .pi-coverage-title,
+  .pm-mobile.pm-day .pi-coverage-title,
+  .app.app-day-mode .pm-mobile .cs-section-eyebrow,
+  .pm-mobile.pm-day .cs-section-eyebrow,
+  .app.app-day-mode .pm-mobile .pmc__shared h4,
+  .pm-mobile.pm-day .pmc__shared h4,
+  .app.app-day-mode .pm-mobile .pi-hero-eyebrow,
+  .pm-mobile.pm-day .pi-hero-eyebrow { color: rgba(15, 23, 42, 0.45); }
+
+  .app.app-day-mode .pm-mobile .pm-tab,
+  .pm-mobile.pm-day .pm-tab,
+  .app.app-day-mode .pm-mobile .pi-chip-btn,
+  .pm-mobile.pm-day .pi-chip-btn,
+  .app.app-day-mode .pm-mobile .pi-chart-tf,
+  .pm-mobile.pm-day .pi-chart-tf { color: rgba(15, 23, 42, 0.45); }
+  .app.app-day-mode .pm-mobile .pm-tab-active,
+  .pm-mobile.pm-day .pm-tab-active,
+  .app.app-day-mode .pm-mobile .pi-chip-btn-active,
+  .pm-mobile.pm-day .pi-chip-btn-active,
+  .app.app-day-mode .pm-mobile .pi-chart-tf-active,
+  .pm-mobile.pm-day .pi-chart-tf-active {
+    color: #0f172a;
+    background: rgba(15, 23, 42, 0.06);
+    border-color: rgba(15, 23, 42, 0.1);
+    box-shadow: none;
+  }
+
+  .app.app-day-mode .pm-mobile .pm-refresh,
+  .pm-mobile.pm-day .pm-refresh,
+  .app.app-day-mode .pm-mobile .pi-hero-cta,
+  .pm-mobile.pm-day .pi-hero-cta { color: #0f172a; border-color: rgba(15, 23, 42, 0.12); background: rgba(15, 23, 42, 0.04); }
+
+  .app.app-day-mode .pm-mobile .pm-select-trigger,
+  .pm-mobile.pm-day .pm-select-trigger,
+  .app.app-day-mode .pm-mobile .pi-search,
+  .pm-mobile.pm-day .pi-search,
+  .app.app-day-mode .pm-mobile .pm-accel-search,
+  .pm-mobile.pm-day .pm-accel-search { background: #ffffff; border-color: rgba(15, 23, 42, 0.12); }
+
+  .app.app-day-mode .pm-mobile .pm-deal-card::after,
+  .pm-mobile.pm-day .pm-deal-card::after,
+  .app.app-day-mode .pm-mobile .pi-card::after,
+  .pm-mobile.pm-day .pi-card::after,
+  .app.app-day-mode .pm-mobile .pm-accel-card::after,
+  .pm-mobile.pm-day .pm-accel-card::after { background: rgba(15, 23, 42, 0.08); }
+  .app.app-day-mode .pm-mobile .pm-deal-card:active,
+  .pm-mobile.pm-day .pm-deal-card:active,
+  .app.app-day-mode .pm-mobile .pm-deal-card-active,
+  .pm-mobile.pm-day .pm-deal-card-active,
+  .app.app-day-mode .pm-mobile .pi-card:active,
+  .pm-mobile.pm-day .pi-card:active,
+  .app.app-day-mode .pm-mobile .pi-card-active,
+  .pm-mobile.pm-day .pi-card-active,
+  .app.app-day-mode .pm-mobile .pm-accel-card:active,
+  .pm-mobile.pm-day .pm-accel-card:active { background: rgba(15, 23, 42, 0.04) !important; }
+
+  .app.app-day-mode .pm-mobile .pm-deal-sector,
+  .pm-mobile.pm-day .pm-deal-sector,
+  .app.app-day-mode .pm-mobile .pm-deal-val,
+  .pm-mobile.pm-day .pm-deal-val,
+  .app.app-day-mode .pm-mobile .pm-deal-lead-label,
+  .pm-mobile.pm-day .pm-deal-lead-label,
+  .app.app-day-mode .pm-mobile .pm-deal-lead-name,
+  .pm-mobile.pm-day .pm-deal-lead-name,
+  .app.app-day-mode .pm-mobile .pm-deal-source,
+  .pm-mobile.pm-day .pm-deal-source,
+  .app.app-day-mode .pm-mobile .pm-deal-date,
+  .pm-mobile.pm-day .pm-deal-date,
+  .app.app-day-mode .pm-mobile .pi-card-sector,
+  .pm-mobile.pm-day .pi-card-sector,
+  .app.app-day-mode .pm-mobile .pi-card-round,
+  .pm-mobile.pm-day .pi-card-round,
+  .app.app-day-mode .pm-mobile .pi-card-investors,
+  .pm-mobile.pm-day .pi-card-investors,
+  .app.app-day-mode .pm-mobile .pi-card-open,
+  .pm-mobile.pm-day .pi-card-open,
+  .app.app-day-mode .pm-mobile .pm-accel-batch,
+  .pm-mobile.pm-day .pm-accel-batch,
+  .app.app-day-mode .pm-mobile .pm-accel-oneliner,
+  .pm-mobile.pm-day .pm-accel-oneliner,
+  .app.app-day-mode .pm-mobile .cs-stat-note,
+  .pm-mobile.pm-day .cs-stat-note { color: #64748b; }
+  .app.app-day-mode .pm-mobile .pm-deal-date::before,
+  .pm-mobile.pm-day .pm-deal-date::before,
+  .app.app-day-mode .pm-mobile .pi-card-investors::before,
+  .pm-mobile.pm-day .pi-card-investors::before { color: rgba(15, 23, 42, 0.25); }
+
+  .app.app-day-mode .pm-mobile .pi-hero-feed,
+  .pm-mobile.pm-day .pi-hero-feed,
+  .app.app-day-mode .pm-mobile .cs-section,
+  .pm-mobile.pm-day .cs-section,
+  .app.app-day-mode .pm-mobile .pmc--embedded,
+  .pm-mobile.pm-day .pmc--embedded,
+  .app.app-day-mode .pm-mobile .htb,
+  .pm-mobile.pm-day .htb { border-top-color: rgba(15, 23, 42, 0.08) !important; }
+  .app.app-day-mode .pm-mobile .pi-tweet,
+  .pm-mobile.pm-day .pi-tweet,
+  .app.app-day-mode .pm-mobile .cs-market,
+  .pm-mobile.pm-day .cs-market { border-bottom-color: rgba(15, 23, 42, 0.08) !important; }
+  .app.app-day-mode .pm-mobile .pi-chart-frame,
+  .pm-mobile.pm-day .pi-chart-frame { border-color: rgba(15, 23, 42, 0.08); }
+}

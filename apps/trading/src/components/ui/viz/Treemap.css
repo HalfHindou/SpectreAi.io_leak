@@ -1,0 +1,132 @@
+/**
+ * Treemap.css — heatmap surface + per-cell hover lift + stagger-in.
+ */
+
+.tm {
+  position: relative;
+  background: var(--ob-surface-2);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+}
+
+.tm--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tm-empty-label {
+  color: var(--text-3);
+  font-family: var(--font-body);
+  font-size: var(--t-body);
+}
+
+.tm-cell {
+  position: absolute;
+  border: 1px solid var(--ob-surface-1);
+  cursor: pointer;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text-1);
+  border-radius: 0;
+  font-family: inherit;
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    border-color var(--dur-micro) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    z-index 0ms;
+  animation: tm-cell-in var(--dur-enter) var(--ease-out) backwards;
+}
+
+.tm-cell:hover {
+  z-index: 2;
+  transform: scale(1.04);
+  border-color: var(--glass-border-lit);
+  box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.8);
+}
+
+.tm-cell:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  z-index: 2;
+}
+
+.tm-label {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  pointer-events: none;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Heatmap labels live on COLOUR. The tile background is the per-token
+   accent (any hue — silver, purple, olive, green, red, ...) blended with
+   the diverging up/down channel, so any FIXED text colour will end up
+   invisible on at least one theme. We use the photo-caption pattern:
+   warm-white text on a multi-layer dark shadow (1px hard + soft blur)
+   so type stays crisp on EVERY tile colour without needing per-theme
+   logic. The +/- sign in the % string + the tile fill carry direction.
+
+   Why no per-up/down colour tint here: the tile is already up/down
+   coloured, and tinting the text toward the SAME hue (green on green,
+   coral on coral) is what made the previous pass unreadable. */
+.tm-symbol {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--t-label);
+  color: #ffffff;
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.55),
+    0 0 6px rgba(0, 0, 0, 0.50),
+    0 0 2px rgba(0, 0, 0, 0.65);
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tm-change {
+  /* Use the display sans (NOT --font-mono) and explicitly turn off the
+     slashed/dotted-zero stylistic sets the body inherits ('cv02','cv03',
+     'cv04','cv11' from index.css + 'zero' OpenType). Heatmap cells are
+     small + crowded — a crossed 0 reads as an 8 / Ø at this size. */
+  font-family: var(--font-display);
+  font-feature-settings: 'zero' 0, 'cv11' 0, 'cv02' 0, 'cv03' 0, 'cv04' 0;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-caption);
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.55),
+    0 0 6px rgba(0, 0, 0, 0.50),
+    0 0 2px rgba(0, 0, 0, 0.65);
+}
+
+/* No directional tint — pure warm-white reads cleanly on every
+   themed tile colour. .tm-change--up / --down still emit so the
+   class names stay stable for analytics + future polish. */
+.tm-change--up,
+.tm-change--down { color: #ffffff; }
+
+/* Tiny tiles — shrink + tighten so 40-55px-wide cells still surface
+   their symbol without clipping or breaking the grid. */
+.tm-cell--tiny { padding: 3px 4px; }
+.tm-cell--tiny .tm-symbol { font-size: var(--t-caption); }
+.tm-cell--tiny .tm-change { font-size: var(--t-micro); }
+
+@keyframes tm-cell-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-cell { animation: none; transition: none; }
+  .tm-cell:hover { transform: none; }
+}
+.app[data-reduced-motion="true"] .tm-cell { animation: none; transition: none; }
+.app[data-reduced-motion="true"] .tm-cell:hover { transform: none; }

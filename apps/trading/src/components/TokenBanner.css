@@ -1,0 +1,2067 @@
+/**
+ * TokenBanner - Wall Street terminal dense layout
+ * Two rows: identity + price | socials + stats + description
+ * Target height: ~90px expanded, ~45px collapsed
+ */
+
+/* TokenBanner surface — Obsidian & Lime baseline.
+   Plain glass card; the full P4 redesign rebuilds this with GlassPanel
+   variant="featured" + gradient-lime border + TokenMark3D + OdometerNumber.
+   For P1 we just consume the canonical tokens. */
+.token-banner {
+  /* Sized container so the row's compact-tf swap (below) reacts to the
+     banner's own width, not the viewport. The banner can be narrow
+     (~700-900px) at any viewport size because the page splits between
+     left/middle/right panels. */
+  container-type: inline-size;
+  container-name: token-banner;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 12px 20px;
+  /* Was --glass-fill alone (rgba(255,255,255,0.025)) - a translucent wash with
+     NO opaque base, so the banner was effectively the page substrate plus 2.5%
+     white and read as the weakest panel on the screen. It now sits on the same
+     raised tier as the chart and the tx table, with the white wash kept ON TOP
+     so the glass highlight survives. In light mode --ob-surface-2 resolves to
+     #ffffff, which is the correct light-mode answer (panels are white; the
+     substrate is the tinted one). */
+  /* Token wash - the diagonal tint that stops the panel reading as a flat
+     slab (the Research Zone hero's trick). Transparent by default and filled
+     in by the .token-coloring gate below: kept as a VARIABLE so the gate flips
+     one value instead of restating the whole background stack, which would
+     then drift from this one. */
+  --tb-wash: transparent;
+  background:
+    linear-gradient(105deg, var(--tb-wash) 0%, transparent 62%),
+    linear-gradient(180deg, var(--glass-fill) 0%, transparent 60%),
+    var(--ob-surface-2, #0E0F11);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    var(--shadow-2);
+  position: relative;
+  z-index: 100;
+  overflow: visible;
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+.token-banner:hover {
+  border-color: var(--glass-border-lit);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    var(--shadow-3);
+}
+
+.token-banner:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 20px 50px rgba(0, 0, 0, 0.7),
+    0 3px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Ensure content is above glow layers */
+.token-banner > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Token-colored ambient glow (only when Token Coloring setting is on) ── */
+.token-banner-glow,
+.token-banner-glow-secondary {
+  display: none;
+}
+
+/* Alphas are DELIBERATELY under the Research Zone hero's (0.15/0.05, see
+   research-zone-lite.css .rz-lite-hero-glow). Matching them 1:1 was too hot:
+   that hero is ~140px tall with 30px padding, this banner is ~90px at 12px -
+   the same alpha concentrates into roughly half the area and reads as a
+   coloured panel instead of an ambient lift. Anchored at the left edge so it
+   rises from behind the logo like the hero's does; NOT research's left:-5%,
+   because this banner is a rounded card with overflow:visible and a negative
+   offset would bleed the halo past the corner. */
+.token-coloring .token-banner-glow {
+  display: block;
+  position: absolute;
+  top: -40%;
+  left: 0;
+  width: 48%;
+  height: 160%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(var(--token-rgb, 245, 245, 247), 0.07) 0%,
+    rgba(var(--token-rgb, 245, 245, 247), 0.025) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(30px);
+  transition: opacity 0.6s ease;
+}
+
+/* Accent hairline along the bottom edge - the token-coloured line under the
+   Research Zone hero. Inset by the corner radius so it stops before the curve
+   instead of poking out of it. ::after because skins.css already owns
+   .token-banner::before. Deliberately STATIC: the research original pulses
+   opacity, but the token page spent a whole pass removing infinite animations
+   and one more is not worth the frame budget here. */
+.token-coloring .token-banner::after {
+  content: '';
+  position: absolute;
+  left: var(--r-lg);
+  right: var(--r-lg);
+  bottom: 0;
+  height: 1px;
+  border-radius: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(var(--token-rgb, 245, 245, 247), 0.14) 18%,
+    rgba(var(--token-rgb, 245, 245, 247), 0.30) 50%,
+    rgba(var(--token-rgb, 245, 245, 247), 0.14) 82%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* The gate only flips the wash; the stack itself lives on .token-banner.
+   Very low: the wash sits ON TOP of the glow (research's hero has no wash at
+   all), so anything higher double-tints the same corner and the panel starts
+   reading as a coloured card rather than a dark one that happens to be lit. */
+.token-coloring .token-banner {
+  --tb-wash: rgba(var(--token-rgb, 245, 245, 247), 0.022);
+}
+
+.token-coloring .token-banner-glow-secondary {
+  display: block;
+  position: absolute;
+  bottom: -30%;
+  right: 5%;
+  width: 40%;
+  height: 120%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(var(--token-rgb, 245, 245, 247), 0.03) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(40px);
+  transition: opacity 0.6s ease;
+}
+
+/* Hover: glow intensifies */
+.token-coloring .token-banner:hover .token-banner-glow {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(var(--token-rgb, 245, 245, 247), 0.10) 0%,
+    rgba(var(--token-rgb, 245, 245, 247), 0.035) 40%,
+    transparent 70%
+  );
+}
+
+.token-coloring .token-banner:hover .token-banner-glow-secondary {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(var(--token-rgb, 245, 245, 247), 0.05) 0%,
+    transparent 60%
+  );
+}
+
+/* Banner border tints toward token color on hover */
+.token-coloring .token-banner:hover {
+  border-color: rgba(var(--token-rgb, 245, 245, 247), 0.12);
+  box-shadow:
+    var(--shadow-panel),
+    0 0 40px rgba(var(--token-rgb, 245, 245, 247), 0.06),
+    inset 0 1px 0 rgba(var(--token-rgb, 245, 245, 247), 0.06);
+}
+
+body.theme-light .token-coloring .token-banner-glow,
+body.theme-light .token-coloring .token-banner-glow-secondary {
+  opacity: 0.5;
+}
+
+/* ── Toggle Button ── */
+.banner-toggle-btn {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  color: rgba(245, 245, 247, 0.60);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  z-index: 101;
+}
+
+.banner-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(245, 245, 247, 0.8);
+}
+
+.banner-toggle-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ========== ROW 1: Identity + CA + Explorer + Watchlist + Price + TF ==========
+   Identity sits on the left, the price-group anchors right via
+   margin-left:auto. The contract address + explorer link sit INLINE
+   next to the name (restored 2026-06-12 per Gleb - they were briefly
+   collapsed into a popover); below 480px they hide to protect the
+   price row. */
+.banner-row-1 {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 10px;
+  min-height: 34px;
+  padding-bottom: 7px;
+  min-width: 0;
+}
+
+/* Identity: logo + symbol + fullname inline */
+.banner-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* v2 Observatory: logo wrap hosts the orbit ring (FX2) via ::after.
+   We've removed `overflow: hidden` here and moved circular clipping onto
+   the inner <img> via border-radius so the orbit ring (which sits at
+   inset:-8px outside the wrap) is visible. */
+.token-logo-wrap {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  /* No overflow:hidden here — the ::after orbit ring sits at inset:-6px
+     and would get clipped. The inner .token-logo-clip handles image
+     clipping instead. */
+}
+
+/* Inner clip — circular bounding box for the raw <img>. overflow:hidden
+   guarantees any wide / oddly-padded PNG (SPECTRE wave mark, square
+   logos with bleed, off-centre marks) stays inside the circle. */
+.token-logo-clip {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.token-banner .token-logo {
+  width: 100%;
+  height: 100%;
+  /* contain (not cover): keeps the full mark visible inside the circle
+     rather than zoom-cropping it. Matches the GMGN / Bybit / Bloomberg
+     convention for token avatars. */
+  object-fit: contain;
+  display: block;
+  border-radius: 50%;
+}
+
+/* FX2 — hairline orbit ring (rotates on hover) */
+.token-logo-wrap::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-top-color: rgba(255, 255, 255, 0.35);  /* orbit notch — one quadrant brighter */
+  border-radius: 50%;
+  transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.token-logo-wrap:hover::after {
+  transform: rotate(360deg);
+  border-top-color: rgba(255, 255, 255, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .token-logo-wrap:hover::after { transform: none; }
+}
+
+.token-banner .token-symbol {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: #f5f5f7;
+  white-space: nowrap;
+}
+
+.token-banner .token-fullname {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.70);
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+/* CA: plain text, NO box. Geist SANS via --font-num-chip - NOT --font-mono,
+   which is Geist Mono (the slashed/"crossing" zero + terminal look the user
+   rejected). The whole page is set in Geist, so the sans address is the
+   matching modern look; weight + a hover-brighten carry it without any chip. */
+.banner-ca {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  font-family: var(--font-num-chip);
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.58);
+  letter-spacing: 0;
+  cursor: pointer;
+  transition: color 0.15s var(--ease-out);
+  user-select: none;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.banner-ca:hover {
+  color: rgba(245, 245, 247, 0.9);
+}
+
+/* Chain tag - network the token lives on, next to the CA */
+.banner-chain-tag {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 2px 8px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.62);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 9999px;
+  user-select: none;
+}
+
+.banner-ca svg {
+  width: 11px;
+  height: 11px;
+  opacity: 0.4;
+  transition: opacity 0.15s ease;
+}
+
+.banner-ca:hover svg {
+  opacity: 0.8;
+}
+
+/* Explorer link */
+.banner-explorer {
+  display: flex;
+  align-items: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.25;
+  transition: opacity 0.15s ease;
+  text-decoration: none;
+}
+
+.banner-explorer:hover {
+  opacity: 0.7;
+}
+
+.banner-explorer img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 3px;
+}
+
+.ca-btn.copy.copied {
+  color: #10b981;
+}
+
+.ca-btn.etherscan {
+  padding: 3px;
+  overflow: hidden;
+}
+
+.ca-btn.etherscan img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 2px;
+}
+
+/* Watchlist button */
+.banner-watchlist-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 0;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  transition: color 0.15s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.banner-watchlist-btn:hover {
+  color: rgba(245, 245, 247, 0.6);
+}
+
+.banner-watchlist-btn.active {
+  color: var(--bear, #EF4444);
+}
+
+.banner-watchlist-btn.active:hover {
+  color: var(--bear-bright, #F87171);
+}
+
+/* Alert bell button - matches watchlist btn style */
+.alert-button-wrap {
+  position: relative;
+  flex-shrink: 0;
+  z-index: 50;
+}
+
+.alert-bell-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 0;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  transition: color 0.15s ease;
+  padding: 0;
+  position: relative;
+}
+.alert-bell-btn:hover { color: rgba(245, 245, 247, 0.6); }
+.alert-bell-btn.has-alerts { color: var(--amber, #F59E0B); }
+.alert-bell-btn.has-alerts:hover { color: #FBBF24; }
+
+.alert-badge {
+  position: absolute;
+  top: 2px;
+  right: 1px;
+  width: 14px;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--amber, #F59E0B);
+  color: #000;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* Alert dropdown - Wall Street terminal meets Apple */
+.alert-dropdown {
+  width: 260px;
+  background: rgba(17, 17, 19, 0.96);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 14px;
+  z-index: 2147483647;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.65), 0 0 0 0.5px rgba(255, 255, 255, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.alert-dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 2px;
+}
+.alert-dropdown-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary, #f5f5f7);
+  letter-spacing: -0.01em;
+}
+.alert-dropdown-price {
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.65);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Mode + Direction segmented controls */
+.alert-mode-toggle,
+.alert-direction-toggle {
+  display: flex;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 2px;
+}
+.alert-mode-btn,
+.alert-dir-btn {
+  flex: 1;
+  padding: 5px 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: rgba(245, 245, 247, 0.60);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  letter-spacing: 0.01em;
+}
+.alert-mode-btn.active,
+.alert-dir-btn.active {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary, #f5f5f7);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.alert-price-input-wrap {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 0 10px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.alert-price-input-wrap:focus-within {
+  border-color: rgba(245, 245, 247, 0.25);
+  box-shadow: 0 0 0 3px rgba(245, 245, 247, 0.04);
+}
+.alert-price-prefix {
+  color: rgba(245, 245, 247, 0.60);
+  font-size: 13px;
+  font-family: var(--font-mono);
+  margin-right: 4px;
+  user-select: none;
+}
+.alert-price-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  padding: 9px 0;
+  width: 100%;
+}
+.alert-price-input::placeholder {
+  color: rgba(245, 245, 247, 0.50);
+  font-size: 12px;
+}
+
+.alert-mcap-hint {
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.60);
+  font-family: var(--font-mono);
+  margin-top: -4px;
+}
+
+.alert-error {
+  color: var(--bear, #EF4444);
+  font-size: 13px;
+}
+
+.alert-create-btn {
+  width: 100%;
+  padding: 9px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(245, 245, 247, 0.08);
+  color: var(--text-primary, #f5f5f7);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  letter-spacing: -0.01em;
+}
+.alert-create-btn:hover {
+  background: rgba(245, 245, 247, 0.14);
+  transform: translateY(-1px);
+}
+.alert-create-btn:active { transform: translateY(0); }
+.alert-create-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+.alert-active-list {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.alert-active-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(245, 245, 247, 0.60);
+  margin-bottom: 2px;
+}
+.alert-active-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+.alert-active-item:hover { background: rgba(255, 255, 255, 0.04); }
+.alert-active-info {
+  font-size: 13px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: rgba(245, 245, 247, 0.5);
+}
+.alert-delete-btn {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0;
+  transition: all 0.12s ease;
+}
+.alert-delete-btn:hover { color: var(--bear); background: rgba(239, 68, 68, 0.08); }
+
+.ca-btn svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Price group: price + change + timeframe toggle.
+   Allowed to shrink (and to wrap onto its own row via the row-1 wrap
+   rule) so long-digit prices like $0.00000000034 never bleed past the
+   center column into the right panel. */
+.banner-price-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  flex-shrink: 1;
+  min-width: 0;
+  padding-right: 0;
+}
+
+/* v2 Observatory: hero price scales fluidly with the available space.
+   Uses clamp() against viewport width so tokens with very long price
+   strings (small-cap memes with many zeros) stay inside the banner at
+   any screen size without manual breakpoint tuning. */
+.price-amount {
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif);
+  /* Smaller upper bound than the previous clamp(2rem, 3vw, 3rem) so the
+     hero price stays inline with the token name + watchlist controls
+     instead of bumping the price-group to a second wrapped row. */
+  font-size: clamp(1.5rem, 2.1vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--text-primary, #f5f5f7);
+  font-variant-numeric: tabular-nums;
+  position: relative;
+  transition: color 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Price <-> MCap flip affordance: quiet by default, lifts on hover. */
+.price-amount--toggle {
+  cursor: pointer;
+  user-select: none;
+  border-radius: 8px;
+}
+.price-amount--toggle:hover { color: #ffffff; }
+.price-amount--toggle:focus-visible {
+  outline: 2px solid var(--accent, #f5f5f7);
+  outline-offset: 3px;
+}
+.price-amount-tag {
+  display: inline-block;
+  margin-right: 7px;
+  vertical-align: 0.35em;
+  font-size: 0.42em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-3, rgba(245, 245, 247, 0.5));
+}
+body.theme-light .price-amount-tag { color: #94a3b8; }
+
+.price-amount.flash-up {
+  animation: flashUp 0.5s ease;
+}
+
+.price-amount.flash-down {
+  animation: flashDown 0.5s ease;
+}
+
+@keyframes flashUp {
+  0%, 100% { filter: none; }
+  50% { filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.5)); transform: scale(1.02); }
+}
+
+@keyframes flashDown {
+  0%, 100% { filter: none; }
+  50% { filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.5)); transform: scale(1.02); }
+}
+
+.price-update-indicator {
+  position: absolute;
+  right: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.875rem;
+  -webkit-text-fill-color: initial;
+  animation: indicatorFade 0.5s ease forwards;
+}
+
+@keyframes indicatorFade {
+  0% { opacity: 1; transform: translateY(-50%) translateX(0); }
+  100% { opacity: 0; transform: translateY(-50%) translateX(10px); }
+}
+
+.price-change {
+  /* Delta-chip typography — sans-serif Geist with slashed-zero disabled.
+     Geist Mono's slashed `0` turns "+0.00%" into a wall of crossed circles
+     at chip sizes. See `--font-num-chip` token + `.tnum-chip` utility. */
+  font-family: var(--font-num-chip);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+  white-space: nowrap;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: -0.01em;
+}
+
+.price-change.positive {
+  color: var(--bull);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.price-change.negative {
+  color: var(--bear);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* ========== ROW 2: Actions + Desc ========== */
+.banner-row-2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 26px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* Action buttons - terminal style: flat, generous touch targets */
+.banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.action-pill {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: rgba(245, 245, 247, 0.60);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+  padding: 0;
+}
+
+.action-pill:hover {
+  color: rgba(245, 245, 247, 0.7);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.action-pill:active {
+  color: rgba(245, 245, 247, 0.5);
+}
+
+.action-pill.active {
+  color: rgba(245, 245, 247, 0.6);
+}
+
+.action-pill svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* Locked Coming Soon affordance — dim + bottom-right Lock chip.
+   Position-relative on the host so the absolutely-positioned lock
+   glyph clings to the corner of the pill. */
+.action-pill.is-locked {
+  position: relative;
+  cursor: not-allowed;
+  color: rgba(245, 245, 247, 0.32);
+}
+
+.action-pill.is-locked:hover {
+  color: rgba(245, 245, 247, 0.42);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.action-pill__lock {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  color: rgba(245, 245, 247, 0.32);
+  pointer-events: none;
+}
+
+.action-pill.is-locked:hover .action-pill__lock {
+  color: rgba(245, 245, 247, 0.45);
+}
+
+.action-divider {
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+/* Stats inline - monospace, separated by subtle dividers */
+.banner-stats {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+  padding-left: 14px;
+  border-left: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.banner-stat {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.65);
+  white-space: nowrap;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.banner-stat .stat-val {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.55);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+
+/* Timeframe toggle - inline next to price */
+.banner-tf {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  margin-left: 4px;
+}
+
+.banner-tf .tf-btn {
+  padding: 3px 7px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.60);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.banner-tf .tf-btn:hover {
+  color: rgba(245, 245, 247, 0.7);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.banner-tf .tf-btn.active {
+  background: rgba(255, 255, 255, 0.06);
+  color: #f5f5f7;
+  font-weight: 600;
+}
+
+/* Compact timeframe trigger — single button + chevron that opens a
+   popover listing the four timeframe options. Hidden by default; the
+   container query (further down) shows this and hides .banner-tf when
+   the banner is narrow. */
+.banner-tf-compact {
+  display: none;
+  flex-shrink: 0;
+}
+.banner-tf-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px 4px 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  color: rgba(245, 245, 247, 0.85);
+  font-family: var(--font-mono, var(--font-body));
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  line-height: 1;
+  min-height: 28px;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.12s ease;
+}
+.banner-tf-trigger:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f5f5f7;
+}
+.banner-tf-trigger:active { transform: scale(0.96); }
+.banner-tf-trigger.is-open {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #f5f5f7;
+}
+.banner-tf-trigger-value { font-variant-numeric: tabular-nums; }
+.banner-tf-trigger svg {
+  color: rgba(245, 245, 247, 0.5);
+  flex-shrink: 0;
+}
+
+.banner-tf-dropdown {
+  min-width: 110px;
+  padding: 4px;
+  background: rgba(12, 12, 15, 0.96);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 12px 32px rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.banner-tf-dropdown-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-family: var(--font-mono, var(--font-body));
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(245, 245, 247, 0.75);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+.banner-tf-dropdown-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f5f5f7;
+}
+.banner-tf-dropdown-row.is-active {
+  background: rgba(255, 255, 255, 0.07);
+  color: #f5f5f7;
+}
+
+/* Day-mode override. */
+body.theme-light .banner-tf-trigger {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: rgba(15, 23, 42, 0.85);
+}
+body.theme-light .banner-tf-dropdown {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 12px 32px rgba(15, 23, 42, 0.12);
+}
+body.theme-light .banner-tf-dropdown-row {
+  color: rgba(15, 23, 42, 0.75);
+}
+body.theme-light .banner-tf-dropdown-row:hover,
+body.theme-light .banner-tf-dropdown-row.is-active {
+  background: rgba(0, 0, 0, 0.05);
+  color: #0f172a;
+}
+
+/* Container-query swap: at narrow banner widths, replace the inline
+   4-pill timeframe row with the compact dropdown trigger. Threshold
+   chosen empirically — at <950px the price + change% + 4 pills no
+   longer fit inline alongside the identity block, so the change pill
+   starts colliding with the price digits. */
+@container token-banner (max-width: 950px) {
+  .banner-tf { display: none; }
+  .banner-tf-compact { display: inline-flex; }
+}
+
+/* Description - single line truncated */
+.banner-description {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.60);
+  line-height: 1.5;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.15s ease;
+}
+
+.banner-description:hover {
+  color: rgba(245, 245, 247, 0.6);
+}
+
+.banner-description.expanded {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  color: rgba(245, 245, 247, 0.5);
+}
+
+.banner-description .description-text {
+  display: inline;
+}
+
+/* ========== COLLAPSED STATE ========== */
+.token-banner.collapsed {
+  padding: 8px 16px;
+  gap: 0;
+}
+
+.token-banner.collapsed .banner-row-1 {
+  min-height: 28px;
+}
+
+.token-banner.collapsed .token-logo-wrap {
+  width: 26px;
+  height: 26px;
+}
+
+.token-banner.collapsed .token-symbol {
+  font-size: 1.0625rem;
+}
+
+.token-banner.collapsed .token-fullname {
+  display: none;
+}
+
+.token-banner.collapsed .banner-toggle-btn {
+  top: 6px;
+  right: 8px;
+}
+
+/* ========== PORTALED DROPDOWNS ========== */
+
+/* Socials Dropdown */
+.socials-dropdown-wrapper {
+  position: relative;
+}
+
+.socials-dropdown {
+  position: fixed;
+  min-width: 200px;
+  background: rgba(12, 12, 16, 0.98);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-2);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 0 40px rgba(255, 255, 255, 0.04);
+  z-index: 99999;
+  animation: dropdownFade 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes dropdownFade {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.social-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.12s ease;
+}
+
+.social-menu-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+}
+
+.social-menu-item svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.social-menu-item:hover svg { opacity: 1; }
+
+.social-menu-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: var(--sp-2) var(--sp-2);
+}
+
+/* Share Dropdown */
+.share-btn-wrapper {
+  position: relative;
+  z-index: 100;
+}
+
+.share-dropdown {
+  width: 260px;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  z-index: 99999;
+}
+
+.share-dropdown-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.share-title {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+}
+
+.share-subtitle {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.5);
+}
+
+.share-options {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.share-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.share-option:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.share-option-icon {
+  font-size: 1rem;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.share-option-label {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.share-option-arrow {
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  opacity: 0.4;
+  transition: all 0.12s ease;
+}
+
+.share-option:hover .share-option-arrow {
+  opacity: 1;
+  transform: translateX(3px);
+}
+
+.share-dropdown-footer {
+  padding: 10px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.share-dropdown-footer span {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.share-option.capturing {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Coming Soon tooltip */
+.coming-soon-tooltip-fixed {
+  padding: 6px 12px;
+  background: rgba(18, 18, 20, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.8);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+}
+
+/* =========================================
+   Responsive
+   ========================================= */
+
+/* Large Desktop - no changes needed, base layout is already compact */
+
+/* < 1440px: keep the row single-line. The price-group stays anchored
+   right via margin-left:auto from the base rules — we just clamp the
+   fullname so identity doesn't push the price off. The contract
+   address + explorer link are inline next to the name; they hide
+   below 480px (extreme compact rule further down). */
+@media (max-width: 1440px) {
+  .token-banner .token-fullname {
+    max-width: 140px;
+  }
+}
+
+/* Below 1200px: stack stats under socials */
+@media (max-width: 1200px) {
+  .banner-row-2 {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .token-banner .token-fullname {
+    max-width: 120px;
+  }
+}
+
+/* Below 1024px: shrink text, hide fullname */
+@media (max-width: 1024px) {
+  .token-banner .token-fullname {
+    max-width: 100px;
+  }
+
+  .price-amount {
+    font-size: 1.125rem;
+  }
+
+  .banner-stats {
+    gap: 8px;
+  }
+}
+
+/* Below 900px: allow wrap as a last-resort fallback for very narrow
+   tablet widths. Mobile (≤768) uses the separate MobileTokenPage tree
+   and never hits this rule. */
+@media (max-width: 900px) {
+  .banner-row-1 {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .banner-price-group {
+    margin-left: 0;
+  }
+
+  .banner-row-2 {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .banner-description {
+    flex-basis: 100%;
+  }
+}
+
+/* Below 768px: tighter */
+@media (max-width: 768px) {
+  .token-banner {
+    padding: 8px 12px;
+    border-radius: 10px;
+  }
+
+  .token-logo-wrap {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+  }
+
+  .token-banner .token-symbol {
+    font-size: 0.9375rem;
+  }
+
+  .token-banner .token-fullname,
+  .token-banner .banner-slash {
+    display: none;
+  }
+
+  .price-amount {
+    font-size: 1rem;
+  }
+
+  .price-change {
+    font-size: 0.8125rem;
+  }
+
+  .banner-stat {
+    font-size: 0.8125rem;
+  }
+}
+
+/* Below 640px: compact everything */
+@media (max-width: 640px) {
+  .token-banner {
+    padding: 6px 10px;
+    border-radius: 8px;
+    gap: 4px;
+  }
+
+  .banner-row-1 {
+    gap: 6px;
+  }
+
+  .token-logo-wrap {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+  }
+
+  .token-banner .token-symbol {
+    font-size: 0.875rem;
+  }
+
+  .banner-identity {
+    gap: 6px;
+  }
+
+  .banner-ca .ca-address {
+    font-size: 0.8125rem;
+  }
+
+  .price-amount {
+    font-size: 0.9375rem;
+  }
+
+  .price-change {
+    font-size: 0.8125rem;
+  }
+
+  .banner-row-2 {
+    gap: 4px;
+  }
+
+  .action-pill {
+    width: 24px;
+    height: 22px;
+  }
+
+  .banner-description {
+    font-size: 0.8125rem;
+  }
+
+  .banner-tf .tf-btn {
+    padding: 2px 4px;
+    font-size: 0.8125rem;
+  }
+
+  .share-dropdown {
+    width: 200px;
+  }
+
+  .share-option {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .share-option-icon {
+    width: 26px;
+    height: 26px;
+    font-size: 0.875rem;
+  }
+
+  .share-option-label {
+    font-size: 0.8125rem;
+  }
+}
+
+/* Below 480px: extreme compact */
+@media (max-width: 480px) {
+  .token-banner {
+    padding: 6px 8px;
+  }
+
+  .banner-ca,
+  .banner-explorer {
+    display: none;
+  }
+
+  .price-amount {
+    font-size: 0.875rem;
+  }
+
+  .banner-stats {
+    gap: 4px;
+  }
+
+  .banner-stat {
+    font-size: 0.8125rem;
+  }
+
+  .banner-tf {
+    display: none;
+  }
+
+  .banner-description {
+    display: none;
+  }
+
+  .action-pill.more {
+    display: none;
+  }
+
+  .action-divider {
+    display: none;
+  }
+}
+
+/* Landscape compact */
+@media (orientation: landscape) and (max-height: 500px) {
+  .token-banner {
+    padding: 6px 12px;
+    gap: 4px;
+  }
+
+  .token-logo-wrap {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+  }
+
+  .token-banner .token-symbol {
+    font-size: 0.875rem;
+  }
+
+  .price-amount {
+    font-size: 1rem;
+  }
+}
+
+/* =========================================
+   Day Mode (.theme-light)
+   ========================================= */
+
+body.theme-light .token-banner .token-symbol {
+  color: #0f172a;
+}
+
+body.theme-light .token-banner .token-fullname {
+  color: #94a3b8;
+}
+
+/* dead selector kept for safety */
+body.theme-light .banner-separator {
+  color: rgba(15, 23, 42, 0.2);
+}
+
+body.theme-light .token-banner .token-fullname {
+  color: #94a3b8;
+}
+
+body.theme-light .banner-slash {
+  color: rgba(0, 0, 0, 0.12);
+}
+
+body.theme-light .banner-chain-tag {
+  color: #475569;
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+body.theme-light .banner-ca {
+  color: #64748b;
+}
+
+body.theme-light .banner-ca:hover {
+  color: #0f172a;
+}
+
+body.theme-light .banner-explorer {
+  opacity: 0.35;
+}
+
+body.theme-light .banner-explorer:hover {
+  opacity: 0.7;
+}
+
+body.theme-light .price-amount {
+  color: #0f172a;
+}
+
+body.theme-light .banner-toggle-btn {
+  border-color: rgba(0, 0, 0, 0.08);
+  color: rgba(15, 23, 42, 0.4);
+}
+
+body.theme-light .banner-toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: rgba(15, 23, 42, 0.7);
+}
+
+body.theme-light .banner-row-2 {
+  border-top-color: rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .action-pill {
+  color: rgba(15, 23, 42, 0.52); /* was 0.3 - too faint to read the X / Website / Telegram glyphs at rest */
+}
+
+body.theme-light .action-pill:hover {
+  color: rgba(15, 23, 42, 0.92);
+  background: rgba(15, 23, 42, 0.08); /* was 0.03 - near-invisible; darken clearly on white for real hover feedback */
+}
+
+body.theme-light .action-pill:active {
+  color: rgba(15, 23, 42, 0.72);
+  background: rgba(15, 23, 42, 0.12);
+}
+
+body.theme-light .action-pill.active {
+  color: rgba(15, 23, 42, 0.62);
+}
+
+/* Locked (Coming Soon) pills stay dimmer, but readable + a faint hover. */
+body.theme-light .action-pill.is-locked {
+  color: rgba(15, 23, 42, 0.34);
+}
+body.theme-light .action-pill.is-locked:hover {
+  color: rgba(15, 23, 42, 0.5);
+  background: rgba(15, 23, 42, 0.05);
+}
+body.theme-light .action-pill.is-locked .action-pill__lock,
+body.theme-light .action-pill.is-locked:hover .action-pill__lock {
+  color: rgba(15, 23, 42, 0.4);
+}
+
+/* The 1H/4H/12H/24H banner timeframe trigger brightened to warm-white text on
+   hover (invisible on white) over a white tint (no feedback). */
+body.theme-light .banner-tf-trigger:hover {
+  background: rgba(17, 17, 19, 0.06);
+  color: var(--text-1);
+}
+
+body.theme-light .action-divider {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+body.theme-light .token-logo-wrap {
+  background: transparent;
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .token-logo-clip {
+  background: #fff;
+}
+
+body.theme-light .banner-watchlist-btn {
+  color: rgba(15, 23, 42, 0.2);
+}
+
+body.theme-light .banner-watchlist-btn:hover {
+  color: rgba(15, 23, 42, 0.6);
+}
+
+body.theme-light .banner-watchlist-btn.active {
+  color: var(--bear, #EF4444);
+}
+
+body.theme-light .banner-stat {
+  color: #94a3b8;
+}
+
+body.theme-light .banner-stat .stat-val {
+  color: #475569;
+}
+
+body.theme-light .banner-tf {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .banner-tf .tf-btn {
+  color: #94a3b8;
+}
+
+body.theme-light .banner-tf .tf-btn:hover {
+  color: #475569;
+}
+
+body.theme-light .banner-tf .tf-btn.active {
+  background: rgba(0, 0, 0, 0.04);
+  color: #0f172a;
+}
+
+body.theme-light .banner-description {
+  color: #94a3b8;
+}
+
+body.theme-light .banner-description:hover {
+  color: #64748b;
+}
+
+body.theme-light .banner-description.expanded {
+  color: #64748b;
+}
+
+body.theme-light .token-banner .token-logo {
+  filter: none;
+}
+
+body.theme-light .socials-dropdown {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+}
+
+body.theme-light .social-menu-item {
+  color: #475569;
+}
+
+body.theme-light .social-menu-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #0f172a;
+}
+
+body.theme-light .social-menu-divider {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+body.theme-light .share-dropdown {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+body.theme-light .share-title {
+  color: #0f172a;
+}
+
+body.theme-light .share-subtitle {
+  color: #94a3b8;
+}
+
+body.theme-light .share-option:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .share-option-label {
+  color: #334155;
+}
+
+body.theme-light .share-option-icon {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .share-dropdown-footer {
+  background: rgba(0, 0, 0, 0.02);
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+/* ============================================================
+   LIGHT MODE: ported from trading-platform sibling fork
+   ============================================================ */
+
+body.theme-light .token-banner::before {
+  background: radial-gradient(
+    ellipse at top center,
+    rgba(0, 0, 0, 0.03) 0%,
+    transparent 70%
+  );
+}
+
+/* This rule is MORE specific than .token-banner, so it replaces the whole
+   background stack - the token wash has to be restated here or light mode
+   silently loses it and goes back to a flat card. Weaker alpha than dark: on
+   a white panel the same 0.06 reads as a colour cast, not a wash. */
+body.theme-light .token-banner {
+  background:
+    linear-gradient(105deg, var(--tb-wash) 0%, transparent 62%),
+    var(--surface-card);
+  border-color: var(--surface-card-border);
+}
+
+body.theme-light .token-coloring .token-banner {
+  --tb-wash: rgba(var(--token-rgb, 17, 17, 19), 0.018);
+}
+
+body.theme-light .token-coloring .token-banner::after {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(var(--token-rgb, 17, 17, 19), 0.10) 18%,
+    rgba(var(--token-rgb, 17, 17, 19), 0.24) 50%,
+    rgba(var(--token-rgb, 17, 17, 19), 0.10) 82%,
+    transparent 100%
+  );
+}
+
+body.theme-light .price-change.positive {
+  background: rgba(16, 185, 129, 0.10);
+  border-color: rgba(16, 185, 129, 0.25);
+  color: #047857;
+}
+
+body.theme-light .price-change.negative {
+  background: rgba(239, 68, 68, 0.10);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #b91c1c;
+}
+
+body.theme-light .ca-btn {
+  background: rgba(17, 17, 19, 0.04);
+  border-color: rgba(17, 17, 19, 0.08);
+  color: rgba(17, 17, 19, 0.65);
+}
+
+body.theme-light .ca-btn:hover {
+  background: rgba(17, 17, 19, 0.07);
+  border-color: rgba(17, 17, 19, 0.12);
+  color: #111113;
+}
+
+/* ====================================================================
+   TONAL PASS (2026-09-11) - the banner joins the header, the tape and the
+   vitals bento: a flat black surface one step above the page, no glass
+   gradient, no hairline, no orbit ring, no glow; controls are black keys
+   (10px, no border) that step up a tone on hover; numbers in chip
+   numerals. Appended so it wins on cascade order; every rule below has
+   its light-mode counterpart at the end of the block.
+   ==================================================================== */
+
+.token-banner {
+  background:
+    linear-gradient(105deg, var(--tb-wash) 0%, transparent 62%),
+    #101114;
+  border: 0;
+  border-radius: 12px;
+  box-shadow: none;
+}
+.token-banner:hover {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* Logo: no orbit ring - a flat mark on a one-step-up disc. */
+.token-logo-wrap::after { content: none; }
+.token-logo-clip { background: #1A1B1F; }
+
+.token-banner .token-symbol {
+  font-family: var(--font-body);
+  letter-spacing: -0.03em;
+}
+.token-banner .token-fullname {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+/* Chain tag and the collapse toggle are keys. */
+.banner-chain-tag {
+  height: 20px;
+  padding: 0 7px;
+  font-family: var(--font-num-chip, var(--font-body));
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: rgba(245, 245, 247, 0.72);
+  background: #1A1B1F;
+  border: 0;
+  border-radius: 6px;
+}
+.banner-toggle-btn {
+  /* Centred on row 1's line, not pinned to the corner: it is the row's last
+     control. Both rows stop 32px short of the edge so nothing runs under
+     it (the timeframe trigger used to sit 14px beneath the chevron). */
+  top: 17px;
+  right: 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.6);
+}
+.token-banner.collapsed .banner-toggle-btn { top: 12px; right: 8px; }
+.banner-toggle-btn:hover {
+  background: #1A1B1F;
+  border-color: transparent;
+  color: #ffffff;
+}
+.banner-row-1 { padding-right: 32px; }
+
+/* Price: chip numerals; the change chip takes the text pair. */
+.price-amount {
+  font-family: var(--font-num-chip, var(--font-body));
+  letter-spacing: -0.03em;
+}
+.price-change {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+.price-change.positive { color: var(--up-text, #46B87D); background: rgba(70, 184, 125, 0.10); }
+.price-change.negative { color: var(--down-text, #DE5759); background: rgba(222, 87, 89, 0.10); }
+
+/* Timeframe: a black key rail, the active window one step lighter. */
+.banner-tf {
+  gap: 2px;
+  padding: 3px;
+  background: #131417;
+  border: 0;
+  border-radius: 9px;
+}
+.banner-tf .tf-btn {
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-family: var(--font-num-chip, var(--font-body));
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: rgba(245, 245, 247, 0.62);
+}
+.banner-tf .tf-btn:hover {
+  background: #1C1D21;
+  color: rgba(245, 245, 247, 0.9);
+}
+.banner-tf .tf-btn.active {
+  background: #25262B;
+  color: #ffffff;
+  font-weight: 600;
+}
+.banner-tf-trigger {
+  background: #131417;
+  border: 0;
+  border-radius: 8px;
+  font-family: var(--font-num-chip, var(--font-body));
+  letter-spacing: -0.005em;
+}
+.banner-tf-trigger:hover,
+.banner-tf-trigger.is-open { background: #1C1D21; border-color: transparent; }
+.banner-tf-dropdown {
+  background: rgba(12, 12, 15, 0.84);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  box-shadow: 0 24px 60px -16px rgba(0, 0, 0, 0.9), 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.banner-tf-dropdown-row {
+  font-family: var(--font-num-chip, var(--font-body));
+  letter-spacing: -0.005em;
+  border: 0;
+}
+.banner-tf-dropdown-row:hover,
+.banner-tf-dropdown-row.is-active { background: rgba(255, 255, 255, 0.07); }
+
+/* Row 2: [action rail] [AI Dossier well]. The socials and the page actions
+   live in ONE black key rail on the LEFT (where the icons always were) that
+   matches the timeframe rail above it - #131417, 9px, 3px inset, 24px keys.
+   Keys are ghost at rest, step up a tone on hover (#1C1D21), press down
+   (#0E0F12) and hold the lit tone while their menu is open (#25262B). An
+   armed alert bell goes white with a white count chip - no amber; an armed
+   alert is a state, not a warning. The dossier well (HeaderDossier.css)
+   fills the rest of the line, top-aligned with the rail. */
+.banner-row-2 {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 0;
+  padding: 8px 32px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+.banner-actions {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 2px;
+  padding: 3px;
+  background: #131417;
+  border-radius: 9px;
+}
+.action-pill {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.62);
+  transition: background 120ms ease, color 120ms ease;
+}
+.action-pill svg { width: 13px; height: 13px; }
+.action-pill:hover { background: #1C1D21; color: #ffffff; }
+.action-pill:active { background: #0E0F12; color: #ffffff; }
+.action-pill.active { background: #25262B; color: #ffffff; }
+.action-pill.has-alerts { color: #ffffff; }
+.action-pill.is-locked { color: rgba(245, 245, 247, 0.3); }
+.action-pill.is-locked:hover { background: transparent; color: rgba(245, 245, 247, 0.42); }
+.action-pill__lock { right: 2px; bottom: 2px; }
+.action-divider {
+  width: 1px;
+  height: 12px;
+  margin: 0 3px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.alert-badge {
+  top: -3px;
+  right: -3px;
+  width: 13px;
+  height: 13px;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #0a0b0d;
+  font-family: var(--font-num-chip, var(--font-body));
+  font-size: 9px;
+  font-weight: 600;
+  box-shadow: 0 0 0 2px #131417;
+}
+.banner-stat .stat-val { font-family: var(--font-num-chip, var(--font-body)); }
+.banner-description { font-size: 13px; color: rgba(245, 245, 247, 0.6); }
+
+/* Light counterparts. */
+body.theme-light .token-banner {
+  background: linear-gradient(105deg, var(--tb-wash) 0%, transparent 62%), #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+body.theme-light .token-logo-clip { background: #f0f0f3; }
+body.theme-light .token-banner .token-fullname { color: rgba(15, 23, 42, 0.55); }
+body.theme-light .banner-chain-tag { background: #f0f0f3; color: rgba(15, 23, 42, 0.7); border: 0; }
+body.theme-light .banner-toggle-btn { background: transparent; color: rgba(15, 23, 42, 0.6); border: 0; }
+body.theme-light .banner-toggle-btn:hover { background: #f0f0f3; color: #0f172a; }
+body.theme-light .price-change.positive { color: #047857; background: rgba(4, 120, 87, 0.08); }
+body.theme-light .price-change.negative { color: #b91c1c; background: rgba(185, 28, 28, 0.08); }
+body.theme-light .banner-tf { background: #f0f0f3; border: 0; }
+body.theme-light .banner-tf .tf-btn { color: rgba(15, 23, 42, 0.62); }
+body.theme-light .banner-tf .tf-btn:hover { background: #e6e6eb; color: #0f172a; }
+body.theme-light .banner-tf .tf-btn.active { background: #ffffff; color: #0f172a; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12); }
+body.theme-light .banner-tf-trigger { background: #f0f0f3; border: 0; }
+body.theme-light .banner-tf-dropdown { background: rgba(255, 255, 255, 0.9); border-color: rgba(15, 23, 42, 0.1); }
+body.theme-light .banner-row-2 { border-top-color: rgba(15, 23, 42, 0.08); }
+body.theme-light .banner-actions { background: #f0f0f3; }
+body.theme-light .action-pill { background: transparent; color: rgba(15, 23, 42, 0.6); }
+body.theme-light .action-pill:hover { background: #e6e6eb; color: #0f172a; }
+body.theme-light .action-pill:active { background: #dedee3; color: #0f172a; }
+body.theme-light .action-pill.active { background: #ffffff; color: #0f172a; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12); }
+body.theme-light .action-pill.has-alerts { color: #0f172a; }
+body.theme-light .action-pill.is-locked { color: rgba(15, 23, 42, 0.32); }
+body.theme-light .action-pill.is-locked:hover { background: transparent; color: rgba(15, 23, 42, 0.45); }
+body.theme-light .action-divider { background: rgba(15, 23, 42, 0.1); }
+body.theme-light .alert-badge { background: #0f172a; color: #ffffff; box-shadow: 0 0 0 2px #f0f0f3; }

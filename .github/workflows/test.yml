@@ -1,0 +1,44 @@
+name: test
+
+# Scoped triggers to avoid email spam:
+#   - pull_request to main: validates every PR before merge
+#   - push to main only: post-merge status (badge / main health)
+# Pushing to a feature branch no longer fires a run on its own - the PR
+# event covers it. This also removes the duplicate run (push + PR) that
+# every PR commit used to generate.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  unit:
+    name: vitest unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  # TODO: enable Playwright E2E once smoke specs are fleshed out. Kept out of
+  # the default CI run to avoid browser-download flakiness and hanging on dev
+  # servers. To enable: install browsers (npx playwright install --with-deps
+  # chromium), start the apps, set E2E_BASE_URL, then run npx playwright test.
+  #
+  # e2e:
+  #   name: playwright e2e
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20
+  #         cache: npm
+  #     - run: npm ci
+  #     - run: npx playwright install --with-deps chromium
+  #     - run: npx playwright test

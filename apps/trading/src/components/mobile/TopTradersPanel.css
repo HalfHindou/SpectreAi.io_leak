@@ -1,0 +1,232 @@
+/* TopTradersPanel — DexScreener-style ranked trader list (mobile + desktop).
+   Content floats on void; tabular numbers; magnitude via bull/bear colour. */
+
+.tt {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-num-chip, system-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Sticky header: ranking + period segments, source note on the right. */
+.tt-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(9, 9, 11, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.tt-seg {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  flex: none;
+}
+.tt-seg-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-family: var(--font-body, system-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-3, rgba(255, 255, 255, 0.45));
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+  touch-action: manipulation;
+}
+.tt-seg-btn:hover { color: var(--text-2, rgba(255, 255, 255, 0.7)); }
+.tt-seg-btn.is-active {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-1, #f5f5f7);
+}
+/* Worst reads red only while selected - a red idle button would shout. */
+.tt-seg-btn--worst.is-active { color: var(--down, #ff5169); }
+.tt-seg-btn:focus-visible { outline: 2px solid var(--accent, #f5f5f7); outline-offset: -2px; }
+
+.tt-note {
+  margin-left: auto;
+  font-family: var(--font-body, system-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-3, rgba(255, 255, 255, 0.4));
+  white-space: nowrap;
+}
+
+.tt-body { display: flex; flex-direction: column; }
+
+.tt-row {
+  display: grid;
+  grid-template-columns: 20px 22px 1fr 16px;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  min-height: 52px;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+  background: transparent;
+  text-align: left;
+  color: var(--text-1, #f5f5f7);
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+.tt-row:not(.tt-row--skel):active { background: rgba(255, 255, 255, 0.04); }
+.tt-row[role="button"]:focus-visible { outline: 2px solid var(--accent, #f5f5f7); outline-offset: -2px; }
+
+.tt-rank {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-3, rgba(255, 255, 255, 0.42));
+  text-align: center;
+}
+.tt-rank--top { color: var(--text-1, #f5f5f7); }
+
+.tt-avatar { justify-self: center; display: inline-flex; align-items: center; }
+.tt-avatar--pos { color: var(--up, #34e89e); }
+.tt-avatar--neg { color: var(--down, #ff5169); }
+
+.tt-main { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+
+.tt-line1 { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.tt-addr {
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tt-meta {
+  flex: none;
+  font-family: var(--font-body, system-ui);
+  font-size: 11px;
+  color: var(--text-3, rgba(255, 255, 255, 0.45));
+  white-space: nowrap;
+}
+
+.tt-line2 { display: flex; align-items: center; gap: 12px; font-size: 12px; }
+.tt-bought, .tt-sold, .tt-net { display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; }
+.tt-bought { color: var(--up, #34e89e); }
+.tt-sold { color: var(--down, #ff5169); }
+.tt-net { margin-left: auto; font-weight: 600; }
+.tt-net.is-pos { color: var(--up, #34e89e); }
+.tt-net.is-neg { color: var(--down, #ff5169); }
+
+/* Codex rows: identity cluster (address + label chips) on the left of line 1,
+   realized PnL on the right; line 2 carries bought/sold/counts and pushes
+   volume + last-active to the right edge. */
+.tt-id { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
+.tt-id .tt-addr { flex: 0 1 auto; }
+.tt-chip {
+  flex: none;
+  padding: 0 5px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  font-family: var(--font-body, system-ui);
+  font-size: 9.5px;
+  line-height: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-3, rgba(255, 255, 255, 0.45));
+  white-space: nowrap;
+  cursor: help;
+}
+.tt-chip--smart { border-color: rgba(52, 232, 158, 0.35); color: var(--up, #34e89e); }
+.tt-chip--warn { border-color: rgba(245, 158, 11, 0.4); color: var(--amber, #F59E0B); }
+
+.tt-pnl {
+  flex: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-2, rgba(255, 255, 255, 0.7));
+  white-space: nowrap;
+}
+.tt-pnl.is-pos { color: var(--up, #34e89e); }
+.tt-pnl.is-neg { color: var(--down, #ff5169); }
+.tt-pnl-pct { font-size: 10.5px; font-weight: 600; opacity: 0.75; }
+
+.tt-meta--right { margin-left: auto; }
+.tt-holding { color: var(--text-2, rgba(255, 255, 255, 0.62)); }
+
+.tt-chev { color: var(--text-3, rgba(255, 255, 255, 0.3)); }
+
+/* skeleton */
+.tt-skel {
+  display: inline-block;
+  height: 11px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.09) 37%, rgba(255,255,255,0.05) 63%);
+  background-size: 400% 100%;
+  animation: ttShimmer 1.4s ease infinite;
+}
+.tt-skel--rank { width: 12px; }
+.tt-skel--avatar { width: 22px; height: 22px; border-radius: 50%; }
+.tt-skel--w80 { width: 80px; }
+.tt-skel--w60 { width: 60px; }
+.tt-skel--w50 { width: 50px; }
+@keyframes ttShimmer { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+
+.tt-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 40px 20px;
+  text-align: center;
+}
+.tt-empty p { margin: 0; font-size: 14px; color: var(--text-2, rgba(255, 255, 255, 0.7)); }
+.tt-empty span { font-size: 12px; color: var(--text-3, rgba(255, 255, 255, 0.4)); }
+
+/* ── Day mode (trading = body.theme-light) ── */
+body.theme-light .tt-head {
+  background: rgba(255, 255, 255, 0.7);
+  border-bottom-color: rgba(0, 0, 0, 0.07);
+}
+body.theme-light .tt-note { color: rgba(15, 23, 42, 0.45); }
+body.theme-light .tt-seg { background: rgba(0, 0, 0, 0.04); border-color: rgba(0, 0, 0, 0.06); }
+body.theme-light .tt-seg-btn { color: rgba(15, 23, 42, 0.5); }
+body.theme-light .tt-seg-btn:hover { color: rgba(15, 23, 42, 0.75); }
+body.theme-light .tt-seg-btn.is-active { background: #ffffff; color: #0f172a; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08); }
+body.theme-light .tt-seg-btn--worst.is-active { color: #DC2626; }
+body.theme-light .tt-chip { border-color: rgba(15, 23, 42, 0.14); color: rgba(15, 23, 42, 0.5); }
+body.theme-light .tt-chip--smart { border-color: rgba(4, 120, 87, 0.35); color: #047857; }
+body.theme-light .tt-chip--warn { border-color: rgba(180, 83, 9, 0.4); color: #B45309; }
+body.theme-light .tt-pnl { color: rgba(15, 23, 42, 0.7); }
+body.theme-light .tt-pnl.is-pos { color: #047857; }
+body.theme-light .tt-pnl.is-neg { color: #DC2626; }
+body.theme-light .tt-holding { color: rgba(15, 23, 42, 0.6); }
+body.theme-light .tt-row { border-bottom-color: rgba(0, 0, 0, 0.06); color: #0f172a; }
+body.theme-light .tt-row:not(.tt-row--skel):active { background: rgba(0, 0, 0, 0.03); }
+body.theme-light .tt-rank { color: rgba(15, 23, 42, 0.45); }
+body.theme-light .tt-rank--top { color: #0f172a; }
+body.theme-light .tt-avatar--pos { color: #047857; }
+body.theme-light .tt-avatar--neg { color: #DC2626; }
+body.theme-light .tt-meta { color: rgba(15, 23, 42, 0.5); }
+body.theme-light .tt-bought, body.theme-light .tt-net.is-pos { color: #047857; }
+body.theme-light .tt-sold, body.theme-light .tt-net.is-neg { color: #DC2626; }
+body.theme-light .tt-chev { color: rgba(15, 23, 42, 0.3); }
+body.theme-light .tt-empty p { color: rgba(15, 23, 42, 0.65); }
+body.theme-light .tt-empty span { color: rgba(15, 23, 42, 0.4); }
+body.theme-light .tt-skel {
+  background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.07) 37%, rgba(0,0,0,0.04) 63%);
+  background-size: 400% 100%;
+}

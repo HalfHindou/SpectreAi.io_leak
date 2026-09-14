@@ -1,0 +1,558 @@
+/* ===========================================
+   IButton - Intelligence "i" tooltip system
+   =========================================== */
+
+/* -- Button -------------------------------- */
+
+.i-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-default);
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  line-height: 1;
+  transition: all var(--duration-fast) ease;
+  flex-shrink: 0;
+  margin-left: 4px;
+  vertical-align: middle;
+  user-select: none;
+  -webkit-user-select: none;
+  padding: 0;
+}
+
+.i-btn:hover,
+.i-btn.i-btn--active {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-secondary);
+}
+
+.i-btn--sm {
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+  max-width: 16px !important;
+  max-height: 16px !important;
+  font-size: 8px;
+  font-weight: 600;
+  font-style: italic;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  margin-left: 5px;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 70%);
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.15);
+  color: rgba(245, 245, 247, 0.4);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.i-btn--sm:hover,
+.i-btn--sm.i-btn--active {
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.06) 70%);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    0 0 12px rgba(255, 255, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.1);
+  color: rgba(245, 245, 247, 0.7);
+  transform: scale(1.08);
+}
+
+.i-btn--md {
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
+}
+
+
+/* -- Tooltip -------------------------------- */
+
+.i-tooltip {
+  position: fixed;
+  width: 300px;
+  padding: 16px;
+  background: linear-gradient(165deg, rgba(20, 20, 24, 0.95) 0%, rgba(12, 12, 14, 0.98) 100%);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.04),
+    0 8px 40px rgba(0, 0, 0, 0.6),
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  /* Above every card/overlay that can host an ⓘ. The token-card popup portals
+     to <body> at 10100, so a tooltip at 10000 rendered BEHIND the card it was
+     opened from. A tooltip is always triggered from whatever is already on
+     top, so it belongs above the overlay ladder — but still far below the
+     toast/tour tier (999990+), which must stay reachable over it. */
+  z-index: 10200;
+  /* Desktop placement clamps the card to the viewport via an inline
+     max-height (IButton.jsx getPosition) — scroll the overflow instead of
+     letting the top of the card slide off-screen. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: iTooltipIn 0.25s var(--ease-out) forwards;
+}
+
+@keyframes iTooltipIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+
+/* -- Tooltip label row --------------------- */
+
+.i-tooltip-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+  color: var(--text-muted);
+}
+
+.i-tooltip-label-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 700;
+  font-style: italic;
+  font-family: 'Georgia', serif;
+  background: rgba(255, 255, 255, 0.06);
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.5);
+}
+
+
+/* -- Tooltip content ----------------------- */
+
+.i-tooltip-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.35;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.i-tooltip-body {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+
+/* -- Historical card ----------------------- */
+
+.i-tooltip-historical {
+  background: rgba(255, 255, 255, 0.025);
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.i-tooltip-historical-label {
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  margin-bottom: 5px;
+}
+
+.i-tooltip-historical-text {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+  font-family: var(--font-mono);
+}
+
+
+/* -- Action items -------------------------- */
+
+.i-tooltip-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.i-tooltip-action {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  border: 0.5px solid transparent;
+}
+
+.i-tooltip-action--bullish {
+  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.08);
+}
+.i-tooltip-action--bearish {
+  background: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.08);
+}
+.i-tooltip-action--neutral {
+  background: rgba(245, 245, 247, 0.03);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.i-tooltip-action-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.i-tooltip-action-dot--bullish { background: var(--bull); box-shadow: 0 0 4px rgba(16, 185, 129, 0.4); }
+.i-tooltip-action-dot--bearish { background: var(--bear); box-shadow: 0 0 4px rgba(239, 68, 68, 0.4); }
+.i-tooltip-action-dot--neutral { background: rgba(245, 245, 247, 0.35); }
+
+
+/* -- Disclaimer ---------------------------- */
+
+.i-tooltip-disclaimer {
+  padding-top: 10px;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.04);
+  font-size: 9px;
+  color: var(--text-disabled);
+  letter-spacing: 0.02em;
+}
+
+
+/* -- Close button -------------------------- */
+
+.i-tooltip-pin {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 10px;
+  padding: 0;
+  transition: all var(--duration-fast) ease;
+}
+
+.i-tooltip-pin:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+}
+
+
+/* -- Error state --------------------------- */
+
+.i-tooltip-error {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 16px 0;
+}
+
+.i-tooltip-retry {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.06);
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-family: var(--font-body);
+  transition: all var(--duration-fast) ease;
+}
+
+.i-tooltip-retry:hover {
+  background: rgba(255, 255, 255, 0.1);
+  text-decoration: none;
+}
+
+
+/* -- Mobile bottom sheet ------------------- */
+
+@media (max-width: 768px) {
+  /* The visual button stays a 16px accent, but a 16px tap target is a miss
+     magnet — extend the HIT AREA invisibly to ~40px without moving layout. */
+  .i-btn {
+    position: relative;
+  }
+  .i-btn::after {
+    content: '';
+    position: absolute;
+    inset: -12px;
+  }
+
+  .i-tooltip {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    width: 100%;
+    max-height: 70vh;
+    overflow-y: auto;
+    border-radius: 20px 20px 0 0;
+    /* iOS home-screen PWA: keep the disclaimer clear of the home indicator */
+    padding: 24px 20px calc(36px + env(safe-area-inset-bottom, 0px));
+    animation: iSheetUp 0.3s var(--ease-out) forwards;
+    -webkit-overflow-scrolling: touch;
+    box-shadow:
+      0 -4px 40px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  /* Drag handle indicator */
+  .i-tooltip::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.15);
+    margin: 0 auto 16px;
+  }
+
+  @keyframes iSheetUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+
+  .i-tooltip-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    /* Sits one step under the sheet itself, but still above the card that
+       opened it — otherwise the mobile sheet dims nothing. */
+    z-index: 10190;
+    animation: iOverlayIn 0.2s ease forwards;
+  }
+
+  @keyframes iOverlayIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .i-tooltip-title {
+    font-size: 15px;
+    letter-spacing: -0.015em;
+  }
+
+  .i-tooltip-body {
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .i-tooltip-action {
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+
+  .i-tooltip-pin {
+    top: 16px;
+    right: 16px;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    max-width: 28px !important;
+    max-height: 28px !important;
+    border-radius: 8px;
+  }
+}
+
+
+/* -- Skeleton shimmer ---------------------- */
+
+.i-tooltip-skeleton {
+  padding: 4px 0;
+}
+
+.i-tooltip-skeleton .shimmer-bar {
+  height: 10px;
+  border-radius: var(--radius-xs);
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+  margin-bottom: 8px;
+}
+
+.i-tooltip-skeleton .shimmer-bar--title {
+  width: 70%;
+  height: 12px;
+}
+
+.i-tooltip-skeleton .shimmer-bar--body {
+  width: 100%;
+}
+
+.i-tooltip-skeleton .shimmer-bar--body2 {
+  width: 85%;
+}
+
+.i-tooltip-skeleton .shimmer-bar--action {
+  width: 60%;
+  height: 8px;
+}
+
+
+/* -- Day mode ------------------------------ */
+
+/* The .i-btn--day pairings mirror the tooltip's .i-tooltip--day pattern:
+   body-portaled consumers (token-card-popup etc.) sit outside .app, so the
+   .app.app-day-mode selectors alone never reach them. */
+.app.app-day-mode .i-btn,
+.i-btn.i-btn--day {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #94a3b8;
+}
+
+.app.app-day-mode .i-btn--sm,
+.i-btn--sm.i-btn--day {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.25);
+}
+
+.app.app-day-mode .i-btn:hover,
+.app.app-day-mode .i-btn.i-btn--active,
+.i-btn.i-btn--day:hover,
+.i-btn.i-btn--day.i-btn--active {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.15);
+  color: #475569;
+}
+
+.app.app-day-mode .i-tooltip,
+.i-tooltip.i-tooltip--day {
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 249, 250, 0.98) 100%);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.app.app-day-mode .i-tooltip-title,
+.i-tooltip.i-tooltip--day .i-tooltip-title {
+  color: #0f172a;
+}
+
+.app.app-day-mode .i-tooltip-body,
+.i-tooltip.i-tooltip--day .i-tooltip-body {
+  color: #475569;
+}
+
+.app.app-day-mode .i-tooltip-label,
+.i-tooltip.i-tooltip--day .i-tooltip-label {
+  color: #64748b;
+}
+
+.app.app-day-mode .i-tooltip-label-icon,
+.i-tooltip.i-tooltip--day .i-tooltip-label-icon {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #475569;
+}
+
+.app.app-day-mode .i-tooltip-historical,
+.i-tooltip.i-tooltip--day .i-tooltip-historical {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.app.app-day-mode .i-tooltip-historical-label,
+.i-tooltip.i-tooltip--day .i-tooltip-historical-label {
+  color: #64748b;
+}
+
+.app.app-day-mode .i-tooltip-historical-text,
+.i-tooltip.i-tooltip--day .i-tooltip-historical-text {
+  color: #475569;
+}
+
+.app.app-day-mode .i-tooltip-action,
+.i-tooltip.i-tooltip--day .i-tooltip-action {
+  color: #475569;
+}
+
+.app.app-day-mode .i-tooltip-action--neutral,
+.i-tooltip.i-tooltip--day .i-tooltip-action--neutral {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.05);
+}
+
+.app.app-day-mode .i-tooltip-disclaimer,
+.i-tooltip.i-tooltip--day .i-tooltip-disclaimer {
+  color: #94a3b8;
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.app.app-day-mode .i-tooltip-skeleton .shimmer-bar,
+.i-tooltip.i-tooltip--day .i-tooltip-skeleton .shimmer-bar {
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.04) 50%, transparent 100%);
+  background-size: 200% 100%;
+}
+
+.app.app-day-mode .i-tooltip-pin,
+.i-tooltip.i-tooltip--day .i-tooltip-pin {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #64748b;
+}
+
+.app.app-day-mode .i-tooltip-pin:hover,
+.i-tooltip.i-tooltip--day .i-tooltip-pin:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #0f172a;
+}
+
+.app.app-day-mode .i-tooltip-error,
+.i-tooltip.i-tooltip--day .i-tooltip-error {
+  color: #94a3b8;
+}
+
+.i-tooltip-overlay.i-tooltip-overlay--day {
+  background: rgba(15, 23, 42, 0.35);
+}

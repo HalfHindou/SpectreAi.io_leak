@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fear & Greed Index</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0a0a0f;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .fear-greed-container {
+      width: 100%;
+      max-width: 480px;
+      padding: 40px 32px;
+      background: rgba(10, 10, 15, 0.95);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #f5f5f7;
+      text-align: center;
+      margin-bottom: 32px;
+      letter-spacing: -0.3px;
+    }
+
+    .gauge-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 0.6;
+      margin-bottom: 24px;
+    }
+
+    /* SVG gauge */
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .gauge-track {
+      fill: none;
+      stroke-linecap: round;
+    }
+
+    .gauge-fill {
+      fill: none;
+      stroke: url(#gaugeGradient);
+      stroke-linecap: round;
+    }
+
+    .needle {
+      transform-origin: center;
+      transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .value-display {
+      position: absolute;
+      bottom: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+
+    .value-number {
+      font-size: 56px;
+      font-weight: 700;
+      color: #30d158;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -1px;
+    }
+
+    .value-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #30d158;
+      margin-top: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Metric chips */
+    .metrics-row {
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      margin-top: 32px;
+    }
+
+    .metric-chip {
+      flex: 1;
+      padding: 12px 16px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .metric-label {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .metric-value-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .metric-value {
+      font-size: 18px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      color: #f5f5f7;
+      letter-spacing: -0.4px;
+    }
+
+    .metric-change {
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: -0.3px;
+    }
+
+    .change-positive {
+      color: #30d158;
+      background: rgba(48, 209, 88, 0.1);
+    }
+
+    .change-negative {
+      color: #ff453a;
+      background: rgba(255, 69, 58, 0.1);
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .fear-greed-container {
+        padding: 32px 24px;
+      }
+
+      .title {
+        font-size: 16px;
+        margin-bottom: 28px;
+      }
+
+      .metrics-row {
+        gap: 8px;
+        margin-top: 28px;
+      }
+
+      .metric-chip {
+        padding: 10px 12px;
+      }
+
+      .metric-label {
+        font-size: 8px;
+      }
+
+      .metric-value {
+        font-size: 16px;
+      }
+
+      .value-number {
+        font-size: 48px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="fear-greed-container">
+    <h1 class="title">Fear & Greed Index</h1>
+
+    <div class="gauge-wrapper">
+      <svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color: #ff453a; stop-opacity: 1" />
+            <stop offset="50%" style="stop-color: #8e8e93; stop-opacity: 1" />
+            <stop offset="100%" style="stop-color: #30d158; stop-opacity: 1" />
+          </linearGradient>
+        </defs>
+
+        <!-- Background track -->
+        <path
+          class="gauge-track"
+          d="M 20 100 A 80 80 0 0 1 180 100"
+          stroke="rgba(255, 255, 255, 0.08)"
+          stroke-width="8"
+        />
+
+        <!-- Gradient fill (0-100 scale, 72 value) -->
+        <path
+          class="gauge-fill"
+          d="M 20 100 A 80 80 0 0 1 163.2 37.6"
+          stroke-width="8"
+        />
+
+        <!-- Needle circle base -->
+        <circle cx="100" cy="100" r="4" fill="#f5f5f7" />
+
+        <!-- Needle (72° rotation from left to right on 180° arc) -->
+        <!-- 72% of 180° = 129.6° rotation from start point -->
+        <g class="needle" style="transform: rotate(129.6deg)">
+          <line
+            x1="100"
+            y1="100"
+            x2="100"
+            y2="30"
+            stroke="#f5f5f7"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <circle cx="100" cy="30" r="5" fill="#f5f5f7" />
+        </g>
+      </svg>
+
+      <div class="value-display">
+        <div class="value-number">72</div>
+        <div class="value-label">Greed</div>
+      </div>
+    </div>
+
+    <!-- Metric chips -->
+    <div class="metrics-row">
+      <div class="metric-chip">
+        <div class="metric-label">BTC Dominance</div>
+        <div class="metric-value-row">
+          <span class="metric-value">58.2%</span>
+          <span class="metric-change change-positive">+0.3%</span>
+        </div>
+      </div>
+      <div class="metric-chip">
+        <div class="metric-label">Total Market Cap</div>
+        <div class="metric-value-row">
+          <span class="metric-value">$3.42T</span>
+          <span class="metric-change change-positive">+1.2%</span>
+        </div>
+      </div>
+      <div class="metric-chip">
+        <div class="metric-label">24H Volume</div>
+        <div class="metric-value-row">
+          <span class="metric-value">$142B</span>
+          <span class="metric-change change-negative">−3.1%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

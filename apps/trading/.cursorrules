@@ -1,0 +1,339 @@
+# Claude Rules - Trading Terminal Application
+
+This file contains rules and guidelines for Claude when working on a high-performance trading terminal application. Claude's role is to **analyze requirements, create implementation plans, and execute the implementation**.
+
+---
+
+## Project Overview
+
+A **Trading Terminal** is a high-performance, non-custodial trading platform for on-chain crypto trading. The architecture prioritizes speed, reliability, real-time data streaming, and security while serving thousands of concurrent users.
+
+### Key Characteristics
+- **Non-custodial**: Users retain full control of their funds and private keys
+- **Real-time**: Live price feeds, order execution, and market data via WebSockets
+- **High-throughput**: Handles thousands of concurrent users with low latency
+- **Mobile-first**: Responsive design optimized for mobile trading
+- **Blockchain-native**: Direct on-chain execution
+
+---
+
+## Recommended Technology Stack
+
+### Frontend
+| Component | Technology |
+|-----------|------------|
+| Framework | Next.js (React 18+) |
+| Language | TypeScript |
+| State Management | TanStack Query + Zustand |
+| Real-time | WebSocket (native/Socket.IO) |
+| Styling | Tailwind CSS |
+| Charts | TradingView Lightweight Charts |
+| Web3 | Chain-specific SDK (e.g., @solana/web3.js) |
+
+### Backend
+| Component | Technology |
+|-----------|------------|
+| Runtime | Bun.js / Node.js |
+| Language | TypeScript |
+| API Framework | Hono / Fastify |
+| Database (Primary) | PostgreSQL |
+| Database (Analytics) | Clickhouse |
+| Cache | Redis |
+| Message Queue | Redis Pub/Sub / BullMQ |
+| WebSocket | ws / uWebSockets.js |
+
+### Infrastructure
+| Component | Technology |
+|-----------|------------|
+| Containerization | Docker |
+| Orchestration | Kubernetes / Docker Compose |
+| CI/CD | GitHub Actions |
+| Monitoring | Prometheus + Grafana |
+| Logging | Pino / Winston |
+
+---
+
+## Workflow Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  1. CLAUDE: Analyze requirement                                 │
+│     - Understand the task and identify affected areas           │
+│     - Explore relevant codebase sections                        │
+│     - Identify affected files and patterns                      │
+├─────────────────────────────────────────────────────────────────┤
+│  2. CLAUDE: Create implementation plan (for non-trivial tasks)  │
+│     - Write detailed step-by-step plan                          │
+│     - Include code snippets and patterns to follow              │
+│     - Optionally save to .claude/plans/<feature-name>.md        │
+│     - Get user approval before proceeding                       │
+├─────────────────────────────────────────────────────────────────┤
+│  3. CLAUDE: Implement the changes                               │
+│     - Follow the approved plan                                  │
+│     - Create/modify files as outlined                           │
+│     - Write tests for new functionality                         │
+│     - Update documentation                                      │
+├─────────────────────────────────────────────────────────────────┤
+│  4. CLAUDE: Verify implementation                               │
+│     - Run tests to confirm functionality                        │
+│     - Verify all checklist items are complete                   │
+│     - Report completion status to user                          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Core Behavioral Guidelines
+
+### 1. Think Before Coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+### 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+### 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- Remove imports/variables/functions that YOUR changes made unused.
+
+### 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+---
+
+## Architecture Principles
+
+### Monorepo Structure
+
+Organize code into a monorepo with clear separation:
+
+```
+project/
+├── apps/
+│   ├── web/              # Frontend application
+│   └── api/              # Backend API service
+├── packages/
+│   ├── shared/           # Shared types and utilities
+│   ├── ui/               # Shared UI components
+│   └── config/           # Shared configuration
+└── infrastructure/       # Docker, K8s configs
+```
+
+### Layer Separation
+
+| Layer | Responsibility |
+|-------|----------------|
+| Routes/Controllers | HTTP handling, validation, response formatting |
+| Services | Business logic, orchestration |
+| Repositories | Data access, database queries |
+| Models | Database schema, type definitions |
+| WebSocket Handlers | Real-time data streaming |
+| Blockchain Layer | On-chain interactions |
+
+### Key Design Principles
+
+1. **Non-Custodial Architecture**
+   - Never store private keys on the server
+   - All transaction signing happens client-side
+   - Server builds unsigned transactions, client signs
+
+2. **Real-time First**
+   - Use WebSockets for live data (prices, orders, trades)
+   - Implement pub/sub patterns for broadcasting updates
+   - Cache aggressively with short TTLs for real-time data
+
+3. **High Performance**
+   - Multi-layer caching (memory → Redis → database)
+   - Database indexing optimized for trading queries
+   - Use Clickhouse for time-series analytics data
+   - Connection pooling for database connections
+
+4. **Security by Default**
+   - Input validation on all endpoints (use Zod)
+   - Rate limiting on API endpoints
+   - Sanitize all user inputs
+   - Never expose sensitive data in responses
+
+---
+
+## Best Practices
+
+### API Design
+
+- Use RESTful conventions for CRUD operations
+- Use WebSockets for real-time streaming data
+- Version your APIs (`/api/v1/...`)
+- Return consistent response formats
+- Implement proper error codes and messages
+
+### Database
+
+- Index columns used in WHERE clauses and JOINs
+- Use partial indexes for filtered queries (e.g., active orders only)
+- Separate OLTP (PostgreSQL) from OLAP (Clickhouse) workloads
+- Implement soft deletes for audit trails
+
+### Caching Strategy
+
+- L1: In-memory cache (microseconds latency)
+- L2: Redis cache (milliseconds latency)
+- L3: Database (tens of milliseconds)
+- Use short TTLs for price data (1-5 seconds)
+- Longer TTLs for static data (minutes to hours)
+
+### Error Handling
+
+- Catch errors at service boundaries
+- Log errors with context (request ID, user, parameters)
+- Return user-friendly error messages
+- Never expose internal errors to clients
+
+### Testing
+
+- Unit tests for services with mocked dependencies
+- Integration tests for API routes
+- WebSocket handler tests for real-time features
+- Aim for >80% coverage on new code
+
+---
+
+## Naming Conventions
+
+### Backend
+| Type | Convention | Example |
+|------|------------|---------|
+| Files | camelCase | `orderService.ts` |
+| Functions | camelCase | `executeSwap` |
+| Classes | PascalCase | `OrderService` |
+| Constants | UPPER_SNAKE_CASE | `MAX_SLIPPAGE` |
+| Types/Interfaces | PascalCase | `SwapParams` |
+
+### Frontend
+| Type | Convention | Example |
+|------|------------|---------|
+| Components | PascalCase | `SwapForm.tsx` |
+| Hooks | useCamelCase | `useTokenPrice.ts` |
+| Utilities | camelCase | `formatNumber.ts` |
+| Stores | camelCaseStore | `tradingStore.ts` |
+
+---
+
+## Mandatory Requirements
+
+### 1. Tests are Required
+
+Every new feature MUST include tests:
+- Backend: Service tests, route tests, WebSocket tests
+- Frontend: Component tests, hook tests
+- Aim for >80% coverage on new code
+
+### 2. Documentation is Required
+
+Every new feature MUST update documentation:
+- New API endpoints
+- New WebSocket message types
+- New environment variables
+- Configuration changes
+
+### 3. Security Review
+
+All features touching user data or funds MUST:
+- Validate all inputs
+- Implement rate limiting
+- Follow non-custodial patterns
+- Be reviewed for vulnerabilities
+
+---
+
+## When to Plan vs. Implement Directly
+
+### Use Plan Mode for:
+- New trading features (order types, strategies)
+- WebSocket protocol changes
+- Database schema changes
+- Blockchain integration changes
+- Security-related changes
+
+### Implement Directly for:
+- Bug fixes with clear scope
+- UI component updates
+- Adding tests to existing code
+- Documentation updates
+- Performance optimizations with clear metrics
+
+---
+
+## Implementation Checklist
+
+### Before Starting
+- [ ] Target area(s) identified (frontend/backend/blockchain)
+- [ ] Affected files identified
+- [ ] Existing patterns understood
+- [ ] API contract defined (for full-stack changes)
+- [ ] Security implications considered
+- [ ] User approval obtained (for non-trivial changes)
+
+### Before Completing
+- [ ] Code implemented and working
+- [ ] Follows existing patterns
+- [ ] TypeScript types complete (no `any`)
+- [ ] Error handling comprehensive
+- [ ] Input validation in place
+- [ ] **Tests created and passing** (MANDATORY)
+- [ ] **Documentation updated** (MANDATORY)
+- [ ] No hardcoded secrets
+- [ ] Rate limiting applied where needed
+
+---
+
+## Development Commands
+
+```bash
+# Backend
+bun install          # Install dependencies
+bun run dev          # Start development server
+bun test             # Run tests
+bun run build        # Build for production
+
+# Frontend
+npm install          # Install dependencies
+npm run dev          # Start development server
+npm test             # Run tests
+npm run build        # Build for production
+
+# Database
+bun run db:migrate   # Run migrations
+bun run db:seed      # Seed development data
+```
+
+---
+
+## Bash Guidelines
+
+- DO NOT pipe output through `head`, `tail`, `less`, or `more`
+- Use command-specific flags (e.g., `git log -n 10`)
+- Run commands directly without pipes when possible
+- Let commands complete fully before processing output
+

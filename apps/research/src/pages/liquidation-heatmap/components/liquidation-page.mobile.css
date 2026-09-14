@@ -1,0 +1,1378 @@
+/* ═══════════════════════════════════════════
+   LIQUIDATION HEATMAP — Mobile Cinematic
+   Prefix: mlh-
+   ═══════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  /* Kill parent padding - page owns its own layout */
+  .liqp.mlh-page {
+    padding: 0 !important;
+    gap: 0 !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    animation: none !important;
+  }
+
+  /* Hide desktop header on mobile (shell header handles it) */
+  .mlh-page .liqp-header {
+    display: none;
+  }
+
+  /* Content container */
+  .mlh-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--m-sm, 8px);
+    padding: calc(var(--m-header-h, 52px) + env(safe-area-inset-top, 0px) + 8px) 0 0 0;
+  }
+
+  /* Header spacer fallback */
+  .mlh-header-spacer {
+    flex-shrink: 0;
+    height: 0;
+    width: 100%;
+  }
+
+  /* Section with horizontal padding */
+  .mlh-section {
+    padding: 0 var(--m-sm, 8px);
+  }
+
+  /* Full-bleed section */
+  .mlh-section-flush {
+    padding: 0;
+  }
+
+  /* Chart section uses even tighter padding */
+  .mlh-section-chart {
+    padding: 0 var(--m-xs, 4px);
+  }
+
+  /* Bottom spacer for nav clearance */
+  .mlh-bottom-spacer {
+    height: calc(var(--m-bottom-nav-h, 76px) + env(safe-area-inset-bottom, 0px) + 16px);
+    flex-shrink: 0;
+  }
+
+  /* ═══════════════════════════════════════════
+     SECTION LABELS (L3 cinematic pattern)
+     ═══════════════════════════════════════════ */
+
+  .mlh-section-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(245, 245, 247, 0.35);
+    margin-bottom: var(--m-sm, 8px);
+    margin-top: var(--m-lg, 16px);
+  }
+
+  .mlh-section:first-of-type .mlh-section-label {
+    margin-top: 0;
+  }
+
+  /* ═══════════════════════════════════════════
+     TOKEN SELECTOR — Horizontal pill strip
+     ═══════════════════════════════════════════ */
+
+  .mlh-token-strip {
+    display: flex;
+    gap: 8px;
+    padding: 8px 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mlh-token-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mlh-token-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px;
+    height: 34px;
+    border-radius: 17px;
+    border: none;
+    background: transparent;
+    color: rgba(245, 245, 247, 0.3);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .mlh-token-pill.active {
+    background: rgba(255, 255, 255, 0.06);
+    color: #f5f5f7;
+    font-weight: 600;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 12px rgba(245, 245, 247, 0.06),
+                inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .mlh-token-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .mlh-token-label {
+    letter-spacing: 0.3px;
+  }
+
+  /* ═══════════════════════════════════════════
+     METRICS GRID — 2x2 stat cards
+     ═══════════════════════════════════════════ */
+
+  .mlh-metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .mlh-stat-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 0.5px solid rgba(255, 255, 255, 0.04);
+    border-radius: var(--m-card-radius, 10px);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-height: 72px;
+  }
+
+  .mlh-stat-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(245, 245, 247, 0.25);
+  }
+
+  .mlh-stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: rgba(245, 245, 247, 0.9);
+    line-height: 1;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mlh-stat-value.positive {
+    color: var(--bull, #10B981);
+  }
+
+  .mlh-stat-value.negative {
+    color: var(--bear, #EF4444);
+  }
+
+  .mlh-stat-value.warning {
+    color: #F59E0B;
+  }
+
+  .mlh-stat-sub {
+    font-size: 11px;
+    font-weight: 400;
+    color: rgba(245, 245, 247, 0.2);
+  }
+
+  /* ═══════════════════════════════════════════
+     VIEW TABS — Ghost pill style (L4)
+     ═══════════════════════════════════════════ */
+
+  .mlh-view-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 4px 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mlh-view-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mlh-view-pill {
+    padding: 0 12px;
+    height: 28px;
+    border-radius: 14px;
+    border: none;
+    background: transparent;
+    color: rgba(245, 245, 247, 0.3);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .mlh-view-pill.active {
+    background: rgba(255, 255, 255, 0.06);
+    color: #f5f5f7;
+    font-weight: 600;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 12px rgba(245, 245, 247, 0.06),
+                inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* ═══════════════════════════════════════════
+     CHART WRAP — Canvas container
+     ═══════════════════════════════════════════ */
+
+  .mlh-chart-wrap {
+    border-radius: 0;
+    overflow: hidden;
+  }
+
+  /* Override desktop canvas heights for mobile */
+  .mlh-chart-wrap .liqp-heatmap-view {
+    margin: 0;
+  }
+
+  .mlh-chart-wrap .liq-heatmap-canvas-wrap {
+    height: 420px !important;
+  }
+
+  /* Remove any inner padding from heatmap container */
+  .mlh-chart-wrap .liqp-heatmap-section {
+    padding: 0;
+  }
+
+  .mlh-chart-wrap .welcome-heatmap-container {
+    border-radius: 0;
+    border: none;
+  }
+
+  .mlh-chart-wrap .liqp-levels-view {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .mlh-chart-wrap .liqp-levels-canvas-wrap {
+    height: 260px;
+  }
+
+  .mlh-chart-wrap .liqp-levels-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .mlh-chart-wrap .liqp-levels-legend {
+    display: none;
+  }
+
+  .mlh-chart-wrap .liqp-3d-canvas-wrap {
+    height: 280px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .mlh-chart-wrap .liqp-3d-controls {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    padding: 8px 12px;
+  }
+
+  .mlh-chart-wrap .liqp-zones-view {
+    gap: 8px;
+  }
+
+  .mlh-chart-wrap .liqp-zones-canvas-wrap {
+    height: 240px;
+    border-radius: 0;
+  }
+
+  .mlh-chart-wrap .liqp-zones-risk-meter {
+    border-radius: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 8px;
+  }
+
+  .mlh-chart-wrap .liqp-zones-risk-bar-bg {
+    width: 100%;
+  }
+
+  .mlh-chart-wrap .liqp-zones-signals {
+    gap: 6px;
+  }
+
+  .mlh-chart-wrap .liqp-zones-signal {
+    padding: 8px;
+    border-radius: 8px;
+  }
+
+  .mlh-chart-wrap .liqp-zones-explanation {
+    border-radius: 8px;
+    font-size: 12px;
+    padding: 10px 8px;
+  }
+
+  /* Tooltips - reduce blur for mobile perf */
+  .mlh-chart-wrap .liqp-levels-tooltip,
+  .mlh-chart-wrap .liqp-zones-tooltip {
+    backdrop-filter: var(--m-blur-heavy, blur(12px));
+    -webkit-backdrop-filter: var(--m-blur-heavy, blur(12px));
+  }
+
+  /* Filter pill group — compact segmented control (Bybit-style) */
+  .mlh-chart-wrap .liqp-levels-filters {
+    gap: 1px;
+    padding: 2px;
+    border-radius: 8px;
+  }
+
+  .mlh-chart-wrap .liqp-filter-btn {
+    padding: 0 10px !important;
+    font-size: 11px !important;
+    min-height: 26px !important;
+    min-width: 0 !important;
+    height: 26px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    letter-spacing: 0.02em;
+  }
+
+  /* ═══════════════════════════════════════════
+     SECTION HEAD — inline label + subtitle
+     ═══════════════════════════════════════════ */
+
+  .mlh-section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: var(--m-lg, 16px);
+    margin-bottom: var(--m-sm, 8px);
+  }
+
+  .mlh-section-head .mlh-section-label {
+    margin: 0;
+  }
+
+  .mlh-section-sub {
+    font-size: 10px;
+    font-weight: 400;
+    color: rgba(245, 245, 247, 0.25);
+    letter-spacing: 0.2px;
+    text-align: right;
+  }
+
+  /* ═══════════════════════════════════════════
+     LEVERAGE DISTRIBUTION — flatten card chrome
+     ═══════════════════════════════════════════ */
+
+  .mlh-dist-section .liqp-leverage-dist {
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* Hide the internal desktop header - mobile uses mlh-section-head */
+  .mlh-dist-section .liqp-leverage-dist > .liqp-section-header {
+    display: none;
+  }
+
+  .mlh-dist-section .liqp-dist-chart-area {
+    grid-template-columns: 28px 1fr;
+    min-height: 140px;
+  }
+
+  .mlh-dist-section .liqp-dist-yaxis {
+    padding-right: 4px;
+  }
+
+  .mlh-dist-section .liqp-dist-yaxis span {
+    font-size: 9px;
+    color: rgba(245, 245, 247, 0.3);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mlh-dist-section .liqp-dist-chart {
+    gap: 1px;
+    border-left-color: rgba(255, 255, 255, 0.04);
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+    touch-action: pan-y;
+  }
+
+  .mlh-dist-section .liqp-dist-xaxis span {
+    font-size: 9px;
+    color: rgba(245, 245, 247, 0.3);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mlh-dist-section .liqp-dist-legend {
+    gap: 16px;
+    margin-top: 10px;
+  }
+
+  .mlh-dist-section .liqp-dist-legend-item {
+    font-size: 10px;
+    color: rgba(245, 245, 247, 0.4);
+  }
+
+  /* ═══════════════════════════════════════════
+     KEY LEVELS — 5-column compact table
+     ═══════════════════════════════════════════ */
+
+  .mlh-levels-table {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mlh-levels-thead,
+  .mlh-levels-row {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr 0.95fr 0.9fr 0.7fr;
+    gap: 6px;
+    align-items: center;
+    padding: 8px 0;
+  }
+
+  .mlh-levels-thead {
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .mlh-levels-thead span {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: rgba(245, 245, 247, 0.3);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  }
+
+  .mlh-levels-row + .mlh-levels-row {
+    border-top: 1px solid rgba(255, 255, 255, 0.025);
+  }
+
+  .mlh-levels-row.cluster {
+    background: rgba(255, 159, 10, 0.05);
+    padding-left: 8px;
+    margin-left: -8px;
+    padding-right: 8px;
+    margin-right: -8px;
+    border-radius: 4px;
+  }
+
+  .mlh-lt-price {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(245, 245, 247, 0.9);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  .mlh-lt-density {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+  }
+
+  .mlh-lt-density-bg {
+    flex: 1;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+    overflow: hidden;
+    min-width: 20px;
+  }
+
+  .mlh-lt-density-fill {
+    display: block;
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .mlh-lt-density-fill.long {
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.5), rgba(239, 68, 68, 0.7));
+  }
+
+  .mlh-lt-density-fill.short {
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.5), rgba(16, 185, 129, 0.7));
+  }
+
+  .mlh-lt-density-val {
+    font-size: 10px;
+    font-weight: 500;
+    color: rgba(245, 245, 247, 0.5);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    min-width: 22px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .mlh-lt-amount {
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(245, 245, 247, 0.55);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.2px;
+  }
+
+  .mlh-lt-side {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    padding: 2px 5px;
+    border-radius: 4px;
+    text-align: center;
+    width: fit-content;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  }
+
+  .mlh-lt-side.long {
+    color: rgba(239, 68, 68, 0.9);
+    background: rgba(239, 68, 68, 0.12);
+  }
+
+  .mlh-lt-side.short {
+    color: rgba(16, 185, 129, 0.9);
+    background: rgba(16, 185, 129, 0.12);
+  }
+
+  .mlh-lt-dist {
+    font-size: 11px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.2px;
+    text-align: right;
+  }
+
+  .mlh-lt-dist.above {
+    color: rgba(16, 185, 129, 0.85);
+  }
+
+  .mlh-lt-dist.below {
+    color: rgba(239, 68, 68, 0.85);
+  }
+
+  /* Narrow screens: drop Est. Liq column */
+  @media (max-width: 380px) {
+    .mlh-levels-thead,
+    .mlh-levels-row {
+      grid-template-columns: 1fr 1.3fr 0.9fr 0.7fr;
+    }
+    .mlh-levels-thead span:nth-child(3),
+    .mlh-levels-row .mlh-lt-amount {
+      display: none;
+    }
+  }
+
+  /* ═══════════════════════════════════════════
+     HEATMAP VIEW — Override welcome tab panel
+     for standalone page mobile rendering
+     ═══════════════════════════════════════════ */
+
+  .mlh-chart-wrap .liq-tab-scroll-wrap {
+    flex: none;
+    min-height: auto;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  /* ── Restyle inner toolbar to single row, icon-only on mobile ── */
+
+  .mlh-chart-wrap .liq-heatmap-toolbar {
+    padding: 6px 8px;
+    border-bottom: none;
+    flex-wrap: nowrap;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .mlh-chart-wrap .liq-heatmap-toolbar-left {
+    gap: 4px;
+  }
+
+  .mlh-chart-wrap .liq-heatmap-toolbar-title {
+    display: none;
+  }
+
+  /* Chart mode tabs container (Heatmap / Candles) - icon only */
+  .mlh-chart-wrap .liq-chart-mode-tabs {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    gap: 2px !important;
+  }
+
+  /* Individual chart mode tab - icon only, hide text */
+  .mlh-chart-wrap .liq-chart-mode-tab {
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    border: none !important;
+    background: transparent !important;
+    color: rgba(245, 245, 247, 0.3) !important;
+    font-size: 0 !important;
+    box-shadow: none !important;
+    gap: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 32px !important;
+  }
+
+  .mlh-chart-wrap .liq-chart-mode-tab svg {
+    width: 16px !important;
+    height: 16px !important;
+    opacity: 0.4;
+    flex-shrink: 0;
+  }
+
+  .mlh-chart-wrap .liq-chart-mode-tab.active {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: #f5f5f7 !important;
+    border: 0.5px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: none !important;
+  }
+
+  .mlh-chart-wrap .liq-chart-mode-tab.active svg {
+    opacity: 1;
+  }
+
+  /* Thin separator between groups */
+  .mlh-chart-wrap .liq-heatmap-tf-btns {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    margin-left: 4px;
+    padding-left: 6px !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.06) !important;
+  }
+
+  .mlh-chart-wrap .liq-heatmap-tf-btn {
+    padding: 0 8px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+    border: none !important;
+    background: transparent !important;
+    color: rgba(245, 245, 247, 0.3) !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    box-shadow: none !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif !important;
+    min-width: 28px !important;
+  }
+
+  .mlh-chart-wrap .liq-heatmap-tf-btn.active {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: #f5f5f7 !important;
+    font-weight: 600 !important;
+    border: 0.5px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  /* Sensitivity buttons - icon only, hide text */
+  .mlh-chart-wrap .liq-sensitivity-btns {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    gap: 2px !important;
+    margin-left: 4px;
+    padding-left: 6px !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.06) !important;
+  }
+
+  .mlh-chart-wrap .liq-sens-btn {
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    border: none !important;
+    background: transparent !important;
+    color: rgba(245, 245, 247, 0.3) !important;
+    box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 32px !important;
+  }
+
+  /* Hide text label, show icon */
+  .mlh-chart-wrap .liq-sens-label {
+    display: none;
+  }
+
+  .mlh-chart-wrap .liq-sens-icon {
+    opacity: 0.4;
+    flex-shrink: 0;
+  }
+
+  .mlh-chart-wrap .liq-sens-btn.active {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: #f5f5f7 !important;
+    border: 0.5px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .mlh-chart-wrap .liq-sens-btn.active .liq-sens-icon {
+    opacity: 1;
+  }
+
+  /* Legend label */
+  .mlh-chart-wrap .liq-heatmap-legend-label {
+    display: none;
+  }
+
+  /* Zoom badge + reset */
+  .mlh-chart-wrap .liq-zoom-badge {
+    font-size: 10px !important;
+    padding: 2px 8px !important;
+    border-radius: 8px !important;
+  }
+
+  .mlh-chart-wrap .liq-reset-btn {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 8px !important;
+    background: transparent !important;
+    border: 0.5px solid rgba(255, 255, 255, 0.06) !important;
+  }
+
+  /* Fullscreen button */
+  .mlh-chart-wrap .welcome-heatmap-fullscreen-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: transparent;
+    border: 0.5px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Toolbar right - compact */
+  .mlh-chart-wrap .liq-heatmap-toolbar-right {
+    gap: 4px;
+  }
+
+  /* ── Day mode for inner toolbar ── */
+
+  .liqp.mlh-page.day-mode .mlh-chart-wrap .liq-chart-mode-tab {
+    color: rgba(0, 0, 0, 0.35) !important;
+  }
+
+  .liqp.mlh-page.day-mode .mlh-chart-wrap .liq-chart-mode-tab.active {
+    background: rgba(0, 0, 0, 0.05) !important;
+    color: #0f172a !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+  }
+
+  .liqp.mlh-page.day-mode .mlh-chart-wrap .liq-heatmap-tf-btn {
+    color: rgba(0, 0, 0, 0.35) !important;
+  }
+
+  .liqp.mlh-page.day-mode .mlh-chart-wrap .liq-heatmap-tf-btn.active {
+    background: rgba(0, 0, 0, 0.05) !important;
+    color: #0f172a !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+  }
+
+  .liqp.mlh-page.day-mode .mlh-chart-wrap .liq-sens-btn {
+    color: rgba(0, 0, 0, 0.35) !important;
+  }
+
+  .liqp.mlh-page.day-mode .mlh-chart-wrap .liq-sens-btn.active {
+    background: rgba(0, 0, 0, 0.05) !important;
+    color: #0f172a !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+  }
+
+  .liqp.mlh-page.day-mode .mlh-chart-wrap .liq-sensitivity-btns {
+    border-left-color: rgba(0, 0, 0, 0.08) !important;
+  }
+
+  .liqp.mlh-page.day-mode .mlh-chart-wrap .liq-heatmap-tf-btns {
+    border-left-color: rgba(0, 0, 0, 0.08) !important;
+  }
+
+  /* ═══════════════════════════════════════════
+     DAY MODE
+     ═══════════════════════════════════════════ */
+
+  .liqp.mlh-page.day-mode {
+    background: #f8f9fa;
+  }
+
+  /* Section labels */
+  .liqp.mlh-page.day-mode .mlh-section-label {
+    color: rgba(0, 0, 0, 0.3);
+  }
+
+  /* Token pills */
+  .liqp.mlh-page.day-mode .mlh-token-pill {
+    color: rgba(0, 0, 0, 0.35);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-token-pill.active {
+    background: rgba(0, 0, 0, 0.05);
+    color: #0f172a;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Stat cards */
+  .liqp.mlh-page.day-mode .mlh-stat-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-stat-label {
+    color: rgba(0, 0, 0, 0.3);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-stat-value {
+    color: #0f172a;
+  }
+
+  .liqp.mlh-page.day-mode .mlh-stat-value.positive {
+    color: #1B9E4B;
+  }
+
+  .liqp.mlh-page.day-mode .mlh-stat-value.negative {
+    color: #D42020;
+  }
+
+  .liqp.mlh-page.day-mode .mlh-stat-value.warning {
+    color: #C97A00;
+  }
+
+  .liqp.mlh-page.day-mode .mlh-stat-sub {
+    color: rgba(0, 0, 0, 0.25);
+  }
+
+  /* View pills */
+  .liqp.mlh-page.day-mode .mlh-view-pill {
+    color: rgba(0, 0, 0, 0.35);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-view-pill.active {
+    background: rgba(0, 0, 0, 0.05);
+    color: #0f172a;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Chart wrap */
+  .liqp.mlh-page.day-mode .mlh-chart-wrap .liqp-levels-view {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-chart-wrap .liqp-3d-controls {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-chart-wrap .liqp-3d-canvas-wrap {
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-chart-wrap .liqp-zones-risk-meter {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-chart-wrap .liqp-zones-signal {
+    background: rgba(0, 0, 0, 0.02);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-chart-wrap .liqp-zones-explanation {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.04);
+    color: #475569;
+  }
+
+  /* Section head subtitle */
+  .liqp.mlh-page.day-mode .mlh-section-sub {
+    color: rgba(0, 0, 0, 0.3);
+  }
+
+  /* Leverage distribution */
+  .liqp.mlh-page.day-mode .mlh-dist-section .liqp-dist-yaxis span,
+  .liqp.mlh-page.day-mode .mlh-dist-section .liqp-dist-xaxis span {
+    color: rgba(0, 0, 0, 0.4);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-dist-section .liqp-dist-chart {
+    border-left-color: rgba(0, 0, 0, 0.08);
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-dist-section .liqp-dist-legend-item {
+    color: rgba(0, 0, 0, 0.45);
+  }
+
+  /* Key levels table */
+  .liqp.mlh-page.day-mode .mlh-levels-thead {
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-levels-thead span {
+    color: rgba(0, 0, 0, 0.4);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-levels-row + .mlh-levels-row {
+    border-top-color: rgba(0, 0, 0, 0.05);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-levels-row.cluster {
+    background: rgba(255, 159, 10, 0.06);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-lt-price {
+    color: #0f172a;
+  }
+
+  .liqp.mlh-page.day-mode .mlh-lt-density-bg {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-lt-density-val {
+    color: rgba(0, 0, 0, 0.5);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-lt-amount {
+    color: rgba(0, 0, 0, 0.55);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-lt-side.long {
+    color: #D42020;
+    background: rgba(212, 32, 32, 0.12);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-lt-side.short {
+    color: #1B9E4B;
+    background: rgba(27, 158, 75, 0.12);
+  }
+
+  .liqp.mlh-page.day-mode .mlh-lt-dist.above {
+    color: #1B9E4B;
+  }
+
+  .liqp.mlh-page.day-mode .mlh-lt-dist.below {
+    color: #D42020;
+  }
+
+  /* ═══════════════════════════════════════════
+     RISK PULSE (mobile)
+     ═══════════════════════════════════════════ */
+
+  .mlh-stat-card--risk-pulse {
+    animation: mlhRiskPulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes mlhRiskPulse {
+    0%, 100% {
+      border-color: rgba(239, 68, 68, 0.08);
+      box-shadow: none;
+    }
+    50% {
+      border-color: rgba(239, 68, 68, 0.2);
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.06);
+    }
+  }
+
+  .liqp.mlh-page.day-mode .mlh-stat-card--risk-pulse {
+    animation: mlhRiskPulseDay 2.5s ease-in-out infinite;
+  }
+
+  @keyframes mlhRiskPulseDay {
+    0%, 100% {
+      border-color: rgba(212, 32, 32, 0.1);
+      box-shadow: none;
+    }
+    50% {
+      border-color: rgba(212, 32, 32, 0.2);
+      box-shadow: 0 0 14px rgba(212, 32, 32, 0.05);
+    }
+  }
+
+  /* ═══════════════════════════════════════════
+     L/S RATIO BAR (mobile)
+     ═══════════════════════════════════════════ */
+
+  .mlh-stat-card .liqp-ls-bar-wrap {
+    margin-top: 3px;
+  }
+
+  .mlh-stat-card .liqp-ls-bar {
+    height: 3px;
+  }
+
+  .mlh-stat-card .liqp-ls-label {
+    font-size: 9px;
+  }
+
+  /* ═══════════════════════════════════════════
+     AI ANALYSIS (mobile)
+     ═══════════════════════════════════════════ */
+
+  .mlh-section .liqp-ai-section {
+    padding: 14px 12px;
+    border-radius: var(--m-card-radius, 10px);
+    background: rgba(255, 255, 255, 0.02);
+    border: 0.5px solid rgba(255, 255, 255, 0.04);
+    box-shadow: none;
+  }
+
+  .mlh-section .liqp-ai-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+  }
+
+  .mlh-section .liqp-ai-section .liqp-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(245, 245, 247, 0.35);
+  }
+
+  .mlh-section .liqp-ai-timeframes {
+    gap: 1px;
+    padding: 2px;
+    border-radius: 6px;
+  }
+
+  .mlh-section .liqp-ai-tf-btn {
+    padding: 3px 10px;
+    font-size: 11px;
+    border-radius: 5px;
+  }
+
+  .mlh-section .liqp-ai-text {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .mlh-section .liqp-ai-level {
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    padding: 6px 10px;
+    border-radius: 6px;
+  }
+
+  .mlh-section .liqp-ai-level-label {
+    font-size: 10px;
+    min-width: 80px;
+  }
+
+  .mlh-section .liqp-ai-level-price {
+    font-size: 12px;
+  }
+
+  .mlh-section .liqp-ai-level-amount {
+    font-size: 10px;
+    margin-left: 11px;
+  }
+
+  /* Day mode AI section (mobile) */
+  .liqp.mlh-page.day-mode .liqp-ai-section {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+
+  .liqp.mlh-page.day-mode .liqp-ai-section .liqp-section-title {
+    color: rgba(0, 0, 0, 0.3);
+  }
+
+  .liqp.mlh-page.day-mode .liqp-ai-text {
+    color: rgba(0, 0, 0, 0.5);
+  }
+
+  .liqp.mlh-page.day-mode .liqp-ai-level {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.04);
+  }
+
+  .liqp.mlh-page.day-mode .liqp-ai-level-price {
+    color: #0f172a;
+  }
+
+  .liqp.mlh-page.day-mode .liqp-ai-level-amount {
+    color: rgba(0, 0, 0, 0.4);
+  }
+
+  .liqp.mlh-page.day-mode .liqp-ai-level-label {
+    color: rgba(0, 0, 0, 0.45);
+  }
+
+  /* ═══════════════════════════════════════════
+     REAL HEATMAP MOBILE OVERRIDES
+     ═══════════════════════════════════════════ */
+
+  .liqp-real-heatmap {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .liqp-real-heatmap-canvas-wrap {
+    height: 440px;
+  }
+
+  /* In fullscreen on mobile, the 440px cap + desktop's max-height:calc(100dvh-320px)
+     leave a huge empty strip below the chart. Let the canvas fill whatever
+     space the toolbar leaves. */
+  .liqp-real-heatmap--fullscreen .liqp-real-heatmap-canvas-wrap {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
+  }
+  /* 🪤🪤 THE FULLSCREEN CONTAINERS WERE WRITTEN FOR THE BROWSER FULLSCREEN API,
+     WHICH MOBILE NEVER GETS. requestFullscreen is a no-op on non-video elements
+     in iOS Safari and installed PWAs reject it outright (see
+     use-chart-fullscreen.js), so on a phone this ALWAYS lands on the CSS
+     fallback: a plain position:fixed inset:0 box inside a document served with
+     viewport-fit=cover. Under the real API the element goes to the top layer
+     where inset:0 genuinely is the screen; in the fallback it is the DOCUMENT,
+     which runs under the status bar.
+
+     So `inset: 0` + `padding: 0` put the header row — symbol picker, timeframe,
+     settings, and the ONLY control that exits fullscreen — underneath the notch.
+     That is the founder's "buttons go too far top", and because the trapped
+     control is the EXIT, it also reads as being stuck in there.
+
+     And `height: 100dvh` is the LARGE viewport on iOS: it lies by the height of
+     the browser chrome, so the bottom of the chart fell off screen. index.html
+     already measures the truth from visualViewport into --app-vh; this file
+     just never used it.
+
+     Fixed here, not in liquidation-page.css, so DESKTOP keeps inset:0 + 100dvh
+     — correct there, because desktop really does get the top layer. */
+  .liqp-real-heatmap--fullscreen {
+    position: fixed !important;
+    inset: 0 !important;
+    box-sizing: border-box !important;
+    padding: var(--app-safe-top, env(safe-area-inset-top, 0px)) env(safe-area-inset-right, 0px) var(--app-safe-bottom, env(safe-area-inset-bottom, 0px)) env(safe-area-inset-left, 0px) !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100vw !important;
+    height: var(--app-vh, 100dvh) !important;
+    z-index: 2000;
+    background: var(--bg-void, #09090b);
+    border-radius: 0 !important;
+  }
+
+  /* The other four views (Bands, Levels, Zones, Map) fullscreen through
+     ChartFullscreen/.liqp-chart-fs instead of HeatmapView's own button, and had
+     exactly the same two bugs — same fix, plus its 10px inset preserved. */
+  .liqp-chart-fs.is-fullscreen {
+    box-sizing: border-box !important;
+    height: var(--app-vh, 100dvh) !important;
+    padding:
+      calc(10px + var(--app-safe-top, env(safe-area-inset-top, 0px)))
+      calc(10px + env(safe-area-inset-right, 0px))
+      calc(10px + var(--app-safe-bottom, env(safe-area-inset-bottom, 0px)))
+      calc(10px + env(safe-area-inset-left, 0px)) !important;
+  }
+
+  /* Escape does not exist on a phone, so in the CSS fallback these two buttons
+     are the only way out — and at 26px they were under the app's own 38px touch
+     floor. Give them a real target while fullscreen, without moving them: the
+     box grows, the icon does not. */
+  .liqp-real-heatmap--fullscreen .liqp-hm-fullscreen-btn,
+  .liqp-chart-fs.is-fullscreen .liqp-chart-fs-btn {
+    width: 38px;
+    height: 38px;
+    flex: none;
+  }
+
+  .liqp-hm-header {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .liqp-hm-title {
+    display: none;
+  }
+
+  .liqp-hm-dropdown-btn {
+    padding: 4px 10px;
+    font-size: 0.75rem;
+  }
+
+  .liqp-hm-dropdown-panel {
+    width: 160px;
+  }
+
+  /* Zoom controls - compact (override global 44px touch-target rule) */
+  .liqp-hm-zoom-controls {
+    gap: 0;
+    padding: 1px;
+    border-radius: 6px;
+  }
+
+  .liqp-hm-zoom-btn {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    padding: 0 !important;
+    border-radius: 6px !important;
+  }
+
+  .liqp-hm-zoom-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .liqp-real-heatmap-error {
+    min-height: 200px;
+  }
+
+  /* Heatmap 2.0 header controls - tight header, hide the exchange pills below 560px */
+  @media (max-width: 560px) {
+    .liqp-hm-ex-pills {
+      display: none;
+    }
+  }
+
+  /* Threshold slider - compact on mobile: drop the text label, shorten track */
+  .liqp-hm-threshold-label {
+    display: none;
+  }
+  .liqp-hm-threshold input[type="range"] {
+    width: 60px;
+  }
+
+  /* Day mode - header stays dark */
+  .liqp.mlh-page.day-mode .liqp-hm-header {
+    background: rgba(12, 12, 24, 0.95);
+  }
+
+  .liqp.mlh-page.day-mode .liqp-hm-title {
+    color: #f5f5f7;
+  }
+
+  .liqp.mlh-page.day-mode .liqp-hm-dropdown-btn {
+    color: #f5f5f7;
+  }
+
+  .liqp.mlh-page.day-mode .liqp-real-heatmap-canvas-wrap {
+    background: #0a0a18;
+  }
+
+  /* ═══════════════════════════════════════════
+     REDUCED MOTION
+     ═══════════════════════════════════════════ */
+
+  @media (prefers-reduced-motion: reduce) {
+    .mlh-token-pill,
+    .mlh-view-pill {
+      transition: none !important;
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   Liquidation heatmap FULLSCREEN — rotate hint
+   ═══════════════════════════════════════════════ */
+@media (max-width: 768px) and (orientation: portrait) {
+  .liqp-real-heatmap--fullscreen .liqp-real-heatmap-canvas-wrap::after {
+    content: "Rotate your device for a better view ⟲";
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 14px;
+    background: rgba(18, 18, 22, 0.92);
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    color: rgba(245, 245, 247, 0.9);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    pointer-events: none;
+    z-index: 10;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    animation: liqp-rotate-hint-in 0.35s ease 0.15s both;
+  }
+
+  .liqp-real-heatmap--fullscreen .liqp-real-heatmap-canvas-wrap {
+    position: relative;
+  }
+}
+
+@keyframes liqp-rotate-hint-in {
+  from { opacity: 0; transform: translate(-50%, -6px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* In landscape the canvas gets the full viewport — kill any content that would
+   constrain it. Portrait-only hint auto-hides since selector stops matching. */
+@media (max-width: 932px) and (orientation: landscape) {
+  /* 🪤 Rotate a phone and the notch moves to a SIDE — a blanket `padding: 0`
+     here would have undone the fix above the moment the user turned the device
+     to read the chart, which is exactly what fullscreen is for. Give the top
+     back to the chart (there is no status bar to clear in landscape) and keep
+     the horizontal + home-indicator insets. --app-safe-* are declared under
+     max-width:768px, which a 932px landscape phone does NOT match, so the
+     env() fallbacks in these vars are load-bearing here. */
+  /* 🪤 box-sizing is load-bearing, not tidiness: the base rule is
+     width:100vw/height:100dvh with padding:0, so adding padding WITHOUT
+     border-box pushes the box past the viewport and hands a landscape phone a
+     horizontally scrolling "fullscreen". And --app-vh is repeated here because
+     the portrait block above is max-width:768px, which a landscape phone
+     (844-932px wide) does not match — it would silently fall back to the
+     100dvh that is wrong on iOS. */
+  .liqp-real-heatmap--fullscreen {
+    box-sizing: border-box !important;
+    height: var(--app-vh, 100dvh) !important;
+    padding: 0 env(safe-area-inset-right, 0px) var(--app-safe-bottom, env(safe-area-inset-bottom, 0px)) env(safe-area-inset-left, 0px) !important;
+  }
+  .liqp-chart-fs.is-fullscreen {
+    box-sizing: border-box !important;
+    height: var(--app-vh, 100dvh) !important;
+    padding: 4px calc(4px + env(safe-area-inset-right, 0px)) calc(4px + var(--app-safe-bottom, env(safe-area-inset-bottom, 0px))) calc(4px + env(safe-area-inset-left, 0px)) !important;
+  }
+  /* Same reasoning as portrait: with no Escape key these are the only exit. */
+  .liqp-real-heatmap--fullscreen .liqp-hm-fullscreen-btn,
+  .liqp-chart-fs.is-fullscreen .liqp-chart-fs-btn {
+    width: 38px;
+    height: 38px;
+    flex: none;
+  }
+  .liqp-real-heatmap--fullscreen .liqp-hm-header {
+    padding: 4px 8px;
+  }
+}

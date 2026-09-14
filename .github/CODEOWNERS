@@ -1,0 +1,55 @@
+# CODEOWNERS — auto-request review on PRs that touch high-risk files.
+#
+# Goal: prevent the "imperceptible prompt injection" / supply-chain delivery
+# path from landing through an unreviewed PR. The agent-instruction-unicode-
+# scan workflow blocks invisible-Unicode at CI; this file ensures EVERY PR
+# touching AI-readable instruction files or the workflows enforcing them
+# auto-requests review from @spectreaibot (Gleb + Sunny).
+#
+# Effect:
+#   - With branch protection "Require review from Code Owners": enabled,
+#     external/fork PRs that change any path below cannot merge without a
+#     review from @spectreaibot. Closes the "attacker opens a real PR to
+#     LangChain/LlamaIndex/MetaGPT" delivery vector flagged 2026-05-25.
+#   - Internal PRs authored BY @spectreaibot (the shared Gleb+Sunny account)
+#     do not need to request their own approval — GitHub excludes the PR
+#     author from codeowner-review requirements. The gleb -> main flow is
+#     unaffected.
+#
+# Patterns are evaluated bottom-up: last match wins. Keep most-specific rules
+# at the bottom if you ever add narrower overrides.
+
+# ── AI agent instruction surfaces (read by Claude / Cursor / Windsurf / Aider) ──
+CLAUDE.md          @spectreaibot
+AGENTS.md          @spectreaibot
+.cursorrules       @spectreaibot
+.windsurfrules     @spectreaibot
+.aiderules         @spectreaibot
+.claude/           @spectreaibot
+.claude/**         @spectreaibot
+
+# ── CI workflows + this file (an attacker who can weaken these defeats the rest) ──
+.github/workflows/         @spectreaibot
+.github/CODEOWNERS         @spectreaibot
+.githooks/                 @spectreaibot
+scripts/security/          @spectreaibot
+
+# ── Auth boundary code (closest to credential exposure / privilege escalation) ──
+apps/research/api/auth-gate.js     @spectreaibot
+apps/trading/api/auth-gate.js      @spectreaibot
+apps/research/api/_lib/auth.js     @spectreaibot
+apps/trading/api/_lib/auth.js      @spectreaibot
+developer-control/middleware.js    @spectreaibot
+
+# ── Dependency files (supply-chain attack surface) ──
+# Added 2026-05-25 in response to the "TrapDoor" 34-package wave (CoinDesk
+# 2026-05-25, Socket Security) targeting Aptos / Sui / Solana developer
+# environments to steal SSH keys + wallet credentials via postinstall
+# scripts. Bare patterns match anywhere in the tree (root, apps/*,
+# packages/*, developer-control/, desktop/). Any PR adding/changing a dep
+# auto-tags @spectreaibot for review; combined with the required CI status
+# checks (npm audit + secret-scan + unicode-scan), this is the practical
+# closure of the "compromised package version" delivery path.
+package.json          @spectreaibot
+package-lock.json     @spectreaibot
+.npmrc                @spectreaibot

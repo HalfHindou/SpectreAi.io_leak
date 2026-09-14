@@ -1,0 +1,464 @@
+/* Research Zone — Quick Switcher
+ * Built on Spectre's "Apple Cinematic" glass-card primitive.
+ * Surfaces, type, spacing and motion all flow from index.css design tokens.
+ */
+
+/* Box-less class carrier for the body portal — it exists only so the theme
+   selectors (`.app.app-day-mode …`, `.app.pro-paper …`) still match. Giving it
+   a box would append a second full-height layout block to <body> (App.css
+   makes `.app` a flex column that is `min-height: 100vh`). The `.app` pairing
+   is not redundant: on its own this selector only TIES with `.app`, and a tie
+   is settled by stylesheet order, which is not guaranteed to match dev in a
+   bundled build. */
+.rz-qs-portal-root,
+.rz-qs-portal-root.app { display: contents; }
+
+.rz-qs-backdrop {
+  position: fixed;
+  inset: 0;
+  /* Above the header (300) and nav (400) now that the modal is portalled to
+     body and no longer trapped in `.app-main-content`'s stacking context. */
+  z-index: 1100;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+  animation: rz-qs-fade var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+@keyframes rz-qs-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* === MODAL — glass-card primitive === */
+.rz-qs-modal {
+  width: min(560px, 92vw);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%),
+    var(--glass-bg, rgba(9, 9, 11, 0.88));
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.04));
+  border-radius: var(--radius-lg, 16px);
+  box-shadow:
+    var(--shadow-inner, inset 0 1px 0 rgba(255, 255, 255, 0.04)),
+    0 24px 60px rgba(0, 0, 0, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  overflow: hidden;
+  animation: rz-qs-pop var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+@keyframes rz-qs-pop {
+  from { opacity: 0; transform: translateY(-8px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* === HEADER === */
+.rz-qs-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3, 12px);
+  padding: var(--sp-3, 12px) var(--sp-4, 16px);
+  border-bottom: 1px solid var(--border-default, rgba(255, 255, 255, 0.04));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.012) 0%, transparent 100%);
+}
+
+.rz-qs-search-icon {
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  flex-shrink: 0;
+}
+
+.rz-qs-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary, #f5f5f7);
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  padding: 4px 0;
+  min-width: 0;
+}
+
+.rz-qs-input::placeholder {
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+}
+
+/* === LIST === */
+.rz-qs-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--sp-2, 8px);
+    }
+
+.rz-qs-list::-webkit-scrollbar { width: 4px; }
+.rz-qs-list::-webkit-scrollbar-track { background: transparent; }
+.rz-qs-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full, 9999px);
+}
+.rz-qs-list::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.14); }
+
+.rz-qs-empty {
+  padding: var(--sp-8, 32px) var(--sp-5, 20px);
+  text-align: center;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+/* === ITEMS === */
+.rz-qs-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3, 12px);
+  padding: 10px var(--sp-3, 12px);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md, 12px);
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-primary, #f5f5f7);
+  transition:
+    background var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    border-color var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    box-shadow var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.rz-qs-item--active {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--glass-border-light, rgba(255, 255, 255, 0.035));
+  box-shadow: var(--shadow-inner, inset 0 1px 0 rgba(255, 255, 255, 0.04));
+}
+
+.rz-qs-item-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full, 50%);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+  box-shadow: var(--shadow-inner, inset 0 1px 0 rgba(255, 255, 255, 0.04));
+}
+
+.rz-qs-item-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-full, 50%);
+}
+
+.rz-qs-item-fallback {
+  font-family: var(--font-mono, 'JetBrains Mono', 'SF Mono', monospace);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+}
+
+.rz-qs-item-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rz-qs-item-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary, #f5f5f7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+.rz-qs-item-sub {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2, 6px);
+  font-size: 0.7188rem;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+}
+
+.rz-qs-item-symbol {
+  font-family: var(--font-mono, 'JetBrains Mono', 'SF Mono', monospace);
+  font-weight: 500;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  letter-spacing: 0.02em;
+}
+
+.rz-qs-item-dot { color: var(--text-disabled, rgba(245, 245, 247, 0.2)); }
+
+.rz-qs-item-time {
+  font-family: var(--font-mono, 'JetBrains Mono', 'SF Mono', monospace);
+  font-size: 0.6875rem;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+}
+
+/* CURRENT pill — Spectre badge pattern */
+.rz-qs-item-badge {
+  margin-left: 4px;
+  padding: 2px 8px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--accent-muted, rgba(245, 245, 247, 0.08));
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.04));
+  border-radius: var(--radius-full, 9999px);
+}
+
+.rz-qs-item-enter {
+  font-family: var(--font-mono, 'JetBrains Mono', 'SF Mono', monospace);
+  font-size: 0.875rem;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  flex-shrink: 0;
+  padding: 0 4px;
+}
+
+/* === FOOTER === */
+.rz-qs-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3, 12px);
+  padding: 10px var(--sp-4, 16px);
+  border-top: 1px solid var(--border-default, rgba(255, 255, 255, 0.04));
+  background:
+    linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.012) 100%),
+    rgba(0, 0, 0, 0.18);
+}
+
+.rz-qs-hint {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2, 6px);
+  font-size: 0.6875rem;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  letter-spacing: 0.01em;
+}
+
+.rz-qs-sep {
+  width: 1px;
+  height: 12px;
+  background: var(--border-strong, rgba(255, 255, 255, 0.06));
+  margin: 0 var(--sp-2, 8px);
+}
+
+/* Keyboard pill — Spectre kbd pattern */
+.rz-qs-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  font-family: var(--font-mono, 'JetBrains Mono', 'SF Mono', monospace);
+  font-size: 0.6563rem;
+  font-weight: 600;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  background: var(--bg-elevated, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.04));
+  border-radius: var(--radius-sm, 8px);
+  box-shadow: var(--shadow-inner, inset 0 1px 0 rgba(255, 255, 255, 0.04));
+  line-height: 1;
+}
+
+.rz-qs-kbd--esc {
+  margin-left: auto;
+  text-transform: lowercase;
+}
+
+/* === BUTTONS — secondary (glass) === */
+.rz-qs-clear,
+.rz-qs-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.04));
+  border-radius: var(--radius-sm, 8px);
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  cursor: pointer;
+  font-family: inherit;
+  transition: all var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.rz-qs-clear {
+  padding: 6px 12px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.rz-qs-clear:hover {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.04));
+  border-color: var(--border-strong, rgba(255, 255, 255, 0.06));
+  color: var(--text-primary, #f5f5f7);
+  transform: translateY(-1px);
+}
+
+.rz-qs-clear:active { transform: translateY(0); }
+
+.rz-qs-close {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.rz-qs-close:hover {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.06));
+  border-color: var(--border-strong, rgba(255, 255, 255, 0.06));
+  color: var(--text-primary, #f5f5f7);
+  transform: translateY(-1px);
+}
+
+.rz-qs-close:active { transform: scale(0.96); }
+
+.rz-qs-close:focus-visible,
+.rz-qs-clear:focus-visible {
+  outline: 2px solid var(--accent, #f5f5f7);
+  outline-offset: 3px;
+}
+
+/* === Hero history button (separate component, kept here for proximity) === */
+.rz-lite-hero-history {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9px;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  flex-shrink: 0;
+}
+
+.rz-lite-hero-history:hover {
+  background: rgba(var(--token-rgb), 0.12);
+  color: rgb(var(--token-rgb-accent, var(--token-rgb)));
+  border-color: rgba(var(--token-rgb-accent, var(--token-rgb)), 0.25);
+}
+
+/* ================================================================
+   DAY MODE
+   ================================================================ */
+.app.app-day-mode .rz-qs-modal {
+  background:
+    linear-gradient(135deg, rgba(0, 0, 0, 0.018) 0%, rgba(0, 0, 0, 0.005) 100%),
+    #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
+  color: #0f172a;
+  box-shadow:
+    0 24px 60px rgba(15, 23, 42, 0.18),
+    0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.app.app-day-mode .rz-qs-header {
+  border-bottom-color: rgba(15, 23, 42, 0.06);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.01) 0%, transparent 100%);
+}
+
+.app.app-day-mode .rz-qs-input { color: #0f172a; }
+.app.app-day-mode .rz-qs-input::placeholder { color: rgba(15, 23, 42, 0.4); }
+.app.app-day-mode .rz-qs-search-icon { color: rgba(15, 23, 42, 0.5); }
+
+.app.app-day-mode .rz-qs-item { color: #0f172a; }
+.app.app-day-mode .rz-qs-item--active {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+.app.app-day-mode .rz-qs-item-name { color: #0f172a; }
+.app.app-day-mode .rz-qs-item-sub { color: rgba(15, 23, 42, 0.55); }
+.app.app-day-mode .rz-qs-item-symbol { color: rgba(15, 23, 42, 0.7); }
+.app.app-day-mode .rz-qs-item-time { color: rgba(15, 23, 42, 0.55); }
+.app.app-day-mode .rz-qs-item-dot { color: rgba(15, 23, 42, 0.25); }
+.app.app-day-mode .rz-qs-item-logo { background: rgba(15, 23, 42, 0.04); }
+.app.app-day-mode .rz-qs-item-enter { color: rgba(15, 23, 42, 0.55); }
+.app.app-day-mode .rz-qs-item-badge {
+  background: rgba(15, 23, 42, 0.06);
+  color: rgba(15, 23, 42, 0.7);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+.app.app-day-mode .rz-qs-footer {
+  background: linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.01) 100%), #fafafa;
+  border-top-color: rgba(15, 23, 42, 0.06);
+}
+.app.app-day-mode .rz-qs-hint { color: rgba(15, 23, 42, 0.55); }
+.app.app-day-mode .rz-qs-sep { background: rgba(15, 23, 42, 0.08); }
+.app.app-day-mode .rz-qs-kbd {
+  color: rgba(15, 23, 42, 0.7);
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.app.app-day-mode .rz-qs-clear,
+.app.app-day-mode .rz-qs-close {
+  color: rgba(15, 23, 42, 0.6);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+.app.app-day-mode .rz-qs-clear:hover,
+.app.app-day-mode .rz-qs-close:hover {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.18);
+}
+
+.app.app-day-mode .rz-lite-hero-history {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.08);
+  color: rgba(15, 23, 42, 0.65);
+}
+.app.app-day-mode .rz-lite-hero-history:hover {
+  background: rgba(15, 23, 42, 0.06);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+}
+
+/* ================================================================
+   MOBILE
+   ================================================================ */
+@media (max-width: 768px) {
+  /* Frame it inside the safe area and above the docked bottom bar. `6vh` used
+     to put the search row under the notch AND under the fixed header, which is
+     how the top of the panel read as cut off. */
+  .rz-qs-backdrop {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--m-bottom-nav-h, 48px) + 12px);
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .rz-qs-modal {
+    width: 100%;
+    /* 100% of the padded box — grows with content, never past the safe area. */
+    max-height: 100%;
+  }
+  .rz-qs-footer { flex-wrap: wrap; gap: var(--sp-2, 8px); }
+  .rz-qs-hint { font-size: 0.625rem; }
+}
+
+/* Keep token search readable when iOS focuses the field, including on iPad. */
+@media (any-pointer: coarse) {
+  .rz-qs-input { font-size: max(16px, 1rem); min-height: 44px; }
+}

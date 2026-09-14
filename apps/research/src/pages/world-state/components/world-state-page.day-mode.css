@@ -1,0 +1,90 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   WORLD STATE — day mode
+   ══════════════════════════════════════════════════════════════════════════
+
+   The page's colour lives entirely in the local ramp declared on .wst-root, so
+   day mode is one token swap rather than a parallel stylesheet. If a rule in
+   world-state-page.css names a colour directly, it is a bug there, not a
+   missing override here.
+
+   The floor is #64748b: nothing that carries MEANING may be lighter than that
+   on white. That covers more than body text — as_of stamps, volume cells, the
+   THIN marker, the COT note, the stance word and the changelog timestamps are
+   all load-bearing on this page, and every one of them resolves to --wst-ink-3.
+   The serif quote sits at --wst-ink in both themes: it is the only prose here
+   and it is never secondary.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.app.app-day-mode .wst-root {
+  --wst-ink: #0f172a;
+  --wst-ink-2: #475569;
+  --wst-ink-3: #64748b;
+  --wst-hair: rgba(15, 23, 42, 0.09);
+  --wst-hair-soft: rgba(15, 23, 42, 0.05);
+
+  --wst-fill: rgba(15, 23, 42, 0.022);
+  --wst-fill-hi: rgba(15, 23, 42, 0.045);
+  --wst-ground: rgba(15, 23, 42, 0.06);
+  --wst-zero: rgba(15, 23, 42, 0.2);
+
+  /* Standardised day semantics — matches the shipped board values. */
+  --wst-bull: #059669;
+  --wst-bear: #b91c1c;
+
+  /* Still neutral, still never semantic — just inverted. */
+  --wst-track: rgba(15, 23, 42, 0.55);
+}
+
+/* The version flash paints with currentColor; on white it needs to darken
+   rather than lighten, which it does — but the ink is much denser, so the
+   overlay is pulled back to stay a flash and not a block. */
+.app.app-day-mode .wst-ver.is-flash::after { opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .app.app-day-mode .wst-ver.is-flash::after { animation-name: wstArriveDay; }
+}
+@keyframes wstArriveDay { from { opacity: 0.1; } to { opacity: 0; } }
+
+/* The house shimmer is a white sweep over a white tint — invisible on paper. */
+.app.app-day-mode .wst-sk.animate-shimmer { background-color: rgba(15, 23, 42, 0.045); }
+.app.app-day-mode .wst-sk.animate-shimmer::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(15, 23, 42, 0.07) 50%, transparent 100%);
+}
+
+/* The ghost tick marks last week's position — meaning-bearing, so it holds at
+   the floor rather than fading into the plot. */
+.app.app-day-mode .wst-cot-ghost { opacity: 0.75; }
+
+/* ── the engine in day mode: a deliberately dark framed media card ───────── */
+
+/* The precedent is the liquidation console (`.liqp-real-heatmap--day`): a
+   surface whose whole language is additive light on black does not become a
+   light surface by inverting its tokens — it becomes a flat wash. So the stage
+   keeps its night palette and the PAGE frames it, the way a print magazine
+   frames a photograph on white paper.
+   The mat is drawn with box-shadow rather than padding so it costs no layout
+   and the plate/key/market overlays keep the coordinates they have in dark. */
+.app.app-day-mode .wste {
+  border-radius: 20px;
+  box-shadow:
+    0 0 0 10px #ffffff,
+    0 0 0 11px rgba(15, 23, 42, 0.09),
+    0 8px 24px rgba(15, 23, 42, 0.07);
+}
+.app.app-day-mode .wste-stage { border-color: rgba(255, 255, 255, 0.07); }
+
+/* Everything inside .wste sits ON the dark stage, so it keeps the night ramp.
+   Scoped to .wste only — the band's head and footnote are outside it and stay
+   on the page's day ink. */
+.app.app-day-mode .wste {
+  --wst-ink: rgba(245, 245, 247, 0.95);
+  --wst-ink-2: rgba(245, 245, 247, 0.78);
+  --wst-ink-3: rgba(245, 245, 247, 0.55);
+}
+
+/* The tank reads its own colour from the ramp, so it follows the day
+   semantics (#b91c1c / #059669) with no extra rule. The ladder shimmer is a
+   white sweep, which needs pulling back over dark ink on paper. */
+.app.app-day-mode .wst-odds-fill.is-lead::after {
+  background: linear-gradient(90deg,
+    transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+}

@@ -1,0 +1,522 @@
+/**
+ * CommandPalette.css — Iteration 8 surface (modern pass).
+ *
+ * Direction: the palette reads NEUTRAL by default. The active token's
+ * accent is a whisper (a 1px spine, a subtle wash) — never a slam. The
+ * modal lifts onto a properly elevated glass surface that's visibly
+ * distinct from the page void underneath. Numbers right-aligned in a
+ * stable grid. No vendor-clone Spotlight aesthetics; this is a trading
+ * command surface.
+ */
+
+/* --- Scrim ----------------------------------------------------------- */
+
+.cmdk-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  /* Deeper void to match the token page feel. The page behind reads as
+     solid black, the modal floats over it crisply. */
+  background: rgba(0, 0, 0, 0.72);
+  -webkit-backdrop-filter: blur(14px) saturate(105%);
+  backdrop-filter: blur(14px) saturate(105%);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 10vh var(--sp-4) var(--sp-4);
+  animation: cmdk-scrim-in var(--dur-base) var(--ease-out);
+}
+
+@keyframes cmdk-scrim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* --- Panel ----------------------------------------------------------- */
+
+/* Near-black sleek surface — matches the token page void aesthetic.
+   No "lit from above" gradient (that read as a glass card); solid
+   panel with crisp edges and a subtle top-edge highlight only. */
+.cmdk-panel {
+  position: relative;
+  width: min(660px, 100%);
+  max-height: min(70vh, 620px);
+  display: flex;
+  flex-direction: column;
+  background: #0a0b0d;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    /* Thin top-edge highlight — the only "lift" cue */
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    /* Deep shadow lift over the scrim */
+    0 32px 80px -16px rgba(0, 0, 0, 0.95),
+    0 8px 24px -8px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+  animation: cmdk-panel-in var(--dur-enter) var(--ease-out);
+  isolation: isolate;
+  z-index: 1;
+}
+
+@keyframes cmdk-panel-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* --- Search row ------------------------------------------------------ */
+
+.cmdk-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  /* Bigger hero strip — generous vertical so the input feels
+     spacious and "free" instead of a thin search box. */
+  padding: 32px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cmdk-search-icon {
+  color: var(--text-3);
+  flex-shrink: 0;
+  transition: color var(--dur-micro) var(--ease-out);
+}
+
+.cmdk-search:focus-within .cmdk-search-icon {
+  color: var(--text-1);
+}
+
+.cmdk-input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-1);
+  caret-color: #ffffff;
+  font-family: var(--font-display);
+  /* Larger, lighter — hero command field weight. */
+  font-size: 1.125rem;          /* 18px */
+  font-weight: 400;
+  letter-spacing: -0.012em;
+  line-height: 1.5;
+  /* 8px left padding so the caret sits well clear of the search icon
+     even at idle. */
+  padding: 0 4px 0 8px;
+  min-width: 0;
+}
+
+.cmdk-input::placeholder {
+  color: var(--text-3);
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  opacity: 1; /* Firefox dims placeholders by default — normalise */
+}
+
+.cmdk-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background: transparent;
+  border-radius: 6px;
+  color: var(--text-3);
+  cursor: pointer;
+  transition:
+    background var(--dur-micro) var(--ease-out),
+    color var(--dur-micro) var(--ease-out);
+}
+
+.cmdk-clear:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-1);
+}
+
+.cmdk-search-esc {
+  user-select: none;
+}
+
+/* Make the esc chip an actual close control (it visually reads as a button). */
+.cmdk-search-esc-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.cmdk-search-esc-btn:hover .cmdk-search-esc {
+  opacity: 0.7;
+}
+
+/* --- Results scroller ----------------------------------------------- */
+
+.cmdk-results {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+    }
+
+.cmdk-results::-webkit-scrollbar { width: 6px; }
+.cmdk-results::-webkit-scrollbar-track { background: transparent; }
+.cmdk-results::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--r-pill);
+}
+.cmdk-results::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* --- Section --------------------------------------------------------- */
+
+.cmdk-section + .cmdk-section {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cmdk-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px 6px;
+}
+
+.cmdk-section-label {
+  font-family: var(--font-display);
+  font-size: 0.625rem;          /* 10px — smaller, more refined */
+  font-weight: 600;              /* slightly heavier for distinction */
+  letter-spacing: 0.18em;        /* looser tracking, more "platform label" */
+  text-transform: uppercase;
+  color: var(--text-4);          /* dimmer base, so the eye treats rows as content */
+  /* Subtle vertical-align tweak — uppercase tracking pushes baselines off
+     when sitting next to a button at body-line height. */
+  line-height: 1.4;
+}
+
+.cmdk-section-action {
+  border: 0;
+  background: transparent;
+  color: var(--text-4);
+  font-family: var(--font-display);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  margin-right: -4px;            /* visual alignment with row right edge */
+  cursor: pointer;
+  border-radius: 4px;
+  transition:
+    color var(--dur-micro) var(--ease-out),
+    background var(--dur-micro) var(--ease-out);
+}
+
+.cmdk-section-action:hover {
+  color: var(--text-1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.cmdk-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* --- Token row ------------------------------------------------------- */
+
+.cmdk-row {
+  position: relative;
+  display: grid;
+  /* logo / identity (flex) / metrics stack / price + delta stack */
+  grid-template-columns: 36px minmax(0, 1fr) minmax(96px, auto) minmax(110px, auto);
+  align-items: center;
+  gap: 18px;
+  padding: 12px 18px;
+  margin: 0 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background var(--dur-micro) var(--ease-out);
+}
+
+.cmdk-row + .cmdk-row { margin-top: 2px; }
+
+/* Hover state — neutral lift, no accent shout */
+.cmdk-row:hover:not(.is-active) {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+/* Keyboard-focused (active) state */
+.cmdk-row.is-active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.cmdk-row.is-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+/* Cells -------------------------------------------------------------- */
+
+.cmdk-row__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Identity — two-row stack: name above, "SYM · 0xABC…123" below */
+.cmdk-row__id {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cmdk-row__name {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-1);
+  letter-spacing: -0.005em;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cmdk-row__sub {
+  font-family: var(--font-num-chip);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: var(--text-3);
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+  /* Reserve a line height even when sub is empty so rows stay aligned */
+  min-height: 0.95em;
+}
+
+/* Metrics column — MC + VOL stacked, label left, value right */
+.cmdk-row__metrics {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cmdk-row__metric {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+  line-height: 1.25;
+  min-height: 0.95em;
+}
+
+.cmdk-row__metric-label {
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-4);
+}
+
+.cmdk-row__metric-value {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-2);
+  letter-spacing: -0.005em;
+}
+
+/* Price + delta column — two-row stack, right-aligned */
+.cmdk-row__pricestack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cmdk-row__price {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-family: var(--font-num-chip);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-1);
+  letter-spacing: -0.005em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+  line-height: 1.25;
+}
+
+.cmdk-row__price-empty {
+  color: var(--text-4);
+}
+
+.cmdk-row__delta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 0.95em;
+}
+
+/* Mute the DeltaChip halo in the palette — the dense list reads cleaner
+   without the bull/bear glow on every row. */
+.cmdk-row__delta .delta-chip {
+  box-shadow: none;
+  font-weight: 500;
+  font-size: 0.6875rem;
+  padding: 1px 6px;
+}
+
+/* Address (synthetic paste) variant — metrics is empty, the delta cell
+   carries the forward-arrow glyph centered. */
+.cmdk-row--address .cmdk-row__delta {
+  color: var(--text-2);
+}
+
+/* --- Empty ----------------------------------------------------------- */
+
+.cmdk-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 20px;
+  gap: 8px;
+  text-align: center;
+}
+
+.cmdk-empty-title {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.cmdk-empty-hint {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  color: var(--text-3);
+  max-width: 340px;
+}
+
+/* --- Footer ---------------------------------------------------------- */
+
+.cmdk-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 10px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cmdk-foot-cue {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 0.6875rem;
+  color: var(--text-3);
+  letter-spacing: 0.02em;
+}
+
+.cmdk-foot-label {
+  letter-spacing: 0.01em;
+}
+
+/* --- Reduced motion -------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .cmdk-scrim,
+  .cmdk-panel {
+    animation: none;
+  }
+  .cmdk-row {
+    transition: none;
+  }
+}
+
+.app[data-reduced-motion="true"] .cmdk-scrim,
+.app[data-reduced-motion="true"] .cmdk-panel {
+  animation: none;
+}
+
+.app[data-reduced-motion="true"] .cmdk-row {
+  transition: none;
+}
+
+/* --- Day mode -------------------------------------------------------- */
+
+body.theme-light .cmdk-scrim {
+  background: rgba(245, 245, 247, 0.55);
+}
+
+/* ====================================================================
+   WHITE MODE (body.theme-light) - the .app-day-mode rules above are the
+   RESEARCH selector and are DEAD in the trading app, so the palette stayed
+   fully dark on white. Mirror them under body.theme-light (+ the sub/metric
+   text the original block missed) so the whole search modal reads light.
+   ==================================================================== */
+body.theme-light .cmdk-panel {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.02) 0%, transparent 60%),
+    rgba(255, 255, 255, 0.98);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 24px 60px -16px rgba(15, 23, 42, 0.18),
+    0 8px 24px -8px rgba(15, 23, 42, 0.12);
+}
+body.theme-light .cmdk-search { border-bottom-color: rgba(15, 23, 42, 0.08); }
+body.theme-light .cmdk-search-icon { color: #64748b; }
+body.theme-light .cmdk-search:focus-within .cmdk-search-icon { color: #0f172a; }
+body.theme-light .cmdk-input { color: #0f172a; caret-color: #0f172a; }
+body.theme-light .cmdk-input::placeholder { color: #94a3b8; }
+body.theme-light .cmdk-row__name { color: #0f172a; }
+body.theme-light .cmdk-row__symbol,
+body.theme-light .cmdk-row__sub,
+body.theme-light .cmdk-row__metric-label,
+body.theme-light .cmdk-section-label,
+body.theme-light .cmdk-section-action,
+body.theme-light .cmdk-foot-cue,
+body.theme-light .cmdk-empty-hint { color: #64748b; }
+body.theme-light .cmdk-row__price,
+body.theme-light .cmdk-row__metric-value { color: #0f172a; }
+body.theme-light .cmdk-row:hover:not(.is-active) { background: rgba(0, 0, 0, 0.03); }
+body.theme-light .cmdk-row.is-active { background: rgba(0, 0, 0, 0.05); }
+body.theme-light .cmdk-section + .cmdk-section { border-top-color: rgba(15, 23, 42, 0.08); }
+body.theme-light .cmdk-footer { border-top-color: rgba(15, 23, 42, 0.08); }
+
+/* --- Tiny viewport --------------------------------------------------- */
+
+@media (max-width: 640px) {
+  .cmdk-scrim { padding-top: 6vh; }
+  .cmdk-panel { max-height: 80vh; }
+  /* Drop the MC/VOL metrics column on tight viewports — identity + price
+     stack is enough; row stays width-stable. */
+  .cmdk-row {
+    grid-template-columns: 36px minmax(0, 1fr) minmax(96px, auto);
+    gap: 12px;
+  }
+  .cmdk-row__metrics { display: none; }
+}

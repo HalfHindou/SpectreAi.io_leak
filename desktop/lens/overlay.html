@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="overlay.css">
+</head>
+<body>
+<div class="lens" id="lens">
+
+  <!-- ======= COLLAPSED BAR ======= -->
+  <div class="bar" id="bar">
+    <div class="bar-left">
+      <div class="pulse-dot" id="pulseDot"></div>
+      <span class="bar-brand">SPECTRE LENS</span>
+    </div>
+
+    <!-- Welcome (first ever activation) -->
+    <div class="bar-center" id="centerWelcome">
+      <span class="bar-welcome">Hi — I watch your screen and surface intelligence</span>
+    </div>
+
+    <!-- Watching (passive, no entity yet) -->
+    <div class="bar-center hidden" id="centerWatching">
+      <span class="bar-watching">Watching your screen...</span>
+    </div>
+
+    <!-- Entity detected -->
+    <div class="bar-center hidden" id="centerEntity">
+      <span class="bar-ticker"  id="barTicker"></span>
+      <span class="bar-sep">&middot;</span>
+      <span class="bar-price"   id="barPrice"></span>
+      <span class="bar-change"  id="barChange"></span>
+      <div  class="bar-verdict hidden" id="barVerdict"></div>
+    </div>
+
+    <div class="bar-right">
+      <div class="bar-action hidden" id="barAction">Analyze &rarr;</div>
+      <button class="bar-btn" id="btnHistory" title="History">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </button>
+      <button class="bar-btn" id="btnClose">&#x2715;</button>
+    </div>
+  </div>
+
+  <!-- ======= EXPANDED PANEL ======= -->
+  <div class="panel" id="panel">
+
+    <!-- LISTENING / READY -->
+    <div class="pstate" id="stateListening">
+      <button class="scan-btn" id="btnScanScreen">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="12" cy="12" r="10" opacity="0.3"/>
+          <path d="M12 2a10 10 0 0110 10" stroke="rgba(139,92,246,0.9)" stroke-width="2">
+            <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1.5s" repeatCount="indefinite"/>
+          </path>
+          <circle cx="12" cy="12" r="3" fill="rgba(139,92,246,0.6)"/>
+        </svg>
+        <span>Scan Screen</span>
+      </button>
+      <p class="state-sub" style="margin-top:10px">Reads what's on your screen and analyzes it</p>
+      <div class="input-row" style="margin-top:12px">
+        <input class="lens-input" id="textQuery" placeholder="Or type a question..." autocomplete="off" spellcheck="false">
+        <button class="send-btn" id="btnSend">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- SCANNING / ANALYZING -->
+    <div class="pstate hidden" id="stateLoading">
+      <div class="scan-rings">
+        <div class="ring r1"></div>
+        <div class="ring r2"></div>
+        <div class="ring-core"></div>
+      </div>
+      <p class="state-title" id="loadTitle">Scanning screen</p>
+      <p class="state-sub"   id="loadSub">Reading what you're looking at</p>
+      <div class="detected-badge hidden" id="detectedBadge">
+        <div class="badge-dot"></div>
+        <span id="detectedTicker"></span>
+        <span class="badge-platform" id="detectedPlatform"></span>
+      </div>
+      <div class="skeleton-rows">
+        <div class="skel skel-80"></div>
+        <div class="skel skel-60"></div>
+        <div class="skel skel-90"></div>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="pstate hidden" id="stateResult">
+      <div class="result-header">
+        <div class="result-id">
+          <div class="result-symbol" id="rSymbol"></div>
+          <div class="result-name"   id="rName"></div>
+        </div>
+        <div class="result-price-block">
+          <div class="result-price"  id="rPrice"></div>
+          <div class="result-change" id="rChange"></div>
+        </div>
+      </div>
+
+      <!-- Market context strip -->
+      <div class="context-strip">
+        <div class="ctx-item">
+          <span class="ctx-label">MCAP</span>
+          <span class="ctx-value" id="ctxMcap">&mdash;</span>
+        </div>
+        <div class="ctx-div"></div>
+        <div class="ctx-item">
+          <span class="ctx-label">VOL 24H</span>
+          <span class="ctx-value" id="ctxVol">&mdash;</span>
+        </div>
+        <div class="ctx-div"></div>
+        <div class="ctx-item">
+          <span class="ctx-label">RANK</span>
+          <span class="ctx-value" id="ctxRank">&mdash;</span>
+        </div>
+        <div class="ctx-div"></div>
+        <div class="ctx-item">
+          <span class="ctx-label">F&amp;G</span>
+          <span class="ctx-value" id="ctxFng">&mdash;</span>
+        </div>
+      </div>
+
+      <div class="result-sep"></div>
+
+      <div class="signals">
+        <div class="sig"><span class="sig-lbl">SENTIMENT</span><div class="sig-track"><div class="sig-fill" id="fSentiment"></div></div><span class="sig-val" id="vSentiment">&mdash;</span></div>
+        <div class="sig"><span class="sig-lbl">ON-CHAIN</span><div class="sig-track"><div class="sig-fill" id="fOnchain"></div></div><span class="sig-val" id="vOnchain">&mdash;</span></div>
+        <div class="sig"><span class="sig-lbl">MOMENTUM</span><div class="sig-track"><div class="sig-fill" id="fMomentum"></div></div><span class="sig-val" id="vMomentum">&mdash;</span></div>
+        <div class="sig"><span class="sig-lbl">WHALE FLOW</span><div class="sig-track"><div class="sig-fill" id="fWhale"></div></div><span class="sig-val" id="vWhale">&mdash;</span></div>
+      </div>
+
+      <div class="result-sep"></div>
+
+      <div class="verdict-block">
+        <div class="verdict-chip" id="verdictChip"></div>
+        <p class="verdict-text"   id="verdictText"></p>
+      </div>
+
+      <div class="insight-card" id="insightCard">
+        <span class="insight-label">KEY INSIGHT</span>
+        <p class="insight-text" id="insightText"></p>
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary" id="btnDeepDive">Full Thesis &rarr;</button>
+        <button class="btn-ghost"   id="btnVoice"  title="Read aloud">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor" opacity="0.6"/>
+            <path d="M15.54 8.46a5 5 0 010 7.07" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button class="btn-ghost"   id="btnShare"  title="Share to X">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+        </button>
+        <button class="btn-ghost"   id="btnAlert"  title="Set price alert">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- TRADINGVIEW MODE -->
+    <div class="pstate hidden" id="stateTradingView">
+      <div class="tv-header">
+        <div class="tv-logo">
+          <svg width="14" height="14" viewBox="0 0 33 28" fill="none">
+            <path d="M0 28L11 0l5.5 14L22 7l11 21H0z" fill="#2962FF"/>
+          </svg>
+          <span>TradingView Mode</span>
+        </div>
+        <span class="tv-status" id="tvStatus">Ready</span>
+      </div>
+      <div class="tv-suggestions">
+        <div class="tv-chip" data-cmd="Draw support at current price">Support line</div>
+        <div class="tv-chip" data-cmd="Draw resistance at current price">Resistance</div>
+        <div class="tv-chip" data-cmd="Mark Monday open">Monday open</div>
+        <div class="tv-chip" data-cmd="Add RSI indicator">RSI</div>
+        <div class="tv-chip" data-cmd="Add VWAP">VWAP</div>
+        <div class="tv-chip" data-cmd="Draw fibonacci">Fibonacci</div>
+      </div>
+      <div class="input-row">
+        <input class="lens-input" id="tvQuery" placeholder="Draw RSI, mark Monday open, set alert at 70k..." autocomplete="off">
+        <button class="send-btn" id="btnTvSend">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- HISTORY DRAWER -->
+    <div class="pstate hidden" id="stateHistory">
+      <div class="history-header">
+        <span class="state-title" style="font-size:13px">Recent Detections</span>
+        <button class="btn-ghost" id="btnClearHistory" style="font-size:10px;padding:4px 10px;width:auto;height:auto">Clear</button>
+      </div>
+      <div class="history-list" id="historyList"></div>
+    </div>
+
+    <!-- ERROR STATE -->
+    <div class="pstate hidden" id="stateError">
+      <div class="error-ring">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(239,68,68,0.7)" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <p class="state-title" style="font-size:13px">Could not analyze</p>
+      <p class="state-sub" id="errorMsg">Unknown error</p>
+      <button class="btn-ghost" id="btnRetry" style="margin-top:8px;padding:6px 16px;width:auto;height:auto">Try again</button>
+    </div>
+
+  </div>
+</div>
+<audio id="voicePlayer" style="display:none"></audio>
+<script src="overlay.js"></script>
+</body>
+</html>

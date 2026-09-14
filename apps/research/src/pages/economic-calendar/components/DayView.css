@@ -1,0 +1,408 @@
+/**
+ * DayView — Card list with time labels
+ * Spectre Premium Recipe: gradient bg, multi-layered shadow,
+ * bell-curve dividers, 450/600 font-weights.
+ * Clean, readable layout — no spreadsheet grids.
+ */
+
+.day-view {
+  position: relative;
+}
+
+.day-view__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* Time block: side label + stacked event cards */
+.day-view__time-block {
+  display: flex;
+  gap: var(--sp-4);
+  align-items: flex-start;
+  animation: ec-blur-entrance 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Staggered entrance for time blocks (nth-of-type to skip gap dividers) */
+.day-view__time-block:nth-of-type(1) { animation-delay: 0ms; }
+.day-view__time-block:nth-of-type(2) { animation-delay: 60ms; }
+.day-view__time-block:nth-of-type(3) { animation-delay: 120ms; }
+.day-view__time-block:nth-of-type(4) { animation-delay: 180ms; }
+.day-view__time-block:nth-of-type(5) { animation-delay: 240ms; }
+.day-view__time-block:nth-of-type(6) { animation-delay: 300ms; }
+
+.day-view__time-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 450;
+  color: var(--text-muted);
+  min-width: 72px;
+  padding-top: var(--sp-3);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.day-view__events {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* Gap divider between distant time blocks — bell-curve gradient */
+/* NOW — the line between what has printed today and what hasn't. Warm-white,
+   the same accent today gets everywhere else in the calendar. */
+.day-view__now {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0 6px 0;
+  position: relative;
+}
+
+.day-view__now-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cal-today-edge);
+  box-shadow: 0 0 0 3px rgba(245, 245, 247, 0.08);
+  flex-shrink: 0;
+  margin-left: 2px;
+}
+
+.day-view__now-text {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.day-view__now-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--cal-today-edge) 0%, rgba(245, 245, 247, 0.12) 22%, rgba(245, 245, 247, 0.03) 70%, transparent 100%);
+}
+
+.app-day-mode .day-view__now-text { color: #334155; }
+.app-day-mode .day-view__now-dot { box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.06); }
+
+.day-view__gap {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-1) 0;
+  position: relative;
+  animation: ec-blur-entrance 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.day-view__gap-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 15%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.04) 85%,
+    transparent 100%
+  );
+}
+
+.day-view__gap-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 450;
+  color: var(--text-disabled);
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+}
+
+/* ═══════════════════════════════════════════════
+   Earnings Section
+   ═══════════════════════════════════════════════ */
+.day-view__earnings {
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid rgba(255,255,255,0.04);
+  animation: ec-blur-entrance 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 300ms;
+}
+
+.day-view__earnings-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+
+.day-view__earnings-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(245, 245, 247, 0.5);
+}
+
+.day-view__earnings-count {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.5);
+  background: rgba(255,255,255,0.06);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.day-view__earnings-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* ═══════════════════════════════════════════════
+   Empty State — Glass Card with Premium Treatment
+   ═══════════════════════════════════════════════ */
+.day-view--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.day-view__empty-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+  padding: var(--sp-6) var(--sp-8);
+  max-width: 480px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  transition: all var(--duration-base) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shine sweep for empty card */
+.day-view__empty-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.03) 45%, transparent 50%);
+  opacity: 0;
+  transition: opacity 300ms ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.day-view__empty-card:hover::before {
+  opacity: 1;
+}
+
+.day-view__empty-card:hover {
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16), 0 12px 40px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.day-view__empty-icon {
+  color: var(--text-muted);
+  margin-bottom: var(--sp-1);
+  position: relative;
+  z-index: 2;
+  animation: ec-blur-entrance 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.day-view__empty-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.01em;
+  position: relative;
+  z-index: 2;
+}
+
+.day-view__empty-subtitle {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 450;
+  color: var(--text-muted);
+  margin: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.day-view__empty-next {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  position: relative;
+  z-index: 2;
+}
+
+.day-view__empty-next-label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 450;
+  color: var(--text-muted);
+}
+
+.day-view__empty-next-date {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 450;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.day-view__empty-event-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  position: relative;
+  z-index: 2;
+}
+
+.day-view__empty-event-name {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--text-primary);
+}
+
+.day-view__empty-stats {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 450;
+  color: var(--text-muted);
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  position: relative;
+  z-index: 2;
+}
+
+.day-view__empty-stats span {
+  color: var(--text-secondary);
+}
+
+/* ═══════════════════════════════════════════════
+   Day Mode
+   ═══════════════════════════════════════════════ */
+.app-day-mode .day-view__time-label {
+  color: #94a3b8;
+}
+
+.app-day-mode .day-view__gap-line {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.04) 15%,
+    rgba(0, 0, 0, 0.06) 50%,
+    rgba(0, 0, 0, 0.04) 85%,
+    transparent 100%
+  );
+}
+
+.app-day-mode .day-view__gap-text {
+  color: #cbd5e1;
+}
+
+.app-day-mode .day-view__empty-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.88) 100%);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.app-day-mode .day-view__empty-card::before {
+  background: linear-gradient(105deg, transparent 40%, rgba(0, 0, 0, 0.015) 45%, transparent 50%);
+}
+
+.app-day-mode .day-view__empty-card:hover {
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.app-day-mode .day-view__earnings {
+  border-top-color: rgba(0,0,0,0.06);
+}
+
+.app-day-mode .day-view__earnings-title {
+  color: rgba(15, 23, 42, 0.45);
+}
+
+.app-day-mode .day-view__earnings-count {
+  color: #64748b;
+  background: rgba(0,0,0,0.04);
+}
+
+.app-day-mode .day-view__empty-icon {
+  color: #94a3b8;
+}
+
+.app-day-mode .day-view__empty-title {
+  color: #0f172a;
+}
+
+.app-day-mode .day-view__empty-subtitle {
+  color: #94a3b8;
+}
+
+.app-day-mode .day-view__empty-next-label {
+  color: #64748b;
+}
+
+.app-day-mode .day-view__empty-next-date {
+  color: #334155;
+}
+
+.app-day-mode .day-view__empty-event-name {
+  color: #0f172a;
+}
+
+.app-day-mode .day-view__empty-stats {
+  color: #94a3b8;
+}
+
+.app-day-mode .day-view__empty-stats span {
+  color: #334155;
+}
+
+/* ═══════════════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .day-view__time-block {
+    flex-direction: column;
+    gap: var(--sp-1);
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .day-view__time-label {
+    text-align: left;
+    min-width: 0;
+    padding-top: 0;
+    padding-left: var(--sp-2);
+    font-size: 10px;
+  }
+
+  .day-view__events {
+    width: 100%;
+  }
+
+  .day-view__empty-card {
+    padding: var(--sp-5) var(--sp-4);
+  }
+}

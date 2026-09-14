@@ -1,0 +1,1455 @@
+/**
+ * Header.css — Spectre Trading platform top bar.
+ *
+ * App bar (2026-09-11, Gleb's references: dark product dashboards of the
+ * Linear / Raycast school). Depth is TONAL, not drawn: the page is near
+ * black, the bar is a lifted charcoal surface on it, and every control is
+ * one more flat step up the same ladder - no hairline borders, no
+ * gradients, no inset highlights, no glow. Bar #070708 (black) -> key #131417
+ * -> hover #1C1D21, with the page (#0A0B0D) sitting a hair above the bar.
+ * 10px corners, 34px keys, one 6% hairline under the bar and nothing else. That ladder is what makes it read as
+ * software: the eye gets surfaces stacked on surfaces, not outlines. The
+ * adaptive --accent* channel is neutralised inside the bar so the chrome
+ * stays black/white whatever token is open.
+ *
+ * Layout: a single 56px row of clusters separated by vertical hairlines.
+ */
+
+/* --- The fixed shell ------------------------------------------ */
+/* `position: fixed` (not sticky) so the global --header-height
+   variable accurately offsets every consumer (token ticker, data
+   tabs, embedded layouts). Sticky would put it in flow and main-
+   layout's padding-top would double-count it. The ticker + main
+   layout already assume the Header is removed from the flow. */
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  pointer-events: none;
+
+  /* The tonal ladder. Every control is a flat fill one step above the bar;
+     hover is the next step; press is a step back down. No borders anywhere
+     (the two `--hd-line*` stay transparent so the shared rules compile),
+     no shadows on controls. Labels: Geist 12.5px/500; numbers in
+     --font-num-chip (round zero) - never Geist Mono's slashed zero. */
+  --hd-bar:         #070708;
+  --hd-fill:        #131417;
+  --hd-fill-hover:  #1C1D21;
+  --hd-fill-active: #0E0F12;
+  --hd-key:         #131417;
+  --hd-key-hover:   #1C1D21;
+  --hd-line:        transparent;
+  --hd-line-hover:  transparent;
+  --hd-line-key:    transparent;
+  --hd-raise:       none;
+  --hd-raise-hover: none;
+  --hd-press:       none;
+  --hd-recess-bg:   #101114;
+  --hd-recess:      none;
+  --hd-text:        rgba(245, 245, 247, 0.86);
+  --hd-text-hover:  #ffffff;
+  --hd-font-size:   12.5px;
+  --hd-radius:      10px;
+  --hd-control-h:   34px;
+
+  /* Neutralise the adaptive accent INSIDE the header. The page below
+     still re-themes per token via the Iteration 3 --accent* channel
+     (banner, charts, gauges, sparklines), but the header chrome stays
+     locked to a white/black palette so the controls feel consistent
+     regardless of which token is open. Dark mode = white-based
+     accents; day mode = black-based (override block at the bottom). */
+  --accent:          rgba(255, 255, 255, 0.95);
+  --accent-bright:   #ffffff;
+  --accent-deep:     rgba(255, 255, 255, 0.78);
+  --accent-glow:     rgba(255, 255, 255, 0.30);
+  --accent-wash:     rgba(255, 255, 255, 0.08);
+  --accent-contrast: #0a0a0c;
+}
+
+.header > .header-bar { pointer-events: auto; }
+
+/* --- The terminal bar ----------------------------------------- */
+
+.header-bar {
+  /* 3-column grid: left cluster | centred search | right cluster.
+     `1fr auto 1fr` guarantees the search sits geometrically in the
+     middle regardless of how wide the left vs right clusters are. */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--sp-3, 12px);
+  height: 56px;
+  padding: 0 var(--sp-4, 16px);
+  border: 0;
+  border-radius: 0;
+  /* Black. The page below is #0A0B0D, so the bar is the darkest surface on
+     screen and a single 6% hairline under it is the only edge it needs -
+     the keys on it are the next tonal step up, not outlines. */
+  background: var(--hd-bar);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: none;
+  transition:
+    border-color var(--dur-base, 240ms) var(--ease-out),
+    box-shadow   var(--dur-base, 240ms) var(--ease-out);
+  position: relative;
+  isolation: isolate;
+}
+
+/* Left + right clusters — flex rows inside their grid columns. The
+   right cluster pushes itself against the bar's right edge so the
+   centred search has equal breathing room on both sides. */
+
+.header-left {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3, 12px);
+  justify-self: start;
+  min-width: 0;
+}
+
+.header-right {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3, 12px);
+  justify-self: end;
+  min-width: 0;
+}
+
+/* On scroll the cast shadow deepens so content sliding under the bar reads
+   as under it. */
+.header--scrolled .header-bar {
+  border-bottom-color: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 12px 28px -14px rgba(0, 0, 0, 0.9);
+}
+
+/* --- Hairline divider ----------------------------------------- */
+
+.header-divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.07);
+  margin: 0 var(--sp-1, 4px);
+}
+
+/* --- Cluster 1 — Brand --------------------------------------- */
+
+.header-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  padding: 0 8px 0 4px;
+  background: transparent;
+  border: 0;
+  border-radius: var(--hd-radius);
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+  transition:
+    background var(--dur-base, 240ms) var(--ease-out),
+    border-color var(--dur-base, 240ms) var(--ease-out);
+}
+
+.header-brand:hover,
+.header-brand:focus-visible {
+  background: var(--hd-fill);
+  border-color: transparent;
+}
+
+.header-brand:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.header-mark {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: block;
+  flex-shrink: 0;
+  transition: filter var(--dur-base, 240ms) var(--ease-out);
+  animation: header-brand-breathe 6s ease-in-out infinite;
+}
+
+.header-brand:hover .header-mark {
+  filter: drop-shadow(0 0 8px var(--accent-glow));
+}
+
+@keyframes header-brand-breathe {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.92; }
+}
+
+.header-wordmark {
+  font-family: var(--font-display, 'Geist', Inter, system-ui, sans-serif);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+  line-height: 1;
+  user-select: none;
+}
+
+/* --- Cluster 3 — Command bar (centre, flex-grows) ------------ */
+
+.header-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  /* Sits in the centre grid column (1fr auto 1fr) — fixed-ish width
+     so the bar feels balanced; clamps narrower on smaller viewports. */
+  width: clamp(280px, 32vw, 460px);
+  justify-self: center;
+  padding: 0 10px 0 12px;
+  border: 0;
+  border-radius: var(--hd-radius);
+  /* A filled field, one tonal step up, like every other control. */
+  background: var(--hd-recess-bg);
+  box-shadow: none;
+  color: var(--text-3, rgba(255, 255, 255, 0.40));
+  font-family: var(--font-body);
+  font-size: var(--hd-font-size);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  cursor: text;
+  transition:
+    border-color var(--dur-base, 240ms) var(--ease-out),
+    background   var(--dur-base, 240ms) var(--ease-out),
+    box-shadow   var(--dur-base, 240ms) var(--ease-out);
+  position: relative;
+}
+
+.header-search:hover {
+  background: var(--hd-fill);
+  color: var(--text-2, rgba(255, 255, 255, 0.62));
+}
+
+.header-search:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18);
+}
+
+.header-search-icon {
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+
+.header-search-placeholder {
+  flex: 1 1 auto;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-kbd {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.header-kbd-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-family: var(--font-num-chip, var(--font-body));
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--text-2);
+  background: var(--hd-fill-hover);
+  border: 0;
+  border-radius: 5px;
+  letter-spacing: 0;
+}
+
+/* --- Right cluster actions (sits inside .header-right) ------- */
+
+.header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2, 8px);
+  flex-shrink: 0;
+}
+
+/* --- Pills (Research / Trading Pro / Deposit) ---------------- */
+
+.header-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--hd-control-h);
+  padding: 0 11px;
+  border-radius: var(--hd-radius);
+  border: 0;
+  background: var(--hd-fill);
+  color: var(--hd-text);
+  font-family: var(--font-body);
+  font-size: var(--hd-font-size);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--dur-base, 240ms) var(--ease-out),
+    color      var(--dur-base, 240ms) var(--ease-out);
+}
+
+/* One tonal step up on hover, one down on press. */
+.header-pill:hover,
+.header-pill:focus-visible {
+  background: var(--hd-fill-hover);
+  color: var(--hd-text-hover);
+}
+
+.header-pill:active {
+  background: var(--hd-fill-active);
+}
+
+.header-pill:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.header-pill-label { line-height: 1; }
+
+/* Trading Pro — small PRO badge */
+
+.header-pro-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 16px;
+  padding: 0 5px;
+  margin-left: 2px;
+  border-radius: 3px;
+  background: color-mix(in oklab, var(--accent) 20%, transparent);
+  border: 1px solid color-mix(in oklab, var(--accent) 40%, transparent);
+  color: var(--accent);
+  font-family: var(--font-num-chip, var(--font-body));
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+/* Deposit — accent-tinted outline (money action emphasis) */
+
+/* Deposit: the money CTA is the white key, like Sign In - black on white
+   is the only high-contrast control on the bar, so it is the one the eye
+   lands on. */
+.header-pill--deposit {
+  color: #0a0a0c;
+  background: #f5f5f7;
+  font-weight: 600;
+}
+
+.header-pill--deposit:hover,
+.header-pill--deposit:focus-visible {
+  background: #ffffff;
+  color: #0a0a0c;
+}
+
+.header-pill--deposit:active {
+  background: #dcdce2;
+}
+
+/* --- Circular icon buttons (info, bell, settings) ------------ */
+
+.header-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--hd-control-h);
+  height: var(--hd-control-h);
+  padding: 0;
+  border: 0;
+  border-radius: var(--hd-radius);
+  background: transparent;
+  color: var(--hd-text);
+  cursor: pointer;
+  transition:
+    background var(--dur-base, 240ms) var(--ease-out),
+    border-color var(--dur-base, 240ms) var(--ease-out),
+    color var(--dur-base, 240ms) var(--ease-out);
+  position: relative;
+}
+
+.header-icon-btn:hover,
+.header-icon-btn:focus-visible {
+  background: var(--hd-fill);
+  color: var(--hd-text-hover);
+}
+
+.header-icon-btn:active {
+  background: var(--hd-fill-active);
+}
+
+.header-icon-btn--notifications { position: relative; }
+
+.header-icon-btn__badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ob-surface-1);
+  background: var(--up);
+  border-radius: var(--radius-full);
+  pointer-events: none;
+}
+
+body.theme-light .header-icon-btn__badge { color: #fff; background: #0f172a; }
+
+.header-icon-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.header-icon-btn.is-on {
+  background: var(--hd-fill-hover);
+  color: var(--accent);
+}
+
+/* Bell unread dot (hidden until count > 0; toggled via data-unread attr) */
+.header-icon-btn[data-unread="true"]::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--accent-glow);
+  animation: header-bell-pulse 2s ease-out infinite;
+}
+
+@keyframes header-bell-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.7; transform: scale(1.4); }
+}
+
+/* --- Theme toggle (sliding pill) ------------------------------ */
+
+.header-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 48px;
+  height: 24px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: var(--r-pill, 999px);
+  background: var(--hd-fill);
+  cursor: pointer;
+  position: relative;
+  transition: background var(--dur-base, 240ms) var(--ease-out);
+}
+
+.header-theme-toggle:hover {
+  background: var(--hd-fill-hover);
+}
+
+.header-theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.header-theme-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  color: var(--text-3, rgba(255, 255, 255, 0.40));
+  z-index: 1;
+  transition: color var(--dur-base, 240ms) var(--ease-out);
+}
+
+/* Night state: moon side is "active" (lit), sun is dim. Knob sits over the moon. */
+.header-theme-toggle.is-night .header-theme-glyph--moon { color: var(--accent); }
+.header-theme-toggle.is-night .header-theme-glyph--sun  { color: var(--text-4); }
+
+/* Day state: sun is "active", moon is dim. Knob slides to the sun. */
+.header-theme-toggle.is-day .header-theme-glyph--sun  { color: var(--accent); }
+.header-theme-toggle.is-day .header-theme-glyph--moon { color: var(--text-4); }
+
+/* Locked: day-mode side reads gated. Reuse the dim text-4 tone for the
+   lock glyph + dim the knob so the pill clearly says "not switchable". */
+.header-theme-toggle.is-locked {
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+.header-theme-toggle.is-locked:hover {
+  background: var(--glass-fill, rgba(255, 255, 255, 0.03));
+  border-color: var(--glass-border, rgba(255, 255, 255, 0.06));
+}
+.header-theme-toggle.is-locked .header-theme-glyph--sun {
+  color: var(--text-4, rgba(255, 255, 255, 0.28));
+}
+
+.header-theme-knob {
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #f5f5f7;
+  border: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  transform: translateY(-50%) translateX(0);
+  transition: transform var(--dur-base, 240ms) var(--ease-soft, cubic-bezier(0.33, 1, 0.68, 1));
+  pointer-events: none;
+}
+
+.header-theme-toggle.is-day .header-theme-knob {
+  transform: translateY(-50%) translateX(22px);
+}
+
+/* --- Info popover (portal) ------------------------------------ */
+
+.header-info-popover {
+  z-index: 2147483647;
+  display: inline-block;
+  max-width: 280px;
+  padding: 8px 12px;
+  border-radius: var(--r-sm, 10px);
+  background: var(--ob-surface-4, #1C1F23);
+  border: 1px solid var(--glass-border-lit, rgba(255, 255, 255, 0.13));
+  box-shadow: var(--shadow-3, 0 24px 60px -16px rgba(0, 0, 0, 0.85));
+  color: var(--text-1);
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 1.45;
+  animation: header-info-pop-in 140ms var(--ease-out);
+  pointer-events: auto;
+}
+
+@keyframes header-info-pop-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* --- Profile dropdown ----------------------------------------- */
+
+.header-profile {
+  position: relative;
+}
+
+.header-profile-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 10px 0 4px;
+  /* Same black key as every other control on the bar - no ring, no pill;
+     the ring was what read as grey. */
+  border: 0;
+  border-radius: var(--hd-radius);
+  background: var(--hd-fill);
+  color: var(--text-1, rgba(255, 255, 255, 0.95));
+  font-family: var(--font-body);
+  font-size: var(--hd-font-size);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: background var(--dur-base, 240ms) var(--ease-out);
+}
+
+.header-profile-trigger:hover,
+.header-profile-trigger.is-open {
+  background: var(--hd-fill-hover);
+}
+
+/* Sign In - the one solid control on the bar. Scoped override of the page's
+   GlowButton: same height and corners as its neighbours, a white key with
+   real depth (top highlight + drop) instead of a glowing halo. */
+.header-right .glow-btn.glow-btn--sm {
+  height: var(--hd-control-h);
+  padding: 0 14px;
+  border-radius: var(--hd-radius);
+  border-color: transparent;
+  font-size: var(--hd-font-size);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  background: #f5f5f7;
+  box-shadow: none;
+}
+.header-right .glow-btn.glow-btn--sm:hover {
+  transform: none;
+  background: #ffffff;
+  box-shadow: none;
+}
+.header-right .glow-btn.glow-btn--sm:active {
+  transform: none;
+  background: #dcdce2;
+  box-shadow: none;
+}
+
+.header-profile-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.header-profile-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--hd-fill-hover);
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.header-profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.header-profile-initial {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-1);
+  text-transform: uppercase;
+}
+
+.header-profile-meta {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  line-height: 1.1;
+}
+
+.header-profile-name {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: var(--hd-font-size);
+  letter-spacing: -0.01em;
+  color: var(--text-1);
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Chip numerals (round zero) - the slashed-zero mono is banned on numbers. */
+.header-profile-balance {
+  font-family: var(--font-num-chip, var(--font-body));
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--hd-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.header-profile-chevron {
+  color: var(--text-3);
+  flex-shrink: 0;
+  transition: transform var(--dur-base, 240ms) var(--ease-out);
+}
+
+.header-profile-chevron.is-open { transform: rotate(180deg); }
+
+/* The dropdown panel */
+
+.header-profile-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 100;
+  min-width: 260px;
+  padding: 6px;
+  border-radius: 12px;
+  /* Same tone as the bar's ladder, but glass: the black is 84% so the
+     page ghosts through it, blurred, with a faint light along the top
+     edge - a floating pane, not a card. The 8% ring keeps the edge
+     readable over busy content. */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 40%),
+    rgba(12, 12, 15, 0.84);
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 60px -16px rgba(0, 0, 0, 0.9), 0 2px 8px rgba(0, 0, 0, 0.5);
+  animation: header-profile-menu-in 160ms var(--ease-out);
+}
+
+@keyframes header-profile-menu-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.header-profile-menu-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 8px;
+}
+
+.header-profile-menu-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.header-profile-menu-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.header-profile-menu-id {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.header-profile-menu-name {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-1);
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-profile-menu-email {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  letter-spacing: -0.005em;
+  color: rgba(245, 245, 247, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-profile-menu-divider {
+  height: 1px;
+  margin: 4px 6px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.header-profile-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  color: var(--hd-text, rgba(245, 245, 247, 0.86));
+  font-family: var(--font-body);
+  font-size: var(--hd-font-size, 12.5px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+  transition:
+    background var(--dur-micro, 120ms) var(--ease-out),
+    color      var(--dur-micro, 120ms) var(--ease-out);
+}
+
+/* Rows are ghost; hover is a translucent step so the glass stays glass. */
+.header-profile-menu-item:hover,
+.header-profile-menu-item:focus-visible {
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+}
+
+.header-profile-menu-item:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.header-profile-menu-item--referral {
+  cursor: default;
+  gap: 8px;
+}
+
+.header-profile-menu-item--referral:hover { background: transparent; }
+
+.header-profile-menu-referral-label {
+  flex: 1 1 auto;
+  color: var(--hd-text, rgba(245, 245, 247, 0.86));
+}
+
+/* The code is a small black key with chip numerals - no accent tint, no
+   outline. */
+.header-profile-menu-referral-code {
+  font-family: var(--font-num-chip, var(--font-body));
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 0;
+}
+
+.header-profile-menu-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--hd-text, rgba(245, 245, 247, 0.86));
+  cursor: pointer;
+  transition:
+    background var(--dur-micro) var(--ease-out),
+    color      var(--dur-micro) var(--ease-out);
+}
+
+.header-profile-menu-copy:hover {
+  background: rgba(255, 255, 255, 0.13);
+  color: #ffffff;
+}
+
+.header-profile-menu-item--signout {
+  color: var(--hd-text, rgba(245, 245, 247, 0.86));
+}
+
+.header-profile-menu-item--signout:hover {
+  background: color-mix(in oklab, var(--down) 12%, transparent);
+  color: var(--down);
+}
+
+/* ============================================================
+   Settings popover — opens from the header gear button. Mirrors
+   the UD Settings appearance card so the controls live in two
+   places that stay in lockstep via Zustand + the header's
+   colorMode controller.
+   ============================================================ */
+
+.header-settings-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.header-settings-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 100;
+  width: 268px;
+  padding: 10px;
+  border-radius: 14px;
+  /* Near-black tinted glass — sits against the page void so the popover
+     feels like an extension of the chrome, not a foreign card. Vertical
+     gradient adds the faintest top-edge lift without lightening the body. */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0) 32%),
+    rgba(8, 8, 10, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 18px 48px rgba(0, 0, 0, 0.6),
+    0 4px 12px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  animation: header-profile-menu-in 160ms var(--ease-out);
+}
+
+/* Whisper-thin accent rail along the top edge — token-tinted via
+   --accent so the popover reads as part of the per-token theme. */
+.header-settings-menu::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  height: 1px;
+  border-radius: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    color-mix(in oklab, var(--accent) 60%, transparent) 50%,
+    transparent 100%);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.header-settings-menu-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 6px 8px;
+}
+
+.header-settings-menu-title {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-1);
+}
+
+.header-settings-menu-link {
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--text-3);
+  cursor: pointer;
+  padding: 2px 0;
+  transition: color var(--dur-micro, 120ms) var(--ease-out);
+}
+
+.header-settings-menu-link:hover { color: var(--accent); }
+
+.header-settings-menu-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 0 2px;
+  border-top: 1px solid var(--glass-border, rgba(255, 255, 255, 0.06));
+}
+
+.header-settings-menu-group-label {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 6px 8px 4px;
+}
+
+.header-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 8px;
+  border: none;
+  background: transparent;
+  border-radius: var(--r-sm, 10px);
+  color: var(--text-1);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  transition: background var(--dur-micro, 120ms) var(--ease-out);
+}
+
+.header-settings-row:hover {
+  background: var(--glass-fill-hover, rgba(255, 255, 255, 0.045));
+}
+
+.header-settings-row:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.header-settings-row-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.header-settings-row-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--text-2);
+  flex-shrink: 0;
+}
+
+.header-settings-row-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1);
+}
+
+/* Toggle pill — matches the UD Settings switch tone but trims width
+   for the denser popover. Track + thumb use accent on active so the
+   per-token tint reads through. */
+.header-settings-toggle {
+  position: relative;
+  display: inline-block;
+  width: 32px;
+  height: 18px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.06));
+  flex-shrink: 0;
+  transition:
+    background var(--dur-micro, 120ms) var(--ease-out),
+    border-color var(--dur-micro, 120ms) var(--ease-out);
+}
+
+.header-settings-toggle-thumb {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  transition: transform var(--dur-base, 200ms) var(--ease-out);
+}
+
+.header-settings-toggle.is-on {
+  background: color-mix(in oklab, var(--accent) 70%, transparent);
+  border-color: color-mix(in oklab, var(--accent) 55%, transparent);
+}
+
+.header-settings-toggle.is-on .header-settings-toggle-thumb {
+  transform: translateX(14px);
+  background: var(--accent-contrast, #0a0a0a);
+}
+
+.header-settings-row-trailing {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* --- Reduced motion ------------------------------------------ */
+/* Universal-selector sweep inside .header — catches every animation,
+   transition, and the bell-dot pulse without enumerating each class.
+   Animation-duration set to 0.01ms (not 0) so any "animationend"
+   listener still fires; transitions snap. Iteration-count 1 prevents
+   infinite loops from looping. */
+
+@media (prefers-reduced-motion: reduce) {
+  .header *,
+  .header *::before,
+  .header *::after {
+    animation-duration:        0.01ms !important;
+    animation-iteration-count: 1      !important;
+    transition-duration:       0.01ms !important;
+    scroll-behavior:           auto   !important;
+  }
+}
+.app[data-reduced-motion="true"] .header *,
+.app[data-reduced-motion="true"] .header *::before,
+.app[data-reduced-motion="true"] .header *::after {
+  animation-duration:        0.01ms !important;
+  animation-iteration-count: 1      !important;
+  transition-duration:       0.01ms !important;
+}
+
+/* --- Responsive cluster collapse ----------------------------- */
+
+/* < 1440px: Research / Trading Pro / Deposit pill labels collapse to
+   icon-only at common laptop widths (1280-1440px). The search bar
+   stays generously wide so the centred command bar actually fills
+   the empty space between the brand and the right cluster — at this
+   width 1fr/auto/1fr otherwise leaves large dead gaps. */
+@media (max-width: 1440px) {
+  .header-pill .header-pill-label,
+  .header-pill .header-pro-badge { display: none; }
+  .header-pill { padding: 0 10px; }
+  .header-search { width: clamp(360px, 36vw, 520px); }
+  /* Hide the profile balance line at this width too — the avatar +
+     name + chevron are still visible, balance lives in the dashboard. */
+  .header-profile-balance { display: none; }
+  /* Tighter actions gap + smaller icon buttons so the cluster doesn't
+     crowd the bar's right inner edge at 1390-ish viewports. */
+  .header-actions { gap: 6px; }
+  .header-icon-btn { width: 30px; height: 30px; }
+  .header-divider { margin: 0 2px; }
+}
+
+/* The More-menu icon is desktop-hidden by default — it only appears
+   when at least one inline item has moved into its dropdown. */
+.header-more-wrap { display: none; position: relative; }
+
+/* When visible, the More wrap behaves like a regular icon button slot. */
+.header-icon-btn--more {
+  flex-shrink: 0;
+}
+
+/* < 1280px: Research + Deposit pills move into the More menu and
+   the More menu button appears. Search stays in the bar. */
+@media (max-width: 1280px) {
+  .header-pill--ghost,
+  .header-pill--deposit { display: none; }
+  .header-actions > .header-divider:first-of-type { display: none; }
+  .header-more-wrap { display: inline-flex; }
+}
+
+/* < 1200px: search bar narrows. */
+@media (max-width: 1200px) {
+  .header-search { width: clamp(220px, 26vw, 360px); }
+  .header-bar { padding: 0 14px; }
+}
+
+/* < 1024px: kbd chips hide, actions tighter. */
+@media (max-width: 1024px) {
+  .header-kbd { display: none; }
+  .header-search { width: clamp(180px, 24vw, 300px); }
+  .header-actions { gap: 4px; }
+}
+
+/* < 960px: Info + Notifications move into More menu too. Search
+   stays — it just gets compact. The right cluster now holds
+   only Theme + More + Settings + Sign In, leaving room for the
+   search input. */
+@media (max-width: 960px) {
+  .header-icon-btn--info,
+  .header-icon-btn--notifications { display: none; }
+  .header-search { width: clamp(140px, 22vw, 240px); }
+}
+
+/* < 768px: Theme toggle hides from the toolbar — the Settings
+   dropdown already exposes a "Dark Mode" row in its Appearance
+   section, so the standalone pill is redundant on phones. Frees
+   ~50-60px which makes the bar feel breathable. */
+@media (max-width: 768px) {
+  .header-theme-toggle { display: none; }
+}
+
+/* < 900px: brand wordmark hides (mark only). */
+@media (max-width: 900px) {
+  .header-wordmark { display: none; }
+  .header-search-placeholder { font-size: 12px; }
+  .header-search { width: clamp(120px, 20vw, 200px); }
+}
+
+/* < 768px: phone-class viewports.
+   The bar is rebuilt around ONE priority: the money action. Search
+   collapses to an icon (the placeholder sentence ate a third of the
+   row and said nothing a magnifier doesn't), Deposit comes back out
+   of the More menu as the only labelled control, and the profile
+   drops to avatar + balance - the account name is noise once you are
+   the one holding the phone. Centre stays deliberately empty. */
+@media (max-width: 768px) {
+  .header { padding: 0; }
+  .header-bar {
+    display: flex;
+    align-items: center;
+    grid-template-columns: none;
+    height: 52px;
+    padding: 0 var(--sp-3, 12px);
+    gap: var(--sp-2, 8px);
+  }
+  .header-divider { display: none; }
+  .header-left { flex: 0 0 auto; margin-right: 0; }
+  /* Empty centre: the action cluster is pinned to the right edge. */
+  .header-right { flex: 0 0 auto; margin-left: auto; }
+
+  /* Search — icon button, same tap target as its neighbours. */
+  .header-search {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    min-width: 0;
+    max-width: none;
+    padding: 0;
+    gap: 0;
+    border-radius: 50%;
+    justify-self: auto;
+    justify-content: center;
+    margin: 0;
+  }
+  .header-search-placeholder,
+  .header-kbd { display: none !important; }
+  .header-search-icon { width: 17px; height: 17px; }
+
+  /* Deposit returns to the bar (it is hidden into More at <=1280 on
+     desktop) and keeps its label - it is the one thing worth naming. */
+  .header-pill--deposit {
+    display: inline-flex;
+    height: 36px;
+    padding: 0 14px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .header-pill--deposit .header-pill-label { display: inline; }
+
+  .header-icon-btn { width: 36px; height: 36px; }
+  .header-actions { gap: 4px; }
+
+  /* Profile: avatar + balance only. */
+  .header-profile-name,
+  .header-profile-chevron { display: none; }
+  .header-profile-balance { display: block; font-size: 12px; }
+  .header-profile-trigger { padding: 3px 8px 3px 3px; gap: 6px; }
+}
+
+/* < 480px: very small phones. Env capsule hides, chrome tightens.
+   Deposit keeps its label as long as it fits; below 380px it drops
+   to the wallet glyph alone. */
+@media (max-width: 480px) {
+  .env-capsule { display: none; }
+  .header-bar { padding: 0 8px; gap: 6px; }
+  .header-left { gap: 6px; }
+  .header-actions { gap: 2px; }
+  .header-search { width: 34px; height: 34px; }
+  .header-icon-btn { width: 34px; height: 34px; }
+  .header-pill--deposit { height: 34px; padding: 0 12px; }
+}
+
+/* < 380px: iPhone SE class - tightest packing. Deposit goes icon-only,
+   the balance line drops so the avatar stays a clean circle. */
+@media (max-width: 380px) {
+  .header-bar { padding: 0 6px; height: 48px; gap: 4px; }
+  .header-search,
+  .header-icon-btn { width: 30px; height: 30px; }
+  .header-search-icon { width: 15px; height: 15px; }
+  .header-pill--deposit {
+    height: 30px;
+    width: 30px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+  }
+  .header-pill--deposit .header-pill-label { display: none; }
+  .header-profile-balance { display: none; }
+}
+
+/* --- More popover - position the dropdown like Settings -----
+   Anchored to the More button, right-aligned so on narrow viewports
+   the dropdown doesn't overflow the viewport's right edge. */
+.header-more-wrap {
+  position: relative;
+}
+
+.header-more-menu {
+  right: 0;
+  left: auto;
+  /* Keep the menu inside the viewport on narrow screens. */
+  max-width: calc(100vw - 24px);
+}
+
+/* On phones, shift the menu away from the very right edge of the
+   viewport so it has breathing room from the bar's rounded corner. */
+@media (max-width: 480px) {
+  .header-more-menu {
+    right: -4px;
+  }
+}
+
+/* --- Phones: popovers hug the VIEWPORT, not the trigger -------
+   Settings/Actions are absolute + right:0 against their own icon
+   button. On a phone those buttons sit in the middle of the bar, so
+   a 268px panel ran off the LEFT edge of the screen (the heading read
+   "ETTINGS" / "ACTIONS" was half-cut). Below 640px they detach into
+   fixed sheets pinned to the viewport's right edge and width-clamped,
+   so neither edge can clip them. */
+@media (max-width: 640px) {
+  .header-settings-menu,
+  .header-more-menu {
+    position: fixed;
+    top: calc(var(--header-height, 68px) + 6px);
+    right: 10px;
+    left: auto;
+    width: min(268px, calc(100vw - 20px));
+    max-width: none;
+  }
+}
+
+/* ============================================================
+   WHITE MODE — body.theme-light (trading app light theme).
+   The trading app toggles `body.theme-light` on <body> (NOT the
+   research app's `.app.app-day-mode`, which is DEAD here). The
+   canonical token layer in index.css already flips --glass-fill,
+   --glass-border, --text-1..4, --ob-surface-*, etc. under
+   body.theme-light, so most header chrome (bar, divider, wordmark,
+   pills, icon buttons, theme toggle, profile trigger, dropdown text,
+   info popover surface) auto-adapts through those vars. The rules
+   below cover only what the dark styles HARDCODE (so tokens can't
+   flip it) plus the Apple-clean anchors: the frosted bar, the search
+   field, and the heavy dark shadows on the popovers/menus.
+   ============================================================ */
+
+/* Neutralised accent: dark rules pin the header's local --accent* to
+   WHITE (invisible on a light bar). Flip it to near-black so LIVE dots,
+   focus rings, active markers, the theme knob + deposit glow read on
+   white. On token pages useAccentTheme still inline-overrides these
+   with the token's brand hue. */
+body.theme-light .header {
+  --accent:          #111113;
+  --accent-bright:   #2a2a2e;
+  --accent-deep:     #000000;
+  --accent-glow:     rgba(17, 17, 19, 0.20);
+  --accent-wash:     rgba(17, 17, 19, 0.05);
+  --accent-contrast: #ffffff;
+}
+
+/* Frosted white bar — the dark rule hardcodes a heavy dark drop shadow
+   (--shadow-2) that reads as a smudge on white; swap for a soft light
+   depth. Background/border flow from the flipped glass tokens but we
+   pin a slightly stronger white for the Apple-clean look. */
+body.theme-light .header {
+  --hd-bar:         #ffffff;
+  --hd-fill:        #f0f0f3;
+  --hd-fill-hover:  #e6e6eb;
+  --hd-fill-active: #dcdce2;
+  --hd-key:         #f0f0f3;
+  --hd-key-hover:   #e6e6eb;
+  --hd-line:        transparent;
+  --hd-line-hover:  transparent;
+  --hd-line-key:    transparent;
+  --hd-raise:       none;
+  --hd-raise-hover: none;
+  --hd-press:       none;
+  --hd-recess-bg:   #f3f3f6;
+  --hd-recess:      none;
+  --hd-text:        rgba(15, 23, 42, 0.80);
+  --hd-text-hover:  #0f172a;
+}
+body.theme-light .header-pill--deposit {
+  color: #ffffff;
+  background: #111113;
+}
+body.theme-light .header-pill--deposit:hover { background: #2a2a2e; color: #ffffff; }
+
+body.theme-light .header-bar {
+  background: var(--hd-bar);
+  box-shadow: 0 8px 20px -14px rgba(15, 23, 42, 0.25);
+}
+
+body.theme-light .header--scrolled .header-bar {
+  box-shadow: 0 14px 28px -14px rgba(15, 23, 42, 0.3);
+}
+body.theme-light .header-divider { background: rgba(15, 23, 42, 0.10); }
+body.theme-light .header-search { background: var(--hd-recess-bg); box-shadow: none; }
+body.theme-light .header-search:hover { background: var(--hd-fill-hover); box-shadow: none; }
+body.theme-light .header-theme-knob { background: #ffffff; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.3); }
+body.theme-light .header-right .glow-btn.glow-btn--sm { background: #111113; box-shadow: none; }
+body.theme-light .header-right .glow-btn.glow-btn--sm:hover { background: #2a2a2e; }
+body.theme-light .header-profile-trigger { border: 0; }
+
+/* Search field — pin an Apple-clean white/off-white input with a
+   hairline border + dark placeholder (base uses glass tokens which
+   flip, but pin it so the field reads as a crisp light control). */
+body.theme-light .header-search {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  color: var(--text-3);
+}
+body.theme-light .header-search:hover {
+  background: #f5f5f7;
+  border-color: rgba(0, 0, 0, 0.14);
+  color: var(--text-2);
+}
+
+/* Kbd hint chip — dark rule hardcodes a white-on-white translucent
+   fill (invisible on light). */
+body.theme-light .header-kbd-key {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: var(--text-2);
+}
+
+/* Interactive chrome hover — every icon/pill hover uses --glass-fill-hover,
+   which flips to near-opaque WHITE in light mode, so hovering an icon or pill
+   on the white bar gave NO visible feedback. Darken slightly on white instead
+   (with a crisp near-black icon) so hover reads clearly. */
+body.theme-light .header-icon-btn:hover,
+body.theme-light .header-icon-btn:focus-visible,
+body.theme-light .header-pill:hover,
+body.theme-light .header-pill:focus-visible,
+body.theme-light .header-brand:hover,
+body.theme-light .header-brand:focus-visible,
+body.theme-light .header-theme-toggle:hover,
+body.theme-light .header-profile-trigger:hover,
+body.theme-light .header-profile-trigger.is-open {
+  background: rgba(17, 17, 19, 0.07);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: var(--text-1);
+}
+body.theme-light .header-profile-menu-item:hover,
+body.theme-light .header-profile-menu-item:focus-visible,
+body.theme-light .header-settings-row:hover {
+  background: rgba(17, 17, 19, 0.05);
+  color: var(--text-1);
+}
+
+/* Info popover — surface flips via --ob-surface-4, but the dark rule
+   hardcodes a heavy near-black drop shadow. */
+body.theme-light .header-info-popover {
+  box-shadow: 0 12px 32px -10px rgba(17, 17, 19, 0.20);
+}
+
+/* Profile dropdown panel — same: surface flips, shadow is hardcoded dark. */
+body.theme-light .header-profile-menu {
+  background: rgba(255, 255, 255, 0.86);
+  border-color: rgba(15, 23, 42, 0.10);
+  box-shadow: 0 12px 32px -10px rgba(17, 17, 19, 0.20);
+}
+body.theme-light .header-profile-menu-avatar,
+body.theme-light .header-profile-menu-referral-code,
+body.theme-light .header-profile-menu-copy { background: #ececf0; color: #0f172a; }
+body.theme-light .header-profile-menu-item { color: rgba(15, 23, 42, 0.8); }
+body.theme-light .header-profile-menu-email { color: rgba(15, 23, 42, 0.5); }
+body.theme-light .header-profile-menu-divider { background: rgba(15, 23, 42, 0.08); }
+
+/* Settings popover — dark rule HARDCODES a near-black tinted-glass
+   gradient + white-line border + deep dark shadows; none of it flips.
+   Rebuild as frosted white. */
+body.theme-light .header-settings-menu {
+  background:
+    linear-gradient(180deg, rgba(17, 17, 19, 0.03) 0%, rgba(17, 17, 19, 0) 32%),
+    rgba(255, 255, 255, 0.94);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 18px 48px rgba(17, 17, 19, 0.12),
+    0 4px 12px rgba(17, 17, 19, 0.08);
+}
+
+/* Settings toggle OFF track — dark rule hardcodes a white translucent
+   fill (invisible on white). The ON state + thumb are accent/token
+   driven and flip automatically. */
+body.theme-light .header-settings-toggle {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.10);
+}

@@ -1,0 +1,3419 @@
+/**
+ * Spectre AI Trading Platform — Token Page Redesign: "Obsidian & Lime"
+ *
+ * The canonical design system lives in `styles/design-tokens.css` (imported
+ * first below). This file now contains only:
+ *   - Legacy non-token-page styling (Header, Discover, Dashboard chrome)
+ *   - Privy modal CSS-var overrides
+ *   - Day-mode overrides
+ *   - Animation keyframes used across the app
+ *
+ * Every CSS file in `src/components/` consumes `var(--*)` from design-tokens.css
+ * — no hard-coded hex values anywhere except the token file.
+ */
+
+@import './styles/design-tokens.css';
+@import './styles/skins.css';
+/* Inter loads from index.html (async, non-render-blocking) - including the
+   wght 300 this @import carried. Font @imports in CSS serialize first paint
+   behind a cross-origin round trip; never reintroduce one here. */
+
+/* ============================================================
+   Page-specific tokens — supplement the canonical design system.
+   ----
+   The Obsidian / Lime / Market / Glass / Text / Aurora / Typography /
+   Spacing / Radius / Shadow / Motion tokens live in design-tokens.css
+   along with the legacy alias block that keeps old --bg-* / --text-* /
+   --accent-* / --bull / --bear / --radius-* / --shadow-* / --duration-*
+   names working through the rollout.
+
+   This :root block adds the EXTRAS that don't belong in the canonical
+   system: layout dimensions, page-specific palette extensions (Discover,
+   Sentiment, Narrative), secondary accents, and a few legacy glass /
+   shadow variants still consumed by non-redesigned files.
+   ============================================================ */
+:root {
+  /* Layout — fixed dimensions.
+     --header-height is the FULL height of the fixed Header element.
+     Token ticker offsets by this; main-layout padding-top adds ticker
+     on top. 2026-09-11: back to 56 - the terminal bar is full-bleed,
+     the floating header's 12px top gutter is gone. Mirrored in
+     index.html's #boot-skeleton bands. */
+  --header-height: 56px;
+  --ticker-height: 44px;
+
+  /* Sub-canvas glass variants (legacy) */
+  --glass-bg:        rgba(10, 11, 13, 0.88);
+  --glass-bg-light:  rgba(255, 255, 255, 0.04);
+  --glass-bg-card:   rgba(18, 18, 22, 0.55);
+  --glass-glow:      rgba(255, 255, 255, 0.08);
+  --glass-border-light: rgba(255, 255, 255, 0.08);
+
+  /* Token-page surface aliases (legacy) */
+  --surface-card:         var(--glass-bg);
+  --surface-card-border:  var(--glass-border);
+  --surface-card-inset:   inset 0 1px 0 var(--glass-highlight);
+  --shadow-panel:
+    0 22px 60px rgba(0, 0, 0, 0.65),
+    0 10px 22px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 var(--glass-highlight);
+  --shadow-panel-hover:
+    0 26px 72px rgba(0, 0, 0, 0.72),
+    0 12px 26px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-glow-sm: 0 0 20px var(--accent-glow);
+
+  /* Legacy UI-accent aliases (still consumed by older surfaces) */
+  --ui-accent:               rgba(245, 245, 247, 0.92);
+  --ui-accent-muted:         rgba(245, 245, 247, 0.10);
+  --ui-accent-muted-2:       rgba(245, 245, 247, 0.06);
+  --ui-accent-border:        rgba(245, 245, 247, 0.07);
+  --ui-accent-border-strong: rgba(245, 245, 247, 0.10);
+  --ui-focus-ring:           rgba(245, 245, 247, 0.28);
+  --accent-gradient:         linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  --text-gradient:           linear-gradient(135deg, var(--text-1) 0%, var(--text-2) 100%);
+
+  /* Secondary accents — restrained, contextual only */
+  --cyan:        #06B6D4;
+  --cyan-glow:   rgba(6, 182, 212, 0.4);
+  --amber:       #F59E0B;
+  --violet:      rgba(245, 245, 247, 0.5);
+  --pink:        #EC4899;
+  --blue:        #3B82F6;
+
+  /* Motion extras (design-tokens.css owns --ease-out / --ease-inout) */
+  --ease-in-out: var(--ease-inout);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-instant: 100ms;
+  --duration-fast:    var(--dur-micro);
+
+  /* Discover-page tokens (used by /discover and shared components) */
+  --discover-section-gap:        48px;
+  --discover-section-gap-mobile: 32px;
+  --discover-max-width:          1280px;
+  --discover-padding-x:          32px;
+  --discover-padding-x-mobile:   16px;
+
+  /* Sentiment (Discover) */
+  --sentiment-bullish: var(--up);
+  --sentiment-bearish: var(--down);
+  --sentiment-neutral: var(--neutral);
+
+  /* Narrative Theme Colors (Discover narrative cards) */
+  --narrative-ai:     #06B6D4;
+  --narrative-defi:   #60A5FA;
+  --narrative-memes:  #FBBF24;
+  --narrative-rwa:    #34D399;
+  --narrative-gaming: #F472B6;
+  --narrative-infra:  #3B82F6;
+  --narrative-layer2: #22D3EE;
+  --narrative-nft:    #FB923C;
+
+  /* Card depth levels (legacy alpha ramp) */
+  --card-bg-1:         rgba(255, 255, 255, 0.035);
+  --card-bg-2:         rgba(255, 255, 255, 0.055);
+  --card-bg-3:         rgba(255, 255, 255, 0.075);
+  --card-border-rest:  rgba(255, 255, 255, 0.035);
+  --card-border-hover: rgba(255, 255, 255, 0.10);
+
+  /* SPACING LEGACY OVERRIDES — design-tokens.css uses a true 8px scale
+     (--sp-5: 24, --sp-6: 32, --sp-8: 64, --sp-9: 96) but components written
+     against v1 expect (--sp-5: 20, --sp-6: 24, --sp-8: 32, --sp-10: 40,
+     --sp-12: 48, --sp-16: 64). Restore v1 values here so component layouts
+     don't shift on token load. P8 cleanup migrates components to the new
+     scale token-by-token. (--sp-1..4 + --sp-7 are identical in both scales.)
+  */
+  --sp-0:  0;
+  --sp-5:  20px;
+  --sp-6:  24px;
+  --sp-8:  32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+}
+
+/* Tabular nums for all numeric elements (system font alignment) */
+.mono,
+.stat-value,
+.price,
+.ticker-price,
+.ticker-change {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Token page */
+body.token-page {
+  background: var(--bg-base);
+}
+
+/* Mobile: the vertical scroll container on the token page is `.app.token-page`
+   (App.css: height:100vh; overflow-y:auto), NOT html/body. In DevTools device
+   mode its emulated CLASSIC scrollbar reserves ~8px, shrinking the column to
+   422 in a 430 viewport - so the chart (sized to the column) has its right
+   price scale clipped. Hide the `.app` scrollbar on mobile (overlay behaviour,
+   which real phones already use) so the column stays full-width and the chart
+   fits with NO re-fit - re-fitting the TV iframe to fix this killed its touch
+   gestures. Scroll still works (touch); only the visible bar is hidden. */
+@media (max-width: 768px) {
+  .app,
+  html,
+  body {
+    scrollbar-width: none;        /* Firefox */
+    -ms-overflow-style: none;     /* legacy Edge */
+  }
+  .app::-webkit-scrollbar,
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+}
+
+/* =========================================
+   Light Theme Overrides (Apple-like)
+   Toggle via: body.theme-light
+   ========================================= */
+body.theme-light {
+  /* Background - modern ALL-WHITE (2026 trading-platform look). Page + panels
+     are white; structure comes from hairline borders + soft shadows, not a gray
+     page. --bg-hover/-overlay keep a faint gray so hover/press states still read
+     on white. */
+  --bg-void: #ffffff;
+  --bg-base: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-overlay: #f7f7f9;
+  --bg-hover: #f2f2f4;
+
+  /* Glass */
+  --glass-bg: rgba(255, 255, 255, 0.78);
+  --glass-bg-light: rgba(0, 0, 0, 0.03);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-border-light: rgba(0, 0, 0, 0.12);
+  --glass-glow: rgba(0, 0, 0, 0.06);
+
+  /* Text */
+  --text-primary: #111113;
+  --text-secondary: rgba(17, 17, 19, 0.66);
+  --text-tertiary: rgba(17, 17, 19, 0.54);
+  --text-muted: rgba(17, 17, 19, 0.40);
+  --text-disabled: rgba(17, 17, 19, 0.26);
+  --text-gradient: linear-gradient(135deg, #111113 0%, rgba(17, 17, 19, 0.62) 100%);
+
+  /* Borders */
+  --border-subtle: rgba(17, 17, 19, 0.06);
+  --border-default: rgba(17, 17, 19, 0.10);
+  --border-strong: rgba(17, 17, 19, 0.14);
+
+  /* UI Accent (neutral) */
+  --ui-accent: rgba(17, 17, 19, 0.92);
+  --ui-accent-muted: rgba(17, 17, 19, 0.10);
+  --ui-accent-muted-2: rgba(17, 17, 19, 0.06);
+  --ui-accent-border: rgba(17, 17, 19, 0.14);
+  --ui-accent-border-strong: rgba(17, 17, 19, 0.18);
+  --ui-focus-ring: rgba(17, 17, 19, 0.22);
+
+  /* Card Depth Levels (light) */
+  --card-bg-1: rgba(0, 0, 0, 0.02);
+  --card-bg-2: rgba(0, 0, 0, 0.04);
+  --card-bg-3: rgba(0, 0, 0, 0.06);
+  --card-border-rest: rgba(0, 0, 0, 0.06);
+  --card-border-hover: rgba(0, 0, 0, 0.18);
+
+  /* Token page surfaces (semantic) */
+  --surface-card: var(--glass-bg);
+  --surface-card-border: var(--border-default);
+  --surface-card-inset: inset 0 1px 0 rgba(0, 0, 0, 0.06);
+  --shadow-panel:
+    0 18px 46px rgba(17, 17, 19, 0.10),
+    0 6px 14px rgba(17, 17, 19, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  --shadow-panel-hover:
+    0 22px 54px rgba(17, 17, 19, 0.12),
+    0 8px 18px rgba(17, 17, 19, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+
+  /* ============================================================
+     WHITE MODE — canonical "obsidian" token overrides.
+     The block above only flips the LEGACY aliases (--bg-*, --text-primary*,
+     --border-*, --glass-bg). The canonical tokens below live in
+     design-tokens.css and default to DARK (white text, dark surfaces, white
+     translucent fills) — so any component authored against them rendered
+     dark-on-white / invisible-on-white in light mode. Flipping them here is
+     the systemic fix: every canonical-token surface (VitalsBento stat cards,
+     identity card, etc.) auto-adapts. Apple-clean: system-gray page, white
+     elevated cards, hairline borders, near-black chrome accent, deeper
+     emerald/coral market pair. Kept in sync with the alias values above. */
+
+  /* Surface ladder — modern all-white. Page + panels + cards are white;
+     separation is via hairline borders + soft shadows, not gray fills. */
+  --ob-void: #ffffff;
+  /* Substrate goes very slightly BELOW the white panels in light mode - the
+     inverse of dark, where it sits above them. Panels stay #ffffff and read
+     as raised against it. Kept subtle so the page still reads as white, not
+     grey. */
+  --ob-page: #F4F5F7;
+  --ob-surface-1: #ffffff;
+  --ob-surface-2: #ffffff;
+  --ob-surface-3: #ffffff;
+  --ob-surface-4: #ffffff;
+  /* Chart plane — white like every other light surface. The dark theme's
+     "raise the chart above the panels" step has no light-mode equivalent
+     (there is no lightness ladder here); the chart frame's border carries
+     the separation instead. */
+  --ob-chart: #ffffff;
+
+  /* Text — near-black + slate ramp (mirrors the --text-primary ramp above) */
+  --text-1: #111113;
+  --text-2: rgba(17, 17, 19, 0.66);
+  --text-3: rgba(17, 17, 19, 0.52);
+  --text-4: rgba(17, 17, 19, 0.40);
+
+  /* Glass — frosted WHITE fills (elevated over the gray page) + hairline
+     borders/insets. --glass-border already flips to rgba(0,0,0,0.08) above. */
+  --glass-fill: rgba(255, 255, 255, 0.72);
+  --glass-fill-hover: rgba(255, 255, 255, 0.92);
+  --glass-border-lit: rgba(0, 0, 0, 0.14);
+  --glass-highlight: rgba(0, 0, 0, 0.04);
+
+  /* Accent — near-black neutral for default chrome (LIVE dots, focus rings,
+     active markers, primary fills). Warm-white is invisible on white. On token
+     pages useAccentTheme still inline-overrides --accent* with the token brand
+     color, so accented chrome keeps its hue; this is the default fallback. */
+  --accent: #111113;
+  --accent-bright: #2a2a2e;
+  --accent-deep: #000000;
+  --accent-glow: rgba(17, 17, 19, 0.20);
+  --accent-wash: rgba(17, 17, 19, 0.05);
+  --accent-contrast: #ffffff;
+  /* Legacy --lime* aliases resolve to --accent-family; re-point for light */
+  --lime: #111113;
+  --lime-deep: #000000;
+  --lime-glow: rgba(17, 17, 19, 0.20);
+  --lime-wash: rgba(17, 17, 19, 0.05);
+
+  /* Market — deeper emerald/coral for white-bg legibility (match the chart's
+     day candles in chartStyle.js), with softer glows. */
+  --up: #059669;
+  --up-glow: rgba(5, 150, 105, 0.22);
+  --down: #DC2626;
+  --down-glow: rgba(220, 38, 38, 0.22);
+}
+
+body.theme-light.token-page {
+  background: var(--bg-base);
+}
+
+/* --- Light mode: text utility overrides --- */
+body.theme-light .text-headline {
+  background: linear-gradient(135deg, #111113 0%, rgba(17, 17, 19, 0.62) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+body.theme-light .text-subheadline {
+  color: rgba(17, 17, 19, 0.60);
+}
+
+body.theme-light .text-body-primary {
+  color: #111113;
+}
+
+body.theme-light .text-body-secondary {
+  color: rgba(17, 17, 19, 0.60);
+}
+
+body.theme-light .text-display-lg {
+  color: #111113;
+}
+
+body.theme-light .text-display-sm {
+  color: #111113;
+}
+
+body.theme-light .text-uppercase-label {
+  color: rgba(17, 17, 19, 0.54);
+}
+
+body.theme-light .text-button {
+  color: #ffffff;
+}
+
+body.theme-light .text-tab {
+  color: rgba(17, 17, 19, 0.54);
+}
+
+body.theme-light .text-tab.active {
+  color: #111113;
+}
+
+/* --- Light mode: dark glass scrollbar pills (pairs with the glass system
+   further down) --- */
+body.theme-light [data-scrolling]::-webkit-scrollbar-thumb,
+html[data-scrolling]:has(body.theme-light)::-webkit-scrollbar-thumb {
+  background-color: rgba(15, 23, 42, 0.10) !important;
+  background-image: linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.26) 0%,
+    rgba(15, 23, 42, 0.10) 100%
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 0 0 1px rgba(15, 23, 42, 0.08) !important;
+}
+
+body.theme-light ::-webkit-scrollbar-thumb:hover,
+body.theme-light ::-webkit-scrollbar-thumb:active {
+  background-color: rgba(15, 23, 42, 0.18) !important;
+  background-image: linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.42) 0%,
+    rgba(15, 23, 42, 0.2) 100%
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 0 0 1px rgba(15, 23, 42, 0.12) !important;
+  border-width: 1px !important;
+}
+
+/* --- Light mode: selection --- */
+/* Token pair only — the ::selection / ::-moz-selection rules that consume it
+   live in the "Selection & Focus" block further down, so dark and light can
+   never drift apart again. */
+body.theme-light {
+  --selection-bg: rgba(165, 243, 252, 0.94);
+  --selection-fg: #06212b;
+  --selection-glow: none;
+}
+
+/* --- Light mode: glass utilities --- */
+body.theme-light .glass-subtle {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+body.theme-light .glass-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.78) 100%);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .glass-card:hover {
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 12px 32px rgba(0, 0, 0, 0.08);
+}
+
+body.theme-light .glass-shine::after {
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.01) 40%,
+    rgba(0, 0, 0, 0.02) 50%,
+    rgba(0, 0, 0, 0.01) 60%,
+    transparent 100%
+  );
+}
+
+/* --- Light mode: glow effects (muted in light) --- */
+body.theme-light .glow-border {
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.04), inset 0 0 12px rgba(0, 0, 0, 0.01);
+}
+
+/* --- Light mode: animate-shimmer --- */
+body.theme-light .animate-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.04) 50%, transparent 100%);
+  background-size: 200% 100%;
+}
+
+/* --- Light mode: discover focus-visible --- */
+body.theme-light .discover-page button:focus-visible,
+body.theme-light .discover-page a:focus-visible,
+body.theme-light .discover-page [role="button"]:focus-visible,
+body.theme-light .discover-page [tabindex]:focus-visible,
+body.theme-light .token-row:focus-visible,
+body.theme-light .narrative-card:focus-visible,
+body.theme-light .discovery-card:focus-visible,
+body.theme-light .briefing-card:focus-visible,
+body.theme-light .table-category-tab:focus-visible,
+body.theme-light .network-dropdown-trigger:focus-visible,
+body.theme-light .timeframe-pill:focus-visible,
+body.theme-light .view-toggle-btn:focus-visible {
+  outline: 2px solid rgba(17, 17, 19, 0.30);
+}
+
+/* =========================================
+   Reset & Base
+   ========================================= */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+  min-height: 100vh;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+/* =========================================
+   Background - Subtle ambient color on Space Gray
+   Very restrained - just enough to feel alive,
+   not enough to overpower the matte metal surface.
+   ========================================= */
+/* Body ambient blurs removed - ElegantShapes handles background */
+
+#root {
+  min-height: 100vh;
+  position: relative;
+  /* AuroraField.css states this contract in its own header ("#root in
+     index.css must be position:relative; z-index:1") but it was never
+     satisfied here - position:relative alone does NOT create a stacking
+     context. Without it, .aurora-field (fixed, z-index:0, opaque) and
+     .app.token-page::before (fixed, z-index:0, the per-token orbs) land in
+     the SAME stacking context at the SAME z-index, so tree order decides -
+     and a ::before precedes every real child. The orbs were painting
+     underneath an opaque black layer, which is why per-token background
+     tinting has never been visible. */
+  z-index: 1;
+}
+
+/* =========================================
+   Typography - SF Pro Display / Apple style
+   ========================================= */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+}
+
+/* Hero: 64px, bold, -2px tracking, gradient fade */
+.display-hero {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  background: var(--text-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@media (min-width: 900px) {
+  .display-hero { font-size: 4rem; letter-spacing: -2px; }
+}
+
+/* Subtitle: 20px, secondary */
+.subtitle {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.display-xl { font-size: 3rem; font-weight: 700; letter-spacing: -0.02em; }
+.display-lg { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; }
+.display-md { font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; }
+.display-sm { font-size: 1.375rem; font-weight: 600; letter-spacing: -0.015em; }
+.heading { font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; }
+.subheading { 
+  font-size: 0.75rem; 
+  font-weight: 600; 
+  text-transform: uppercase; 
+  letter-spacing: 0.08em; 
+  color: var(--text-tertiary); 
+}
+.body-lg { font-size: 1.0625rem; line-height: 1.65; }
+.body { font-size: 0.9375rem; }
+.body-sm { font-size: 0.8125rem; }
+.caption { font-size: 0.75rem; color: var(--text-tertiary); }
+.mono { font-family: var(--font-mono); font-size: 0.875em; }
+
+/* Gradient text (hero fade) */
+.gradient-text {
+  background: var(--text-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Accent gradient text */
+.gradient-text-accent {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* =========================================
+   Token Page – Apple text styles
+   ========================================= */
+/* Main headline (hero): 64px, 700, -2px, gradient */
+.text-headline {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4.5vw, 4rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  background: linear-gradient(135deg, #f5f5f7 0%, rgba(245, 245, 247, 0.7) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@media (min-width: 900px) {
+  .text-headline { font-size: 4rem; letter-spacing: -2px; }
+}
+
+/* Subheadline: 20px, 400, 60% white */
+.text-subheadline {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.6);
+}
+
+/* Primary body: 14px, 400, #f5f5f7 */
+.text-body-primary {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: #f5f5f7;
+}
+
+/* Secondary body: 13–14px, 400–500, 60% white */
+.text-body-secondary {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.6);
+}
+
+/* Large display numbers (prices, stats): 28–32px, 600–700 */
+.text-display-lg {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #f5f5f7;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Small display numbers: system font 16-18px */
+.text-display-sm {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f5f5f7;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Uppercase labels: 13px, 400, UPPERCASE, 0.5px */
+.text-uppercase-label {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(245, 245, 247, 0.6);
+}
+
+/* Button text: 14–16px, 500–600, #fff */
+.text-button {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* Tab/Nav: 13–14px, 500; inactive 60%, active #f5f5f7 */
+.text-tab {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.6);
+}
+
+.text-tab.active {
+  color: #f5f5f7;
+}
+
+/* =========================================
+   Glass Scrollbars - ONE system, app-wide
+   ========================================= */
+/* macOS-overlay feel: invisible until the pointer is over the scroller, then
+   a slim floating glass pill. No tracks, no chrome. !important on purpose -
+   the legacy per-component scrollbar styles inherit this ONE look without a
+   file-by-file sweep. Deliberate hiders keep working: `::-webkit-scrollbar
+   { display: none }` wins because display is never set here.
+   ⚠️ Chrome 121+: setting `scrollbar-width` / `scrollbar-color` on an element
+   DISABLES all ::-webkit-scrollbar styling for it - never add those on app
+   surfaces (the Firefox fallback lives in the @supports block below). */
+::-webkit-scrollbar {
+  width: 14px !important;
+  height: 14px !important;
+  background: transparent !important;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent !important;
+  border: none !important;
+}
+
+::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background: transparent !important;
+  /* Transparent border + padding-box clip = an 8px pill floating in a 14px
+     gutter - fat enough for the glass (gradient + ring + curve) to READ. */
+  border: 3px solid transparent !important;
+  background-clip: padding-box !important;
+  border-radius: 9999px !important;
+}
+
+/* Pill appears ONLY while the element is actually scrolling - the
+   glass-scrollbars helper stamps data-scrolling on the live scroller (html
+   for window scroll) and clears it ~1s after motion stops. macOS-overlay
+   behavior: nothing visible at rest, ever. backdrop-filter doesn't exist on
+   scrollbar pseudos, so the glass is built the design-system way: gradient
+   body + top light + hairline ring. */
+[data-scrolling]::-webkit-scrollbar-thumb {
+  background-color: rgba(245, 245, 247, 0.07) !important;
+  background-image: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.18) 0%,
+    rgba(255, 255, 255, 0.06) 100%
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.10) !important;
+}
+
+/* On the pill itself (visible while scrolling / just after) -> brighter
+   glass + thicker, so it can be grabbed and dragged */
+::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:active {
+  background-color: rgba(245, 245, 247, 0.12) !important;
+  background-image: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.32) 0%,
+    rgba(255, 255, 255, 0.12) 100%
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14) !important;
+  border-width: 1px !important;
+}
+
+/* Touch devices have no hover - keep a faint always-on glass pill */
+@media (hover: none) {
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(245, 245, 247, 0.06) !important;
+    background-image: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.14) 0%,
+      rgba(255, 255, 255, 0.05) 100%
+    ) !important;
+  }
+}
+
+/* Firefox (no ::-webkit-scrollbar support): thin subtle bars. Guarded so
+   Chromium never sees scrollbar-width (it would kill the styling above). */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+  [data-scrolling] {
+    scrollbar-color: rgba(245, 245, 247, 0.3) transparent;
+  }
+  body.theme-light [data-scrolling] {
+    scrollbar-color: rgba(15, 23, 42, 0.4) transparent;
+  }
+}
+
+/* =========================================
+   Selection & Focus
+   ========================================= */
+/* One selection language across the Spectre products (see the long note in
+   apps/research/src/index.css). Near-opaque on purpose: a translucent
+   highlight takes on whatever sits behind it, and these pages put glass over
+   photo backdrops. Previously ::selection was a grey wash and
+   ::-moz-selection was purple — the same text highlighted two different
+   colours depending on the browser. */
+:root {
+  --selection-bg: rgba(14, 116, 144, 0.92);
+  --selection-fg: #f2fdff;
+  --selection-glow: 0 0 6px rgba(34, 211, 238, 0.35);
+}
+
+::selection {
+  background: var(--selection-bg);
+  color: var(--selection-fg);
+  -webkit-text-fill-color: var(--selection-fg);
+  text-shadow: var(--selection-glow);
+}
+
+::-moz-selection {
+  background: var(--selection-bg);
+  color: var(--selection-fg);
+  -webkit-text-fill-color: var(--selection-fg);
+  text-shadow: var(--selection-glow);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ui-focus-ring);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* =========================================
+   Premium Animations - WOW Effects
+   ========================================= */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes fadeInDown {
+  from { 
+    opacity: 0; 
+    transform: translateY(-20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes scaleIn {
+  from { 
+    opacity: 0; 
+    transform: scale(0.9); 
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+}
+
+@keyframes slideInLeft {
+  from { 
+    opacity: 0; 
+    transform: translateX(-30px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateX(0); 
+  }
+}
+
+@keyframes slideInRight {
+  from { 
+    opacity: 0; 
+    transform: translateX(30px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateX(0); 
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.7; 
+    transform: scale(0.98);
+  }
+}
+
+@keyframes breathe {
+  0%, 100% {
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+  50% {
+    box-shadow: 0 0 40px var(--accent-glow), 0 0 60px rgba(255, 255, 255, 0.08);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes rotateGlow {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+@keyframes borderGlow {
+  0%, 100% {
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.04);
+  }
+  50% {
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* Apple-keynote entrance: blur + translate + opacity (Jakub Krehel recipe) */
+@keyframes revealUp {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes revealScale {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Glass shine sweep - horizontal light beam across a surface */
+@keyframes glassShineSweep {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(300%) skewX(-15deg);
+  }
+}
+
+/* Soft glow pulse for highlighted elements */
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 20px rgba(255, 255, 255, 0.02),
+      0 8px 32px rgba(0, 0, 0, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 40px rgba(255, 255, 255, 0.04),
+      0 8px 32px rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* Subtle content slide for tab switching */
+@keyframes contentSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* Gradient border shimmer - rotating conic gradient */
+@keyframes borderShimmer {
+  0% { --shimmer-angle: 0deg; }
+  100% { --shimmer-angle: 360deg; }
+}
+
+/* Number counter tick */
+@keyframes numberTick {
+  0% { transform: translateY(0); opacity: 1; }
+  40% { transform: translateY(-6px); opacity: 0; }
+  60% { transform: translateY(6px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* Animation Classes */
+.animate-in { animation: fadeIn var(--duration-base) var(--ease-out); }
+.animate-fade-up { animation: fadeInUp var(--duration-slow) var(--ease-out); }
+.animate-fade-down { animation: fadeInDown var(--duration-slow) var(--ease-out); }
+.animate-scale { animation: scaleIn var(--duration-slow) var(--ease-spring); }
+.animate-slide-left { animation: slideInLeft var(--duration-slow) var(--ease-out); }
+.animate-slide-right { animation: slideInRight var(--duration-slow) var(--ease-out); }
+.animate-pulse { animation: pulse 2s var(--ease-in-out) infinite; }
+.animate-breathe { animation: breathe 3s var(--ease-in-out) infinite; }
+.animate-float { animation: float 4s var(--ease-in-out) infinite; }
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Apple-grade reveal classes */
+.animate-reveal-up {
+  animation: revealUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.animate-reveal-scale {
+  animation: revealScale 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.animate-content-in {
+  animation: contentSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── Scroll-triggered reveal system - cinematic, generous ── */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(48px);
+  filter: blur(8px);
+  transition:
+    opacity 1.1s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 1.1s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform, filter;
+}
+
+.scroll-reveal.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+/* Stagger children inside a revealed container */
+.scroll-reveal-stagger > * {
+  opacity: 0;
+  transform: translateY(28px);
+  filter: blur(5px);
+  transition:
+    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scroll-reveal-stagger.is-revealed > *:nth-child(1) { transition-delay: 0ms; opacity: 1; transform: translateY(0); filter: blur(0); }
+.scroll-reveal-stagger.is-revealed > *:nth-child(2) { transition-delay: 100ms; opacity: 1; transform: translateY(0); filter: blur(0); }
+.scroll-reveal-stagger.is-revealed > *:nth-child(3) { transition-delay: 200ms; opacity: 1; transform: translateY(0); filter: blur(0); }
+.scroll-reveal-stagger.is-revealed > *:nth-child(4) { transition-delay: 300ms; opacity: 1; transform: translateY(0); filter: blur(0); }
+.scroll-reveal-stagger.is-revealed > *:nth-child(5) { transition-delay: 400ms; opacity: 1; transform: translateY(0); filter: blur(0); }
+
+/* ── Scroll-driven text reveal (POPUP.FUND style) ── */
+.scroll-text-reveal {
+  position: relative;
+  display: inline;
+}
+
+.scroll-text-reveal .char {
+  display: inline-block;
+  opacity: 0.15;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity;
+}
+
+.scroll-text-reveal .char.is-lit {
+  opacity: 1;
+}
+
+/* Whitespace character - preserve spacing */
+.scroll-text-reveal .char-space {
+  display: inline;
+  width: 0.3em;
+}
+
+/* ── Glass shine overlay ── */
+.glass-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-shine::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.03) 40%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.03) 60%,
+    transparent 100%
+  );
+  pointer-events: none;
+  transform: translateX(-100%) skewX(-15deg);
+}
+
+.glass-shine:hover::after {
+  animation: glassShineSweep 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Stagger delays for lists */
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+.stagger-6 { animation-delay: 300ms; }
+.stagger-7 { animation-delay: 350ms; }
+.stagger-8 { animation-delay: 400ms; }
+
+/* =========================================
+   Premium Glass Components
+   ========================================= */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-inner), var(--shadow-lg);
+}
+
+.glass-subtle {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+}
+
+.glass-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-inner), var(--shadow-md);
+  transition: all var(--duration-base) var(--ease-out);
+}
+
+.glass-card:hover {
+  border-color: var(--glass-border-light);
+  box-shadow: var(--shadow-inner), var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* =========================================
+   Premium Glow Effects
+   ========================================= */
+.glow {
+  box-shadow: var(--shadow-glow);
+}
+
+.glow-sm {
+  box-shadow: var(--shadow-glow-sm);
+}
+
+.glow-text {
+  text-shadow: 0 0 20px var(--accent-glow);
+}
+
+.glow-border {
+  border: 1px solid var(--border-accent);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.06), inset 0 0 20px rgba(255, 255, 255, 0.02);
+}
+
+.glow-line {
+  position: relative;
+}
+
+.glow-line::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.5;
+}
+
+/* =========================================
+   Premium Button Styles
+   ========================================= */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-5);
+  background: var(--accent-gradient);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255,255,255,0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+  opacity: 1;
+  transition: opacity var(--duration-fast);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.15), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+/* Light mode: fill with the near-black accent so white text stays legible; the
+   dark-mode white outer glow is invisible on white, so swap it for a soft dark
+   drop shadow. The white inset highlight still reads on the dark fill. */
+body.theme-light .btn-primary {
+  background: var(--accent, #111113);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(17, 17, 19, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+body.theme-light .btn-primary:hover {
+  box-shadow: 0 6px 20px rgba(17, 17, 19, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-5);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.btn-ghost:hover {
+  background: var(--glass-bg-light);
+  color: var(--text-primary);
+}
+
+/* =========================================
+   Premium Input Styles
+   ========================================= */
+.input {
+  width: 100%;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-muted);
+}
+
+/* =========================================
+   Utility Classes
+   ========================================= */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Status indicators */
+.status-live {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.status-live::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--bull);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+  box-shadow: 0 0 8px var(--bull-glow);
+}
+
+/* Dividers */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-default), transparent);
+}
+
+.divider-vertical {
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(180deg, transparent, var(--border-default), transparent);
+}
+
+/* =========================================
+   X Bubbles Fullscreen Mode - Hide Other Elements
+   ========================================= */
+body.x-bubbles-fullscreen .panel-left,
+body.x-bubbles-fullscreen .panel-right,
+body.x-bubbles-fullscreen .layout-section--banner,
+body.x-bubbles-fullscreen .layout-section--txns,
+body.x-bubbles-fullscreen .data-tabs,
+body.x-bubbles-fullscreen .token-banner,
+body.x-bubbles-fullscreen .ai-assistant,
+body.x-bubbles-fullscreen .ai-fab,
+body.x-bubbles-fullscreen header {
+  display: none !important;
+}
+
+body.x-bubbles-fullscreen .main-layout {
+  display: block !important;
+  padding: 0 !important;
+}
+
+body.x-bubbles-fullscreen .layout-section--chart {
+  width: 100% !important;
+  padding: 0 !important;
+}
+
+body.x-bubbles-fullscreen {
+  overflow: hidden;
+}
+
+/* =========================================
+   Chart Fullscreen Mode - Hide Other Elements
+   ========================================= */
+body.chart-fullscreen .panel-left,
+body.chart-fullscreen .panel-right,
+body.chart-fullscreen .layout-section--banner,
+body.chart-fullscreen .layout-section--txns,
+body.chart-fullscreen .data-tabs,
+body.chart-fullscreen .token-banner,
+body.chart-fullscreen .ai-assistant,
+body.chart-fullscreen .ai-fab,
+body.chart-fullscreen header {
+  display: none !important;
+}
+
+body.chart-fullscreen .main-layout {
+  display: block !important;
+  padding: 0 !important;
+}
+
+body.chart-fullscreen .layout-section--chart {
+  width: 100% !important;
+  padding: 0 !important;
+}
+
+body.chart-fullscreen {
+  overflow: hidden;
+}
+
+/* =========================================
+   Cursor Styles - Premium Professional
+   ========================================= */
+
+/* Custom cursor - Clean, professional finance */
+:root {
+  /* Default cursor - crisp white arrow, minimal shadow */
+  --cursor-default: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><filter id="s" x="-20%25" y="-20%25" width="140%25" height="140%25"><feDropShadow dx="0.5" dy="1" stdDeviation="1" flood-opacity="0.35"/></filter></defs><path d="M4 2L18 12L11 14L8 21Z" fill="%23f5f5f7" stroke="%230a0a0c" stroke-width="1.2" stroke-linejoin="round" filter="url(%23s)"/></svg>') 4 2, default;
+
+  /* Pointer cursor - native system pointer, no custom SVG */
+  --cursor-pointer: pointer;
+
+  /* Text cursor - clean I-beam, no color dots */
+  --cursor-text: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="24" viewBox="0 0 16 24"><defs><filter id="s" x="-20%25" y="-20%25" width="140%25" height="140%25"><feDropShadow dx="0.5" dy="1" stdDeviation="0.6" flood-opacity="0.25"/></filter></defs><path d="M8 3v18M5 3h6M5 21h6" fill="none" stroke="%23f5f5f7" stroke-width="1.5" stroke-linecap="round" filter="url(%23s)"/></svg>') 8 12, text;
+}
+
+/* Apply custom default cursor globally */
+html, body {
+  cursor: var(--cursor-default);
+}
+
+/* Pointer for all interactive elements */
+a,
+button,
+[role="button"],
+[tabindex]:not([tabindex="-1"]),
+.clickable,
+.watchlist-btn,
+.social-btn,
+.action-btn,
+.sort-btn,
+.tf-btn,
+.type-btn,
+.tool-btn,
+.tab-btn,
+.dropdown-btn,
+.btn-primary,
+.btn-secondary,
+.btn-ghost,
+.btn-degen,
+.btn-deposit,
+.toggle-btn,
+.badge,
+.smart-badge,
+.search-trigger,
+.close-btn,
+.expand-btn,
+.nav-item,
+.token-item,
+.watchlist-item,
+.search-item,
+.search-item-card,
+.tweet,
+.share-option,
+.social-menu-item,
+.notification-item,
+.stat-card,
+.card-ca,
+.sort-option,
+.clear-history-btn,
+.search-clear-btn,
+.copy-btn,
+.icon-btn,
+label[for],
+select,
+[onclick],
+input[type="button"],
+input[type="submit"],
+input[type="checkbox"],
+input[type="radio"],
+.ca-btn,
+.description-toggle,
+.logo-icon,
+.profile-btn,
+.header-right > *,
+.chart-controls button,
+.chart-controls .type-btn,
+.chart-controls .tf-btn,
+.chart-controls .tool-btn,
+.stat-item.has-dropdown,
+.stat-item.has-dropdown *,
+.vol-tf-btn,
+.comparison-bar,
+.lock-item,
+.data-tab,
+.panel-tab,
+.watchlist-add-btn {
+  cursor: var(--cursor-pointer) !important;
+}
+
+/* Text cursor for inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+textarea,
+[contenteditable="true"] {
+  cursor: var(--cursor-text);
+}
+
+/* Chart - no cursor */
+.trading-chart canvas,
+.chart-canvas {
+  cursor: none;
+}
+
+/* Resize cursors */
+.resize-handle,
+.chart-resize-handle {
+  cursor: ns-resize;
+}
+
+/* Price axis - vertical resize */
+.price-axis-area,
+.axis-drag-handle.price {
+  cursor: ns-resize;
+}
+
+/* Time axis - horizontal resize */
+.time-axis-area,
+.axis-drag-handle.time {
+  cursor: ew-resize;
+}
+
+/* Not allowed cursor */
+.disabled,
+[disabled],
+.btn-disabled,
+.unavailable {
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+/* Wait/loading cursor */
+.loading,
+.processing {
+  cursor: wait;
+}
+
+/* Link hover effect */
+a:not(.social-btn):not(.btn-primary):not(.btn-secondary):not(.btn-degen):not(.btn-ghost) {
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+a:not(.social-btn):not(.btn-primary):not(.btn-secondary):not(.btn-degen):not(.btn-ghost):not(.df-link):not(.action-pill):hover {
+  color: var(--accent);
+}
+
+/* Light mode: on a token page --accent is the token's OWN brand colour, which
+   can be light (SPECTRE = silver) - so a raw var(--accent) link-hover turns
+   invisible on white. Mix it toward dark ink so every link-hover stays legible
+   while keeping a hint of brand hue. Higher specificity (body.theme-light +
+   same chain) so it wins over the rule above. */
+body.theme-light a:not(.social-btn):not(.btn-primary):not(.btn-secondary):not(.btn-degen):not(.btn-ghost):not(.df-link):not(.action-pill):hover {
+  color: color-mix(in srgb, var(--accent) 55%, #0f172a 45%);
+}
+
+/* ============================================================
+   LIGHT-MODE ACCENT REMAP
+   The per-token --accent* ramp (useAccentTheme) is engineered to be LIGHT so
+   it glows on black; on white those same colours wash out - SPECTRE silver,
+   NEAR mint, BONK/SHIB/TAO yellow, WIF pink all fall below WCAG 3:1 vs #fff.
+   In light mode, point the token-content accent channel at the parallel
+   onLight ramp (same hue, darkened for white legibility, computed in
+   accentNormalize.js and written inline by useAccentTheme).
+
+   Scoped to the token-content wrappers (.main-layout / .token-ticker) which
+   are DESCENDANTS of .app - .app carries the inline --accent*, so setting the
+   channel on a descendant wins by inheritance without fighting the inline
+   style. The header pins its own #111113 accent separately and is untouched.
+   Fallbacks (dark zinc) cover any ramp object that predates the onLight fields.
+   Dark mode never reads these vars, so black-mode colours are unchanged.
+   ============================================================ */
+body.theme-light .main-layout,
+body.theme-light .token-ticker {
+  --accent:          var(--accent-onlight, #3f3f46);
+  --accent-bright:   var(--accent-onlight-bright, #52525b);
+  --accent-deep:     var(--accent-onlight-deep, #27272a);
+  --accent-glow:     var(--accent-onlight-glow, rgba(63, 63, 70, 0.22));
+  --accent-wash:     var(--accent-onlight-wash, rgba(63, 63, 70, 0.06));
+  --accent-contrast: var(--accent-onlight-contrast, #ffffff);
+}
+
+/* =========================================
+   RESPONSIVE BREAKPOINT SYSTEM
+   Mobile-First Approach
+   
+   Breakpoints:
+   - xs: 0-479px (small mobile)
+   - sm: 480-639px (mobile)
+   - md: 640-767px (large mobile / small tablet)
+   - lg: 768-1023px (tablet)
+   - xl: 1024-1199px (small desktop / large tablet)
+   - 2xl: 1200-1399px (desktop)
+   - 3xl: 1400px+ (large desktop)
+   ========================================= */
+
+:root {
+  /* Safe area insets for notched devices */
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  
+  /* Responsive spacing scale */
+  --container-padding: var(--sp-4);
+  --section-gap: var(--sp-6);
+  --card-padding: var(--sp-5);
+}
+
+/* Mobile touch improvements.
+   NOTE (2026-07-13): the old blanket `button { min-width/height: 44px }`
+   touch rule was REMOVED — it silently inflated every compact control
+   (swap % chips, toolbar buttons, timeframe pills) on real phones and
+   made DevTools device-mode render differently from a narrow window.
+   Touch-target sizing is now each component's own responsibility:
+   size the control itself, or add an invisible hit-area expansion
+   (`::after { position:absolute; inset:-10px }`) on small buttons. */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover-dependent effects on touch */
+  .token-card:hover,
+  .glass-card:hover,
+  .search-item-card:hover {
+    transform: none;
+  }
+
+  /* Better scroll behavior on touch */
+  .token-list, .alpha-feed, .search-results, .ai-messages {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+}
+
+/* Small Mobile (xs: 0-479px) */
+@media (max-width: 479px) {
+  :root {
+    --container-padding: var(--sp-3);
+    --section-gap: var(--sp-4);
+    --card-padding: var(--sp-3);
+  }
+  
+  html {
+    font-size: 14px;
+  }
+  
+  .display-hero {
+    font-size: 1.75rem;
+  }
+  
+  .display-xl { font-size: 1.75rem; }
+  .display-lg { font-size: 1.5rem; }
+  .display-md { font-size: 1.25rem; }
+  .display-sm { font-size: 1.125rem; }
+  .heading { font-size: 1rem; }
+  
+  /* Hide on mobile */
+  .hide-xs { display: none !important; }
+}
+
+/* Mobile (sm: 480-639px) */
+@media (min-width: 480px) and (max-width: 639px) {
+  :root {
+    --container-padding: var(--sp-4);
+    --section-gap: var(--sp-5);
+    --card-padding: var(--sp-4);
+  }
+  
+  .hide-sm { display: none !important; }
+}
+
+/* Large Mobile / Small Tablet (md: 640-767px) */
+@media (min-width: 640px) and (max-width: 767px) {
+  :root {
+    --container-padding: var(--sp-5);
+    --section-gap: var(--sp-6);
+    --card-padding: var(--sp-4);
+  }
+  
+  .hide-md { display: none !important; }
+}
+
+/* Tablet (lg: 768-1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --container-padding: var(--sp-6);
+    --section-gap: var(--sp-6);
+    --card-padding: var(--sp-5);
+  }
+  
+  .hide-lg { display: none !important; }
+}
+
+/* Small Desktop (xl: 1024-1199px) */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .hide-xl { display: none !important; }
+}
+
+/* Desktop (2xl: 1200-1399px) */
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .hide-2xl { display: none !important; }
+}
+
+/* Large Desktop (3xl: 1400px+) */
+@media (min-width: 1400px) {
+  .hide-3xl { display: none !important; }
+}
+
+/* Show only on specific breakpoints */
+.show-xs-only { display: none !important; }
+.show-mobile-only { display: none !important; }
+.show-tablet-only { display: none !important; }
+.show-desktop-only { display: none !important; }
+
+@media (max-width: 479px) {
+  .show-xs-only { display: flex !important; }
+}
+
+@media (max-width: 767px) {
+  .show-mobile-only { display: flex !important; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .show-tablet-only { display: flex !important; }
+}
+
+@media (min-width: 1024px) {
+  .show-desktop-only { display: flex !important; }
+}
+
+/* Responsive text utilities */
+.text-truncate-mobile {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  .text-truncate-mobile {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+}
+
+/* Responsive flex utilities */
+.flex-col-mobile {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .flex-col-mobile {
+    flex-direction: row;
+  }
+}
+
+.flex-wrap-mobile {
+  flex-wrap: wrap;
+}
+
+@media (min-width: 1024px) {
+  .flex-wrap-mobile {
+    flex-wrap: nowrap;
+  }
+}
+
+/* Responsive gap utilities */
+.gap-responsive {
+  gap: var(--sp-3);
+}
+
+@media (min-width: 768px) {
+  .gap-responsive {
+    gap: var(--sp-4);
+  }
+}
+
+@media (min-width: 1200px) {
+  .gap-responsive {
+    gap: var(--sp-5);
+  }
+}
+
+/* Safe area padding for notched devices */
+.safe-area-top {
+  padding-top: max(var(--sp-4), var(--safe-area-inset-top));
+}
+
+.safe-area-bottom {
+  padding-bottom: max(var(--sp-4), var(--safe-area-inset-bottom));
+}
+
+.safe-area-left {
+  padding-left: max(var(--sp-4), var(--safe-area-inset-left));
+}
+
+.safe-area-right {
+  padding-right: max(var(--sp-4), var(--safe-area-inset-right));
+}
+
+/* Prevent content shift on scrollbar */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Improve mobile viewport handling */
+@supports (height: 100dvh) {
+  .full-height {
+    height: 100dvh;
+  }
+}
+
+@supports not (height: 100dvh) {
+  .full-height {
+    height: 100vh;
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (orientation: landscape) and (max-height: 500px) {
+  .header {
+    height: 56px;
+  }
+
+  .welcome-hero {
+    padding: 24px 0;
+  }
+
+  .hero-title {
+    font-size: 1.75rem;
+  }
+}
+
+/* =========================================
+   Discover Page - Focus Visible (Keyboard Nav)
+   ========================================= */
+.discover-page button:focus-visible,
+.discover-page a:focus-visible,
+.discover-page [role="button"]:focus-visible,
+.discover-page [tabindex]:focus-visible,
+.token-row:focus-visible,
+.narrative-card:focus-visible,
+.discovery-card:focus-visible,
+.briefing-card:focus-visible,
+.table-category-tab:focus-visible,
+.network-dropdown-trigger:focus-visible,
+.timeframe-pill:focus-visible,
+.view-toggle-btn:focus-visible {
+  outline: 2px solid rgba(245, 245, 247, 0.5);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm, 6px);
+}
+
+.discover-page *:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* =========================================
+   Reduced Motion - Accessibility
+   ========================================= */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Ensure scroll-reveal items are visible immediately */
+  .scroll-reveal,
+  .scroll-reveal-stagger > * {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  /* Disable glass shine sweeps */
+  .glass-shine::after,
+  .hero-pulse::after,
+  .research-desk::after,
+  .tdt-card::after {
+    display: none !important;
+  }
+}
+
+/* ── Privy Modal - Apple Cinematic Theme ── */
+body {
+  --privy-border-radius-sm: 10px;
+  --privy-border-radius-md: 16px;
+  --privy-border-radius-lg: 24px;
+  --privy-border-radius-full: 9999px;
+  --privy-color-background: #0c0c0e;
+  --privy-color-background-2: #111113;
+  --privy-color-background-3: #18181b;
+  --privy-color-foreground: #f5f5f7;
+  --privy-color-foreground-2: rgba(245, 245, 247, 0.7);
+  --privy-color-foreground-3: rgba(245, 245, 247, 0.5);
+  --privy-color-foreground-4: rgba(245, 245, 247, 0.35);
+  --privy-color-foreground-accent: #f5f5f7;
+  --privy-color-accent: #18181b;
+  --privy-color-accent-light: rgba(255, 255, 255, 0.08);
+  --privy-color-accent-lightest: rgba(255, 255, 255, 0.04);
+  --privy-color-accent-dark: #111113;
+  --privy-color-accent-darkest: #0c0c0e;
+  --privy-color-success: #10B981;
+  --privy-color-error: #EF4444;
+  --privy-color-error-light: rgba(239, 68, 68, 0.12);
+}
+
+/* Privy modal backdrop - subtle dim, app stays visible */
+#privy-modal-overlay,
+#privy-dialog-backdrop,
+[data-privy-dialog-overlay] {
+  background: rgba(0, 0, 0, 0.55) !important;
+  backdrop-filter: blur(8px) brightness(0.9) !important;
+  -webkit-backdrop-filter: blur(8px) brightness(0.9) !important;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Privy dialog outer wrapper - must stay full-viewport, never card-style */
+#privy-dialog {
+  overflow: visible !important;
+  min-width: unset !important;
+  max-width: unset !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Privy backdrop - ensure full viewport coverage */
+#privy-dialog-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Privy modal card - wider + Apple glass */
+#privy-modal-content,
+[data-privy-dialog] {
+  position: relative !important;
+  min-width: 520px !important;
+  max-width: 560px !important;
+  background:
+    linear-gradient(
+      170deg,
+      rgba(255, 255, 255, 0.06) 0%,
+      rgba(255, 255, 255, 0.02) 40%,
+      rgba(0, 0, 0, 0.1) 100%
+    ),
+    rgba(12, 12, 14, 0.82) !important;
+  backdrop-filter: blur(16px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(150%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 24px !important;
+  box-shadow:
+    0 40px 120px rgba(0, 0, 0, 0.65),
+    0 16px 40px rgba(0, 0, 0, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.05) !important;
+  overflow: hidden !important;
+  transform-origin: center center !important;
+  animation: privyModalIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Center on screen: Privy's Headless-UI dialog panel defaults to ~360px and is
+   what the fixed flex overlay centers; our card's min-width 520px overflows it
+   to the right and shifts the visual center ~80px. Size the panel (+ its inner
+   wrapper) to the card so the overlay centers the full width. */
+#privy-dialog [id^="headlessui-dialog-panel"],
+#privy-dialog [id^="headlessui-dialog-panel"] > div {
+  width: fit-content !important;
+  max-width: none !important;
+}
+
+@keyframes privyModalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Privy inner card - strip Privy's default solid bg so our glass shows through */
+#privy-modal-content [class*="sc-"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  overflow: visible !important;
+}
+
+/* Force overflow visible on inner wrappers for the non-wallet-picker screens
+   (login, OTP, "Select network") so the deep wrapper's 48px bottom padding is
+   NOT clipped by Privy's inner scroll container. Higher specificity than the
+   generic sc-* rule above so it actually beats Privy's own overflow (the
+   generic rule lost the cascade, which is why trading clipped while research -
+   which has this exact rule - did not). The wallet picker (has the search
+   input) is excluded so it keeps its virtual scroll. */
+#privy-modal-content:not(:has(input[placeholder*="wallet" i])) [class*="sc-"]:not(button),
+#privy-dialog:not(:has(input[placeholder*="wallet" i])) [class*="sc-"]:not(button),
+[data-privy-dialog]:not(:has(input[placeholder*="wallet" i])) [class*="sc-"]:not(button) {
+  overflow: visible !important;
+}
+
+/* Privy inner padding - breathe room. 44px top so the "Sign in to Spectre AI"
+   header clears the modal top edge + the absolute close button (was clipped).
+   40px bottom so simpler modals (link email/phone, OTP) don't have the submit
+   button hugging the modal's bottom edge. */
+#privy-modal-content > div,
+[data-privy-dialog] > div {
+  padding-top: 44px !important;
+  padding-left: 32px !important;
+  padding-right: 32px !important;
+  padding-bottom: 40px !important;
+}
+
+/* Bottom padding on deeper Privy content wrapper (sc-bypJrU) */
+#privy-modal-content > div > div > div > div {
+  padding-bottom: 48px !important;
+}
+
+/* No wallet extension: the wallet button is hidden, so the social tiles become the
+   last row and sit close to the modal's bottom edge. Let the sign-in card fit its
+   (shorter) content with height:auto so the extra padding actually renders, then
+   give the tiles more breathing room below. Scoped to the sign-in screen
+   (:has login tiles) so the OTP / wallet-picker screens are untouched, and to
+   :not(.wallet-ext-present) so the approved wallet-state spacing is unchanged. */
+html:not(.wallet-ext-present) #privy-modal-content:has(button.login-method-button) {
+  height: auto !important;
+}
+html:not(.wallet-ext-present) #privy-modal-content:has(button.login-method-button) > div > div > div > div {
+  padding-bottom: 64px !important;
+}
+
+/* "Select network" sub-screen fix (the input-less screen: no email field, no
+   wallet-search). Privy sets the modal card's inline height from its content,
+   and these network rows are shorter than research's, so Privy computes a card
+   ~30px too short - its glass edge lands ~3px under the last row with no
+   breathing room (research's taller rows make Privy compute a taller card -> it
+   shows ~23px). Let the card grow to its content here and trim the deep
+   wrapper's padding to ~24px so the gap below the last network row matches
+   research. Scoped via :not(:has(input)) so the email screen and the 600-wallet
+   picker (which has a search input) are untouched. */
+#privy-modal-content:not(:has(input)) {
+  height: auto !important;
+}
+#privy-modal-content:not(:has(input)) > div {
+  padding-bottom: 0 !important;
+}
+#privy-modal-content:not(:has(input)) > div > div > div > div {
+  padding-bottom: 24px !important;
+}
+
+/* Privy logo - 4K crisp rendering */
+#privy-modal-content img,
+#privy-dialog img,
+[data-privy-dialog] img {
+  image-rendering: -webkit-optimize-contrast !important;
+  image-rendering: crisp-edges !important;
+}
+
+#privy-modal-content img[alt*="logo" i],
+#privy-modal-content img[alt*="Logo" i],
+#privy-dialog img[alt*="logo" i],
+[data-privy-dialog] img[alt*="logo" i],
+#privy-modal-content img[src*="logo"],
+#privy-dialog img[src*="logo"],
+[data-privy-dialog] img[src*="logo"] {
+  width: 72px !important;
+  height: 72px !important;
+  border-radius: 18px !important;
+  filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.5)) !important;
+  image-rendering: -webkit-optimize-contrast !important;
+}
+
+/* Privy headings - Apple typography */
+#privy-modal-content h1,
+#privy-modal-content h2,
+#privy-modal-content h3,
+#privy-dialog h1,
+#privy-dialog h2,
+#privy-dialog h3,
+[data-privy-dialog] h1,
+[data-privy-dialog] h2,
+[data-privy-dialog] h3 {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.025em !important;
+  color: #f5f5f7 !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* Privy body text */
+#privy-modal-content p,
+#privy-modal-content span,
+#privy-dialog p,
+#privy-dialog span,
+[data-privy-dialog] p,
+[data-privy-dialog] span {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* Privy email/text input fields - 4K crisp, generous sizing */
+#privy-modal-content input[type="email"],
+#privy-modal-content input[type="text"],
+#privy-modal-content input[type="tel"],
+#privy-dialog input[type="email"],
+#privy-dialog input[type="text"],
+#privy-dialog input[type="tel"],
+[data-privy-dialog] input[type="email"],
+[data-privy-dialog] input[type="text"],
+[data-privy-dialog] input[type="tel"] {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: var(--radius-lg) !important;
+  color: #f5f5f7 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif !important;
+  font-size: 16px !important;
+  padding: 14px 90px 14px 48px !important;
+  -webkit-font-smoothing: antialiased !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+#privy-modal-content input[type="email"]:focus,
+#privy-modal-content input[type="text"]:focus,
+#privy-modal-content input[type="tel"]:focus,
+#privy-dialog input[type="email"]:focus,
+#privy-dialog input[type="text"]:focus,
+#privy-dialog input[type="tel"]:focus,
+[data-privy-dialog] input[type="email"]:focus,
+[data-privy-dialog] input[type="text"]:focus,
+[data-privy-dialog] input[type="tel"]:focus {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: #0c0c0e !important;
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.06),
+    0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  outline: none !important;
+}
+
+#privy-modal-content input::placeholder,
+#privy-dialog input::placeholder,
+[data-privy-dialog] input::placeholder {
+  color: rgba(245, 245, 247, 0.50) !important;
+  transition: color 0.3s ease !important;
+}
+
+#privy-modal-content input:focus::placeholder,
+#privy-dialog input:focus::placeholder,
+[data-privy-dialog] input:focus::placeholder {
+  color: rgba(12, 12, 14, 0.35) !important;
+}
+
+/* Submit button turns black when email input is focused */
+#privy-modal-content label:focus-within button,
+#privy-dialog label:focus-within button,
+[data-privy-dialog] label:focus-within button {
+  background: #0c0c0e !important;
+  color: #f5f5f7 !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+#privy-modal-content label:focus-within button:hover,
+#privy-dialog label:focus-within button:hover,
+[data-privy-dialog] label:focus-within button:hover {
+  background: #1a1a1e !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Submit / continue button - dark, smooth hover */
+#privy-modal-content button[type="submit"],
+#privy-modal-content button[class*="submit" i],
+#privy-modal-content button[class*="Submit" i],
+#privy-modal-content button[class*="continue" i],
+#privy-modal-content button[class*="Continue" i],
+#privy-dialog button[type="submit"],
+#privy-dialog button[class*="submit" i],
+#privy-dialog button[class*="Submit" i],
+[data-privy-dialog] button[type="submit"],
+[data-privy-dialog] button[class*="submit" i] {
+  background: #18181b !important;
+  color: #f5f5f7 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: var(--radius-lg) !important;
+  font-weight: 600 !important;
+  font-size: 15px !important;
+  padding: 13px 24px !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif !important;
+  letter-spacing: -0.01em !important;
+  -webkit-font-smoothing: antialiased !important;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+#privy-modal-content button[type="submit"]:hover,
+#privy-modal-content button[class*="submit" i]:hover,
+#privy-modal-content button[class*="Submit" i]:hover,
+#privy-modal-content button[class*="continue" i]:hover,
+#privy-modal-content button[class*="Continue" i]:hover,
+#privy-dialog button[type="submit"]:hover,
+#privy-dialog button[class*="submit" i]:hover,
+[data-privy-dialog] button[type="submit"]:hover,
+[data-privy-dialog] button[class*="submit" i]:hover {
+  background: #27272a !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  transform: translateY(-2px) !important;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+#privy-modal-content button[type="submit"]:active,
+#privy-modal-content button[class*="submit" i]:active,
+#privy-modal-content button[class*="continue" i]:active,
+#privy-dialog button[type="submit"]:active,
+#privy-dialog button[class*="submit" i]:active,
+[data-privy-dialog] button[type="submit"]:active,
+[data-privy-dialog] button[class*="submit" i]:active {
+  transform: translateY(0) scale(0.98) !important;
+  transition-duration: 0.1s !important;
+}
+
+/* Email-field Submit button (Privy renders it position:absolute right:0 inside
+   the input's <label>). On focus the input turns white and its 16px rounded
+   corner visually clips the dark button's right corners - worse with wider
+   Windows "Submit" rendering. Inset it from the right edge + give it its own
+   smaller rounding so it sits cleanly INSIDE the field, never touching the
+   corner. Scoped to the email label so the wallet / social buttons are unaffected. */
+#privy-modal-content label:has(input[type="email"]) button,
+#privy-dialog label:has(input[type="email"]) button,
+[data-privy-dialog] label:has(input[type="email"]) button {
+  right: 7px !important;
+  padding: 10px 16px !important;
+  border-radius: 12px !important;
+  white-space: nowrap !important;
+}
+
+/* ============================================================
+   Login method buttons - grid layout, social icon row, wallet
+   ============================================================ */
+
+/* Initial view container - 3-column grid.
+   Verified via live DOM inspection in BOTH signed-in and signed-out states:
+   Privy renders exactly 4 buttons in this container - Google, Twitter (X),
+   "Other socials" (More), and Wallet. Discord/Apple/Email all collapse under
+   "Other socials" automatically. The Wallet button spans full width via
+   grid-column: 1 / -1 on :last-of-type so 3-col grid means:
+     Row 1: Google + X + More   (3 cols filled)
+     Row 2: Connect a wallet    (full width)
+   Tried auto-fit minmax(140px,1fr) earlier - modal interior forces 2-col at
+   ~195px and orphans "Other socials" on row 2. Fixed 3-col is the right call. */
+#privy-modal-content div:has(> div):has(> button.login-method-button) {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr 1fr !important;
+  gap: 10px !important;
+}
+
+/* Email input area - span full width */
+#privy-modal-content div:has(> div):has(> button.login-method-button) > div:first-child {
+  grid-column: 1 / -1 !important;
+}
+
+/* Hidden "Continue with email" area - remove from grid */
+#privy-modal-content div:has(> div):has(> button.login-method-button) > div:nth-child(2) {
+  display: none !important;
+}
+
+/* Force the email INPUT wrapper visible in any auth state.
+   Privy renders an email input wrapper with structure:
+     div.cnOCxy > div > label > input[type="email"]
+   In signed-out and returning-user states, Privy sets cnOCxy to display:none
+   and only reveals it when the "Continue with Email" tile is clicked. Plus
+   the wrapper's nth-child position varies between auth states (sometimes
+   child 1, sometimes child 2). A structural :has() selector identifies the
+   wrapper by its inner email-input structure regardless of position.
+
+   Selector ID is doubled (#privy-modal-content#privy-modal-content) to bump
+   specificity to (2,1,4) - needed to beat the earlier rule that hides
+   div:nth-child(2) at spec (1,2,4). Without the bump, the nth-child(2)
+   rule wins and keeps the wrapper hidden in returning-user state where
+   nth-child(2) happens to be this wrapper. Order: -1 + grid-column: 1 / -1
+   place it as a full-width row at the top of the grid. */
+#privy-modal-content#privy-modal-content div:has(> div > label > input[type="email"]) {
+  display: block !important;
+  grid-column: 1 / -1 !important;
+  order: -1 !important;
+}
+
+/* Hide the standalone "Continue with Email" tile button.
+   This tile is redundant - the email INPUT field above (cnOCxy wrapper,
+   forced visible via the grid-column rule for div:nth-child(1)) already
+   provides direct email entry. The tile was meant for returning users to
+   click and reveal the input, but with the input always visible, the tile
+   adds nothing but visual clutter. */
+#privy-modal-content div:has(> button.login-method-button:only-of-type:only-child) {
+  display: none !important;
+}
+
+#privy-modal-content div:has(> button.login-method-button:only-of-type:only-child) > button.login-method-button {
+  width: 100% !important;
+  min-height: 56px !important;
+  height: 56px !important;
+  flex-direction: row !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  padding: 0 18px !important;
+  gap: 12px !important;
+  border-radius: var(--radius-lg) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  font-size: 0.9375rem !important;
+  line-height: 1.5 !important;
+  color: rgba(245, 245, 247, 0.85) !important;
+  font-weight: 500 !important;
+}
+
+#privy-modal-content div:has(> button.login-method-button:only-of-type:only-child) > button.login-method-button:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  transform: translateY(-1px) !important;
+}
+
+#privy-modal-content div:has(> button.login-method-button:only-of-type:only-child) > button.login-method-button > div:first-child {
+  width: 20px !important;
+  height: 20px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Social buttons (Google, X/Twitter, Discord, More) - elegant icon cards.
+   Repeat ID selector (no space) to get specificity (2,x,x) beating Privy's .dIRxAV.dIRxAV
+   font-size/color are NOT zeroed - Privy renders different button counts based
+   on auth state (3 socials when signed-in, 4 when signed-out) so position-based
+   ::after labels would mislabel half of them. Letting Privy's own text render
+   is correct in both states. */
+#privy-modal-content#privy-modal-content div:has(> div):has(> button.login-method-button) > button.login-method-button:not(:last-of-type) {
+  position: relative !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 12px 0 10px !important;
+  height: auto !important;
+  min-height: 88px !important;
+  gap: 8px !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.3 !important;
+  font-weight: 500 !important;
+  color: rgba(245, 245, 247, 0.75) !important;
+  letter-spacing: 0.01em !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif !important;
+  background:
+    linear-gradient(170deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%),
+    rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 16px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+#privy-modal-content div:has(> div):has(> button.login-method-button) > button.login-method-button:not(:last-of-type):hover {
+  background:
+    linear-gradient(170deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.04) 100%),
+    rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  transform: translateY(-2px) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.03) !important;
+}
+
+#privy-modal-content div:has(> div):has(> button.login-method-button) > button.login-method-button:not(:last-of-type):active {
+  transform: translateY(0) scale(0.97) !important;
+  transition-duration: 0.1s !important;
+}
+
+/* "Last used" wallet tile (MetaMask) as a single-column GRID tile, matching the
+   social tiles, so it sits in the same row as Google / "Other socials". Privy
+   renders it as a non-login-method button with 4 children:
+     [0] div  = icon (fox svg)   [1] span = name "MetaMask"
+     [2] span = "Last used"      [3] span = chain badge (svg)  -> hidden per request
+   Scoped :not(.spectre-modal-stacked) so the flex/list fallback (research) is left
+   to the stacked rules. Column = icon + name only (2 items, like Google) so the
+   tile height matches the social tiles; "Last used" is an absolute corner pill so
+   it adds no height, and the chain badge is hidden. */
+#privy-modal-content#privy-modal-content div:has(> div):has(> button.login-method-button):not(.spectre-modal-stacked) > button:not(.login-method-button) {
+  grid-column: auto !important;
+  /* Match the social tiles' height. The tile row renders ~112px (Google /
+     "Other Socials" stretch to fill it) but the MetaMask tile would NOT stretch -
+     it stayed top-aligned at 88px. grid stretch / height:100% didn't take, so pin
+     min-height to the row height directly. align-self:stretch kept as a backstop. */
+  align-self: stretch !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 12px 4px 10px !important;
+  min-height: 112px !important;
+  overflow: hidden !important;
+  background:
+    linear-gradient(170deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%),
+    rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 16px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+#privy-modal-content#privy-modal-content div:has(> div):has(> button.login-method-button):not(.spectre-modal-stacked) > button:not(.login-method-button):hover {
+  background:
+    linear-gradient(170deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.04) 100%),
+    rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  transform: translateY(-2px) !important;
+}
+/* [0] icon */
+#privy-modal-content#privy-modal-content#privy-modal-content#privy-modal-content div:has(> div):has(> button.login-method-button):not(.spectre-modal-stacked) > button:not(.login-method-button) > div:first-child {
+  width: 28px !important;
+  height: 28px !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+  /* Center the fox inside its 28px box - the container's line-height:20px was
+     dropping the inline icon onto the baseline, so the visible icon sat low even
+     though the box aligns with Google's. */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 0 !important;
+}
+#privy-modal-content#privy-modal-content#privy-modal-content#privy-modal-content div:has(> div):has(> button.login-method-button):not(.spectre-modal-stacked) > button:not(.login-method-button) > div:first-child > img,
+#privy-modal-content#privy-modal-content#privy-modal-content#privy-modal-content div:has(> div):has(> button.login-method-button):not(.spectre-modal-stacked) > button:not(.login-method-button) > div:first-child > svg {
+  width: 28px !important;
+  height: 28px !important;
+  display: block !important;
+}
+/* [1] name */
+#privy-modal-content#privy-modal-content div:has(> div):has(> button.login-method-button):not(.spectre-modal-stacked) > button:not(.login-method-button) > span:nth-of-type(1) {
+  width: auto !important;
+  max-width: 100% !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  color: rgba(245, 245, 247, 0.75) !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+/* [2] "Last used" - absolute corner pill so it doesn't add to the column height
+   (keeps the tile the same height as Google / Other socials). */
+#privy-modal-content#privy-modal-content div:has(> div):has(> button.login-method-button):not(.spectre-modal-stacked) > button:not(.login-method-button) > span:nth-of-type(2) {
+  position: absolute !important;
+  top: 6px !important;
+  right: 6px !important;
+  font-size: 0.5rem !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  padding: 2px 5px !important;
+  background: rgba(245, 245, 247, 0.1) !important;
+  color: rgba(245, 245, 247, 0.6) !important;
+  border-radius: 999px !important;
+  white-space: nowrap !important;
+}
+
+/* Hide the wallet chain/network badge (the ETH diamond etc) - the only span with
+   an svg inside a wallet "last used" tile. Applies in both grid and stacked
+   layouts. Frees the tile's width so MetaMask fits beside Google / Other socials. */
+#privy-modal-content div:has(> div):has(> button.login-method-button) > button:not(.login-method-button) > span:has(svg) {
+  display: none !important;
+}
+
+/* Capitalize the social tile labels so Privy's "Other socials" reads "Other
+   Socials". Scoped to the main grid social tiles (:not(:last-of-type)) so it never
+   touches the wallet ("Continue with a wallet") or the non-lmb MetaMask tile. */
+#privy-modal-content div:has(> div):has(> button.login-method-button) > button.login-method-button:not(:last-of-type) {
+  text-transform: capitalize !important;
+}
+
+/* Pin the three row-2 tiles (MetaMask, Google, "Other Socials") to ONE fixed
+   height so they're identical. The grid kept sizing the row unevenly: MetaMask
+   would not stretch to fill it while the social tiles did, and "Block A" (the
+   Select-network row styler, 3x #id) was leaking onto the non-lmb MetaMask tile
+   (its 14px padding) and inflating the row to 136px. A fixed height at 4x #id
+   beats both and collapses the row so all three match. Content (icon + label,
+   ~75px) fits comfortably. Excludes the wallet (:last-of-type, full-width row). */
+#privy-modal-content#privy-modal-content#privy-modal-content#privy-modal-content div:has(> div):has(> button.login-method-button):not(.spectre-modal-stacked) > button.login-method-button:not(:last-of-type),
+#privy-modal-content#privy-modal-content#privy-modal-content#privy-modal-content div:has(> div):has(> button.login-method-button):not(.spectre-modal-stacked) > button:not(.login-method-button) {
+  height: 92px !important;
+  min-height: 92px !important;
+  max-height: 92px !important;
+  /* Zero the margin. Block A / Privy puts margin:4px 0 20px on the non-lmb MetaMask
+     tile - the 4px top pushed it down (the "still lower"), the 20px bottom inflated
+     the row (the unexplained +24px). The social tiles have no margin. */
+  margin: 0 !important;
+  align-self: stretch !important;
+  /* Center the icon + label vertically. Block A (Select-network row styler) was
+     overriding justify-content on the MetaMask tile, leaving its content
+     top-aligned (gap at the bottom) while Google's was centered. Pin the flex
+     centering + uniform padding here so all three read identically. */
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 12px 8px 10px !important;
+}
+/* MetaMask name span renders ~32px tall (vs Google's ~17px label), which fattens
+   the centered content - shifting it a few px low AND lifting the icon up under
+   the "Last used" pill. Tighten it to one normal line so the icon lands at the
+   same height as Google's and clears the pill. */
+#privy-modal-content#privy-modal-content#privy-modal-content#privy-modal-content div:has(> div):has(> button.login-method-button):not(.spectre-modal-stacked) > button:not(.login-method-button) > span:nth-of-type(1) {
+  height: auto !important;
+  max-height: 18px !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+/* "Last used" pill - tuck into the very top-right corner, compact, so it sits
+   clear of the (now lower) icon. */
+#privy-modal-content#privy-modal-content#privy-modal-content#privy-modal-content div:has(> div):has(> button.login-method-button):not(.spectre-modal-stacked) > button:not(.login-method-button) > span:nth-of-type(2) {
+  top: 5px !important;
+  right: 5px !important;
+  font-size: 0.5rem !important;
+  padding: 2px 5px !important;
+}
+
+/* Social button icon div - only target first child (icon), not text divs */
+#privy-modal-content div:has(> div):has(> button.login-method-button) > button.login-method-button:not(:last-of-type) > div:first-child {
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 1rem !important;
+}
+
+/* "Recent" badge on the Google button (only Google has it - it's a SPAN child).
+   Position absolutely in top-right corner so it doesn't stack with the icon
+   and label, keeping Google's inner vertical rhythm identical to Twitter and
+   Other socials (icon centered + label below). Without this, Google's content
+   stack has 3 items (icon + Google text + Recent badge) vs Twitter's 2,
+   shifting icon position higher and breaking visual alignment across tiles. */
+#privy-modal-content div:has(> div):has(> button.login-method-button) > button.login-method-button > span {
+  position: absolute !important;
+  top: 6px !important;
+  right: 6px !important;
+  font-size: 0.5625rem !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  padding: 3px 7px !important;
+  background: rgba(245, 245, 247, 0.1) !important;
+  color: rgba(245, 245, 247, 0.75) !important;
+  border-radius: 999px !important;
+  letter-spacing: 0.02em !important;
+  text-transform: lowercase !important;
+  height: auto !important;
+}
+
+/* Privy text labels render natively now (no ::after overrides). Removed:
+     - The nth-of-type ::after content rules (Google/X/More) - they only worked
+       in the 3-button signed-in state and mislabeled 2/4 buttons in the
+       4-button signed-out state.
+     - The "hide text div" rule for the More button - no longer needed since
+       we're not adding our own ::after to position next to it.
+   Privy intrinsic labels: "Google", "Twitter", "Discord", "Other socials".
+   These read fine and adapt to whichever buttons Privy chose to render. */
+
+/* Gate the "Connect a wallet" button on wallet-extension presence. privy-config.js
+   adds .wallet-ext-present to <html> when window.ethereum / window.solana / an
+   EIP-6963 announce is found. Without it there's nothing to connect, so hide the
+   wallet button (always the last login-method-button under v1 loginMethods). It
+   stays :last-of-type in the DOM, so Telegram remains :not(:last-of-type) and the
+   tile styling + relabel below are untouched. */
+html:not(.wallet-ext-present) #privy-modal-content div:has(> div):has(> button.login-method-button) > button.login-method-button:last-of-type {
+  display: none !important;
+}
+
+/* Wallet button - full width, "Connect a wallet" (initial view only) */
+#privy-modal-content div:has(> div):has(> button.login-method-button) > button.login-method-button:last-of-type {
+  grid-column: 1 / -1 !important;
+  height: 56px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: var(--radius-lg) !important;
+  gap: 10px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Breathing room below the LAST wallet/network row before the modal's bottom
+   edge - applies on BOTH the initial sign-in screen ("Connect a wallet") AND
+   the "Select network" sub-screen, since both render login-method-button rows
+   in the same modal. Modal-level :last-of-type so each screen's final row gets
+   the gap. */
+#privy-modal-content button.login-method-button:last-of-type,
+#privy-dialog button.login-method-button:last-of-type,
+[data-privy-dialog] button.login-method-button:last-of-type {
+  margin-bottom: 16px !important;
+}
+
+#privy-modal-content div:has(> div):has(> button.login-method-button) > button.login-method-button:last-of-type:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+#privy-modal-content div:has(> div):has(> button.login-method-button) > button.login-method-button:last-of-type:active {
+  transform: translateY(0) scale(0.97) !important;
+  transition-duration: 0.1s !important;
+}
+
+/* Wallet icon */
+#privy-modal-content div:has(> div):has(> button.login-method-button) > button.login-method-button:last-of-type > div:first-child {
+  width: 28px !important;
+  height: 28px !important;
+}
+
+/* Wallet text - rename "Continue with a wallet" to "Connect a wallet" */
+#privy-modal-content div:has(> div):has(> button.login-method-button) > button.login-method-button:last-of-type > div:last-child {
+  font-size: 0 !important;
+  color: transparent !important;
+  line-height: 0 !important;
+}
+
+#privy-modal-content div:has(> div):has(> button.login-method-button) > button.login-method-button:last-of-type > div:last-child::after {
+  content: "Connect a wallet" !important;
+  font-size: 0.9375rem !important;
+  color: #f5f5f7 !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.5 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif !important;
+}
+
+/* ============================================================
+   Returning "last used" layout - clean full-width rows
+   --------------------------------------------------------------
+   privy-modal-hacks.js (Hook 3) tags the login-button container with
+   .spectre-modal-stacked whenever it is NOT a clean multi-tile grid: the
+   returning "last used" layout (Privy injects a wide non-login-method "last used"
+   tile e.g. MetaMask alongside the socials) and the lone "Continue with Email"
+   1-item grid. The fresh-grid tile/wallet rules above produce giant tiles, CRAM
+   the last-used tile's rich content (icon + name + chain badge + "Last used")
+   into a 127px cell so its children overlap, and relabel the email button. Force
+   a clean vertical STACK of full-width rows instead - the last-used tile gets room
+   to render its native row content without overlap. Covers BOTH login-method
+   buttons AND the non-lmb last-used tile. 4x-id specificity beats the grid rules
+   above. ============================ */
+
+/* Container: override the forced 3-col grid -> single-column vertical stack. */
+#privy-modal-content#privy-modal-content#privy-modal-content#privy-modal-content .spectre-modal-stacked {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+/* Every method row - socials, wallet, AND the non-lmb "last used" tile. Reset the
+   position/overflow that the grid-tile rules set, so nothing is clipped or stacked
+   on top of itself. */
+#privy-modal-content#privy-modal-content#privy-modal-content#privy-modal-content .spectre-modal-stacked > button:not([aria-label="close modal"]) {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 54px !important;
+  grid-column: 1 / -1 !important;
+  padding: 14px 20px !important;
+  text-align: left !important;
+  position: relative !important;
+  overflow: visible !important;
+}
+/* Icon (div / img / svg first child) - 24px, left of the label */
+#privy-modal-content#privy-modal-content#privy-modal-content#privy-modal-content .spectre-modal-stacked > button:not([aria-label="close modal"]) > div:first-child,
+#privy-modal-content#privy-modal-content#privy-modal-content#privy-modal-content .spectre-modal-stacked > button:not([aria-label="close modal"]) > img:first-child,
+#privy-modal-content#privy-modal-content#privy-modal-content#privy-modal-content .spectre-modal-stacked > button:not([aria-label="close modal"]) > svg:first-child {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  max-width: 24px !important;
+  max-height: 24px !important;
+  flex: 0 0 24px !important;
+  margin: 0 !important;
+  position: static !important;
+}
+#privy-modal-content#privy-modal-content#privy-modal-content#privy-modal-content .spectre-modal-stacked > button:not([aria-label="close modal"]) > div:first-child > img,
+#privy-modal-content#privy-modal-content#privy-modal-content#privy-modal-content .spectre-modal-stacked > button:not([aria-label="close modal"]) > div:first-child > svg {
+  width: 24px !important;
+  height: 24px !important;
+  max-width: 24px !important;
+  max-height: 24px !important;
+}
+/* Label (name) - left aligned, normal flow */
+#privy-modal-content#privy-modal-content#privy-modal-content#privy-modal-content .spectre-modal-stacked > button:not([aria-label="close modal"]) > div:last-child {
+  font-size: 0.9375rem !important;
+  font-weight: 600 !important;
+  color: #f5f5f7 !important;
+  text-align: left !important;
+  position: static !important;
+}
+/* "Last used" pill (span) - small inline badge pushed to the right edge */
+#privy-modal-content#privy-modal-content#privy-modal-content#privy-modal-content .spectre-modal-stacked > button:not([aria-label="close modal"]) > span {
+  position: static !important;
+  margin-left: auto !important;
+  font-size: 0.625rem !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  padding: 3px 8px !important;
+  background: rgba(245, 245, 247, 0.1) !important;
+  color: rgba(245, 245, 247, 0.6) !important;
+  border-radius: 999px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+/* Restore native label (the relabel rule above zeroes the text + adds a
+   "Connect a wallet" ::after that only applies to the fresh grid's last tile). */
+#privy-modal-content#privy-modal-content#privy-modal-content#privy-modal-content .spectre-modal-stacked > button:not([aria-label="close modal"]) > div:last-child::after {
+  content: none !important;
+}
+
+/* ============================================================
+   Primary-row tile normalization (Google / Twitter / Other socials)
+   --------------------------------------------------------------
+   Privy renders these three tiles inconsistently:
+     - Google / Twitter: 32x32 brand SVG + label as a BARE text node
+     - Other socials:    24x24 lucide person SVG + label wrapped in a DIV
+   The smaller person icon plus the extra label wrapper means the content
+   block has a smaller vertical extent, and Privy's flex centering pulls
+   that smaller block upward inside the 122px tile -- so the "Other socials"
+   label visually floats ABOVE the "Google" / "Twitter" labels.
+   Force the icon container to a fixed 32px box and the SVG to 32x32 so all
+   three tiles share the same content height, then justify-content:center
+   on the parent flex aligns the labels on one baseline.
+   ============================================================ */
+#privy-modal-content div:has(> button.login-method-button) > button.login-method-button > div:first-child {
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+#privy-modal-content div:has(> button.login-method-button) > button.login-method-button > div:first-child > svg {
+  width: 32px !important;
+  height: 32px !important;
+}
+/* The "Other socials" label is wrapped in its own div with `flex: 1 1 auto`,
+   so it grows to fill remaining column space inside the button (~63px tall
+   for ~17px of text). The text then renders at the TOP of that oversized
+   box, visually floating above Google/Twitter labels which are bare text
+   nodes that take only their natural line height. Fix: kill the flex-grow
+   so the wrapper hugs its content like a bare text node would. */
+#privy-modal-content div:has(> button.login-method-button) > button.login-method-button > div:not(:first-child) {
+  flex: 0 0 auto !important;
+  flex-grow: 0 !important;
+  height: auto !important;
+  line-height: 1.5 !important;
+}
+
+/* ============================================================
+   "Other socials" expanded view (no div children, only buttons)
+   Shows X (Twitter) + Telegram after clicking "More" - they're the two
+   configured socials not promoted to a primary tile (loginMethods order:
+   email, google, twitter, telegram, wallet -> google is primary, the rest
+   collapse here).
+   ============================================================ */
+
+/* 2-column grid for expanded social options.
+   :nth-of-type(2) qualifier ensures this only matches the actual expanded
+   view (2+ buttons), not the single-button email tile wrapper which also
+   has no div children. */
+#privy-modal-content div:not(:has(> div)):has(> button.login-method-button:nth-of-type(2)) {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+}
+
+/* All buttons in expanded view get glass card styling */
+#privy-modal-content#privy-modal-content div:not(:has(> div)):has(> button.login-method-button:nth-of-type(2)) > button.login-method-button {
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 10px 0 8px !important;
+  height: 76px !important;
+  min-height: 76px !important;
+  gap: 6px !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  color: transparent !important;
+  background:
+    linear-gradient(170deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%),
+    rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 16px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+#privy-modal-content div:not(:has(> div)):has(> button.login-method-button:nth-of-type(2)) > button.login-method-button:hover {
+  background:
+    linear-gradient(170deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.04) 100%),
+    rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  transform: translateY(-2px) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.03) !important;
+}
+
+#privy-modal-content div:not(:has(> div)):has(> button.login-method-button:nth-of-type(2)) > button.login-method-button:active {
+  transform: translateY(0) scale(0.97) !important;
+  transition-duration: 0.1s !important;
+}
+
+/* Expanded view icon (div / img / svg) - uniform 28px so the X and Telegram tiles
+   render at the same height (the icons differ in intrinsic size otherwise). */
+#privy-modal-content div:not(:has(> div)):has(> button.login-method-button:nth-of-type(2)) > button.login-method-button > div,
+#privy-modal-content div:not(:has(> div)):has(> button.login-method-button:nth-of-type(2)) > button.login-method-button > img,
+#privy-modal-content div:not(:has(> div)):has(> button.login-method-button:nth-of-type(2)) > button.login-method-button > svg {
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 1rem !important;
+  flex-shrink: 0 !important;
+}
+#privy-modal-content div:not(:has(> div)):has(> button.login-method-button:nth-of-type(2)) > button.login-method-button img,
+#privy-modal-content div:not(:has(> div)):has(> button.login-method-button:nth-of-type(2)) > button.login-method-button svg {
+  max-width: 28px !important;
+  max-height: 28px !important;
+}
+
+/* Expanded view labels. Privy renders the expanded "Other socials" buttons
+   icon-only (no text), so we add labels via ::after. The two methods here are
+   the configured socials not promoted to a primary tile: X (Twitter) then
+   Telegram, in loginMethods order. (Was hardcoded "Discord"/"Apple" from an
+   older config - corrected to match the current methods + their icons.)
+   Tightened to require :nth-of-type(2) so the selector ONLY matches when the
+   wrapper has 2+ login-method-buttons (the actual expanded panel), not the
+   single-button email tile wrapper. */
+#privy-modal-content div:not(:has(> div)):has(> button.login-method-button:nth-of-type(2)) > button:nth-of-type(1)::after {
+  content: "X" !important;
+}
+#privy-modal-content div:not(:has(> div)):has(> button.login-method-button:nth-of-type(2)) > button:nth-of-type(2)::after {
+  content: "Telegram" !important;
+}
+
+#privy-modal-content div:not(:has(> div)):has(> button.login-method-button:nth-of-type(2)) > button.login-method-button::after {
+  font-size: 0.6875rem !important;
+  font-weight: 500 !important;
+  color: rgba(245, 245, 247, 0.65) !important;
+  letter-spacing: 0.02em !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+
+/* Privy back button - glass circle matching close button.
+   Positioned absolute in the top-left corner of the modal so it aligns
+   horizontally with the close button (which is top-right, also absolute
+   per Privy's default). Without absolute positioning the back button sits
+   in the document flow above the modal content, ~10-15px higher than the
+   close button. */
+#privy-modal-content#privy-modal-content button:not(.login-method-button):has(> svg path[d*="10.5 19.5"]) {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 0.8px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 50% !important;
+  width: 35px !important;
+  height: 35px !important;
+  min-width: 35px !important;
+  min-height: 35px !important;
+  max-width: 35px !important;
+  max-height: 35px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 1 !important;
+  color: rgba(245, 245, 247, 0.5) !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  position: absolute !important;
+  top: 16px !important;
+  left: 16px !important;
+}
+
+#privy-modal-content button:not(.login-method-button):has(> svg path[d*="10.5 19.5"]):hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  color: rgba(245, 245, 247, 0.8) !important;
+}
+
+#privy-modal-content button:not(.login-method-button):has(> svg path[d*="10.5 19.5"]) > svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+/* Wallet selection list - "Select your wallet" screen.
+   Privy renders 600+ wallet rows with auto-sized brand logos. Many wallets
+   ship square logos at 60-72px (Phantom, 1inch, 37x). Without constraints
+   those images bleed out of the 56px row and clip into adjacent rows.
+   Constrain every img inside a wallet-row button to 28px. The wallets
+   don't set the alt attribute (no [alt] selector match) so we target by
+   structure: img inside any button INSIDE the modal except .login-method
+   buttons (those have their own icon-size rules). */
+#privy-modal-content button:not(.login-method-button) img {
+  max-width: 28px !important;
+  max-height: 28px !important;
+  width: 28px !important;
+  height: 28px !important;
+  object-fit: contain !important;
+  border-radius: 6px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Modal header logo - explicit override since it sits OUTSIDE wallet rows
+   (in the modal header area, not inside a button). Already styled at 72px
+   earlier in the file but redeclared here for clarity. */
+#privy-modal-content img[alt*="logo" i],
+#privy-modal-content img[src*="logo"] {
+  max-width: 72px !important;
+  max-height: 72px !important;
+  width: 72px !important;
+  height: 72px !important;
+  border-radius: 18px !important;
+}
+
+/* Wallet list scrollbar styling.
+   The wallet-list scroll-container max-height + overflow:auto is applied
+   from main.jsx (CSS can't reach two levels above the buttons via :has
+   because nested :has() isn't valid). The JS marks the container with
+   data-spectre-scroll-fixed="1" - we use that attribute selector here to
+   style the scrollbar without re-applying scroll behavior. */
+#privy-modal-content [data-spectre-scroll-fixed]::-webkit-scrollbar {
+  width: 4px !important;
+}
+#privy-modal-content [data-spectre-scroll-fixed]::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+#privy-modal-content [data-spectre-scroll-fixed]::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-radius: 999px !important;
+}
+#privy-modal-content [data-spectre-scroll-fixed]::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+}
+
+/* All Privy buttons - base smooth transition */
+#privy-modal-content button,
+#privy-dialog button,
+[data-privy-dialog] button {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  cursor: pointer !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+
+/* Privy divider / separator */
+#privy-modal-content hr,
+#privy-modal-content [class*="divider" i],
+#privy-modal-content [class*="separator" i],
+#privy-dialog hr,
+#privy-dialog [class*="divider" i],
+[data-privy-dialog] hr,
+[data-privy-dialog] [class*="divider" i] {
+  border-color: rgba(255, 255, 255, 0.05) !important;
+  opacity: 1 !important;
+}
+
+/* Privy links */
+#privy-modal-content a,
+#privy-dialog a,
+[data-privy-dialog] a {
+  color: rgba(245, 245, 247, 0.55) !important;
+  text-decoration: none !important;
+  transition: color 0.25s ease !important;
+}
+
+#privy-modal-content a:hover,
+#privy-dialog a:hover,
+[data-privy-dialog] a:hover {
+  color: #f5f5f7 !important;
+}
+
+/* Hide 'Protected by Privy' branding */
+#protected-by-privy,
+#privy-content-footer-container,
+#privy-modal-content [class*="Footer"],
+#privy-modal-content [class*="footer"],
+#privy-modal-content [class*="Branding"],
+#privy-modal-content [class*="branding"],
+#privy-modal-content [class*="privy-branding"],
+#privy-modal-content [class*="PrivyBranding"],
+#privy-modal-content [class*="powered"],
+#privy-modal-content [class*="Powered"],
+#privy-dialog [class*="Footer"],
+#privy-dialog [class*="footer"],
+#privy-dialog [class*="Branding"],
+#privy-dialog [class*="branding"],
+#privy-dialog [class*="powered"],
+[data-privy-dialog] [class*="Footer"],
+[data-privy-dialog] [class*="footer"],
+[data-privy-dialog] [class*="Branding"],
+[data-privy-dialog] [class*="branding"],
+[data-privy-dialog] [class*="powered"] {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* iframe Privy */
+iframe[title*="Privy"],
+iframe[src*="privy"] {
+  border: none !important;
+  border-radius: 24px !important;
+}
+
+/* OTP / verification code input - 4K mono
+   Privy renders OTP as input[type="text"] with inputmode="numeric" or
+   input[type="number"]. The container is a row of inputs for each digit. */
+
+/* OTP container row - constrain width so inputs fit inside modal */
+#privy-modal-content div:has(> input + input),
+#privy-dialog div:has(> input + input),
+[data-privy-dialog] div:has(> input + input) {
+  display: flex !important;
+  gap: 10px !important;
+  justify-content: center !important;
+  max-width: 100% !important;
+}
+
+/* Individual OTP digit inputs */
+#privy-modal-content div:has(> input + input) > input,
+#privy-dialog div:has(> input + input) > input,
+[data-privy-dialog] div:has(> input + input) > input,
+#privy-modal-content input[type="number"],
+#privy-modal-content input[inputmode="numeric"],
+#privy-dialog input[type="number"],
+#privy-dialog input[inputmode="numeric"],
+[data-privy-dialog] input[type="number"],
+[data-privy-dialog] input[inputmode="numeric"] {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  max-width: 100px !important;
+  padding: 14px 8px !important;
+  text-align: center !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 12px !important;
+  color: #f5f5f7 !important;
+  font-family: var(--font-mono) !important;
+  font-variant-numeric: tabular-nums !important;
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+#privy-modal-content div:has(> input + input) > input:focus,
+#privy-dialog div:has(> input + input) > input:focus,
+[data-privy-dialog] div:has(> input + input) > input:focus,
+#privy-modal-content input[type="number"]:focus,
+#privy-modal-content input[inputmode="numeric"]:focus,
+#privy-dialog input[type="number"]:focus,
+#privy-dialog input[inputmode="numeric"]:focus,
+[data-privy-dialog] input[type="number"]:focus,
+[data-privy-dialog] input[inputmode="numeric"]:focus {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ============================================================
+   Wallet/network ROW styling - ported from research so trading's
+   "Select network" rows + "Select your wallet" list rows match research's
+   look (subtle border, glass bg, depth shadow, bold label) instead of Privy's
+   flat default (harsh 0.35 border, no shadow, thin label).
+   ============================================================ */
+
+/* Block A: non-login-method action rows (Select-network rows, etc). Excludes
+   close/back/icon-only/email-submit/virtual-scroll buttons. Margins match
+   research (mt 4 / mb 20) so the gap between network rows reads 29px; the LAST
+   row's mb is zeroed below so the approved 24px bottom space is undisturbed. */
+#privy-modal-content#privy-modal-content#privy-modal-content button:not([aria-label="close modal"]):not(.login-method-button):not(:has(> svg:only-child)):not(label > button):not([style*="position: absolute"]),
+#privy-dialog#privy-dialog#privy-dialog button:not([aria-label="close modal"]):not(.login-method-button):not(:has(> svg:only-child)):not(label > button):not([style*="position: absolute"]) {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.04) 100%) !important;
+  color: #f5f5f7 !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  border-radius: var(--radius-lg) !important;
+  font-weight: 600 !important;
+  font-size: 15px !important;
+  height: auto !important;
+  padding: 14px 24px !important;
+  margin-top: 4px !important;
+  margin-bottom: 20px !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif !important;
+  letter-spacing: -0.01em !important;
+  -webkit-font-smoothing: antialiased !important;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  cursor: pointer !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  transform: none !important;
+}
+#privy-modal-content#privy-modal-content#privy-modal-content button:not([aria-label="close modal"]):not(.login-method-button):not(:has(> svg:only-child)):not(label > button):not([style*="position: absolute"]):hover,
+#privy-dialog#privy-dialog#privy-dialog button:not([aria-label="close modal"]):not(.login-method-button):not(:has(> svg:only-child)):not(label > button):not([style*="position: absolute"]):hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.07) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  transform: none !important;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+#privy-modal-content#privy-modal-content#privy-modal-content button:not([aria-label="close modal"]):not(.login-method-button):not(:has(> svg:only-child)):not(label > button):not([style*="position: absolute"]):active,
+#privy-dialog#privy-dialog#privy-dialog button:not([aria-label="close modal"]):not(.login-method-button):not(:has(> svg:only-child)):not(label > button):not([style*="position: absolute"]):active {
+  transform: scale(0.98) !important;
+  transition-duration: 0.1s !important;
+}
+/* Last Block A row: drop the 20px bottom margin so it doesn't add to the
+   Select-network bottom space (kept at the approved 24px by the card-grow rule).
+   The 20px mb still applies between rows, giving the 29px inter-row gap. */
+#privy-modal-content#privy-modal-content#privy-modal-content button:not([aria-label="close modal"]):not(.login-method-button):not(:has(> svg:only-child)):not(label > button):not([style*="position: absolute"]):last-of-type,
+#privy-dialog#privy-dialog#privy-dialog button:not([aria-label="close modal"]):not(.login-method-button):not(:has(> svg:only-child)):not(label > button):not([style*="position: absolute"]):last-of-type {
+  margin-bottom: 0 !important;
+}
+
+/* Block B: wallet-picker virtual-scroll rows (inline position:absolute) */
+#privy-modal-content button[style*="position: absolute"] {
+  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  padding: 16px 20px !important;
+  gap: 16px !important;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 2px 8px rgba(0,0,0,0.2) !important;
+}
+#privy-modal-content button[style*="position: absolute"]:hover {
+  background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 16px rgba(0,0,0,0.3) !important;
+}
+#privy-modal-content button[style*="position: absolute"] img {
+  width: 40px !important;
+  height: 40px !important;
+  max-width: 40px !important;
+  max-height: 40px !important;
+  border-radius: 10px !important;
+  object-fit: contain !important;
+}
+#privy-modal-content button[style*="position: absolute"] > div:first-child svg {
+  width: 40px !important;
+  height: 40px !important;
+  max-width: 40px !important;
+  max-height: 40px !important;
+}
+#privy-modal-content button[style*="position: absolute"] > div:first-child {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  flex-shrink: 0 !important;
+  overflow: hidden !important;
+  border-radius: 10px !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.05) !important;
+}
+#privy-modal-content button[style*="position: absolute"] > span:first-of-type {
+  font-size: 14.5px !important;
+  font-weight: 600 !important;
+  color: var(--text-primary) !important;
+  letter-spacing: -0.015em !important;
+}
+#privy-modal-content button[style*="position: absolute"] > span:last-of-type {
+  opacity: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  margin-left: auto !important;
+  flex-shrink: 0 !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-end !important;
+  max-width: 140px !important;
+  overflow: visible !important;
+}
+#privy-modal-content button[style*="position: absolute"] > span:last-of-type svg {
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06) !important;
+  flex-shrink: 0 !important;
+  opacity: 0.85 !important;
+}
+#privy-modal-content button[style*="position: absolute"]:hover > span:last-of-type svg {
+  opacity: 1 !important;
+}
+#privy-modal-content button[style*="position: absolute"] > div:first-child::after {
+  border-color: var(--bg-surface) !important;
+}
+
+/* ============================================================
+   Close button - absolute top-right corner, glass circle
+   ============================================================ */
+
+/* Override intermediate position: relative set by Privy inner wrappers
+   so close button's position: absolute anchors to #privy-modal-content.
+   Levels: modal > div > sc-imWYAH > sc-klVQfr(rel!) > sc-bypJrU > sc-ddjGPF(rel!) */
+#privy-modal-content > div > div > div,
+#privy-modal-content > div > div > div > div > div {
+  position: static !important;
+}
+
+/* Collapse the close button wrapper row (saves ~76px vertical space) */
+#privy-modal-content *:has(> div > div > button[aria-label="close modal"]) {
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: visible !important;
+}
+
+/* Close button - positioned at top-right of modal card */
+#privy-modal-content button[aria-label="close modal"] {
+  position: absolute !important;
+  top: 16px !important;
+  right: 16px !important;
+  z-index: 100 !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 50% !important;
+  color: rgba(245, 245, 247, 0.5) !important;
+  padding: 0 !important;
+  cursor: pointer !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+#privy-modal-content button[aria-label="close modal"]:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #f5f5f7 !important;
+  transform: scale(1.08) !important;
+}
+
+#privy-modal-content button[aria-label="close modal"] svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* 4K rendering for all Privy modal content */
+#privy-modal-content,
+[data-privy-dialog] {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+}
+
+/* ── Privy modal — MOBILE overrides ─────────────────────────────
+   Desktop uses min-width 520px / max-width 560px which overflows
+   a 390px mobile viewport and causes the dialog to render off-screen
+   (right side clipped). On mobile we anchor the modal to the bottom
+   of the viewport as a bottom sheet, full-width minus padding.
+   Ported from the research app (apps/research/src/index.css), which
+   already carried this fix - trading shipped the desktop-only sizing
+   and overflowed every phone. Keep the two in sync.
+   Placed LAST in the Privy section on purpose: the desktop rules use
+   the same specificity, so an earlier mobile block loses the cascade
+   (that is why the inner padding stayed at the desktop 32px). */
+@media (max-width: 768px) {
+  #privy-modal-content,
+  [data-privy-dialog] {
+    min-width: 0 !important;
+    max-width: calc(100vw - 16px) !important;
+    width: calc(100vw - 16px) !important;
+    margin: 0 auto !important;
+    border-radius: 18px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* The desktop rule sizes Privy's Headless-UI panel to `fit-content` so a
+     520px card can centre. On a phone the card is viewport-width but the
+     panel stays at Privy's ~360px default, so the content column sits ~16px
+     left of the card's centre. Match the panel to the card. */
+  #privy-dialog [id^="headlessui-dialog-panel"],
+  #privy-dialog [id^="headlessui-dialog-panel"] > div {
+    width: 100% !important;
+    max-width: 100vw !important;
+  }
+
+  /* Inner padding — tighter on mobile so content doesn't cram */
+  #privy-modal-content > div,
+  [data-privy-dialog] > div {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+    padding-top: 18px !important;
+  }
+
+  /* Logo trims down a bit on mobile */
+  #privy-modal-content img[alt*="logo" i],
+  #privy-modal-content img[alt*="Logo" i],
+  #privy-dialog img[alt*="logo" i],
+  [data-privy-dialog] img[alt*="logo" i],
+  #privy-modal-content img[src*="logo"],
+  #privy-dialog img[src*="logo"],
+  [data-privy-dialog] img[src*="logo"] {
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 14px !important;
+  }
+
+  /* Login methods grid — allow wrap so buttons don't clip */
+  #privy-modal-content [class*="sc-"][class*="grid" i] {
+    max-width: 100% !important;
+  }
+
+  /* Privy bleeds this wrapper past its parent with margin: 0 -16px. The
+     inherited `max-width: 100%` clamped the width but kept BOTH negative
+     margins, so the whole content column rendered 16px left of the card's
+     centre (visible as a wider gutter on the right). Give it the width its
+     own margins ask for and the column re-centres. */
+  #privy-modal-content > div > div > div {
+    max-width: none !important;
+    width: calc(100% + 32px) !important;
+  }
+
+  /* ── Email input pill (mobile) ──
+     Tighter, pill-shaped, with better Submit button proportions. */
+  #privy-modal-content input[type="email"],
+  #privy-modal-content input[type="text"],
+  #privy-modal-content input[type="tel"],
+  #privy-dialog input[type="email"],
+  #privy-dialog input[type="text"],
+  #privy-dialog input[type="tel"],
+  [data-privy-dialog] input[type="email"],
+  [data-privy-dialog] input[type="text"],
+  [data-privy-dialog] input[type="tel"] {
+    /* 16px is a floor, not a look: under it iOS Safari zooms the page on
+       focus and never zooms back out, which crops the modal. */
+    font-size: 16px !important;
+    padding: 14px 92px 14px 44px !important;
+    border-radius: 14px !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 0.5px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  /* Submit button — idle state (empty input): ghost pill, still discoverable */
+  #privy-modal-content#privy-modal-content#privy-modal-content label > button,
+  #privy-dialog#privy-dialog#privy-dialog label > button {
+    right: 5px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 14px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 0.5px solid rgba(255, 255, 255, 0.08) !important;
+    color: rgba(245, 245, 247, 0.55) !important;
+    --privy-color-accent: rgba(245, 245, 247, 0.55);
+    --privy-color-accent-dark: rgba(245, 245, 247, 0.8);
+  }
+
+  /* Submit button — active state (input has value OR focused):
+     white primary pill, much more prominent than desktop ghost. */
+  #privy-modal-content#privy-modal-content#privy-modal-content label:focus-within > button,
+  #privy-modal-content#privy-modal-content#privy-modal-content label:has(input:not(:placeholder-shown)) > button,
+  #privy-dialog#privy-dialog#privy-dialog label:focus-within > button,
+  #privy-dialog#privy-dialog#privy-dialog label:has(input:not(:placeholder-shown)) > button {
+    --privy-color-accent: #0c0c0e;
+    --privy-color-accent-dark: #0c0c0e;
+    background: linear-gradient(135deg, #f5f5f7 0%, #e8e8ea 100%) !important;
+    color: #0c0c0e !important;
+    border: 0.5px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow:
+      0 2px 10px rgba(0, 0, 0, 0.3),
+      inset 0 0.5px 0 rgba(255, 255, 255, 0.5) !important;
+  }
+}
+/* v1776084924 */
+/* deploy 1776085845 */

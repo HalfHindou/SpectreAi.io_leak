@@ -1,0 +1,108 @@
+{
+  "name": "spectre-ai-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "npm@11.6.2",
+  "description": "Spectre AI Platform Monorepo - Research + Trading apps with shared packages",
+  "workspaces": [
+    "apps/research",
+    "apps/trading",
+    "packages/*"
+  ],
+  "scripts": {
+    "audit:colors": "node scripts/audit-token-colors.mjs",
+    "audit:chart-history": "node scripts/chart-history-audit.mjs",
+    "dev:research": "npm run dev -w @spectre/research",
+    "dev:trading": "npm run dev -w @spectre/trading",
+    "dev:server": "npm run dev -w @spectre/server",
+    "dev:storybook": "npm run dev -w @spectre/ui",
+    "build:research": "npm run build -w @spectre/research",
+    "build:trading": "npm run build -w @spectre/trading",
+    "build:ui": "npm run build -w @spectre/ui",
+    "server": "npm run start -w @spectre/server",
+    "server:install": "npm install -w @spectre/server",
+    "dev:desktop": "cd desktop && SPECTRE_DEV=true npx electron .",
+    "build:desktop": "npm run build:research && cd desktop && npm run build:mac",
+    "dev:telegram": "npm run dev -w @spectre/telegram-bot",
+    "start:telegram": "npm run start -w @spectre/telegram-bot",
+    "dev:derivatives": "node spectre-derivatives-aggregator.js",
+    "smoke": "bash scripts/smoke-test.sh",
+    "smoke:quiet": "bash scripts/smoke-test.sh --quiet",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepare": "husky || true",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "keywords": [
+    "spectre-ai",
+    "crypto",
+    "trading",
+    "research",
+    "monorepo"
+  ],
+  "author": "Spectre AI",
+  "license": "MIT",
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.48.0",
+    "agentation": "^3.0.2",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.5.6",
+    "globals": "^17.12.0",
+    "husky": "^9.1.7",
+    "jsdom": "^26.1.0",
+    "knip": "^6.4.1",
+    "lint-staged": "^16.4.0",
+    "madge": "^8.0.0",
+    "turbo": "^2.9.6",
+    "vite-plugin-pwa": "^1.2.0",
+    "vitest": "3.2.6"
+  },
+  "dependencies": {
+    "@reown/appkit-controllers": "^1.8.19",
+    "@solana-program/memo": "^0.11.0",
+    "@solana-program/system": "^0.12.0",
+    "@solana-program/token": "^0.12.0",
+    "@solana/kit": "^6.8.0",
+    "@xyflow/react": "^12.10.2",
+    "react-window": "^2.2.7",
+    "uuid": "^11.1.1",
+    "x402": "^1.1.0"
+  },
+  "lint-staged": {
+    "apps/research/src/**/*.{js,jsx}": [
+      "node -e \"const f=process.argv[1],c=require('fs').readFileSync(f,'utf8');if(/console\\.log/.test(c)){console.error('\\x1b[31m[lint-staged] console.log found in '+f+'\\x1b[0m');process.exit(1)}\""
+    ],
+    "*.{js,jsx,mjs,cjs}": [
+      "eslint --no-warn-ignored"
+    ]
+  },
+  "overrides": {
+    "serialize-javascript": "^7.0.5",
+    "axios": "^1.15.2",
+    "uuid": "^11.1.1"
+  },
+  "spectre-security-notes": {
+    "bigint-buffer": "Transitive dep via @solana/spl-token. CVE GHSA-3gc7-fjrx-p6mg (Buffer Overflow in toBigIntLE). No published fix - Solana team has not released a patched version. Our code does not call toBigIntLE directly (verified via grep). Only triggered when @solana/spl-token deserializes attacker-controlled bytes from an RPC, which requires either MITM (blocked by HTTPS) or a compromised RPC provider. Accepted risk - revisit on every Solana SDK upgrade.",
+    "@solana/buffer-layout-utils": "Inherits accepted-risk from bigint-buffer (the only vulnerability path).",
+    "@solana/spl-token": "Inherits accepted-risk from bigint-buffer (the only vulnerability path).",
+    "@solana/spl-token-group": "Inherits accepted-risk from @solana/web3.js (the only vulnerability path).",
+    "@solana/spl-token-metadata": "Inherits accepted-risk from @solana/web3.js (the only vulnerability path).",
+    "@solana/web3.js": "Bundles jayson@4.3.0 which uses uuid@8.3.2 internally for JSON-RPC request IDs. The uuid CVE GHSA-w5hq-g745-h8pq (buffer bounds in v3/v5/v6) is unreachable - jayson only calls uuid.v4() for request correlation. Verified our code never calls uuid.v3/v5/v6 with a buf parameter (grep clean). Accepted risk.",
+    "uuid": "CVE GHSA-w5hq-g745-h8pq affects v3/v5/v6 when called with a buf parameter. Not reachable through any of our deps - Privy, jayson, storybook all use v4(). Override pinned to ^11.1.1: dual-package (CJS at dist/cjs/, ESM at dist/esm/), so svix's `require('uuid')` works while patching the CVE. Previous pin to ^14.0.0 was ESM-only and broke @privy-io/node lambdas with ERR_REQUIRE_ESM at runtime (svix -> require('uuid') chain).",
+    "@privy-io/js-sdk-core": "Inherits accepted-risk from uuid (only path is request-id generation via v4()).",
+    "@privy-io/react-auth": "Inherits accepted-risk from uuid (only path is request-id generation via v4()).",
+    "@privy-io/server-auth": "Inherits accepted-risk from uuid (only path is request-id generation via v4()).",
+    "rpc-websockets": "Inherits accepted-risk from uuid (only path is request-id generation via v4()).",
+    "jayson": "Inherits accepted-risk from uuid (only path is request-id generation via v4()).",
+    "@storybook/addon-actions": "Dev-only Storybook addon. Inherits accepted-risk from uuid. Never reaches production.",
+    "@storybook/addon-essentials": "Dev-only Storybook addon. Inherits accepted-risk from uuid. Never reaches production.",
+    "@vitest/mocker": "Dev-only Vitest test runner. Never reaches production.",
+    "vitest": "Dev-only Vitest test runner. Never reaches production.",
+    "vite-node": "Dev-only Vite SSR helper. Never reaches production.",
+    "esbuild": "CVE GHSA-67mh-4wv8-2f99 affects the esbuild dev server only (not production builds). Local dev attack only - we don't expose esbuild dev server publicly. Fix requires vite@8 (breaking). Accepted risk.",
+    "vite": "Inherits accepted-risk from esbuild (dev-server-only attack)."
+  }
+}

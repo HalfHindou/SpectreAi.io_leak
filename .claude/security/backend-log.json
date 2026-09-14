@@ -1,0 +1,187 @@
+{
+  "description": "Backend audit findings and resolutions from Spectre AI Developer Control. Claude uses this to avoid repeating backend issues in new code.",
+  "lastUpdated": "2026-04-30T12:20:39.004Z",
+  "rules": [
+    {
+      "rule": "Never introduce: 36 vercel functions allow all origins (cors *)",
+      "severity": "high",
+      "category": "auth-cors",
+      "file": null,
+      "resolution": "Applied automatically via Developer Control (31 files changed)",
+      "fixedBy": "Claude",
+      "fixedAt": "2026-03-25T06:09:18.522Z"
+    },
+    {
+      "rule": "Never introduce: 15 external fetch calls without timeout",
+      "severity": "medium",
+      "category": "caching",
+      "file": "packages\\server\\index.js",
+      "resolution": "Applied automatically via Developer Control",
+      "fixedBy": "Claude",
+      "fixedAt": "2026-03-25T05:56:13.023Z"
+    },
+    {
+      "rule": "Never introduce: 5 vercel functions allow all origins (cors *)",
+      "severity": "high",
+      "category": "auth-cors",
+      "file": null,
+      "resolution": "Applied automatically via Developer Control (5 files changed)",
+      "fixedBy": "Claude",
+      "fixedAt": "2026-03-25T06:22:39.212Z"
+    }
+  ],
+  "openIssues": [
+    {
+      "issue": "2 routes: query param passed to fetch unsanitized",
+      "severity": "high",
+      "category": "input-validation",
+      "file": null,
+      "recommendation": "Use encodeURIComponent() on all query params before passing to external APIs.",
+      "foundAt": "2026-03-24T07:32:50.336Z"
+    },
+    {
+      "issue": "1 sensitive routes may lack authentication",
+      "severity": "medium",
+      "category": "auth-cors",
+      "file": null,
+      "recommendation": "Add authentication middleware to sensitive routes (AI, user, swap, admin).",
+      "foundAt": "2026-03-24T07:32:50.336Z"
+    },
+    {
+      "issue": "2 POST/PUT/DELETE routes without visible auth check",
+      "severity": "medium",
+      "category": "auth-enforcement",
+      "file": null,
+      "recommendation": "Add auth middleware or token verification to all mutation routes.",
+      "foundAt": "2026-03-24T07:43:37.097Z"
+    },
+    {
+      "issue": "Content store may write files with unsanitized names",
+      "severity": "medium",
+      "category": "filesystem",
+      "file": "packages\\server\\content\\store.js",
+      "recommendation": "Add slug sanitization: slug.replace(/[^a-zA-Z0-9_-]/g, \"\")",
+      "foundAt": "2026-03-24T07:43:37.097Z"
+    },
+    {
+      "issue": "Swap route may accept negative or zero amounts",
+      "severity": "high",
+      "category": "financial",
+      "file": "packages\\server\\routes\\swap.js",
+      "recommendation": "Validate: amount > 0, amount <= maxAllowed, and amount is a valid number (not NaN/Infinity).",
+      "foundAt": "2026-03-24T07:43:37.097Z"
+    },
+    {
+      "issue": "7 async routes missing try/catch",
+      "severity": "high",
+      "category": "route-safety",
+      "file": null,
+      "recommendation": "Wrap all async route handlers in try/catch with res.status(500).json({ error }) fallback.",
+      "foundAt": "2026-04-30T09:51:42.429Z"
+    },
+    {
+      "issue": "1 AI/expensive routes without rate limiting",
+      "severity": "medium",
+      "category": "rate-limiting",
+      "file": null,
+      "recommendation": "Apply rate limiting middleware to AI and expensive compute routes.",
+      "foundAt": "2026-04-30T09:51:42.429Z"
+    },
+    {
+      "issue": "37 Vercel functions without rate limiting",
+      "severity": "low",
+      "category": "rate-limiting",
+      "file": null,
+      "recommendation": "Add IP-based rate limiting or use Vercel Edge Config for rate control.",
+      "foundAt": "2026-04-30T09:51:42.429Z"
+    },
+    {
+      "issue": "9 routes: req.body used without type check",
+      "severity": "medium",
+      "category": "input-validation",
+      "file": null,
+      "recommendation": "Validate req.body shape and types before processing. Check for null/undefined.",
+      "foundAt": "2026-04-30T09:51:42.429Z"
+    },
+    {
+      "issue": "106 Express routes missing Vercel functions",
+      "severity": "low",
+      "category": "api-parity",
+      "file": null,
+      "recommendation": "Create Vercel serverless functions for production-critical routes, or document as dev-only.",
+      "foundAt": "2026-04-30T09:51:42.429Z"
+    },
+    {
+      "issue": "7 files with sequential fetch calls",
+      "severity": "medium",
+      "category": "performance",
+      "file": null,
+      "recommendation": "Use Promise.all([fetch(...), fetch(...)]) for independent external API calls.",
+      "foundAt": "2026-04-30T09:51:42.429Z"
+    },
+    {
+      "issue": "6 server files exceed 1000 lines",
+      "severity": "low",
+      "category": "performance",
+      "file": null,
+      "recommendation": "Extract route groups into separate files under packages/server/routes/.",
+      "foundAt": "2026-04-30T09:51:42.429Z"
+    },
+    {
+      "issue": "18 files have empty catch blocks",
+      "severity": "medium",
+      "category": "logging",
+      "file": null,
+      "recommendation": "At minimum: catch(err) { console.error(err) }",
+      "foundAt": "2026-04-30T09:51:42.429Z"
+    },
+    {
+      "issue": "2 files pass user input to LLM without sanitization",
+      "severity": "high",
+      "category": "prompt-injection",
+      "file": null,
+      "recommendation": "Use a sanitizer (see agents/querySanitizer.js) to strip injection patterns before passing user text to LLM APIs.",
+      "foundAt": "2026-04-30T09:51:42.429Z"
+    },
+    {
+      "issue": "2 LLM-calling files have no system prompt",
+      "severity": "medium",
+      "category": "prompt-injection",
+      "file": null,
+      "recommendation": "Always include a system role message that defines boundaries and expected behavior.",
+      "foundAt": "2026-04-30T09:51:42.429Z"
+    },
+    {
+      "issue": "1 sensitive Vercel functions may skip auth verification",
+      "severity": "high",
+      "category": "auth-enforcement",
+      "file": null,
+      "recommendation": "Import and call verifyToken from _lib/auth.js at the start of every sensitive handler.",
+      "foundAt": "2026-04-30T09:51:42.429Z"
+    },
+    {
+      "issue": "4 files use dynamic values in file paths",
+      "severity": "medium",
+      "category": "filesystem",
+      "file": null,
+      "recommendation": "Validate: 1) path.basename() to strip slashes, 2) regex to allow only [a-zA-Z0-9_-], 3) verify resolved path is within expected directory.",
+      "foundAt": "2026-04-30T09:51:42.429Z"
+    },
+    {
+      "issue": "3 files apply complex regex to user input",
+      "severity": "medium",
+      "category": "redos",
+      "file": null,
+      "recommendation": "Add input length limits. Simplify regex. Use string methods for simple matching.",
+      "foundAt": "2026-04-30T09:51:42.429Z"
+    },
+    {
+      "issue": "78 files have complex regex on trusted data",
+      "severity": "low",
+      "category": "redos",
+      "file": null,
+      "recommendation": "Low priority. Consider simplifying if these files ever process user input.",
+      "foundAt": "2026-04-30T09:51:42.429Z"
+    }
+  ]
+}

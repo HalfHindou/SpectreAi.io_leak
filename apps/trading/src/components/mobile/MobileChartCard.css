@@ -1,0 +1,220 @@
+/* ============================================
+   MobileChartCard
+   Prefix: mcc-
+
+   Hosts MobileChartToolbar + TradingChart. The
+   native desktop `.chart-controls` is hidden so
+   our compact desktop-styled toolbar (with
+   locked-into-dropdown groups) takes its place.
+   ============================================ */
+
+.mcc {
+  /* Chart height is driven by this custom property so MobileResizeHandle
+     can override it via inline style during a drag (inline doesn't beat
+     !important on .trading-chart, but updating the var here cascades
+     down cleanly). */
+  --mcc-chart-h: clamp(380px, 55dvh, 560px);
+  /* Breathing room under the time axis in fullscreen so it stays grabbable
+     (see .mcc--fs). ~a thumb-width of clearance without eating chart height. */
+  --mcc-fs-axis-gap: 24px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: var(--ob-surface-1);
+  border-top: 1px solid var(--glass-border);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 0;
+}
+
+/* GMGN-style single top bar: TF text row (scrolls, flex-1) + tool icons. */
+.mcc-topbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 6px;
+  border-bottom: 1px solid var(--glass-border);
+  background: var(--ob-surface-1);
+}
+/* The toolbar loses its own full-width bar chrome inside the topbar. */
+.mcc-topbar .mct {
+  flex: 0 0 auto;
+  padding: 6px 2px;
+  border-bottom: none;
+  background: transparent;
+}
+/* Icons only in the compact topbar — labels would crowd out the TF row. */
+.mcc-topbar .mct .mct-btn-label,
+.mcc-topbar .mct .mct-divider {
+  display: none;
+}
+.mcc-topbar .mct .mct-btn {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-3);
+}
+.mcc-topbar .mct .mct-btn.is-open,
+.mcc-topbar .mct .mct-btn:active {
+  background: var(--glass-highlight);
+  color: var(--text-1);
+}
+
+.mcc-chart-wrap {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Chart container — height comes from --mcc-chart-h so the drag handle
+   below can update it without fighting !important. */
+.mcc .trading-chart {
+  width: 100% !important;
+  min-height: 0 !important;
+  height: var(--mcc-chart-h) !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+  /* --ob-chart, NOT surface-1: this is the same plane the chart CANVAS paints
+     (lib/chartStyle.js themeChartSurface reads --ob-chart), and the two have to
+     agree or a band of container shows around the candles. Was surface-1,
+     which is why the mobile chart read as a black hole. */
+  background: var(--ob-chart, #111113) !important;
+}
+
+.mcc .chart-content-area {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+}
+
+.mcc .tradingview-container {
+  background: var(--ob-chart, #111113) !important;
+}
+body.theme-light .mcc .tradingview-container {
+  background: #ffffff !important;
+}
+
+/* HIDE the desktop .chart-controls bar — MobileChartToolbar replaces
+   it. Kept in the DOM (clip-path 0) so the toolbar's DOM-click wiring
+   still works. */
+.mcc .chart-controls {
+  position: absolute !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  border: none !important;
+}
+
+/* Hide the desktop drag-to-resize handle — touch can't reliably hit it. */
+.mcc .chart-resize-handle,
+.mcc :where(.chart-resizer) {
+  display: none !important;
+}
+
+/* ── Fullscreen ──────────────────────────────
+   The desktop fullscreen button is locked ("Coming Soon"), so mobile
+   owns its own overlay: the whole card goes fixed over the page and
+   the chart takes every pixel left under the toolbar. */
+.mcc.mcc--fs {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  height: 100dvh;
+  border: none;
+  padding-top: env(safe-area-inset-top, 0px);
+  /* The time axis is a DRAG TARGET (pinch/drag it to scale time), so it must
+     not sit flush against the bottom edge - there the finger competes with the
+     system home-gesture strip and there's no room below the labels to grab.
+     safe-area alone isn't enough: it's 34px on a notched iPhone but frequently
+     reports 0px on Android gesture-nav, which is where it read as unusable.
+     Always add a real grab band ON TOP of whatever the system reserves. */
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--mcc-fs-axis-gap));
+  background: var(--ob-surface-1);
+}
+.mcc.mcc--fs .mcc-chart-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.mcc.mcc--fs .trading-chart {
+  height: 100% !important;
+  flex: 1 1 auto !important;
+}
+/* No drag-to-resize while fullscreen — the height is the viewport. */
+.mcc.mcc--fs .mcc-resize {
+  display: none;
+}
+
+/* Freeze the page underneath so the overlay doesn't scroll with it. The
+   mobile token page (.mtp) is `position:relative; z-index:1`, i.e. its own
+   stacking context — the overlay's z-index is capped by it, so the page
+   itself has to outrank the fixed header/nav while fullscreen. */
+body.mcc-fs-open {
+  overflow: hidden;
+}
+body.mcc-fs-open .mtp {
+  z-index: 5000;
+}
+
+/* Skeleton placeholder while TradingChart bundle loads. */
+.mcc-skeleton {
+  min-height: 50vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+/* Mobile drag handle — sits below the chart, lets the user drag the
+   chart taller/shorter with their finger. Generous tap target (24px
+   touch zone) with a small visual pill in the middle. */
+.mcc-resize {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 18px;
+  cursor: ns-resize;
+  background: var(--ob-surface-1);
+  border-bottom: 1px solid var(--glass-border);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background-color var(--dur-micro) var(--ease-out);
+}
+.mcc-resize:hover,
+.mcc-resize.is-dragging {
+  background: var(--glass-fill);
+}
+.mcc-resize-bar {
+  display: block;
+  width: 36px;
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: var(--glass-highlight);
+  transition: background-color var(--dur-micro) var(--ease-out);
+}
+.mcc-resize:hover .mcc-resize-bar,
+.mcc-resize.is-dragging .mcc-resize-bar {
+  background: var(--text-2);
+}
+
+/* Day mode */
+body.theme-light .mcc {
+  background: #ffffff;
+  border-top-color: rgba(0, 0, 0, 0.06);
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+body.theme-light .mcc .trading-chart {
+  background: #ffffff !important;
+}
+body.theme-light .mcc.mcc--fs {
+  background: #ffffff;
+}

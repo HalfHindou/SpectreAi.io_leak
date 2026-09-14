@@ -1,0 +1,377 @@
+/* Microcaps · Alt Rotation Radar. Prefixed .ar-
+ *
+ * Dark is the base; every rule that sets a colour has an .app.app-day-mode
+ * counterpart in alt-rotation-page.day-mode.css, and every narrow-viewport
+ * rule lives in alt-rotation-page.mobile.css.
+ *
+ * SURFACE. The panels here used to come from a navy ramp
+ * (rgba(32,36,50,0.55) -> rgba(9,12,20,0.76)), which is a different material
+ * from the rest of the app: Spectre is warm-black with white glass, and hue in
+ * the chrome is the thing the founder rejects on sight. Every plane is now the
+ * app's .glass-card, taken whole off /fear-greed (.fg-metric-card, measured):
+ * the same 135deg 0.04 -> 0.016 gradient, the same 0.04 hairline, the same
+ * 16px radius, the same blur(24px) saturate(1.8), the same --shadow-lg. The
+ * saturate is the part that matters — it lifts the near-black page THROUGH the
+ * panel; without it the identical gradient reads as flat grey.
+ *
+ * COLOUR. Only where it carries market meaning: the bull/bear channel, one
+ * amber for "warming / stalled", and each chain's own brand accent on its own
+ * data (the same licence tokenColors.js has). No hue in the chrome.
+ */
+.ar-page {
+  /* text ramp — floor is 0.46; the app's --text-muted (0.35) reads as
+     grey-on-black at the 10-11px labels this page is full of */
+  --ar-t1: #f5f5f7;
+  --ar-t2: rgba(245, 245, 247, 0.82);
+  --ar-t3: rgba(245, 245, 247, 0.62);
+  --ar-t4: rgba(245, 245, 247, 0.46);
+
+  /* market semantics — design-system tokens, nothing bespoke */
+  --ar-bull: #34D399;
+  --ar-bull-deep: #10B981;
+  --ar-bear: #F87171;
+  --ar-bear-deep: #EF4444;
+  --ar-gold: #F59E0B;
+  --ar-gold-ink: #f5c265;
+
+  /* the app's .glass-card */
+  --ar-pane: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.016) 100%);
+  --ar-pane-soft: linear-gradient(135deg, rgba(255, 255, 255, 0.028) 0%, rgba(255, 255, 255, 0.01) 100%);
+  --ar-edge: rgba(255, 255, 255, 0.06);
+  --ar-edge-soft: rgba(255, 255, 255, 0.04);
+  --ar-glass: blur(24px) saturate(1.8);
+  --ar-lift: var(--shadow-lg);
+  --ar-lift-sm: var(--shadow-inner), var(--shadow-md);
+
+  max-width: 1400px; margin: 0 auto;
+  padding: var(--sp-6) var(--sp-6) var(--sp-16);
+  font-family: var(--font-display);
+  color: var(--ar-t1);
+}
+
+/* masthead — the app's page pattern (kicker -> display title -> lead), the
+   same shape /vitals and /why use. The words are unchanged, only re-ranked:
+   the page is about microcaps, and "Alt Rotation Radar" is what names it. */
+.ar-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--sp-6); flex-wrap: wrap; margin-bottom: var(--sp-5); }
+.ar-head-lead { max-width: 66ch; }
+.ar-kicker { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ar-t4); margin-bottom: var(--sp-2); }
+.ar-title { font-family: var(--font-display); font-size: clamp(30px, 3.6vw, 46px); font-weight: 700; letter-spacing: -0.035em; line-height: 1.02; margin: 0; color: var(--ar-t1); }
+.ar-sub { margin: var(--sp-3) 0 0; font-size: 15px; line-height: 1.62; color: var(--ar-t2); }
+/* a button now (click = refetch), so it opts out of the UA button chrome and
+   pins tabular figures — the age counter must not resize the pill every second */
+.ar-live { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: var(--ar-bull); border: 1px solid rgba(52,211,153,0.3); background: rgba(52,211,153,0.08); white-space: nowrap; font-family: inherit; cursor: pointer; appearance: none; -webkit-appearance: none; font-variant-numeric: tabular-nums; transition: border-color 0.18s ease, background 0.18s ease; }
+.ar-live:hover { border-color: rgba(52,211,153,0.55); background: rgba(52,211,153,0.14); }
+.ar-live.warm:hover { border-color: rgba(245,158,11,0.55); background: rgba(245,158,11,0.14); }
+.ar-live i { width: 7px; height: 7px; border-radius: 50%; background: var(--ar-bull); box-shadow: 0 0 9px rgba(52,211,153,0.85); }
+.ar-live.warm { color: var(--ar-gold-ink); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.08); }
+.ar-live.warm i { background: var(--ar-gold); box-shadow: 0 0 9px rgba(245,158,11,0.7); animation: arpulse 1.4s infinite; }
+@keyframes arpulse { 0%,100% { opacity: 1 } 50% { opacity: 0.35 } }
+
+/* a stalled recorder is amber, not silent — same language as the Live pill */
+.ar-stale { color: var(--ar-gold-ink); font-style: normal; font-weight: 600; }
+
+/* ── the hero grid ────────────────────────────────────────────────────────
+   NOT a card. The hero used to be one 530px box with a hairline splitting two
+   ragged columns inside it: the right column ran out ~100px above the left,
+   leaving a hole in the corner that nothing could fill, and the divider ended
+   in mid-air. It is now a 12-column grid of four INDEPENDENT cards, the way
+   /fear-greed composes its own hero — each ends where its content ends, so
+   there is no dead space to design around. */
+.ar-hero {
+  display: grid; grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--sp-4); margin-bottom: var(--sp-5);
+  align-items: start;
+}
+.ar-card {
+  position: relative; overflow: hidden;
+  padding: var(--sp-5) var(--sp-6);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--ar-edge-soft);
+  background: var(--ar-pane);
+  backdrop-filter: var(--ar-glass); -webkit-backdrop-filter: var(--ar-glass);
+  box-shadow: var(--ar-lift);
+}
+/* the specular edge is most of what reads as GLASS rather than a dark box */
+.ar-card::before {
+  content: ''; position: absolute; inset: 0 0 auto; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12) 22%, rgba(255,255,255,0.12) 78%, transparent);
+}
+/* ── two column STACKS, not grid rows ─────────────────────────────────────
+   The first pass put all four cards straight on the 12-column grid. That
+   re-introduced the hole in a new place: a grid ROW is as tall as its tallest
+   cell, so the shorter card in each row grew a dead tail — 62px under the
+   verdict card, 100px under the depth card. Columns fix it structurally: each
+   is its own flex stack with one fixed gap, so a card is always followed
+   immediately by the next one. The two columns end at slightly different
+   heights, which is what independent cards are supposed to do. */
+.ar-hero-col { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
+.ar-hero-col--main { grid-column: span 7; }
+.ar-hero-col--side { grid-column: span 5; }
+
+.ar-card--verdict { border-color: var(--ar-edge); }
+/* the band glow lives ON the verdict, not washed across the whole hero — it is
+   the verdict's own colour, and it is the only tint on any of these surfaces */
+.ar-card--verdict { background: radial-gradient(620px 220px at 8% -10%, var(--glow), transparent 64%), var(--ar-pane); }
+.ar-card--readiness { }
+.ar-card--read { display: flex; flex-direction: column; }
+.ar-card--depth { }
+.ar-reasons { grid-column: span 12; }
+
+.ar-eyebrow { font-size: 10.5px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ar-t4); }
+.ar-verdict-word { font-size: clamp(30px, 3.2vw, 44px); font-weight: 700; letter-spacing: -0.035em; line-height: 1.03; margin: var(--sp-3) 0; color: var(--band); }
+.ar-verdict-sub { font-size: 15.5px; line-height: 1.55; color: rgba(245,245,247,0.86); margin: 0 0 14px; max-width: 44ch; }
+
+/* ── the two readings inside the read card ────────────────────────────────
+   🔑 TONE IS A RULE, NOT A BOX. These were panels — border, glass fill, inset
+   highlight and a radial tone-glow each — sitting INSIDE the read card, which
+   is itself a glass panel. Two frames nested in a third is the "rectangle in a
+   rectangle" shape the founder rejects on sight, and the inner panels' own
+   margins left a strip of dead card under the last one.
+   The card IS the panel now. Each reading is a row on it, separated by one
+   hairline, with a quiet neutral rule at the leading edge. Market direction stays
+   in the data indicators rather than the editorial labels. */
+.ar-setup, .ar-frontrun {
+  display: flex; align-items: flex-start; gap: var(--sp-4);
+  padding: 0 0 0 var(--sp-4); margin: 0;
+  border: none; border-left: 1px solid var(--ar-edge); border-radius: 0;
+  background: none; box-shadow: none;
+}
+/* the hairline belongs to the SECOND row, so a card with only one reading
+   carries no stray rule */
+.ar-frontrun { margin-top: var(--sp-4); padding-top: var(--sp-4); }
+.ar-card--read > * + * { border-top: 1px solid var(--ar-edge-soft); }
+
+.ar-setup-tag, .ar-fr-tag {
+  flex: none; width: 88px; padding-top: 2px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+}
+.ar-setup-tag { color: var(--ar-t3); }
+.ar-fr-tag { color: var(--ar-t3); white-space: nowrap; }
+.ar-setup-txt, .ar-fr-txt { font-size: 13.5px; line-height: 1.55; color: var(--ar-t2); }
+
+/* majors 30d strip */
+.ar-majors { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+.ar-majors-lbl { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ar-t3); }
+.ar-major { display: inline-flex; align-items: baseline; gap: 5px; font-size: 13px; }
+.ar-major b { font-weight: 700; color: var(--ar-t1); }
+.ar-major em { font-style: normal; font-weight: 700; }
+.ar-majors-arrow { font-size: 11.5px; color: var(--ar-t4); font-weight: 600; }
+/* One even row of cells. These were inline pills, so six of them reflowed into
+   rows of 2/3/1 at 1400px — the ragged edge read as text wrapping rather than
+   as a grid. auto-fit keeps them equal at every width and drops to 3-up, then
+   2-up, without a single hand-written breakpoint. */
+.ar-reasons { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--sp-2); }
+/* 🪤 A FIXED count, not auto-fit. auto-fit picks whatever fits, and with six
+   cells that lands on 5 + 1 at common laptop widths — the ragged row this
+   replaced, back again. 6 / 3 / 2 all divide six, so every row stays full. */
+@media (max-width: 1280px) { .ar-reasons { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.ar-reason { display: flex; align-items: center; gap: 8px; padding: 10px 13px; border-radius: var(--radius-md); font-size: 12.5px;
+  border: 1px solid var(--ar-edge-soft);
+  background: var(--ar-pane);
+  box-shadow: var(--ar-lift-sm);
+  backdrop-filter: blur(10px);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease; }
+@media (hover: hover) {
+  .ar-reason:hover { transform: translateY(-1px); border-color: rgba(255,255,255,0.1);
+    box-shadow: var(--shadow-inner), var(--shadow-lg); }
+}
+.ar-reason-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; box-shadow: 0 0 8px currentColor; }
+.ar-reason-lbl { color: var(--ar-t2); }
+.ar-reason-val { font-weight: 680; margin-left: auto; }
+
+
+.ar-gauge-num { font-size: 46px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; color: var(--ar-t1); }
+.ar-gauge-num b { font-size: 16px; font-weight: 600; color: var(--ar-t4); }
+.ar-gauge-cap { font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ar-t3); margin: 2px 0 12px; }
+.ar-gauge-track { height: 10px; border-radius: 999px; overflow: hidden;
+  background: linear-gradient(180deg, rgba(0,0,0,0.5), rgba(255,255,255,0.045));
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.7), inset 0 -1px 0 rgba(255,255,255,0.07); }
+.ar-gauge-fill { display: block; height: 100%; border-radius: 999px; transition: width 0.6s cubic-bezier(0.16,1,0.3,1);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4); }
+.ar-gauge-scale { display: flex; justify-content: space-between; margin-top: 7px; font-size: 11px; color: var(--ar-t3); font-weight: 600; }
+/* cycle depth gauge — how ATL are the micros */
+.ar-depth { padding: 0; }
+.ar-depth-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.ar-depth-lbl { font-size: 11.5px; font-weight: 600; color: var(--ar-t3); }
+.ar-depth-pct { font-size: 15px; font-weight: 800; letter-spacing: -0.01em; }
+.ar-depth-track { position: relative; height: 8px; border-radius: 999px; margin-bottom: 8px;
+  background: linear-gradient(90deg, #EF4444 0%, #F87171 26%, #F59E0B 54%, #10B981 79%, #34D399 100%);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.45), 0 0 18px -6px rgba(245,158,11,0.3); }
+.ar-depth-marker { position: absolute; top: 50%; width: 16px; height: 16px; border-radius: 50%; background: #09090b; border: 3px solid; transform: translate(-50%, -50%); box-shadow: 0 2px 8px rgba(0,0,0,0.5); transition: left 0.6s cubic-bezier(0.16,1,0.3,1); }
+.ar-depth-scale { display: flex; align-items: flex-start; justify-content: space-between; font-size: 11px; color: var(--ar-t3); font-weight: 600; }
+.ar-depth-scale i { display: block; font-style: normal; font-size: 9.5px; color: var(--ar-t4); font-weight: 600; margin-top: 1px; }
+.ar-depth-r { text-align: right; }
+.ar-depth-zone { text-transform: capitalize; font-weight: 700; align-self: center; }
+
+/* the readiness card holds two blocks — the gauge and the two tape stats.
+   They ran together: "Go time" and "BTC dominance" were 4px apart. */
+.ar-hero-stats { display: flex; flex-direction: column; gap: var(--sp-3); margin-top: var(--sp-4); padding-top: var(--sp-4); border-top: 1px solid var(--ar-edge-soft); }
+.ar-hs { display: flex; flex-direction: column; gap: 3px; }
+.ar-hs span { font-size: 11.5px; color: var(--ar-t3); }
+.ar-hs b { font-size: 17px; font-weight: 700; color: var(--ar-t1); }
+.ar-hs em { font-style: normal; font-size: 12.5px; font-weight: 600; }
+
+/* OTHERS2 cycle chart */
+/* same material as the hero, or it reads flat sitting underneath it */
+.ar-chart-card {
+  position: relative; overflow: hidden;
+  border: 1px solid var(--ar-edge-soft); border-radius: var(--radius-lg); padding: var(--sp-5) var(--sp-5) var(--sp-4); margin-bottom: var(--sp-5);
+  background: var(--ar-pane);
+  backdrop-filter: var(--ar-glass); -webkit-backdrop-filter: var(--ar-glass);
+  box-shadow: var(--ar-lift);
+}
+.ar-chart-card::before {
+  content: ''; position: absolute; inset: 0 0 auto; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.12) 75%, transparent);
+}
+.ar-chart-head { display: flex; align-items: center; justify-content: space-between; gap: 12px 16px; flex-wrap: wrap; margin-bottom: 8px; }
+/* index switcher — TOTAL / TOTAL2 / TOTAL3 / OTHERS / OTHERS2 / OTHERS.D */
+/* a RECESSED trough with the active tab raised out of it — the flat-rectangles
+   row was the other half of what read as slop */
+.ar-chart-idx { display: inline-flex; gap: 2px; padding: 4px; border-radius: 14px; flex-wrap: wrap;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(180deg, rgba(0,0,0,0.42), rgba(255,255,255,0.03));
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.6); }
+.ar-ix { appearance: none; cursor: pointer; border: 1px solid transparent; background: transparent; color: var(--ar-t3); border-radius: 10px; padding: 7px 14px; font-size: 12px; font-weight: 620; letter-spacing: 0.01em; transition: color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease; }
+.ar-ix:hover { color: var(--ar-t1); background: rgba(255,255,255,0.05); }
+.ar-ix.on { color: var(--ar-t1); border-color: rgba(255,255,255,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.13), rgba(255,255,255,0.05));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 4px 14px -6px rgba(0,0,0,0.9); }
+/* OTHERS2 is our own tape, but an active tab in this app is WHITE-based, never
+   a coloured fill (design-system §A). The distinction survives in the line
+   under the chart, which spells out "OUR LINE · OUR OWN TAPE". */
+.ar-ix-own.on { color: var(--ar-t1); }
+.ar-chart-meta { display: flex; align-items: center; gap: 12px; }
+.ar-chart-now { font-size: 14px; font-weight: 800; color: var(--ar-t1); letter-spacing: -0.01em; white-space: nowrap; }
+.ar-chart-sub { font-size: 11.5px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ar-t4); margin: 0 2px 12px; }
+.ar-tf { display: inline-flex; gap: 2px; padding: 3px; border-radius: 11px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(180deg, rgba(0,0,0,0.42), rgba(255,255,255,0.03));
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.6); }
+.ar-tf button { appearance: none; cursor: pointer; border: 1px solid transparent; background: transparent; color: var(--ar-t3); border-radius: 8px; padding: 6px 11px; font-size: 12px; font-weight: 620; transition: color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease; }
+.ar-tf button:hover { color: var(--ar-t1); background: rgba(255,255,255,0.05); }
+.ar-tf button.on { color: var(--ar-t1); border-color: rgba(255,255,255,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.13), rgba(255,255,255,0.05));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 4px 14px -6px rgba(0,0,0,0.9); }
+.ar-chart-wrap { position: relative; height: 300px; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--ar-edge-soft); background: var(--bg-void); }
+.ar-chart-canvas { display: block; width: 100%; height: 100%; }
+.ar-tv { display: block; width: 100%; height: 100%; border: 0; }
+/* shimmer skeleton, not loading text (design-system: no "Loading…" states) */
+.ar-chart-empty {
+  position: relative; height: 300px; border-radius: 12px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.03);
+  color: transparent; font-size: 0;
+}
+.ar-chart-empty::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.07) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: arShimmer 2s infinite;
+}
+@keyframes arShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* panels */
+.ar-panel { margin-bottom: 18px; }
+.ar-panel-head { display: flex; align-items: baseline; gap: 10px; margin: 0 2px 12px; }
+.ar-panel-head h3 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+.ar-panel-head span { font-size: 12.5px; color: var(--ar-t3); }
+
+/* chain grid */
+.ar-chains { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.ar-chain {
+  border: 1px solid var(--ar-edge-soft); border-radius: var(--radius-lg); padding: var(--sp-5) var(--sp-5) var(--sp-4);
+  background: var(--ar-pane);
+  backdrop-filter: var(--ar-glass); -webkit-backdrop-filter: var(--ar-glass);
+  box-shadow: var(--ar-lift);
+}
+.ar-chain.ar-skel { height: 260px; background: rgba(255,255,255,0.02); animation: arshim 1.6s infinite; }
+@keyframes arshim { 0%,100% { opacity: 0.5 } 50% { opacity: 0.85 } }
+.ar-chain-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.ar-chain-id { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.ar-chain-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; box-shadow: 0 0 10px currentColor; }
+.ar-chain-id b { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.ar-chain-mcap { font-size: 12.5px; color: var(--ar-t3); font-weight: 600; }
+.ar-vibe { font-size: 12px; font-weight: 700; padding: 5px 11px; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+.ar-health { height: 6px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; margin-bottom: 14px; }
+.ar-health-fill { display: block; height: 100%; border-radius: 999px; transition: width 0.6s cubic-bezier(0.16,1,0.3,1); }
+.ar-chain-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.ar-cr { display: flex; flex-direction: column; gap: 3px; }
+.ar-cr span { font-size: 10.5px; color: var(--ar-t3); text-transform: uppercase; letter-spacing: 0.04em; }
+.ar-cr b { font-size: 14.5px; font-weight: 700; color: var(--ar-t1); }
+
+.ar-splits { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.ar-split { padding: 10px 11px; border-radius: var(--radius-md); background: rgba(255,255,255,0.028); border: 1px solid var(--ar-edge-soft); }
+.ar-split-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.ar-split-head span { font-size: 12px; font-weight: 600; color: var(--ar-t2); }
+.ar-split-head em { font-style: normal; font-size: 11px; color: var(--ar-t4); font-weight: 600; }
+.ar-split-bar { height: 5px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; margin-bottom: 7px; }
+.ar-split-bar span { display: block; height: 100%; border-radius: 999px; }
+.ar-split-foot { display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 700; }
+.ar-split-br { color: var(--ar-t3); font-weight: 600; font-size: 11px; }
+.ar-split-typ { font-style: normal; font-size: 9.5px; font-weight: 600; color: var(--ar-t4); letter-spacing: 0.02em; }
+
+.ar-leaders { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.ar-lead { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px 4px 5px; border-radius: 999px; background: rgba(255,255,255,0.04); border: 1px solid var(--ar-edge-soft); font-size: 12px; }
+.ar-lead img { width: 16px; height: 16px; border-radius: 50%; object-fit: cover; }
+.ar-lead-x { width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; font-size: 9px; font-weight: 700; background: rgba(255,255,255,0.1); }
+.ar-lead-sym { font-weight: 700; }
+.ar-lead-chg { font-weight: 700; }
+.ar-splitnote { font-size: 10.5px; color: var(--ar-t4); }
+
+/* movers */
+.ar-movers { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.ar-mv-col { border: 1px solid var(--ar-edge-soft); border-radius: var(--radius-md); padding: var(--sp-3) var(--sp-4); background: var(--ar-pane-soft); }
+.ar-mv-lbl { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+.ar-mv { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-top: 1px solid rgba(255,255,255,0.06); }
+.ar-mv:first-of-type { border-top: none; }
+.ar-mv-sym { font-size: 13px; font-weight: 700; }
+.ar-mv-chg { font-size: 13px; font-weight: 700; }
+
+/* shared up/down */
+.up { color: var(--ar-bull); } .down { color: var(--ar-bear); } .neu { color: var(--ar-t3); }
+.ar-mv-lbl.up { color: var(--ar-bull); } .ar-mv-lbl.down { color: var(--ar-bear); }
+
+.ar-foot { margin-top: 22px; text-align: center; font-size: 12px; font-style: italic; color: var(--ar-t4); }
+
+/* responsive */
+/* mobile */
+
+/* day mode */
+
+/* per-chain on-chain DEX volume chart */
+.ar-dexblock { margin-bottom: 12px; padding: 10px 11px 8px; border-radius: var(--radius-md); background: rgba(255,255,255,0.028); border: 1px solid var(--ar-edge-soft); }
+.ar-dexblock-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 7px; }
+.ar-dexblock-head span { font-size: 11px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ar-t3); }
+.ar-dexblock-head em { font-style: normal; font-size: 11.5px; font-weight: 700; }
+.ar-dexchart { position: relative; height: 96px; cursor: pointer; border-radius: 8px; transition: background 0.16s; }
+.ar-dexchart:hover { background: rgba(255,255,255,0.03); }
+.ar-dexchart canvas { display: block; width: 100%; height: 100%; }
+.ar-dexchart-exp { position: absolute; top: 4px; right: 5px; font-size: 12px; color: rgba(245,245,247,0.4); opacity: 0; transition: opacity 0.16s; }
+.ar-dexchart:hover .ar-dexchart-exp { opacity: 1; }
+
+/* fullscreen DEX volume modal */
+.ar-dexmodal { position: fixed; inset: 0; z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 20px;
+  background: rgba(9,9,11,0.72); backdrop-filter: blur(6px); animation: arfade 0.16s ease; }
+@keyframes arfade { from { opacity: 0 } to { opacity: 1 } }
+.ar-dexmodal-box { width: min(920px, 96vw); border-radius: 20px; padding: 20px 22px 22px; border: 1px solid rgba(255,255,255,0.1);
+  background: linear-gradient(135deg, rgba(24,24,27,0.98), rgba(9,9,11,0.99)); box-shadow: 0 40px 90px -30px rgba(0,0,0,0.9); }
+.ar-dexmodal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.ar-dexmodal-id { display: flex; align-items: center; gap: 9px; }
+.ar-dexmodal-id b { font-size: 19px; font-weight: 700; }
+.ar-dexmodal-sub { font-size: 12px; color: var(--ar-t3); }
+.ar-dexmodal-tools { display: flex; align-items: center; gap: 10px; }
+.ar-dexmodal-close { appearance: none; cursor: pointer; width: 30px; height: 30px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: var(--ar-t2); font-size: 14px; }
+.ar-dexmodal-close:hover { color: var(--ar-t1); background: rgba(255,255,255,0.1); }
+.ar-dexmodal-stats { display: flex; gap: 20px; margin-bottom: 14px; }
+.ar-dexmodal-stats span { font-size: 12px; color: var(--ar-t3); }
+.ar-dexmodal-stats b { font-size: 15px; font-weight: 700; color: var(--ar-t1); margin-left: 6px; }
+.ar-dexmodal-chart { height: 340px; border-radius: var(--radius-md); border: 1px solid var(--ar-edge); background: var(--bg-void); padding: 6px; }
+.ar-dexmodal-chart canvas { display: block; width: 100%; height: 100%; }
+
+/* Day-mode ink counterparts — these rules hardcode the warm-white ink
+   instead of the --text-* tokens, so the day-mode ramp cannot reach them and
+   they printed white-on-white under day mode and every bright PRO theme.
+   Generated + alpha-matched; see the same block in x-dash-page.day-mode.css. */
+/* Inline-emphasis leaves (b / em / i) — same hardcoded warm-white, but the
+   generated pass above only covers class leaves, so they are spelled out. */

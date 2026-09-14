@@ -1,0 +1,79 @@
+/**
+ * constellation-engine.css — chrome for the reusable ConstellationEngine.
+ * Scoped to the engine itself (ce-* prefix). View-level chrome (nav rail,
+ * tooltip, legend, masthead) stays in the consuming page's CSS (xd-cn-* etc).
+ *
+ * The engine renders the field on a WebGL <canvas>; the only DOM here is the
+ * drei <Html> sector labels + the wrapper. Premium, restrained, sector-hued.
+ */
+
+.ce-wrap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* refined dark environment: a soft radial vignette + faint depth so the
+     field sits in calm cinematic space rather than on flat black */
+  background:
+    radial-gradient(115% 85% at 50% 18%, rgba(255, 255, 255, 0.028) 0%, rgba(255, 255, 255, 0) 52%),
+    radial-gradient(140% 120% at 50% 110%, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 60%);
+}
+.ce-wrap canvas { display: block; touch-action: none; outline: none; }
+
+/* the drei <Html> wrapper — let clicks pass through to the canvas */
+.ce-hub-html { pointer-events: none; user-select: none; }
+
+/* SECTOR LABEL — big, legible, confident, sector-colored, with token count.
+   Apple-grade: tight tracking, soft shadow so it reads over bubbles, no box. */
+.ce-hublabel {
+  --hue: rgba(245, 245, 247, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+  transform: translateY(2px);
+}
+.ce-hublabel__name {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--hue);
+  /* lift the sector hue toward white a touch for legibility, plus a soft halo */
+  text-shadow:
+    0 0 12px rgba(0, 0, 0, 0.85),
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 0 22px color-mix(in srgb, var(--hue) 45%, transparent);
+}
+.ce-hublabel__count {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(245, 245, 247, 0.45);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── DAY MODE ──────────────────────────────────────────────────────────── */
+.app.app-day-mode .ce-wrap {
+  background:
+    radial-gradient(115% 85% at 50% 18%, rgba(15, 23, 42, 0.03) 0%, rgba(15, 23, 42, 0) 52%),
+    radial-gradient(140% 120% at 50% 110%, rgba(148, 163, 184, 0.16) 0%, rgba(148, 163, 184, 0) 60%);
+}
+.app.app-day-mode .ce-hublabel__name {
+  /* in day mode the sector hue is bright; darken it for legibility on white */
+  color: color-mix(in srgb, var(--hue) 78%, #0f172a);
+  text-shadow:
+    0 1px 2px rgba(255, 255, 255, 0.9),
+    0 0 16px rgba(255, 255, 255, 0.7),
+    0 0 22px color-mix(in srgb, var(--hue) 30%, transparent);
+}
+.app.app-day-mode .ce-hublabel__count { color: rgba(15, 23, 42, 0.45); }
+
+/* ── REDUCED MOTION — the engine already cuts drift + camera tween in JS;
+     ensure the label opacity transition is instant too. ─────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .ce-hub-html > * { transition: none !important; }
+}

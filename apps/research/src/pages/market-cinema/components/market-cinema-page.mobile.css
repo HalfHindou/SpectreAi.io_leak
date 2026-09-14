@@ -1,0 +1,235 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   MARKET CINEMA — phone (≤768px). Dark-only, like its parent sheet.
+
+   ONE breakpoint at 768 plus a single 380 collision guard. The layout is a
+   single screen with nothing to scroll, laid out against the packet's 844
+   budget:
+
+     top block     91   safe 47 + one 44px rail (dot · asset · ⋯)
+     stage        535   whale lane 84 at the top, rain through, tape lower
+     bottom block 218   log 40 · narration 56 · meta 40 · nav 48 · safe 34
+
+   The canvas paints all 844 edge to edge; only the HUD insets.
+
+   Two reallocations inside that budget, both deliberate and both keeping the
+   totals exact:
+   1. The packet splits the bottom block log 52 / narration 44. At 390 the
+      narration slot has to carry three things — the line, its attribution and
+      the permanent provenance caption — and 44px cannot hold all three above
+      the type floor. 12px moves from the log to the narration (log 40 still
+      shows the packet's 2 rows). Bottom block is still 218, stage still 535.
+   2. The collapsed one-line rail sits just BELOW the lane rather than above
+      it: the packet's own vertical budget puts the lane top (93) hard against
+      the top block (91), so there is no "above" to put it in. Under the lane
+      it never collides and still reads as the caption for the streaks.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* 🪤 EVERY <p> SIZE BELOW IS !important, AND HAS TO BE.
+   `styles/mobile-2026.css:1872` carries, inside this same breakpoint:
+       .body-text, p { font-size: var(--m-text-md) !important;
+                       line-height: 1.6 !important }
+   An element selector plus !important beats every class rule in this file, so
+   the whole 844 budget documented above was silently rendering at 14px/1.6 on
+   every phone. Measured at 390×844 before the fix: .cnm-narr held 95px of
+   content in its 56px slot and .cnm-meta held 90px in 40px, which put the
+   permanent provenance caption directly on top of the meta rail's numbers.
+   Same family as the blanket 38px touch-min trap — a page sheet cannot win
+   from specificity alone, only from !important. */
+
+@media (max-width: 768px) {
+  .cnm-root {
+    --cnm-gutter: 14px;
+    --cnm-nav: calc(var(--m-bottom-nav-h, 48px) + env(safe-area-inset-bottom, 0px));
+    /* Under --z-nav (400) so the app's bottom nav stays on top, over
+       --z-header (300) so the mobile header is covered by the stage. */
+    z-index: 399;
+  }
+
+  /* ── top rail: dot · wordmark · asset chips ─────────────────────────── */
+
+  .cnm-brand {
+    top: calc(env(safe-area-inset-top, 0px) + 2px);
+    left: var(--cnm-gutter);
+    right: 58px;
+    height: 44px;
+    max-width: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .cnm-brand__mark { font-size: 9.5px; letter-spacing: 0.15em; }
+  .cnm-filter {
+    margin: 0;
+    gap: 0;
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* pan-x alone locks vertical panning for the whole gesture — always both. */
+    touch-action: pan-x pan-y;
+  }
+  .cnm-filter::-webkit-scrollbar { display: none; }
+  .cnm-chip { padding: 8px 4px; flex: none; }
+  .cnm-chip__v { height: 24px; padding: 0 7px; font-size: 10px; }
+  /* No slot for the recap fact in the 844 budget — it survives as the real
+     <h1> for assistive tech and as the entry title card. */
+  .cnm-brand__fact { display: none; }
+
+  /* ── the ⋯ sheet is the only visible control ────────────────────────── */
+
+  .cnm-ctl {
+    top: calc(env(safe-area-inset-top, 0px) + 2px);
+    right: 8px;
+    height: 44px;
+  }
+  .cnm-ctl .cnm-btn { display: none; }
+  .cnm-btn--sheet { display: inline-flex; }
+
+  /* "Esc to leave" is not true on a phone — the affordances here are the ⋯
+     sheet and the swipe-down, so the hint is not shown rather than reworded. */
+  .cnm-hint { display: none; }
+
+  /* ── title card ─────────────────────────────────────────────────────── */
+
+  /* Serif reads ~10% smaller than sans at the same px, so the phone title card
+     goes UP to hold the same optical weight it had at 17px sans. */
+  .cnm-title {
+    top: calc(env(safe-area-inset-top, 0px) + 190px);
+    left: var(--cnm-gutter);
+    right: var(--cnm-gutter);
+    max-width: none;
+    font-size: 19px !important;
+    line-height: 1.3 !important;
+  }
+
+  /* ── rails: one line, naming the current streak's ends ──────────────── */
+
+  .cnm-rail {
+    top: calc(env(safe-area-inset-top, 0px) + 134px);
+    width: 46%;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .cnm-rail-l { left: var(--cnm-gutter); }
+  .cnm-rail-r { right: var(--cnm-gutter); }
+  .cnm-rail__cap { display: none; }
+  /* The counterparty name keeps its promotion on the phone — it is the one
+     thing on a 390px stage worth reading. Still one line, still ellipsised. */
+  .cnm-rail__v {
+    font-size: 12.5px;
+    line-height: 1.3;
+    -webkit-line-clamp: 1;
+    white-space: nowrap;
+  }
+
+  .cnm-lane-empty {
+    top: calc(env(safe-area-inset-top, 0px) + 134px);
+    font-size: 10.5px !important;
+    line-height: 1.4 !important;
+  }
+
+  .cnm-faults { top: calc(env(safe-area-inset-top, 0px) + 52px); }
+  .cnm-faults__l { font-size: 10.5px !important; line-height: 1.4 !important; }
+  .cnm-tape-stamp {
+    right: var(--cnm-gutter);
+    font-size: 9.5px !important;
+    line-height: 1.4 !important;
+  }
+
+  /* ── bottom block ───────────────────────────────────────────────────── */
+
+  .cnm-log {
+    bottom: calc(var(--cnm-nav) + 96px);
+    left: var(--cnm-gutter);
+    right: var(--cnm-gutter);
+    width: auto;
+    height: 40px;
+    gap: 2px;
+  }
+  .cnm-log__r {
+    grid-template-columns: 52px 40px 38px 62px minmax(0, 1fr);
+    column-gap: 6px;
+    height: 19px;
+    line-height: 19px;
+    font-size: 10px;
+  }
+  .cnm-log__r:nth-child(n + 3) { display: none; }
+  .cnm-log__s { font-size: 8.5px; letter-spacing: 0.08em; }
+
+  .cnm-narr {
+    bottom: calc(var(--cnm-nav) + 40px);
+    left: var(--cnm-gutter);
+    right: var(--cnm-gutter);
+    width: auto;
+    height: 56px;
+    transform: none;
+  }
+  /* The 844 budget gives this slot 56px for line + attribution + provenance.
+     The serif goes up half a point and buys it back on leading, so the block's
+     measured height is unchanged — the meta rail below it must not be pushed. */
+  .cnm-narr__line {
+    font-size: 13px !important;
+    line-height: 1.22 !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
+  .cnm-narr__src { margin-top: 2px; font-size: 9.5px !important; line-height: 1.2 !important; }
+  .cnm-prov { margin-top: 3px; font-size: 9.5px !important; line-height: 1.25 !important; }
+
+  .cnm-meta {
+    bottom: var(--cnm-nav);
+    left: var(--cnm-gutter);
+    right: var(--cnm-gutter);
+    width: auto;
+    height: 40px;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    justify-content: flex-end;
+    gap: 0 10px;
+    overflow: hidden;
+  }
+  .cnm-meta__line { margin: 0; font-size: 9.5px !important; line-height: 19px !important; }
+  .cnm-meta__line--dim { display: none; }
+  /* The dust footnote gets its own line above the log — it cannot share the
+     40px meta rail without pushing a real number out of view. */
+  .cnm-meta__line--dust {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 44px;
+    margin: 0;
+    text-align: right;
+    line-height: 1.3 !important;
+  }
+
+  .cnm-thrift {
+    bottom: calc(var(--cnm-nav) + 148px);
+    padding: 9px 13px;
+    font-size: 11.5px;
+    gap: 10px;
+  }
+
+  /* ── the reduced-motion / data-saver reading ────────────────────────── */
+
+  .cnm-stage--static {
+    padding: calc(env(safe-area-inset-top, 0px) + 60px) var(--cnm-gutter) calc(var(--cnm-nav) + 20px);
+  }
+  .cnm-static__row {
+    grid-template-columns: 60px 46px 50px 68px minmax(0, 1fr);
+    column-gap: 9px;
+    font-size: 10.5px;
+  }
+}
+
+/* ── 380 and below: the log's fixed columns are what collide first ─────── */
+
+@media (max-width: 380px) {
+  .cnm-log__r { grid-template-columns: 48px 36px 34px 56px minmax(0, 1fr); column-gap: 5px; }
+  .cnm-static__row { grid-template-columns: 54px 42px 44px 62px minmax(0, 1fr); column-gap: 7px; }
+  .cnm-brand__mark { display: none; }
+}

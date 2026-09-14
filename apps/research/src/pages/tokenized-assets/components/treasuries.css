@@ -1,0 +1,229 @@
+/* ═══════════════════════════════════════════════════════════
+   Treasuries tab — scoped chrome (prefix: trs-)
+   Consumes the page glass tokens (--ta-glass-*, --ta-pad-*,
+   --ta-gap-*). Adds ONLY the showpiece Yield-Curve panel shell,
+   the two-up frame heads, and an empty-state wrapper. No parallel
+   design language — every surface inherits the canonical glass.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Yield Curve showpiece ─────────────────────────────────
+   A taller, editorial glass panel that frames the YieldCurve
+   creative with a header band, derived stat readouts and a
+   footnote. It is the right pane of the hero split, so it must
+   read as the most considered surface on the tab. */
+.trs-yc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ta-gap-tight);
+  padding: var(--ta-pad-card-lg);
+  background: var(--ta-glass-bg);
+  backdrop-filter: blur(var(--ta-glass-blur));
+  -webkit-backdrop-filter: blur(var(--ta-glass-blur));
+  border: 1px solid var(--ta-glass-border);
+  border-radius: var(--ta-glass-radius);
+  box-shadow: var(--ta-glass-shadow);
+  overflow: hidden;
+  transition: border-color var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out),
+              transform var(--duration-base) var(--ease-out);
+}
+.trs-yc:hover {
+  transform: translateY(-1px);
+  border-color: var(--ta-glass-border-hover);
+  box-shadow: var(--ta-glass-shadow-hover);
+}
+/* Ambient depth — a soft cyan→bull wash that mirrors the curve's
+   own gradient, anchored to the top edge so it reads as light, not
+   a neon glow. Sub-0.06 alpha keeps it Apple-quiet. */
+.trs-yc::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 120px;
+  background: radial-gradient(120% 90% at 78% 0%,
+    rgba(16, 185, 129, 0.07) 0%,
+    rgba(6, 182, 212, 0.05) 38%,
+    transparent 72%);
+  pointer-events: none;
+  z-index: 0;
+}
+.trs-yc > * { position: relative; z-index: 1; }
+
+/* Header band */
+.trs-yc__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.trs-yc__titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.trs-yc__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+.trs-yc__sub {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+/* "Estimated" tag — a quiet glass chip, never a badge/pill with color. */
+.trs-yc__tag {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  background: var(--accent-muted);
+  border: 1px solid var(--ta-glass-border);
+  border-radius: var(--radius-full);
+}
+.trs-yc__tag-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--amber, #F59E0B);
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+}
+
+/* Derived stat readouts — three mono figures the curve resolves to. */
+.trs-yc__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+}
+.trs-yc__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--ta-glass-radius-sm);
+  background: var(--ta-glass-bg-quiet);
+  border: 1px solid var(--ta-glass-border);
+  box-shadow: var(--shadow-inner);
+}
+.trs-yc__stat-label {
+  font-family: var(--font-body);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+.trs-yc__stat-value {
+  font-family: var(--font-mono);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.trs-yc__stat-value.is-pos { color: var(--bull, #10B981); }
+.trs-yc__stat-value.is-neg { color: var(--bear, #EF4444); }
+.trs-yc__stat-value.is-muted { color: var(--text-secondary); }
+
+/* The creative slot — let the YieldCurve fill remaining height. */
+.trs-yc__plot { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+/* Shimmer skeletons for the stat row while loading. */
+.trs-yc__stat-skel {
+  width: 100%;
+  min-height: 52px;
+  border-radius: var(--ta-glass-radius-sm);
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.03) 100%);
+  background-size: 200% 100%;
+  animation: ta-skel-slide 2s linear infinite;
+}
+
+/* ── Two-up frame heads (issuers + chains) ────────────────
+   Wrap RwaHorizontalBars in a glass chart-frame so the two
+   lower panels match the hero. The bars component already owns
+   its inner list; we only supply the shell + head. */
+.trs-panel { gap: var(--sp-3); }
+/* The frame already supplies the glass shell + head, so strip the bars'
+   own card chrome when nested inside a treasuries frame (scoped — does
+   not affect RwaHorizontalBars anywhere else). */
+.trs-panel .rwa-hbars {
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  gap: var(--sp-1);
+}
+.trs-panel .rwa-hbars-head { display: none; }
+.trs-panel__count {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ════════════════════════════ Day mode ════════════════════════════ */
+.app.app-day-mode .trs-yc {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+.app.app-day-mode .trs-yc:hover {
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+.app.app-day-mode .trs-yc::before {
+  background: radial-gradient(120% 90% at 78% 0%,
+    rgba(16, 185, 129, 0.06) 0%,
+    rgba(6, 182, 212, 0.045) 38%,
+    transparent 72%);
+}
+.app.app-day-mode .trs-yc__title { color: #0F172A; }
+.app.app-day-mode .trs-yc__sub { color: #94A3B8; }
+.app.app-day-mode .trs-yc__tag {
+  color: #475569;
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+.app.app-day-mode .trs-yc__stat {
+  background: #fcfcfd;
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.app.app-day-mode .trs-yc__stat-label { color: #64748B; }
+.app.app-day-mode .trs-yc__stat-value { color: #0F172A; }
+.app.app-day-mode .trs-yc__stat-value.is-muted { color: #475569; }
+.app.app-day-mode .trs-yc__stat-skel {
+  background: linear-gradient(90deg,
+    rgba(0, 0, 0, 0.03) 0%,
+    rgba(0, 0, 0, 0.06) 50%,
+    rgba(0, 0, 0, 0.03) 100%);
+  background-size: 200% 100%;
+}
+.app.app-day-mode .trs-panel__count { color: #64748B; }
+
+/* ════════════════════════════ Mobile ════════════════════════════ */
+@media (max-width: 899px) {
+  .trs-yc { padding: var(--ta-pad-card); }
+}
+@media (max-width: 480px) {
+  .trs-yc__stats { grid-template-columns: 1fr; }
+  .trs-yc__stat { flex-direction: row; align-items: baseline; justify-content: space-between; }
+}
+
+/* ════════════════════════════ Reduced motion ════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .trs-yc__stat-skel { animation: none; }
+  .trs-yc:hover { transform: none; }
+}

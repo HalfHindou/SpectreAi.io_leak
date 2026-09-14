@@ -1,0 +1,977 @@
+/* ============================================================
+   KOL PROFILE PAGE — full-screen KOL profile (not the drawer).
+   Prefix: kpp-. Reuses x-dash + KOL Radar tokens (--xd-warm amber tier ring,
+   .xd-num mono numbers, .xd-kol-tierbadge from xd-kol-radar.css, the
+   .keb / .xd-kol-net sub-component styles). Dark base here; day-mode + mobile
+   in the paired files.
+   ============================================================ */
+
+.kpp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  /* fill the content area left→right (the x-dash body has no inner cap); a
+     generous max keeps line-lengths sane on ultrawide without dead margins. */
+  max-width: 2000px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ---- top bar / back ---- */
+.kpp-topbar {
+  display: flex;
+  align-items: center;
+}
+.kpp-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px 7px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-base) var(--ease-out);
+}
+.kpp-back:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+/* ----------------------------------------------------------------
+   HERO HEADER
+   ---------------------------------------------------------------- */
+.kpp-hero {
+  position: relative;
+  padding: var(--sp-6) var(--sp-6);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-inner), var(--shadow-md);
+  overflow: hidden;
+}
+.kpp-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.05) 0%, transparent 38%);
+  pointer-events: none;
+}
+
+.kpp-hero__inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+}
+
+.kpp-hero__avatar {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  padding: 3px;
+}
+.kpp-hero__avatar .xd-avatar { border-radius: var(--radius-full); width: 92px; height: 92px; }
+.kpp-hero__avatar--s { box-shadow: 0 0 0 2.5px #f5c451, 0 0 18px rgba(245, 196, 81, 0.35); }
+.kpp-hero__avatar--t1 { box-shadow: 0 0 0 2px rgba(245, 245, 247, 0.55); }
+.kpp-hero__avatar--t2 { box-shadow: 0 0 0 2px var(--xd-tier-influencer, rgba(245, 245, 247, 0.3)); }
+.kpp-hero__avatar--t3 { box-shadow: 0 0 0 1.5px var(--border-strong); }
+.kpp-hero__tick {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  display: inline-flex;
+  color: var(--xd-verified, rgba(245, 245, 247, 0.9));
+  background: var(--bg-surface);
+  border-radius: var(--radius-full);
+  padding: 2px;
+}
+
+.kpp-hero__id {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+.kpp-hero__name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.kpp-hero__name {
+  margin: 0;
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+.kpp-hero__handle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.kpp-hero__handle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.9375rem;
+  color: var(--text-tertiary);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+.kpp-hero__handle:hover { color: var(--text-secondary); }
+
+.kpp-hero__archetype {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 11px 3px 4px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  border: 1px solid transparent;
+}
+.kpp-hero__archetype-score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.28);
+}
+.kpp-hero__archetype--sharp {
+  color: var(--bull-bright);
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.24);
+}
+.kpp-hero__archetype--mixed {
+  color: var(--amber);
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.24);
+}
+.kpp-hero__archetype--degen {
+  color: var(--bear-bright);
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.24);
+}
+.kpp-hero__archetype--unrated {
+  color: var(--text-tertiary);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-default);
+}
+
+.kpp-hero__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: 4px;
+}
+.kpp-hero__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border-subtle);
+  min-width: 88px;
+}
+.kpp-hero__stat-value {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.kpp-hero__stat-label {
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+/* the "endorsed cap" tile reads as the headline reach number — warm accent. */
+.kpp-hero__stat--cap {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.03) 100%);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+.kpp-hero__stat--cap .kpp-hero__stat-value { color: #f5c451; }
+
+.kpp-hero__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+.kpp-hero__follow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-base) var(--ease-out);
+}
+.kpp-hero__follow:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+.kpp-hero__follow--on {
+  color: #f5c451;
+  background: rgba(245, 196, 81, 0.12);
+  border-color: rgba(245, 196, 81, 0.3);
+}
+.kpp-hero__xbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-tertiary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all var(--duration-base) var(--ease-out);
+}
+.kpp-hero__xbtn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+/* hero shimmer */
+.kpp-shimmer-avatar {
+  width: 98px;
+  height: 98px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ----------------------------------------------------------------
+   BODY — COMPARTMENT MASONRY
+   Every section is a self-contained, content-sized card. They pack into a
+   3-col CSS multi-column masonry so nothing reserves large empty height and no
+   column is left void. The endorsement-bubble card spans all columns (it's a
+   wide compartment); the rest flow + fill the gaps. 3 cols → 2 → 1 (mobile).
+   ---------------------------------------------------------------- */
+.kpp-body { display: flex; flex-direction: column; gap: var(--sp-5); }
+
+.kpp-masonry {
+  column-count: 3;
+  column-gap: var(--sp-4);
+}
+.kpp-masonry > .kpp-card {
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  margin: 0 0 var(--sp-4);
+  /* a masonry child can't be a flex container at the column level — keep the
+     internal stack via the card's own flow; .kpp-card sets display:flex which
+     column layout respects per-item, so children still stack vertically. */
+}
+/* the endorsement bubbles are just ONE compartment among equals — a normal
+   column-width card, NOT a full-width band (a few projects don't earn the
+   whole row). */
+.kpp-masonry > .kpp-card--bubbles {
+  column-span: none;
+  -webkit-column-span: none;
+}
+
+.kpp-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.018) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-inner), var(--shadow-sm);
+}
+.kpp-card__label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.kpp-card--net { align-items: center; }
+
+/* responsive column-count: 3 wide → 2 → 1. Tuned so cards stay ≥~320px each. */
+@media (max-width: 1320px) {
+  .kpp-masonry { column-count: 2; }
+}
+/* ≤1100px the masonry collapses to one column (handled in the mobile file's
+   1100px block too, but set here so column layout is unambiguous). */
+
+/* Recent-new-follows can run long — cap it so the compartment stays tidy and
+   the list scrolls inside its own card rather than stretching the column. */
+.kpp-followscroll {
+  max-height: 340px;
+  overflow-y: auto;
+  margin: 0 calc(var(--sp-2) * -1);
+  padding: 0 var(--sp-2);
+}
+.kpp-followscroll::-webkit-scrollbar { width: 4px; }
+.kpp-followscroll::-webkit-scrollbar-track { background: transparent; }
+.kpp-followscroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full);
+}
+.kpp-followscroll::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.14); }
+/* call ledger is the new headline of the profile — slightly stronger surface
+   than the supporting cards so the receipts read first. */
+.kpp-card--ledger {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.022) 100%);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-inner), var(--shadow-md);
+}
+.app.app-day-mode .kpp-card--ledger {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 6px 18px rgba(0, 0, 0, 0.05);
+}
+
+/* ---- the immersive bubble-field centerpiece card ---- */
+.kpp-card--bubbles {
+  position: relative;
+  gap: var(--sp-3);
+  padding: var(--sp-5) var(--sp-5) var(--sp-4);
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 50% -10%, rgba(245, 158, 11, 0.05) 0%, transparent 55%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border-color: var(--border-strong);
+}
+.kpp-bubbles-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.kpp-bubbles-meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+.kpp-bubbles-meta__n { font-weight: 700; color: var(--text-secondary); }
+.kpp-bubbles-meta__lbl { color: var(--text-muted); }
+.kpp-bubbles-meta__sep { color: var(--text-disabled); margin: 0 2px; }
+
+/* ---- legitimacy block (bigger than the drawer) ---- */
+.kpp-legit__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+.kpp-legit__ring {
+  position: relative;
+  flex-shrink: 0;
+}
+.kpp-legit__ring svg { display: block; }
+.kpp-legit__ring-track { stroke: rgba(255, 255, 255, 0.08); }
+.kpp-legit__ring-fill { transition: stroke-dasharray var(--duration-slow) var(--ease-out); }
+.kpp-legit__ring--sharp .kpp-legit__ring-fill { stroke: var(--bull); }
+.kpp-legit__ring--mixed .kpp-legit__ring-fill { stroke: var(--amber); }
+.kpp-legit__ring--degen .kpp-legit__ring-fill { stroke: var(--bear); }
+.kpp-legit__ring--unrated .kpp-legit__ring-fill { stroke: var(--text-muted); }
+.kpp-legit__ring-num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.kpp-legit__head-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.kpp-legit__archetype {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  border: 1px solid transparent;
+}
+.kpp-legit__archetype--sharp {
+  color: var(--bull-bright);
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.24);
+}
+.kpp-legit__archetype--mixed {
+  color: var(--amber);
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.24);
+}
+.kpp-legit__archetype--degen {
+  color: var(--bear-bright);
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.24);
+}
+.kpp-legit__archetype--unrated {
+  color: var(--text-tertiary);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-default);
+}
+.kpp-legit__breakdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.8125rem;
+  color: var(--text-tertiary);
+}
+.kpp-legit__bd b { font-weight: 600; }
+.kpp-legit__bd--green b { color: var(--bull-bright); }
+.kpp-legit__bd--amber b { color: var(--amber); }
+.kpp-legit__bd--red b { color: var(--bear-bright); }
+.kpp-legit__bd-sep { color: var(--text-disabled); }
+.kpp-legit__none { font-size: 0.8125rem; color: var(--text-muted); line-height: 1.4; }
+
+/* ---- projects-followed chips ---- */
+.kpp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.kpp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px 5px 5px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-default);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.kpp-chip:not(:disabled):hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+.kpp-chip:disabled { cursor: default; }
+.kpp-chip__logo {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+}
+.kpp-chip__logo--ph { background: var(--bg-elevated); }
+.kpp-chip__sym {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.kpp-chip__mc {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding-left: 2px;
+}
+.kpp-chip__ch {
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+.kpp-chip__ch--up { color: var(--bull-bright); }
+.kpp-chip__ch--down { color: var(--bear-bright); }
+.kpp-chip__ch--flat { color: var(--text-muted); }
+
+/* ---- recent follows list ---- */
+.kpp-followlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.kpp-followrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 6px;
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-fast) var(--ease-out);
+}
+.kpp-followrow:hover { background: rgba(255, 255, 255, 0.03); }
+.kpp-followrow + .kpp-followrow { border-top: 1px solid var(--border-subtle); }
+.kpp-followrow__logo-wrap {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.kpp-followrow__logo {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+}
+.kpp-followrow__logo--ph { background: var(--bg-elevated); }
+.kpp-followrow__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.kpp-followrow__line {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+.kpp-followrow__verb { color: var(--text-muted); }
+.kpp-followrow__target { color: var(--text-secondary); font-weight: 500; }
+.kpp-followrow__project {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--amber);
+}
+.kpp-followrow__project:disabled { cursor: default; color: var(--text-secondary); }
+.kpp-followrow__project .xd-num { font-weight: 600; }
+.kpp-followrow__mc {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.kpp-followrow__ch {
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+.kpp-followrow__ch--up { color: var(--bull-bright); }
+.kpp-followrow__ch--down { color: var(--bear-bright); }
+.kpp-followrow__ch--flat { color: var(--text-muted); }
+.kpp-followrow__meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+.kpp-followrow__prepush {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--amber);
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.24);
+}
+
+.kpp-nm-hint {
+  margin: 10px 0 0;
+  font-size: 0.7rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+.kpp-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ---- not found ---- */
+.kpp-notfound {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: var(--sp-12) var(--sp-6);
+  text-align: center;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-subtle);
+}
+.kpp-notfound__title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.kpp-notfound__detail {
+  margin: 0;
+  max-width: 460px;
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+.kpp-notfound__back {
+  margin-top: 6px;
+  padding: 8px 18px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-base) var(--ease-out);
+}
+.kpp-notfound__back:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+/* ================================================================
+   IMMERSIVE PROJECT BUBBLE FIELD (kpb-) — the profile centerpiece.
+   A drifting, packed field of endorsed projects. Size = market cap,
+   fill/ring = health tone, hover = rich card. The rAF in the JSX writes
+   absolute transforms onto each bubble; CSS owns the look + the pop-in.
+   ================================================================ */
+.kpb {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.kpb-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+.kpb-field {
+  position: relative;
+  width: 100%;
+  /* COMPACT compartment in a normal column card (not a full-width band). The
+     bubbles scale to fill this (fieldBand in the JSX) so a few projects look
+     full, not a sea of black. */
+  height: 224px;
+  border-radius: var(--radius-lg);
+}
+
+.kpb-bubble {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: var(--radius-full);
+  border: 1.5px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+  /* the sim writes translate() into transform; pop-in animates scale/opacity
+     via a separate keyframe targeting opacity only, so transform stays free. */
+  animation: kpb-fade var(--duration-slow) var(--ease-out) forwards;
+  transition: border-color var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out),
+              filter var(--duration-fast) var(--ease-out);
+  will-change: transform;
+}
+@keyframes kpb-fade {
+  to { opacity: 1; }
+}
+.kpb-bubble:disabled { cursor: default; }
+.kpb-bubble:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.kpb-bubble:not(:disabled):hover { z-index: 30; }
+
+/* inner disc — gradient fill + logo + cap label. The hover scale lives here so
+   the sim's translate() on the parent isn't clobbered. */
+.kpb-bubble__disc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: transform var(--duration-base) var(--ease-spring);
+}
+.kpb-bubble:not(:disabled):hover .kpb-bubble__disc { transform: scale(1.06); }
+.kpb-bubble__logo {
+  width: 38%;
+  height: 38%;
+  max-width: 46px;
+  max-height: 46px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.kpb-bubble__sym {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-align: center;
+}
+.kpb-bubble__cap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  line-height: 1.05;
+  pointer-events: none;
+}
+.kpb-bubble__cap-sym {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+/* when a logo renders, the disc shows logo + cap-sym + mc; when it doesn't, the
+   __sym fallback already shows the symbol, so hide the duplicate cap-sym. */
+.kpb-bubble__disc:has(.kpb-bubble__logo) .kpb-bubble__cap-sym { display: flex; }
+.kpb-bubble__disc:not(:has(.kpb-bubble__logo)) .kpb-bubble__cap-sym { display: none; }
+.kpb-bubble__cap-mc {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+/* tone fills — health.tone. Radial tint + ring; hover brightens ring/glow. */
+.kpb-bubble--green {
+  background: radial-gradient(circle at 50% 32%, rgba(16, 185, 129, 0.26) 0%, rgba(16, 185, 129, 0.07) 72%, rgba(16, 185, 129, 0.02) 100%);
+  border-color: rgba(16, 185, 129, 0.42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 16px rgba(16, 185, 129, 0.12);
+}
+.kpb-bubble--green:not(:disabled):hover {
+  border-color: var(--bull);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.35), 0 10px 30px rgba(16, 185, 129, 0.28);
+}
+.kpb-bubble--amber {
+  background: radial-gradient(circle at 50% 32%, rgba(245, 158, 11, 0.26) 0%, rgba(245, 158, 11, 0.07) 72%, rgba(245, 158, 11, 0.02) 100%);
+  border-color: rgba(245, 158, 11, 0.42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 16px rgba(245, 158, 11, 0.12);
+}
+.kpb-bubble--amber:not(:disabled):hover {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.35), 0 10px 30px rgba(245, 158, 11, 0.26);
+}
+.kpb-bubble--red {
+  background: radial-gradient(circle at 50% 32%, rgba(239, 68, 68, 0.24) 0%, rgba(239, 68, 68, 0.06) 72%, rgba(239, 68, 68, 0.02) 100%);
+  border-color: rgba(239, 68, 68, 0.42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 16px rgba(239, 68, 68, 0.12);
+}
+.kpb-bubble--red:not(:disabled):hover {
+  border-color: var(--bear);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.35), 0 10px 30px rgba(239, 68, 68, 0.24);
+}
+.kpb-bubble--grey {
+  background: radial-gradient(circle at 50% 32%, rgba(245, 245, 247, 0.1) 0%, rgba(245, 245, 247, 0.03) 72%, rgba(245, 245, 247, 0.01) 100%);
+  border-color: var(--border-strong);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+.kpb-bubble--grey:not(:disabled):hover {
+  border-color: var(--border-accent);
+  box-shadow: 0 0 0 1px rgba(245, 245, 247, 0.18), 0 10px 28px rgba(0, 0, 0, 0.4);
+}
+
+/* ---- rich hover card ---- */
+.kpb-card {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%) translateY(4px);
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 13px;
+  border-radius: var(--radius-md);
+  background: rgba(18, 18, 20, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), inset 0 0.5px 0 rgba(255, 255, 255, 0.06);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 40;
+  transition: opacity var(--duration-fast) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out);
+  text-align: left;
+}
+.kpb-bubble:hover .kpb-card,
+.kpb-bubble:focus-visible .kpb-card {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+/* flip the card below the bubble for the top row so it doesn't clip off-canvas */
+.kpb-field .kpb-bubble:nth-child(-n+4) .kpb-card {
+  bottom: auto;
+  top: calc(100% + 10px);
+}
+.kpb-card__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.kpb-card__logo {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.kpb-card__id { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.kpb-card__sym { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
+.kpb-card__name {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kpb-card__state {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.kpb-card__state--alive { color: var(--bull-bright); background: rgba(16, 185, 129, 0.14); }
+.kpb-card__state--cooling { color: var(--amber); background: rgba(245, 158, 11, 0.14); }
+.kpb-card__state--dead { color: var(--bear-bright); background: rgba(239, 68, 68, 0.14); }
+.kpb-card__state--unknown { color: var(--text-tertiary); background: rgba(255, 255, 255, 0.06); }
+
+.kpb-card__rows { display: flex; flex-direction: column; gap: 4px; }
+.kpb-card__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.kpb-card__k { font-size: 0.6875rem; color: var(--text-muted); }
+.kpb-card__v { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); }
+.kpb-card__v--up { color: var(--bull-bright); }
+.kpb-card__v--down { color: var(--bear-bright); }
+.kpb-card__v--flat { color: var(--text-tertiary); }
+
+.kpb-card__call {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-wrap: wrap;
+}
+.kpb-card__call-cap {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.kpb-card__call-x { font-size: 0.8125rem; font-weight: 700; }
+.kpb-card__call-x--up { color: var(--bull-bright); }
+.kpb-card__call-x--down { color: var(--bear-bright); }
+.kpb-card__call-alpha { font-size: 0.6875rem; font-weight: 600; }
+.kpb-card__call-alpha--up { color: var(--bull-bright); }
+.kpb-card__call-alpha--down { color: var(--bear-bright); }
+
+/* ---- foot: legend + more ---- */
+.kpb-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.kpb-legend { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.kpb-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+}
+.kpb-legend__dot { width: 8px; height: 8px; border-radius: var(--radius-full); }
+.kpb-legend__dot--green { background: var(--bull); }
+.kpb-legend__dot--amber { background: var(--amber); }
+.kpb-legend__dot--red { background: var(--bear); }
+.kpb-legend__hint {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  padding-left: 6px;
+  border-left: 1px solid var(--border-default);
+}
+.kpb-more {
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.kpb-more:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kpb-bubble { animation: none; opacity: 1; }
+}
+
+/* ---- bubble-field loading skeleton (matches the centerpiece shape) ---- */
+.kpp-skeleton { display: flex; flex-direction: column; gap: var(--sp-5); }
+.kpp-skel-bubbles { gap: 0; }
+.kpp-skel-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  height: clamp(248px, 19vw, 308px);
+  overflow: hidden;
+}
+.kpp-skel-bubble {
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.05);
+}
+.app.app-day-mode .kpp-skel-bubble { background: rgba(15, 23, 42, 0.06); }

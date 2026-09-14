@@ -1,0 +1,165 @@
+/* Spectre AI Trading Terminal - TradingView Advanced Charts theme */
+
+/* Geist (sans) for the canvas-rendered axis + legend (paired with custom_font_family
+   in TradingViewAdvanced.jsx - the canvas renderer reads the family from there, this
+   @import just makes the font available INSIDE the iframe). Geist sans has a plain
+   round zero - NO slashed/crossing zero on the price ladder. The iframe inherits the
+   parent CSP, which permits fonts.googleapis.com (style-src) + fonts.gstatic.com
+   (font-src). display=swap → readable fallback paints first, no FOIT. Must stay at
+   the top: @import precedes all style rules. */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500&display=swap');
+
+/* Dark mode (default) - terminal aesthetic */
+.theme-dark:root {
+  /* Backgrounds - surface level, slight lift from void */
+  --tv-color-platform-background: #111113;
+  --tv-color-pane-background: #111113;
+  --tv-color-pane-background-secondary: #111113;
+
+  /* Toolbar - readable */
+  --tv-color-toolbar-button-text: rgba(245, 245, 247, 0.60);
+  --tv-color-toolbar-button-text-hover: rgba(245, 245, 247, 0.80);
+  --tv-color-toolbar-button-text-active: rgba(245, 245, 247, 0.90);
+  --tv-color-toolbar-button-text-active-hover: #f5f5f7;
+  --tv-color-toolbar-button-background-hover: rgba(255, 255, 255, 0.04);
+  --tv-color-toolbar-button-background-active: rgba(255, 255, 255, 0.06);
+  --tv-color-toolbar-button-background-active-hover: rgba(255, 255, 255, 0.08);
+  --tv-color-toolbar-divider-background: rgba(255, 255, 255, 0.03);
+
+  /* Popups/dropdowns - elevated surface */
+  --tv-color-popup-background: #111113;
+  --tv-color-popup-element-text: rgba(245, 245, 247, 0.8);
+  --tv-color-popup-element-text-hover: #f5f5f7;
+  --tv-color-popup-element-background-hover: rgba(255, 255, 255, 0.04);
+  --tv-color-popup-element-background-active: rgba(255, 255, 255, 0.06);
+  --tv-color-popup-element-secondary-text: rgba(245, 245, 247, 0.55);
+
+  /* Borders and separators - near-invisible */
+  --tv-color-toolbar-toggle-button-background-active: rgba(255, 255, 255, 0.06);
+  --tv-color-toolbar-toggle-button-background-active-hover: rgba(255, 255, 255, 0.08);
+}
+
+/* Hide the bottom timeframes bar - we use our own controls */
+.bottom-widgetbar-content,
+.chart-controls-bar,
+div[data-name="timeframes-toolbar"] {
+  display: none !important;
+}
+
+/* Force the iframe document background to follow the platform colour.
+   The library's no-data / loading overlays ("No data here") render on the
+   raw html/body, which otherwise defaults to white - a glaring clash with
+   the dark terminal page (most visible on phones where a data-less token
+   fills the whole chart). Inherits the theme var so day mode stays white. */
+html,
+body,
+.theme-dark,
+.theme-dark body {
+  background-color: var(--tv-color-platform-background, #111113) !important;
+}
+.theme-light,
+.theme-light body {
+  background-color: var(--tv-color-platform-background, #ffffff) !important;
+}
+
+/* The CHROME AROUND the canvas: the left drawing rail, the top toolbar strip,
+   and the root layout wrapper whose 4px gaps show between the three areas.
+   The library paints these from its own surface colour, NOT from
+   paneProperties.background - so the pane and the rail are two independent
+   colours and any change to one leaves the other behind. That is why the rail
+   read as a darker column beside the chart.
+   Bound to --tv-color-platform-background (never a literal) so the runtime
+   sync in TradingViewAdvanced.jsx - which repaints that var whenever the chart
+   background changes, e.g. a picked tone or a custom chart bg - carries the
+   chrome with it. Day mode inherits through the same var. */
+.layout__area--left,
+.layout__area--top,
+.js-rootresizer__contents,
+.layout-with-border-radius {
+  background: var(--tv-color-platform-background) !important;
+}
+.layout__area--left,
+.layout__area--top {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Drawing-toolbar collapse/expand tab (.toggleButton-*). The stock control is a
+   ~9x28 SVG sliver with a dark arrow on a near-transparent fill - almost
+   invisible, and unhittable with a thumb. Scale the SVG up (it is absolutely
+   positioned, so a transform costs no layout - the painted shape scales with
+   it, so the tap target grows too) and restyle it as a glass tab: origin
+   left-bottom keeps the collapsed state (left: 0) flush against the chart edge
+   instead of pushing it off-canvas. */
+[class*='toggleButton-'] {
+  transform: scale(1.5);
+  transform-origin: left bottom;
+  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
+  overflow: visible;
+}
+
+/* The pill body - glass over the chart, not a blue chip */
+[class*='toggleButton-'] [class*='background-'],
+html.theme-dark [class*='toggleButton-'] [class*='background-'] {
+  fill: rgba(18, 18, 22, 0.88) !important;
+  stroke: rgba(255, 255, 255, 0.10) !important;
+  stroke-width: 1;
+}
+
+/* The chevron - warm white, thick enough to read at 1x */
+[class*='toggleButton-'] [class*='arrow-'],
+html.theme-dark [class*='toggleButton-'] [class*='arrow-'] {
+  stroke: rgba(245, 245, 247, 0.75) !important;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (any-hover: hover) {
+  [class*='toggleButton-']:hover {
+    transform: scale(1.62);
+  }
+  [class*='toggleButton-']:hover [class*='background-'],
+  html.theme-dark [class*='toggleButton-']:hover [class*='background-'] {
+    fill: rgba(26, 26, 32, 0.94) !important;
+    stroke: rgba(255, 255, 255, 0.18) !important;
+  }
+  [class*='toggleButton-']:hover [class*='arrow-'],
+  html.theme-dark [class*='toggleButton-']:hover [class*='arrow-'] {
+    stroke: #f5f5f7 !important;
+  }
+}
+
+@media (pointer: coarse), (max-width: 768px) {
+  [class*='toggleButton-'] {
+    transform: scale(2);
+  }
+  /* No hover on touch - keep the resting size stable */
+  [class*='toggleButton-']:hover {
+    transform: scale(2);
+  }
+}
+
+html.theme-light [class*='toggleButton-'] {
+  filter: drop-shadow(0 2px 8px rgba(15, 23, 42, 0.14));
+}
+html.theme-light [class*='toggleButton-'] [class*='background-'] {
+  fill: rgba(255, 255, 255, 0.96) !important;
+  stroke: rgba(15, 23, 42, 0.12) !important;
+}
+html.theme-light [class*='toggleButton-'] [class*='arrow-'] {
+  stroke: rgba(15, 23, 42, 0.65) !important;
+}
+
+/* Light / day mode */
+.theme-light:root {
+  --tv-color-platform-background: #ffffff;
+  --tv-color-pane-background: #ffffff;
+  --tv-color-pane-background-secondary: #f8fafc;
+  --tv-color-toolbar-button-text: #64748b;
+  --tv-color-toolbar-button-text-hover: #334155;
+  --tv-color-toolbar-button-text-active: #0f172a;
+  --tv-color-popup-background: #ffffff;
+  --tv-color-popup-element-text: #334155;
+}

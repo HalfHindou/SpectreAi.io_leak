@@ -1,0 +1,209 @@
+/* ── RZM Dossier Sheet — iOS-style bottom sheet wrapping the desktop DossierPanel ── */
+
+.rzdp-sheet-root {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+}
+
+.rzdp-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  animation: rzdp-fade 200ms ease-out;
+}
+
+.rzdp-sheet {
+  position: relative;
+  width: 100%;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  background: #101012;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.6);
+  animation: rzdp-slide-up 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.rzdp-grab {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 5px;
+  margin: 9px auto 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+}
+
+.rzdp-sheet-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 12px 12px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rzdp-sheet-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.rzdp-sheet-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #f5f5f7;
+}
+
+.rzdp-sheet-sub {
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rzdp-close {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: none;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(245, 245, 247, 0.75);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 150ms ease;
+}
+.rzdp-close:active { background: rgba(255, 255, 255, 0.1); }
+
+.rzdp-sheet-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Tabular numerals for every metric inside the reused panel. */
+.rzdp-wrap {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* ── Scope overrides so the desktop panel fits a 390px sheet ── */
+.rzdp-wrap .dossier-panel {
+  padding: 12px 16px 24px;
+}
+.rzdp-wrap .dossier-header {
+  padding-top: 4px;
+}
+/* Refresh-all / pin actions wrap under the header on narrow width. */
+.rzdp-wrap .dossier-updated {
+  align-items: flex-end;
+}
+.rzdp-wrap .dossier-btn,
+.rzdp-wrap .dossier-btn-primary,
+.rzdp-wrap .dossier-pin-btn {
+  min-height: 34px;
+}
+/* Section toggle rows are the primary touch targets — give them real height. */
+.rzdp-wrap .dossier-section-head {
+  min-height: 44px;
+  padding: 4px 0;
+}
+/* Candle hero: cap height on small screens so KPIs stay above the fold. */
+.rzdp-wrap .candles-canvas {
+  height: 200px !important;
+}
+/* External link chips get a comfortable tap target. */
+.rzdp-wrap .dossier-link,
+.rzdp-wrap .dossier-bubbles-card {
+  min-height: 40px;
+}
+
+/* ── Skeleton (Suspense fallback before the panel chunk lands) ── */
+.rzdp-skel { padding: 14px 16px; }
+.rzdp-skel-chart {
+  width: 100%;
+  height: 200px;
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+.rzdp-skel-kpis { display: flex; flex-direction: column; }
+.rzdp-skel-kpi {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.045);
+  animation: rzdp-fade 300ms ease-out both;
+}
+.rzdp-skel-line { height: 10px; border-radius: 4px; }
+.rzdp-skel-line--label { width: 84px; }
+.rzdp-skel-line--val { width: 64px; }
+.rzdp-skel-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+}
+.rzdp-skel-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.07) 50%, transparent 100%);
+  animation: rzdp-shimmer 1.5s infinite;
+}
+
+@keyframes rzdp-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rzdp-slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes rzdp-shimmer { to { transform: translateX(100%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rzdp-sheet, .rzdp-backdrop, .rzdp-skel-kpi { animation: none; }
+  .rzdp-skel-shimmer::after { animation: none; }
+}
+
+/* ── Day mode ── */
+.app.app-day-mode .rzdp-sheet,
+.rzdp-day .rzdp-sheet {
+  background: #ffffff;
+  border-top-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.22);
+}
+.app.app-day-mode .rzdp-grab,
+.rzdp-day .rzdp-grab { background: rgba(0, 0, 0, 0.18); }
+.app.app-day-mode .rzdp-sheet-head,
+.rzdp-day .rzdp-sheet-head { border-bottom-color: rgba(0, 0, 0, 0.06); }
+.app.app-day-mode .rzdp-sheet-title,
+.rzdp-day .rzdp-sheet-title { color: #0f172a; }
+.app.app-day-mode .rzdp-sheet-sub,
+.rzdp-day .rzdp-sheet-sub { color: #64748b; }
+.app.app-day-mode .rzdp-close,
+.rzdp-day .rzdp-close { background: rgba(0, 0, 0, 0.05); color: #475569; }
+.app.app-day-mode .rzdp-skel-shimmer,
+.rzdp-day .rzdp-skel-shimmer { background: rgba(0, 0, 0, 0.05); }
+.app.app-day-mode .rzdp-skel-shimmer::after,
+.rzdp-day .rzdp-skel-shimmer::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.05) 50%, transparent 100%);
+}
+.app.app-day-mode .rzdp-skel-kpi,
+.rzdp-day .rzdp-skel-kpi { border-bottom-color: rgba(0, 0, 0, 0.05); }

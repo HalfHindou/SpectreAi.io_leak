@@ -1,0 +1,754 @@
+/* ═══════════════════════════════════════════════════════════════
+   Treemap Heatmap — Perplexity-style market cap weighted layout
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Container ── */
+.treemap-container {
+  position: relative;
+  width: 100%;
+  min-height: 460px;
+  border-radius: 14px;
+  background: transparent;
+  overflow: hidden;
+  cursor: grab;
+}
+.treemap-container--panning {
+  cursor: grabbing;
+}
+
+.treemap-container--fullscreen {
+  min-height: calc(100vh - 64px);
+  border-radius: 0;
+}
+
+/* ── Zoom Layer (inner, re-layouts at zoomed dimensions for crisp text) ── */
+.treemap-zoom-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   Zoom Controls — Fixed overlay (not affected by zoom)
+   ═══════════════════════════════════════════════════════════════ */
+
+.treemap-zoom-controls {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  z-index: 30;
+  user-select: none;
+}
+
+.treemap-zoom-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.treemap-zoom-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+}
+.treemap-zoom-btn:active {
+  background: rgba(255, 255, 255, 0.12);
+  transform: scale(0.92);
+}
+
+.treemap-zoom-level {
+  font-family: var(--font-mono, var(--font-mono));
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+  min-width: 36px;
+  text-align: center;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.treemap-zoom-reset {
+  margin-left: 2px;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  padding-left: 4px;
+  border-radius: 0 7px 7px 0;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   Zoom Hint — Shown when not zoomed
+   ═══════════════════════════════════════════════════════════════ */
+
+.treemap-zoom-hint {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 14px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: var(--font-body, -apple-system, sans-serif);
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  z-index: 25;
+  pointer-events: none;
+  animation: treemapHintFade 4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes treemapHintFade {
+  0%   { opacity: 0; }
+  10%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+
+/* ── Individual Cell ── */
+.treemap-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  overflow: hidden;
+  transition: filter 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -22px 36px rgba(0, 0, 0, 0.14);
+}
+
+/* Glossy glass reflection — bright specular band across the top + a soft light
+   spot, so each coloured cell reads as glass, not flat paint. */
+.treemap-cell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.06) 15%, rgba(255, 255, 255, 0) 46%),
+    radial-gradient(130% 82% at 50% -22%, rgba(255, 255, 255, 0.13) 0%, transparent 52%);
+}
+/* Keep cell content crisp above the sheen. */
+.treemap-cell > * { position: relative; z-index: 1; }
+
+.treemap-cell:hover {
+  filter: brightness(1.18) saturate(1.08);
+  z-index: 5;
+}
+.treemap-cell:hover::before {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.30) 0%, rgba(255, 255, 255, 0.08) 16%, rgba(255, 255, 255, 0) 48%),
+    radial-gradient(130% 82% at 50% -22%, rgba(255, 255, 255, 0.18) 0%, transparent 52%);
+}
+
+.treemap-cell:active {
+  filter: brightness(0.95);
+}
+
+/* ── Tier: XL (logo 32 + name + symbol + price + change) ── */
+.treemap-cell--xl {
+  gap: 3px;
+  padding: 6px;
+}
+
+/* ── Tier: L (logo 24 + symbol + price + change) ── */
+.treemap-cell--lg {
+  gap: 2px;
+  padding: 4px;
+}
+
+/* ── Tier: M (symbol + change) ── */
+.treemap-cell--md {
+  gap: 2px;
+  padding: 2px;
+}
+
+/* ── Tier: S (compact symbol + change) ── */
+.treemap-cell--sm {
+  gap: 1px;
+  padding: 1px;
+}
+
+/* ── Tier: XS (change% only) ── */
+.treemap-cell--xs {
+  gap: 0;
+  padding: 0;
+}
+
+
+/* ── Cell Logo ── */
+.treemap-cell-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  opacity: 0.9;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+}
+.treemap-cell-logo--xl {
+  width: 32px;
+  height: 32px;
+}
+
+
+/* ── Cell Symbol / Ticker ── */
+.treemap-cell-symbol {
+  font-family: var(--font-body, -apple-system, sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  padding: 0 3px;
+}
+.treemap-cell-symbol--xl {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.treemap-cell-symbol--lg {
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+.treemap-cell-symbol--sm {
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+
+/* ── Cell Name (XL tier only) ── */
+.treemap-cell-name {
+  font-family: var(--font-body, -apple-system, sans-serif);
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  padding: 0 3px;
+}
+
+
+/* ── Cell Price ── */
+.treemap-cell-price {
+  font-family: var(--font-mono, var(--font-mono));
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  line-height: 1;
+  white-space: nowrap;
+}
+.treemap-cell-price--xl {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+
+/* ── Cell Change % ── */
+.treemap-cell-change {
+  font-family: var(--font-mono, var(--font-mono));
+  font-size: 12px;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  line-height: 1;
+  white-space: nowrap;
+}
+.treemap-cell-change--xl {
+  font-size: 15px;
+}
+.treemap-cell-change--sm {
+  font-size: 8px;
+  font-weight: 600;
+}
+.treemap-cell-change--xs {
+  font-size: 7px;
+  font-weight: 600;
+}
+.treemap-cell-change.positive { color: #34d399; }
+.treemap-cell-change.negative { color: #f87171; }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   Sector Group Labels (stocks mode)
+   ═══════════════════════════════════════════════════════════════ */
+.treemap-group-label {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.50);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  padding: 2px 4px;
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   Color Legend Bar
+   ═══════════════════════════════════════════════════════════════ */
+.treemap-legend {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  z-index: 20;
+  pointer-events: none;
+}
+
+.treemap-legend-bar {
+  width: 120px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg,
+    rgba(239, 68, 68, 0.75) 0%,
+    rgba(239, 68, 68, 0.25) 25%,
+    rgba(255, 255, 255, 0.04) 50%,
+    rgba(16, 185, 129, 0.25) 75%,
+    rgba(16, 185, 129, 0.75) 100%
+  );
+}
+
+.treemap-legend-label {
+  font-family: var(--font-mono, var(--font-mono));
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 1;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   Tooltip — Rich Hover Card (portalled to document.body)
+   ═══════════════════════════════════════════════════════════════ */
+.treemap-tooltip {
+  width: 280px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(20, 20, 26, 0.95) 0%, rgba(16, 16, 22, 0.92) 100%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 8px 32px rgba(0, 0, 0, 0.65),
+    0 2px 8px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  animation: treemapTooltipIn 0.12s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes treemapTooltipIn {
+  from { opacity: 0; transform: translateY(4px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Breadcrumb */
+.treemap-tooltip-breadcrumb {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.38);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+/* Header: logo + ticker + name */
+.treemap-tooltip-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.treemap-tooltip-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.treemap-tooltip-ticker {
+  font-family: var(--font-heading, 'Space Grotesk', sans-serif);
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: -0.01em;
+}
+
+.treemap-tooltip-name {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.50);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Price row */
+.treemap-tooltip-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.treemap-tooltip-price {
+  font-family: var(--font-mono, var(--font-mono));
+  font-size: 18px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: -0.02em;
+}
+
+.treemap-tooltip-change {
+  font-family: var(--font-mono, var(--font-mono));
+  font-size: 13px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+.treemap-tooltip-change.positive {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.12);
+}
+.treemap-tooltip-change.negative {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.12);
+}
+
+/* Stats: mcap + volume */
+.treemap-tooltip-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono, var(--font-mono));
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  margin-bottom: 10px;
+}
+.treemap-tooltip-stats-sep {
+  color: rgba(255, 255, 255, 0.15);
+}
+
+/* Description */
+.treemap-tooltip-desc {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 10px;
+}
+.treemap-tooltip-desc p {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 11px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+}
+
+/* Shimmer skeleton (no spinners — design law) */
+.treemap-tooltip-shimmer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.treemap-tooltip-shimmer-line {
+  height: 10px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: treemapShimmer 1.5s ease-in-out infinite;
+}
+.treemap-tooltip-shimmer-line.short {
+  width: 60%;
+}
+
+@keyframes treemapShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   DAY MODE
+   ═══════════════════════════════════════════════════════════════ */
+.treemap-container.day-mode {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.treemap-container.day-mode {
+  background: rgba(248, 249, 251, 0.9);
+}
+/* Solid finviz-style cells: crisp white gridlines + a whisper of top sheen,
+   NO white wash (the cells carry their own colour now). */
+.treemap-container.day-mode .treemap-cell {
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.treemap-container.day-mode .treemap-cell::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, transparent 18%);
+}
+/* Dark text on the TV-style fills (user-picked over white). */
+.treemap-container.day-mode .treemap-cell-symbol { color: rgba(11, 18, 32, 0.95); text-shadow: none; }
+.treemap-container.day-mode .treemap-cell-symbol--sm { color: rgba(11, 18, 32, 0.82); }
+.treemap-container.day-mode .treemap-cell-name { color: rgba(11, 18, 32, 0.6); }
+.treemap-container.day-mode .treemap-cell-price,
+.treemap-container.day-mode .treemap-cell-price--xl { color: rgba(11, 18, 32, 0.78); text-shadow: none; }
+.treemap-container.day-mode .treemap-cell-change { color: rgba(11, 18, 32, 0.88); text-shadow: none; }
+.treemap-container.day-mode .treemap-cell-change.positive { color: rgba(11, 18, 32, 0.88); }
+.treemap-container.day-mode .treemap-cell-change.negative { color: rgba(11, 18, 32, 0.88); }
+
+.treemap-container.day-mode .treemap-group-label {
+  color: rgba(0, 0, 0, 0.45);
+  text-shadow: none;
+}
+
+.treemap-container.day-mode .treemap-legend {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+.treemap-container.day-mode .treemap-legend-label {
+  color: rgba(0, 0, 0, 0.40);
+}
+
+.treemap-zoom-controls.day-mode {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+.treemap-zoom-controls.day-mode .treemap-zoom-btn {
+  color: rgba(0, 0, 0, 0.45);
+}
+.treemap-zoom-controls.day-mode .treemap-zoom-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.75);
+}
+.treemap-zoom-controls.day-mode .treemap-zoom-level {
+  color: rgba(0, 0, 0, 0.40);
+}
+.treemap-zoom-controls.day-mode .treemap-zoom-reset {
+  border-left-color: rgba(0, 0, 0, 0.08);
+}
+
+.treemap-zoom-hint.day-mode {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.treemap-tooltip.day-mode {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.97) 0%, rgba(248, 250, 252, 0.95) 100%);
+  border-color: rgba(0, 0, 0, 0.10);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.06);
+}
+.treemap-tooltip.day-mode .treemap-tooltip-breadcrumb {
+  color: rgba(0, 0, 0, 0.35);
+}
+.treemap-tooltip.day-mode .treemap-tooltip-ticker {
+  color: #0f172a;
+}
+.treemap-tooltip.day-mode .treemap-tooltip-name {
+  color: #64748b;
+}
+.treemap-tooltip.day-mode .treemap-tooltip-price {
+  color: #0f172a;
+}
+.treemap-tooltip.day-mode .treemap-tooltip-change.positive {
+  color: #059669;
+  background: rgba(5, 150, 105, 0.10);
+}
+.treemap-tooltip.day-mode .treemap-tooltip-change.negative {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.10);
+}
+.treemap-tooltip.day-mode .treemap-tooltip-stats {
+  color: rgba(0, 0, 0, 0.35);
+}
+.treemap-tooltip.day-mode .treemap-tooltip-stats-sep {
+  color: rgba(0, 0, 0, 0.12);
+}
+.treemap-tooltip.day-mode .treemap-tooltip-desc {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+.treemap-tooltip.day-mode .treemap-tooltip-desc p {
+  color: #475569;
+}
+.treemap-tooltip.day-mode .treemap-tooltip-shimmer-line {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.04) 0%,
+    rgba(0, 0, 0, 0.08) 50%,
+    rgba(0, 0, 0, 0.04) 100%
+  );
+  background-size: 200% 100%;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE — No zoom/pan, touch-friendly, proper scrolling
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Mobile container: disable zoom grab cursor, allow page scroll */
+.treemap-container--mobile {
+  cursor: default;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  min-height: auto;
+  /* Use aspect ratio for consistent proportions */
+  aspect-ratio: 1 / 1.1;
+  max-height: 70vh;
+}
+
+/* Mobile zoom layer: static, fills container */
+.treemap-container--mobile .treemap-zoom-layer {
+  position: relative;
+  width: 100% !important;
+  height: 100% !important;
+  transform: none !important;
+}
+
+/* Mobile cells: slightly larger touch targets */
+.treemap-container--mobile .treemap-cell {
+  min-width: 0;
+  min-height: 0;
+}
+
+@media (max-width: 768px) {
+  .treemap-container {
+    min-height: 350px;
+    border-radius: 12px;
+  }
+  .treemap-tooltip { display: none; }
+  .treemap-legend { display: none; }
+  .treemap-zoom-controls { display: none; }
+  .treemap-zoom-hint { display: none; }
+
+  /* Cell text adjustments for small tiles */
+  .treemap-cell-symbol--sm {
+    font-size: 8px;
+  }
+  .treemap-cell-change--sm {
+    font-size: 7px;
+  }
+  .treemap-cell-change--xs {
+    font-size: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .treemap-container {
+    min-height: 280px;
+    border-radius: 10px;
+  }
+  .treemap-container--mobile {
+    aspect-ratio: 1 / 1.15;
+    max-height: 65vh;
+  }
+  .treemap-cell-logo {
+    width: 18px;
+    height: 18px;
+  }
+  .treemap-cell-logo--xl {
+    width: 22px;
+    height: 22px;
+  }
+  .treemap-cell-symbol {
+    font-size: 10px;
+  }
+  .treemap-cell-symbol--xl {
+    font-size: 14px;
+  }
+  .treemap-cell-symbol--lg {
+    font-size: 12px;
+  }
+  .treemap-cell-symbol--sm {
+    font-size: 7px;
+  }
+  .treemap-cell-price {
+    font-size: 9px;
+  }
+  .treemap-cell-price--xl {
+    font-size: 12px;
+  }
+  .treemap-cell-change {
+    font-size: 10px;
+  }
+  .treemap-cell-change--xl {
+    font-size: 13px;
+  }
+  .treemap-cell-change--sm {
+    font-size: 6px;
+  }
+  .treemap-cell-change--xs {
+    font-size: 5px;
+  }
+  .treemap-cell-name {
+    font-size: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .treemap-zoom-hint {
+    animation: none !important;
+    opacity: 1;
+  }
+}

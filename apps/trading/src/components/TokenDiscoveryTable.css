@@ -1,0 +1,1762 @@
+/* =========================================
+   TokenDiscoveryTable - "The Deal Flow"
+   POPUP.FUND-grade data table. Deep black,
+   cinematic spacing, warm ambient hover,
+   institutional precision meets breathing room.
+   ========================================= */
+
+/* ── Section wrapper ── */
+.tdt-section {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  /* Allow the inner table to shrink without inflating the section. */
+  min-width: 0;
+  max-width: 100%;
+  /* Size container: the table mounts in very different boxes (full-width
+     Discover page, the TrendingHub column next to a ~340px social rail, the
+     research-app iframe). Viewport media queries can't see that - a 1400px
+     viewport can hand this table 850px - so the responsive tiers below are
+     @container queries on the table's own width. */
+  container: tdt / inline-size;
+}
+
+/* ── Section header - cinematic, centered, matches hero weight ── */
+.tdt-section-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.tdt-section-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.5vw, 2.5rem);
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.tdt-section-desc {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.70);
+  margin: 0;
+  max-width: 480px;
+  font-weight: 400;
+}
+
+
+/* ── Main container - deep glass with warm edge glow ── */
+/* The card renders FULL HEIGHT in normal page flow. It used to be its own
+   820px `overflow-y: auto` pane, which nested a second vertical scroller
+   inside the page: wheeling down the page got captured by the table until
+   its 30 rows drained, then jumped back out - the reported "weird scroll".
+   `overflow: visible` (not hidden) is required for the sticky toolbar: an
+   overflow:hidden box becomes the toolbar's scrollport and it would never
+   stick against the real scroller (page / embed root / .th-screener). */
+.tdt {
+  border-radius: var(--radius-xl, 24px);
+  overflow: visible;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.025) 0%,
+    rgba(255, 255, 255, 0.006) 100%
+  );
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.12),
+    0 20px 60px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tdt:hover {
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.12),
+    0 24px 72px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Card no longer clips children (overflow:visible) - round the row hover
+   wash at the bottom corners so it stays inside the card's radius. */
+.tdt-table .tdt-row:last-child {
+  border-bottom-left-radius: var(--radius-xl, 24px);
+  border-bottom-right-radius: var(--radius-xl, 24px);
+}
+
+
+/* =========================================
+   Toolbar - sticky, frosted glass
+   ========================================= */
+.tdt-toolbar {
+  position: sticky;
+  /* Standalone app: the page scrolls under a FIXED 68px header (z-100), so
+     the toolbar pins just below it. Embedded (research iframe) and the hub
+     screener have no fixed header above their scrollports - they reset to 0. */
+  top: var(--header-height, 68px);
+  z-index: 20;
+  background: rgba(9, 9, 11, 0.92);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 14px 24px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* Card overflow is visible - the toolbar rounds its own top corners. */
+  border-radius: var(--radius-xl, 24px) var(--radius-xl, 24px) 0 0;
+}
+
+/* Research-app iframe: no fixed header, the .app root is the scrollport. */
+.app-embedded .tdt-toolbar {
+  top: 0;
+}
+
+.tdt-toolbar-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  /* Without min-width:0 the flex children can't shrink, so the inner
+     `.tdt-categories { overflow-x: auto }` never gets to scroll - the
+     row just inflates and clips off the page edge. */
+  min-width: 0;
+  max-width: 100%;
+}
+
+.tdt-toolbar-row > * {
+  min-width: 0;
+}
+
+/* Tabs row scrolls horizontally inside the bounded toolbar. */
+.tdt-categories {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Right-side controls stay their natural size, don't shrink to zero. */
+.tdt-controls {
+  flex-shrink: 0;
+}
+
+.tdt-toolbar-row--chains {
+  padding-top: 0;
+}
+
+
+/* ── Category tabs - clean, understated active ── */
+.tdt-categories {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tdt-categories::-webkit-scrollbar { display: none; }
+
+.tdt-cat {
+  padding: 6px 14px;
+  border-radius: var(--radius-full, 9999px);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  background: none;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color 0.2s var(--ease-out),
+    background 0.2s var(--ease-out);
+}
+
+.tdt-cat:hover {
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.tdt-cat.is-active {
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.07);
+  font-weight: 600;
+}
+
+
+/* ── Controls group ── */
+.tdt-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+
+/* ── Timeframe pills ── */
+.tdt-timeframes {
+  display: flex;
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-sm, 8px);
+  padding: 2px;
+}
+
+.tdt-tf {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+
+.tdt-tf:hover {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.tdt-tf.is-active {
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+
+/* ── View toggle ── */
+.tdt-view-toggle {
+  display: flex;
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-sm, 8px);
+  padding: 2px;
+}
+
+.tdt-view-btn {
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s var(--ease-out);
+  justify-content: center;
+}
+
+.tdt-view-btn:hover {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.tdt-view-btn.is-active {
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+
+/* ── Compare button ── */
+.tdt-compare-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm, 8px);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+
+.tdt-compare-btn:hover {
+  color: rgba(255, 255, 255, 0.55);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.tdt-compare-btn.is-active {
+  color: #f5f5f7;
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Share on X button ── */
+.tdt-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm, 8px);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+.tdt-share-btn:hover {
+  color: rgba(255, 255, 255, 0.55);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.tdt-share-btn:active { transform: scale(0.95); }
+.tdt-share-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.tdt-share-btn.is-capturing {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.2);
+  animation: shareCapturePulse 1s ease-in-out infinite;
+}
+@keyframes shareCapturePulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.6; }
+}
+
+
+/* ── Chain filter pills ── */
+.chain-filter {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+  /* Must be shrinkable so its overflow-x:auto can engage inside the
+     flex toolbar row. Otherwise pills extend past the viewport. */
+  min-width: 0;
+  max-width: 100%;
+  flex: 1 1 auto;
+}
+
+.chain-filter::-webkit-scrollbar { display: none; }
+
+.chain-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full, 9999px);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  background: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s var(--ease-out);
+}
+
+.chain-pill:hover {
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.chain-pill.active {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+
+/* ── Chain dot + badge (shared) ── */
+.chain-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chain-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+
+/* =========================================
+   Table - List View
+   ========================================= */
+.tdt-table {
+  min-width: 100%;
+}
+
+
+/* ── Column header - understated, uppercase ── */
+.tdt-header {
+  display: grid;
+  /* The project column carries a hard floor: a bare `2.2fr` collapses toward
+     zero once the fixed columns eat the container (~1200-1300px wide), and the
+     symbol then painted OVER the price cell. minmax keeps it readable. */
+  grid-template-columns: 36px minmax(190px, 2.2fr) 110px 100px 88px 88px 88px 88px 100px 92px 100px 56px 80px;
+  align-items: center;
+  padding: 0 32px;
+  height: 48px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(9, 9, 11, 0.92);
+}
+
+.th {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.38);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.th-rank { text-align: center; }
+.th-project { padding-left: 4px; text-align: left; }
+.th-project.th-sortable { justify-content: flex-start; }
+.th-price,
+.th-change,
+.th-volume,
+.th-txns,
+.th-liquidity,
+.th-mcap,
+.th-age { text-align: center; }
+.th-sparkline { text-align: center; }
+
+/* Sortable column headers */
+.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  transition: color 0.2s ease;
+}
+.th-sortable:hover {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Sort arrow indicator */
+.th-sort-arrow {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-left: 2px;
+  border-left: 3.5px solid transparent;
+  border-right: 3.5px solid transparent;
+}
+.th-sort-arrow.desc {
+  border-top: 4px solid rgba(255, 255, 255, 0.5);
+}
+.th-sort-arrow.asc {
+  border-bottom: 4px solid rgba(255, 255, 255, 0.5);
+}
+
+body.theme-light .th-sortable:hover {
+  color: rgba(17, 17, 19, 0.55);
+}
+body.theme-light .th-sort-arrow.desc {
+  border-top-color: rgba(17, 17, 19, 0.45);
+}
+body.theme-light .th-sort-arrow.asc {
+  border-bottom-color: rgba(17, 17, 19, 0.45);
+}
+
+
+/* ── Data rows - taller, warmer hover, cinematic entrance ── */
+.tdt-row {
+  display: grid;
+  grid-template-columns: 36px minmax(190px, 2.2fr) 110px 100px 88px 88px 88px 88px 100px 92px 100px 56px 80px;
+  align-items: center;
+  padding: 0 32px;
+  height: 68px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.022);
+  cursor: pointer;
+  position: relative;
+  transition:
+    background 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: rowRevealIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Top Coins - fewer columns (no 5m, 4h, liquidity, age) + added 7d change */
+.tdt-top-coins .tdt-header,
+.tdt-top-coins .tdt-row {
+  grid-template-columns: 36px minmax(200px, 2.4fr) 110px 100px 80px 80px 80px 100px 80px;
+}
+
+/* Warm ambient hover - subtle warm-white glow, not cold */
+.tdt-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+  transform: translateY(-1px);
+  box-shadow:
+    0 2px 16px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(255, 255, 255, 0.025);
+}
+
+.tdt-row:active {
+  transform: translateY(0) scale(0.999);
+  transition-duration: 0.1s;
+}
+
+.tdt-row.is-selected {
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+@keyframes rowRevealIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+
+/* ── Row cells ── */
+.tdt-rank {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.3);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.tdt-project {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding-left: 6px;
+}
+
+.tdt-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.04);
+  /* Subtle ring around logo */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.tdt-logo-fallback {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.tdt-project-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 3px;
+}
+
+.tdt-symbol {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #f5f5f7;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  /* Must truncate, never paint over the price column when the project
+     track is squeezed on narrow containers. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.tdt-name {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.tdt-price {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #f5f5f7;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+
+/* ── Change cells - pill background for emphasis ── */
+.change-cell {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  padding: 5px 11px;
+  border-radius: 7px;
+  display: inline-flex;
+  justify-content: center;
+  justify-self: center;
+  width: fit-content;
+  line-height: 1;
+}
+
+.change-cell.bull {
+  color: var(--bull);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.change-cell.bear {
+  color: var(--bear);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.change-cell.neutral {
+  color: rgba(255, 255, 255, 0.60);
+  background: none;
+}
+
+.tdt-volume,
+.tdt-liquidity,
+.tdt-mcap {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.62);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* MCap tiers RELATIVE to the list average (computed per chain/tab):
+   low = blue, mid = pink, high = yellow. */
+.tdt-mcap--low  { color: #60A5FA; }                    /* blue   - low cap for this list */
+.tdt-mcap--mid  { color: #F472B6; font-weight: 500; }  /* pink   - around the average */
+.tdt-mcap--high { color: #FCD34D; font-weight: 600; }  /* yellow - well above the average */
+
+.tdt-age {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.55);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Txns cell - 24h count + buy/sell pressure bar ── */
+.tdt-txns {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.tdt-txns-count {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.62);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.tdt-txns-bar {
+  position: relative;
+  width: 44px;
+  height: 3px;
+  border-radius: 9999px;
+  /* Track = sell side (bear-muted). Buy fill overlays from the left. */
+  background: rgba(239, 68, 68, 0.35);
+  overflow: hidden;
+}
+
+.tdt-txns-bar-buy {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--bull);
+  border-radius: 9999px;
+}
+
+.tdt-sparkline {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mini-sparkline {
+  display: block;
+}
+
+
+/* ── Checkbox - overlays rank column, doesn't disrupt grid ── */
+.tdt-checkbox {
+  position: absolute;
+  left: 24px;
+  top: 0;
+  bottom: 0;
+  width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.tdt-checkbox input { display: none; }
+
+.tdt-check-mark {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.tdt-checkbox:hover .tdt-check-mark {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+  transform: scale(1.08);
+}
+
+.tdt-checkbox input:checked + .tdt-check-mark {
+  background: #f5f5f7;
+  border-color: #f5f5f7;
+  box-shadow: 0 0 8px rgba(245, 245, 247, 0.25);
+  transform: scale(1);
+}
+
+.tdt-checkbox input:checked + .tdt-check-mark::after {
+  content: '';
+  position: absolute;
+  top: 2.5px;
+  left: 5.5px;
+  width: 4.5px;
+  height: 9px;
+  border: solid #09090b;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  animation: checkPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes checkPop {
+  0% { opacity: 0; transform: rotate(45deg) scale(0.5); }
+  100% { opacity: 1; transform: rotate(45deg) scale(1); }
+}
+
+
+/* =========================================
+   Grid View - deep glass cards
+   ========================================= */
+.tdt-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 16px 24px 24px;
+}
+
+.tdt-card {
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.012) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.035);
+  border-radius: var(--radius-lg, 16px);
+  padding: 20px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition:
+    background 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: rowRevealIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Glass shine sweep on hover */
+.tdt-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.025) 40%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.025) 60%,
+    transparent 100%
+  );
+  pointer-events: none;
+  transform: translateX(-100%) skewX(-15deg);
+}
+
+.tdt-card:hover::after {
+  animation: glassShineSweep 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Warm hover - matches page ambient glow direction */
+.tdt-card:hover {
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.07);
+  transform: translateY(-4px);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.12),
+    0 16px 40px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.tdt-card:active {
+  transform: translateY(-1px) scale(0.99);
+  transition-duration: 0.1s;
+}
+
+.tdt-card.is-selected {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.tdt-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.tdt-card-rank-area {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.tdt-checkbox--card {
+  position: static;
+  width: auto;
+  left: auto;
+  top: auto;
+  bottom: auto;
+}
+
+.tdt-card-rank {
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.25);
+  min-width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+body.theme-light .tdt-card-rank {
+  color: rgba(17, 17, 19, 0.45);
+}
+
+.tdt-card-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tdt-card-names {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tdt-card-price {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.tdt-card-price .tdt-price {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.tdt-card-price .change-cell {
+  font-size: 0.8125rem;
+}
+
+.tdt-card-chart {
+  margin: 0 -6px 14px;
+  overflow: hidden;
+}
+
+.tdt-card-chart .mini-sparkline {
+  width: 100%;
+  height: auto;
+}
+
+.tdt-card-stats {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.025);
+}
+
+.tdt-card-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tdt-card-stat:nth-child(2) { align-items: center; }
+.tdt-card-stat:last-child  { align-items: flex-end; }
+
+.tdt-card-stat-label {
+  font-family: var(--font-body);
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.25);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tdt-card-stat-value {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+  font-variant-numeric: tabular-nums;
+}
+
+
+/* =========================================
+   Loading & Empty States
+   ========================================= */
+.tdt-loading {
+  padding: 0 24px;
+}
+
+.tdt-row-skeleton {
+  height: 56px;
+  margin-bottom: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.015) 0%,
+    rgba(255, 255, 255, 0.035) 50%,
+    rgba(255, 255, 255, 0.015) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: 6px;
+  animation: shimmer 2s linear infinite;
+}
+
+.tdt-card-skeleton {
+  height: 220px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.015) 0%,
+    rgba(255, 255, 255, 0.035) 50%,
+    rgba(255, 255, 255, 0.015) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--radius-lg, 16px);
+  animation: shimmer 2s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.tdt-empty {
+  padding: 80px 24px;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.6;
+}
+
+
+/* =========================================
+   Responsive
+   ========================================= */
+
+/* Narrow container (≤1320px - a 16" laptop viewport, or the hub column beside
+   the social rail) - keep ALL columns and tighten the numeric tracks instead
+   of hiding cells. The old ≤1200 media tier hid the 6h+age HEADERS while its
+   row selector (`.change-cell:nth-of-type(3)` - nth-of-type counts spans, not
+   the class) matched nothing, leaving 12 row cells in an 11-track grid: data
+   misaligned under the wrong headers and the sparkline wrapped. */
+@container tdt (max-width: 1320px) {
+  .tdt-header,
+  .tdt-row {
+    grid-template-columns: 36px minmax(160px, 2.2fr) 96px 88px 70px 70px 70px 70px 88px 76px 88px 48px 72px;
+    padding: 0 20px;
+  }
+  .change-cell {
+    padding: 5px 7px;
+  }
+  .tdt-top-coins .tdt-header,
+  .tdt-top-coins .tdt-row {
+    grid-template-columns: 36px minmax(180px, 2.4fr) 96px 88px 72px 72px 72px 88px 72px;
+  }
+}
+
+/* Tight container (≤1080px) - keep ALL columns and scroll the table
+   horizontally instead of hiding cells. Below this width even the tightened
+   tracks can't fit 13 columns, so the table pans. */
+@container tdt (max-width: 1080px) {
+  .tdt-table {
+    display: block;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+      }
+  .tdt-table::-webkit-scrollbar { height: 6px; }
+  .tdt-table::-webkit-scrollbar-track { background: transparent; }
+  .tdt-table::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 9999px;
+  }
+
+  .tdt-header,
+  .tdt-row {
+    grid-template-columns:
+      40px
+      minmax(180px, 2.2fr)
+      110px
+      100px
+      80px 80px 80px 80px
+      100px 88px 100px
+      60px
+      72px;
+    min-width: 1188px;
+  }
+
+  .tdt-top-coins .tdt-header,
+  .tdt-top-coins .tdt-row {
+    grid-template-columns:
+      40px
+      minmax(180px, 2.2fr)
+      110px
+      100px
+      80px 80px 80px
+      100px 100px
+      72px;
+    min-width: 1020px;
+  }
+}
+
+/* Tablet (768px and below) - keep the desktop row layout but allow
+   horizontal scroll so EVERY column stays accessible. We do NOT
+   hide columns here; the user explicitly wants the desktop layout
+   on mobile with horizontal pan. */
+@media (max-width: 768px) {
+  .tdt-section {
+    gap: 20px;
+  }
+
+  .tdt-section-title {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+  }
+
+  .tdt-section-desc {
+    font-size: 0.8125rem;
+    padding: 0 16px;
+  }
+
+  .tdt-toolbar {
+    padding: 10px 14px;
+  }
+
+  /* Stack toolbar rows vertically so each row (categories, timeframes,
+     chains) gets full toolbar width. Categories then h-scroll inside
+     their own row instead of being squeezed by sibling controls. */
+  .tdt-toolbar-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  /* Each direct child = its own row, full-width, can shrink for scroll. */
+  .tdt-toolbar-row > * {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    flex: 0 0 auto;
+  }
+
+  /* Categories: full width, scroll horizontally inside. */
+  .tdt-categories {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    gap: 4px;
+    padding-bottom: 2px;
+  }
+  .tdt-categories::-webkit-scrollbar { display: none; }
+
+  /* Each category pill keeps its natural size, never shrinks. */
+  .tdt-cat {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  /* Controls row (timeframes + Compare + Share): align left, allow wrap
+     so Compare/Share don't push timeframes off-screen. */
+  .tdt-controls {
+    display: flex;
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Chains row: hard-bound to toolbar width, then chain-filter scrolls
+     horizontally inside. Same pattern as .tdt-categories. */
+  .tdt-toolbar-row--chains {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .chain-filter {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 6px;
+    padding-bottom: 2px;
+  }
+  .chain-filter::-webkit-scrollbar { display: none; }
+
+  /* Each pill keeps natural width, never shrinks. */
+  .chain-pill {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  /* Only the table body scrolls horizontally - the toolbar above
+     stays at viewport width so categories/timeframes remain visible
+     while the user pans through columns. */
+  .tdt-table {
+    display: block;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+      }
+  .tdt-table::-webkit-scrollbar {
+    height: 6px;
+  }
+  .tdt-table::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .tdt-table::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 9999px;
+  }
+
+  /* Full desktop column set + EXPLICIT minmax() on the project column
+     so it never collapses to 0 when content is short. The min-width on
+     the row matches the actual column sum so the grid template lays out
+     identically to desktop, just clipped to the scrollable viewport. */
+  .tdt-header,
+  .tdt-row {
+    grid-template-columns:
+      40px
+      minmax(180px, 2.2fr)
+      110px
+      100px
+      80px 80px 80px 80px
+      100px 88px 100px
+      60px
+      72px;
+    padding: 0 16px;
+    min-width: 1188px;
+  }
+
+  .tdt-top-coins .tdt-header,
+  .tdt-top-coins .tdt-row {
+    grid-template-columns:
+      40px
+      minmax(180px, 2.2fr)
+      110px
+      100px
+      80px 80px 80px
+      100px 100px
+      72px;
+    padding: 0 16px;
+    min-width: 1020px;
+  }
+
+  /* Bring back every column that the 1024/1200 tiers hid. */
+  .th-mcap, .tdt-mcap,
+  .th-liquidity, .tdt-liquidity,
+  .th-age, .tdt-age {
+    display: block;
+  }
+  .th-sparkline { display: block; }
+  .tdt-sparkline { display: flex; }
+  .tdt-header .th:nth-child(7),
+  .tdt-row .change-cell:nth-of-type(3) {
+    display: block;
+  }
+
+  .tdt-row {
+    height: 56px;
+  }
+
+  .tdt-header {
+    height: 38px;
+  }
+
+  .tdt-logo,
+  .tdt-logo-fallback {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* Phone (640px and below) - SAME desktop list, horizontally scrollable.
+   No card-grid swap, no column hiding. Toolbar stays compact above it. */
+@media (max-width: 640px) {
+  /* Keep the toggle hidden (grid view UX is intentional desktop-only
+     for now) but DO render the table. */
+  .tdt-view-toggle { display: none; }
+
+  .tdt-toolbar {
+    top: 0px;
+  }
+
+  .chain-filter {
+    flex-wrap: nowrap;
+  }
+
+  .tdt-card {
+    padding: 16px;
+  }
+
+  .tdt-card-price .tdt-price {
+    font-size: 1.125rem;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .tdt-row,
+  .tdt-card,
+  .tdt-row-skeleton,
+  .tdt-card-skeleton {
+    animation: none !important;
+  }
+
+  .tdt-card::after {
+    display: none;
+  }
+}
+
+/* =========================================
+   Light Theme - TokenDiscoveryTable
+   ========================================= */
+
+/* Section header */
+body.theme-light .tdt-section-title {
+  color: #111113;
+}
+
+body.theme-light .tdt-section-desc {
+  color: rgba(17, 17, 19, 0.42);
+}
+
+/* Main container */
+body.theme-light .tdt {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(255, 255, 255, 0.88) 100%
+  );
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.04),
+    0 20px 60px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.60);
+}
+
+body.theme-light .tdt:hover {
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.05),
+    0 24px 72px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.70);
+}
+
+/* Scrollbar */
+body.theme-light .tdt::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+body.theme-light .tdt::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.14);
+}
+
+/* Toolbar */
+body.theme-light .tdt-toolbar {
+  background: rgba(245, 245, 247, 0.94);
+  border-bottom-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Category tabs */
+body.theme-light .tdt-cat {
+  color: rgba(17, 17, 19, 0.40);
+}
+
+body.theme-light .tdt-cat:hover {
+  color: rgba(17, 17, 19, 0.70);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .tdt-cat.is-active {
+  color: #111113;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Timeframe pills */
+body.theme-light .tdt-timeframes {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .tdt-tf {
+  color: rgba(17, 17, 19, 0.35);
+}
+
+body.theme-light .tdt-tf:hover {
+  color: rgba(17, 17, 19, 0.60);
+}
+
+body.theme-light .tdt-tf.is-active {
+  color: #111113;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* View toggle */
+body.theme-light .tdt-view-toggle {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .tdt-view-btn {
+  color: rgba(17, 17, 19, 0.35);
+}
+
+body.theme-light .tdt-view-btn:hover {
+  color: rgba(17, 17, 19, 0.60);
+}
+
+body.theme-light .tdt-view-btn.is-active {
+  color: #111113;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Compare button */
+body.theme-light .tdt-compare-btn {
+  color: rgba(17, 17, 19, 0.35);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .tdt-compare-btn:hover {
+  color: rgba(17, 17, 19, 0.60);
+  border-color: rgba(0, 0, 0, 0.10);
+}
+
+body.theme-light .tdt-compare-btn.is-active {
+  color: #111113;
+  border-color: rgba(0, 0, 0, 0.16);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Chain filter pills */
+body.theme-light .chain-pill {
+  color: rgba(17, 17, 19, 0.35);
+}
+
+body.theme-light .chain-pill:hover {
+  color: rgba(17, 17, 19, 0.60);
+  background: rgba(0, 0, 0, 0.025);
+}
+
+body.theme-light .chain-pill.active {
+  color: rgba(17, 17, 19, 0.85);
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .chain-badge {
+  color: rgba(17, 17, 19, 0.35);
+}
+
+/* Column header */
+body.theme-light .tdt-header {
+  border-bottom-color: rgba(0, 0, 0, 0.04);
+  background: rgba(245, 245, 247, 0.94);
+}
+
+body.theme-light .th {
+  color: rgba(17, 17, 19, 0.30);
+}
+
+/* Data rows */
+body.theme-light .tdt-row {
+  border-bottom-color: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .tdt-row:hover {
+  background: rgba(0, 0, 0, 0.02);
+  box-shadow:
+    0 2px 16px rgba(0, 0, 0, 0.03),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
+}
+
+body.theme-light .tdt-row.is-selected {
+  background: rgba(0, 0, 0, 0.03);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+/* Row cells */
+body.theme-light .tdt-rank {
+  color: rgba(17, 17, 19, 0.26);
+}
+
+body.theme-light .tdt-logo {
+  background: rgba(0, 0, 0, 0.03);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .tdt-logo-fallback {
+  color: rgba(17, 17, 19, 0.45);
+  background: rgba(0, 0, 0, 0.04);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .tdt-symbol {
+  color: #111113;
+}
+
+body.theme-light .tdt-name {
+  color: rgba(17, 17, 19, 0.36);
+}
+
+body.theme-light .tdt-price {
+  color: #111113;
+}
+
+/* Change cells - bull/bear stay, neutral inverts */
+body.theme-light .change-cell.bull {
+  background: rgba(16, 185, 129, 0.10);
+}
+
+body.theme-light .change-cell.bear {
+  background: rgba(239, 68, 68, 0.10);
+}
+
+body.theme-light .change-cell.neutral {
+  color: rgba(17, 17, 19, 0.24);
+}
+
+body.theme-light .tdt-volume,
+body.theme-light .tdt-liquidity,
+body.theme-light .tdt-mcap {
+  color: rgba(17, 17, 19, 0.50);
+}
+
+body.theme-light .tdt-age {
+  color: rgba(17, 17, 19, 0.45);
+}
+
+/* Checkbox */
+body.theme-light .tdt-check-mark {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.03);
+}
+body.theme-light .tdt-checkbox:hover .tdt-check-mark {
+  border-color: rgba(0, 0, 0, 0.22);
+  background: rgba(0, 0, 0, 0.05);
+}
+body.theme-light .tdt-checkbox input:checked + .tdt-check-mark {
+  background: #1d1d1f;
+  border-color: #1d1d1f;
+  box-shadow: 0 0 8px rgba(29, 29, 31, 0.2);
+}
+body.theme-light .tdt-checkbox input:checked + .tdt-check-mark::after {
+  border-color: #fff;
+}
+
+/* Grid cards */
+body.theme-light .tdt-card {
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(255, 255, 255, 0.88) 100%
+  );
+  border-color: rgba(0, 0, 0, 0.05);
+}
+
+body.theme-light .tdt-card::after {
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.01) 40%,
+    rgba(0, 0, 0, 0.02) 50%,
+    rgba(0, 0, 0, 0.01) 60%,
+    transparent 100%
+  );
+}
+
+body.theme-light .tdt-card:hover {
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0.94) 100%
+  );
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.04),
+    0 16px 40px rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .tdt-card.is-selected {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.10);
+}
+
+body.theme-light .tdt-card-stats {
+  border-top-color: rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .tdt-card-stat-label {
+  color: rgba(17, 17, 19, 0.30);
+}
+
+body.theme-light .tdt-card-stat-value {
+  color: rgba(17, 17, 19, 0.60);
+}
+
+/* Skeletons */
+body.theme-light .tdt-row-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.02) 0%,
+    rgba(0, 0, 0, 0.04) 50%,
+    rgba(0, 0, 0, 0.02) 100%
+  );
+  background-size: 200% 100%;
+}
+
+body.theme-light .tdt-card-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.02) 0%,
+    rgba(0, 0, 0, 0.04) 50%,
+    rgba(0, 0, 0, 0.02) 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* Empty state */
+body.theme-light .tdt-empty {
+  color: rgba(17, 17, 19, 0.36);
+}
+
+
+/* =========================================
+   Share Preview Modal
+   ========================================= */
+.share-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99990;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: shareOverlayIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes shareOverlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.share-modal {
+  position: relative;
+  width: 480px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  padding: 28px;
+  background: #111113;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03) inset;
+  animation: shareModalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes shareModalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); filter: blur(4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+}
+.share-modal-close {
+  position: absolute; top: 16px; right: 16px;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; border: none;
+  background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.35);
+  cursor: pointer; transition: all 0.15s ease;
+}
+.share-modal-close:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6); }
+.share-modal-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+.share-modal-x-icon { color: rgba(255,255,255,0.7); }
+.share-modal-title {
+  font-family: var(--font-display, 'Inter', sans-serif);
+  font-size: 1rem; font-weight: 600;
+  color: rgba(255,255,255,0.85); letter-spacing: -0.01em;
+}
+.share-modal-preview { width: 100%; border-radius: 10px; overflow: hidden; background: #09090b; margin-bottom: 16px; }
+.share-modal-image { display: block; width: 100%; height: auto; border-radius: 10px; }
+.share-modal-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 48px; }
+.share-modal-loading-text { font-family: var(--font-body, 'Inter', sans-serif); font-size: 0.8125rem; font-weight: 500; color: rgba(255,255,255,0.3); letter-spacing: 0.01em; }
+.share-modal-spinner {
+  width: 24px; height: 24px;
+  border: 2px solid rgba(255,255,255,0.08);
+  border-top-color: rgba(255,255,255,0.35);
+  border-radius: 50%;
+  animation: shareSpinnerSpin 0.7s linear infinite;
+}
+@keyframes shareSpinnerSpin { to { transform: rotate(360deg); } }
+.share-modal-textarea {
+  width: 100%; padding: 12px 14px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.85);
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.875rem; line-height: 1.5;
+  resize: vertical; min-height: 72px;
+  transition: border-color 0.15s ease; box-sizing: border-box;
+}
+.share-modal-textarea::placeholder { color: rgba(255,255,255,0.2); }
+.share-modal-textarea:focus { outline: none; border-color: rgba(245,158,11,0.3); }
+.share-modal-char-count {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem; color: rgba(255,255,255,0.2);
+  margin-top: 4px; margin-bottom: 16px;
+}
+.share-modal-label {
+  display: block;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.75rem; font-weight: 550;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 8px; letter-spacing: 0.01em;
+}
+.share-modal-char-count .is-warn { color: #f59e0b; }
+.share-modal-actions { display: flex; gap: 10px; }
+.share-modal-download, .share-modal-copy {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 16px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.55);
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.8125rem; font-weight: 550; cursor: pointer;
+  transition: all 0.15s ease;
+}
+.share-modal-download:hover, .share-modal-copy:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.75); border-color: rgba(255,255,255,0.10); }
+.share-modal-download:disabled, .share-modal-copy:disabled { opacity: 0.4; cursor: not-allowed; }
+.share-modal-copy.is-copied { color: #34d399; border-color: rgba(52,211,153,0.2); }
+.share-modal-post {
+  flex: 1.4; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 16px; border-radius: 10px; border: none;
+  background: #f5f5f7; color: #09090b;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.8125rem; font-weight: 600; cursor: pointer;
+  transition: all 0.15s ease;
+}
+.share-modal-post:hover { background: #ffffff; }
+.share-modal-post:active { transform: scale(0.97); }
+.share-modal-post:disabled { opacity: 0.4; cursor: not-allowed; }
+.share-modal-paste-hint {
+  margin-top: 12px; text-align: center;
+  font-size: 0.6875rem; color: rgba(255,255,255,0.18); line-height: 1.4;
+}
+
+/* ── Share light mode ── */
+body.theme-light .tdt-share-btn { color: rgba(17,17,19,0.35); border-color: rgba(0,0,0,0.06); }
+body.theme-light .tdt-share-btn:hover { color: rgba(17,17,19,0.60); border-color: rgba(0,0,0,0.10); }
+body.theme-light .tdt-share-btn.is-capturing { color: #d97706; border-color: rgba(217,119,6,0.2); }
+body.theme-light .share-modal-overlay { background: rgba(255,255,255,0.70); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+body.theme-light .share-modal { background: #f8f8fa; border-color: rgba(0,0,0,0.08); box-shadow: 0 24px 80px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.04) inset; }
+body.theme-light .share-modal-close { background: rgba(0,0,0,0.04); color: rgba(17,17,19,0.35); }
+body.theme-light .share-modal-close:hover { background: rgba(0,0,0,0.08); color: rgba(17,17,19,0.6); }
+body.theme-light .share-modal-x-icon { color: rgba(17,17,19,0.7); }
+body.theme-light .share-modal-title { color: rgba(17,17,19,0.85); }
+body.theme-light .share-modal-preview { background: #f0f0f2; }
+body.theme-light .share-modal-loading-text { color: rgba(17,17,19,0.35); }
+body.theme-light .share-modal-textarea { border-color: rgba(0,0,0,0.08); background: rgba(0,0,0,0.02); color: #111113; }
+body.theme-light .share-modal-textarea::placeholder { color: rgba(17,17,19,0.25); }
+body.theme-light .share-modal-textarea:focus { border-color: rgba(217,119,6,0.35); }
+body.theme-light .share-modal-char-count { color: rgba(17,17,19,0.25); }
+body.theme-light .share-modal-char-count .is-warn { color: #d97706; }
+body.theme-light .share-modal-label { color: rgba(17,17,19,0.50); }
+body.theme-light .share-modal-download, body.theme-light .share-modal-copy { border-color: rgba(0,0,0,0.08); background: rgba(0,0,0,0.03); color: rgba(17,17,19,0.55); }
+body.theme-light .share-modal-download:hover, body.theme-light .share-modal-copy:hover { background: rgba(0,0,0,0.06); color: rgba(17,17,19,0.75); }
+body.theme-light .share-modal-copy.is-copied { color: #059669; border-color: rgba(5,150,105,0.2); }
+body.theme-light .share-modal-post { background: #111113; color: #f5f5f7; }
+body.theme-light .share-modal-post:hover { background: #1a1a1e; }
+body.theme-light .share-modal-paste-hint { color: rgba(17,17,19,0.2); }

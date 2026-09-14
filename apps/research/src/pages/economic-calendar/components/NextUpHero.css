@@ -1,0 +1,598 @@
+/**
+ * NextUpHero — Dual-mode event banner styles.
+ * Countdown mode: gradient bg, multi-layered shadow, shine sweep.
+ * Results mode:   Breaking-news style with actual value highlight.
+ */
+
+/* ===================================================
+   Shared Base
+   =================================================== */
+
+.ec-next {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 12px 16px;
+  margin-bottom: var(--sp-2);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.04);
+  position: relative;
+  animation: ec-blur-entrance 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 40ms;
+}
+
+/* Shine sweep on hover */
+.ec-next::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.03) 45%, transparent 50%);
+  opacity: 0;
+  transition: opacity 300ms ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ec-next:hover::before {
+  opacity: 1;
+}
+
+.ec-next::-webkit-scrollbar {
+  display: none;
+}
+
+/* ===================================================
+   Countdown Mode (original)
+   =================================================== */
+
+.ec-next__label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%);
+  border: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+
+/* Day tag — TODAY / TOMORROW / weekday */
+.ec-next__day-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.ec-next__day-tag--imminent {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.08);
+  color: rgba(245,245,247,0.8);
+}
+
+.ec-next__flag {
+  /* Flag emojis (regional-indicator chars) fall back to bare "US"/"EU" text
+     on Windows/Linux — ensure the fallback is legible on dark bg. */
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  flex-shrink: 0;
+  color: rgba(245, 245, 247, 0.78);
+  letter-spacing: 0.02em;
+}
+
+.app.app-day-mode .ec-next__flag {
+  color: rgba(15, 23, 42, 0.75);
+}
+
+.ec-next__name {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.ec-next__sep {
+  color: var(--text-disabled);
+  font-size: 10px;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.ec-next__vals {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.ec-next__val-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+}
+
+.ec-next__val-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+}
+
+.ec-next__val-num {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.ec-next__val-box--fcst {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.ec-next__val-box--fcst .ec-next__val-num {
+  color: #f5f5f7;
+}
+
+.ec-next__status {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.ec-next__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--bear);
+  letter-spacing: 0.06em;
+}
+
+.ec-next__live-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--bear);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+  animation: ec-next-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes ec-next-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.ec-next__released {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Urgent — name turns red */
+.ec-next--urgent .ec-next__name {
+  color: var(--bear);
+}
+
+/* Live — subtle red glow */
+.ec-next--live {
+  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.06), 0 4px 12px rgba(0,0,0,0.10), inset 0 1px 0 rgba(239, 68, 68, 0.03);
+}
+
+/* ===================================================
+   Results Mode
+   =================================================== */
+
+.ec-next--results {
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.025) 100%);
+  border-color: rgba(255,255,255,0.06);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.ec-next__results-left {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-shrink: 0;
+}
+
+.ec-next__results-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--bear);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.12);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.ec-next__results-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--bear);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+  animation: ec-next-pulse 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+/* Center: actual + comparison + beat/miss */
+.ec-next__results-center {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ec-next__actual-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+}
+
+.ec-next__actual-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+}
+
+.ec-next__actual-num {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.ec-next__actual-num--beat {
+  color: var(--bull);
+}
+
+.ec-next__actual-num--miss {
+  color: var(--bear);
+}
+
+.ec-next__results-compare {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Beat / Miss badge */
+.ec-next__beat-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.ec-next__beat-badge--beat {
+  color: var(--bull);
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+}
+
+.ec-next__beat-badge--miss {
+  color: var(--bear);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+.ec-next__beat-badge--inline {
+  color: var(--text-tertiary);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+/* Right: brief + history nav */
+.ec-next__results-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+  min-width: 0;
+}
+
+.ec-next__brief {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 450;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-width: 360px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ec-next__brief-shimmer {
+  display: block;
+  width: 240px;
+  height: 28px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 0%,
+    rgba(255,255,255,0.08) 40%,
+    rgba(255,255,255,0.04) 80%
+  );
+  background-size: 200% 100%;
+  animation: ec-next-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes ec-next-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* History navigation arrows */
+.ec-next__history-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ec-next__history-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.03);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 150ms ease;
+  padding: 0;
+}
+
+.ec-next__history-btn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.1);
+  color: var(--text-primary);
+}
+
+.ec-next__history-btn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.ec-next__history-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 28px;
+  text-align: center;
+}
+
+/* ===================================================
+   Day Mode — Countdown
+   =================================================== */
+.app-day-mode .ec-next {
+  background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.88) 100%);
+  border-color: rgba(0,0,0,0.06);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.app-day-mode .ec-next__label {
+  color: #64748b;
+  background: linear-gradient(180deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.015) 100%);
+  border-color: rgba(0,0,0,0.06);
+}
+
+.app-day-mode .ec-next__day-tag {
+  background: rgba(0,0,0,0.03);
+  border-color: rgba(0,0,0,0.06);
+  color: #64748b;
+}
+
+.app-day-mode .ec-next__day-tag--imminent {
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.06);
+  color: #334155;
+}
+
+.app-day-mode .ec-next__name {
+  color: #0f172a;
+}
+
+.app-day-mode .ec-next__val-box {
+  background: linear-gradient(180deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.015) 100%);
+  border-color: rgba(0,0,0,0.06);
+}
+
+.app-day-mode .ec-next__val-label {
+  color: #94a3b8;
+}
+
+.app-day-mode .ec-next__val-num {
+  color: #334155;
+}
+
+.app-day-mode .ec-next__val-box--fcst {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.03) 0%, rgba(0, 0, 0, 0.01) 100%);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.app-day-mode .ec-next__val-box--fcst .ec-next__val-num {
+  color: #0f172a;
+}
+
+.app-day-mode .ec-next__sep {
+  color: #cbd5e1;
+}
+
+.app-day-mode .ec-next__released {
+  color: #64748b;
+}
+
+/* ===================================================
+   Day Mode — Results
+   =================================================== */
+.app-day-mode .ec-next--results {
+  background: linear-gradient(180deg, rgba(255,255,255,0.97) 0%, rgba(255,255,255,0.92) 100%);
+  border-color: rgba(0,0,0,0.08);
+}
+
+.app-day-mode .ec-next__results-label {
+  color: var(--bear);
+  background: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.1);
+}
+
+.app-day-mode .ec-next__actual-box {
+  background: linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.02) 100%);
+  border-color: rgba(0,0,0,0.08);
+}
+
+.app-day-mode .ec-next__actual-num {
+  color: #0f172a;
+}
+
+.app-day-mode .ec-next__brief {
+  color: #475569;
+}
+
+.app-day-mode .ec-next__brief-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(0,0,0,0.04) 0%,
+    rgba(0,0,0,0.08) 40%,
+    rgba(0,0,0,0.04) 80%
+  );
+  background-size: 200% 100%;
+}
+
+.app-day-mode .ec-next__history-btn {
+  background: rgba(0,0,0,0.02);
+  border-color: rgba(0,0,0,0.08);
+  color: #64748b;
+}
+
+.app-day-mode .ec-next__history-btn:hover:not(:disabled) {
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.12);
+  color: #334155;
+}
+
+.app-day-mode .ec-next__history-count {
+  color: #94a3b8;
+}
+
+.app-day-mode .ec-next__beat-badge--beat {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.12);
+}
+
+.app-day-mode .ec-next__beat-badge--miss {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.12);
+}
+
+.app-day-mode .ec-next__beat-badge--inline {
+  background: rgba(0,0,0,0.03);
+  border-color: rgba(0,0,0,0.06);
+  color: #64748b;
+}
+
+/* ===================================================
+   Responsive
+   =================================================== */
+@media (max-width: 900px) {
+  .ec-next--results {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .ec-next__results-right {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .ec-next__brief {
+    max-width: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .ec-next {
+    border-radius: 12px;
+    padding: 10px 12px;
+  }
+
+  .ec-next--countdown .ec-next__vals {
+    display: none;
+  }
+
+  .ec-next--countdown .ec-next__sep {
+    display: none;
+  }
+
+  .ec-next--results {
+    padding: 12px;
+  }
+
+  .ec-next__brief {
+    font-size: 11px;
+    -webkit-line-clamp: 3;
+  }
+}

@@ -1,0 +1,200 @@
+/* ============================================
+   MobileTokenPage — single-column phone layout.
+   Prefix: mtp-
+
+   Sections stack with no gap; each owns its own
+   padding + 1px hairline separator. Visual flow:
+   global Header → hero → chart → tabs → info →
+   sticky bottom nav.
+   ============================================ */
+
+.mtp {
+  /* AuroraField is fixed position with z-index:0 inside .app. Give the
+     page its own stacking context above the aurora. Block layout (NOT
+     flex column) so each section keeps its intrinsic height — the
+     flex column was crushing the price hero to ~34px to fit the
+     viewport-pinned .app wrapper. */
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  background: var(--ob-surface-1);
+  /* Clear the fixed global Header (8px outer + 52px bar + breathing
+     room) plus the device safe-area inset. */
+  padding-top: calc(env(safe-area-inset-top, 0px) + 68px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-sizing: border-box;
+  overflow-x: clip;
+}
+
+/* Bottom-dock spacer — reserves scroll room for the two stacked fixed bars
+   (Buy/Sell + view-nav) so the last content row isn't covered. */
+.mtp-dock-spacer {
+  height: calc(var(--mtp-dock-h, 109px) + env(safe-area-inset-bottom, 0px));
+}
+
+/* Embedded (iframe inside the research /trade page): the research shell owns
+   the fixed header + top safe-area, and the trading app's own fixed Header is
+   unmounted - so the 68px header reserve was a dead strip above the banner
+   (iOS resolves env(safe-area-inset-*) inside iframes with the TOP-LEVEL
+   page's values). The BOTTOM inset stays: since 2026-07-17 the iframe runs
+   full-bleed to the screen edge (research hides its mobile bottom nav here),
+   so the propagated bottom inset is exactly right. */
+.app-embedded .mtp {
+  padding-top: 8px;
+}
+
+/* Inline view containers (Info, Social). Chart + data tabs render as their
+   own full-width sections without a wrapper. */
+.mtp-view {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+}
+
+/* Social view = the X project feed (LeftPanel mobileSection="social").
+   The feed sizing used to be borrowed from the Markets drawer's `.mwd-body`
+   rules; the drawer now renders the mobile board instead of LeftPanel, so the
+   feed owns these outright. Everything below strips the panel's desktop frame
+   and sizes the posts for a phone. */
+.mtp-view--social {
+  padding: 4px 12px 8px;
+}
+.mtp-view--social :where(.left-panel, .left-panel-content) {
+  position: static !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+/* The desktop feed uses a fixed calc(100vh - …) height with its own inner
+   scroll; on mobile it must grow with content and ride the page scroll. */
+.mtp-view--social .main-feed {
+  height: auto !important;
+  overflow: visible !important;
+}
+.mtp-view--social .tweets-feed {
+  overflow: visible !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+}
+.mtp-view--social .filter-row {
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+}
+.mtp-view--social .filter-row::-webkit-scrollbar { display: none !important; }
+
+/* Post body — the reading surface of this view, so it gets real size. */
+.mtp-view--social .tweet-text {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+  letter-spacing: -0.003em;
+  color: var(--text-1, rgba(245, 245, 247, 0.92)) !important;
+}
+.mtp-view--social .parent-tweet-text {
+  font-size: 14.5px !important;
+  line-height: 1.45 !important;
+}
+.mtp-view--social .tweet-user { font-size: 14px !important; }
+.mtp-view--social .tweet-handle { font-size: 12px !important; }
+/* Reply box: 16px floor. Under it iOS Safari zooms the page the moment the
+   field takes focus and leaves the view cropped. */
+.mtp-view--social .reply-textarea { font-size: 16px !important; }
+/* the timestamp is metadata — keep it small so the name keeps the row */
+.mtp-view--social .tweet-time { font-size: 11px !important; }
+/* At this size a long handle ran straight into the timestamp: let the handle
+   ellipsis and push the time to its own end of the header row. */
+/* The display name stays whole; the handle is the one that gives way. */
+.mtp-view--social .tweet-user { flex: 0 0 auto !important; }
+.mtp-view--social .tweet-handle {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+.mtp-view--social .tweet-time { padding-left: 10px !important; }
+/* Cap media so a single post doesn't eat the whole screen. */
+.mtp-view--social .tweet-media-wrap {
+  max-height: 260px !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+.mtp-view--social .tweet-media-wrap img {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 260px !important;
+  object-fit: cover !important;
+}
+/* Engagement counts legible instead of grey-on-grey (leave active states). */
+.mtp-view--social .tweet-actions .action-btn:not(.active) {
+  color: var(--text-2, rgba(245, 245, 247, 0.6)) !important;
+}
+.mtp-view--social .tweet-actions .action-btn span { font-size: 13px !important; }
+body.theme-light .mtp-view--social .tweet-text { color: rgba(15, 23, 42, 0.92) !important; }
+/* Bigger X-feed sub-tabs (Project Posts / Replies / Community / KOLs / All)
+   in the Social view — a touch larger than the base 13px for easier reading
+   and tapping. */
+.mtp-view--social .filter-chip {
+  font-size: 0.9375rem !important;
+  padding-top: 11px !important;
+  padding-bottom: 11px !important;
+}
+.mtp-view-loading {
+  height: 240px;
+  border-radius: 12px;
+  margin: 8px 0;
+  background: var(--glass-fill, rgba(255, 255, 255, 0.04));
+}
+
+/* Chart-only view: the chart fills the viewport instead of its default capped
+   height (which leaves empty space above the trade dock in this single-purpose
+   view). Override the `height` property directly — not the --mcc-chart-h var —
+   so it also wins over the user's saved drag-height, which is applied inline.
+   --mcc-chart-fit is the MEASURED gap between the chart's top and the
+   Buy/Sell dock (set by MobileChartCard while this view is active). The
+   calc() below is the fallback for the frame before that lands: it guesses
+   the chrome, and the guess ran long on notched phones - the time axis and
+   volume rail ended up behind the dock. */
+.mtp[data-view="chart"] .mcc .trading-chart {
+  height: var(--mcc-chart-fit, max(380px, calc(100dvh - 315px))) !important;
+}
+
+/* Chart+Txns view: GMGN-style split — the chart collapses so the txns tape
+   is on-screen the moment the tab is tapped (no scroll hunt). The collapse is
+   the DEFAULT, not a ceiling: --mcc-chart-h-split is written only by a drag
+   made in this view, so it overrides the collapse and the chart can be grown
+   past it (dragging used to stop dead at the cap). --mcc-chart-h stays the
+   chart-only/global height so the two views keep their own sizes.
+   The outer min() keeps ~260px below the chart (resize bar + txn tab strip +
+   a row + the trade dock) so the tape can never be dragged fully off-screen.
+   Budget above the chart: header + hero + topbar (~225).
+   The chart's own `transition: height 0.4s ease-out` animates the
+   collapse/expand when switching between Chart and Chart+Txns. */
+.mtp[data-view="chart-txns"] .mcc .trading-chart {
+  height: min(
+    var(--mcc-chart-h-split, min(var(--mcc-chart-h, 560px), max(300px, calc(100dvh - 500px)))),
+    max(300px, calc(100dvh - 260px))
+  ) !important;
+}
+
+/* Flow sections stack full-width. The floating overlays (.msr side rail,
+   .sagent-fab agent launcher) are fixed, not column children — exclude them
+   so they keep their intrinsic size instead of stretching to viewport width. */
+.mtp > *:not(.msr):not(.sagent-fab):not(.mstt) {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Dossier + vitals moved to the ⓘ Token Info sheet (MobileInfoBody). */
+
+/* ── Day mode ────────────────────────────── */
+body.theme-light .mtp {
+  background: #ffffff;
+}

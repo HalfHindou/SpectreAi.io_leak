@@ -1,0 +1,1052 @@
+/**
+ * MobileSearchOverlay — Fullscreen search experience
+ *
+ * CSS VALUES SOURCE MAP:
+ * - bg: var(--bg-base) #09090b (index.css)
+ * - Input bar: header.css .search-input-bar (bg 0.03, border 0.05, radius 9999px)
+ * - Input text: header.css .search-input-v2 (1rem, weight 500, color #f5f5f7)
+ * - Placeholder: header.css .search-input-v2::placeholder (color 0.35, weight 400)
+ * - Back btn: navigation-sidebar.css .navigation-sidebar-link (radius 10px, border transparent)
+ * - Section label: navigation-sidebar.css .nav-category-header (10px/600, 0.10em, uppercase)
+ * - Divider: side-drawer.css .side-drawer-divider (gradient 90deg, 0.04 center)
+ * - Token row: header.css .token-card-v2 (gap 12px, bg 0.015, border 0.03, radius 14px)
+ * - Token logo: header.css .token-logo-v2 (40px→32px mobile, radius 10px, border 0.08)
+ * - Token symbol: header.css .token-symbol-v2 (0.9375rem, weight 650, color 0.92)
+ * - Token name: header.css .token-name-v2 (0.8125rem, weight 450, color 0.6)
+ * - Clear btn: header.css .clear-btn-v2 (10px/600)
+ */
+
+/* ══════════════════════════════════════════════════════════
+   ROOT — fullscreen overlay, z-400
+   ══════════════════════════════════════════════════════════ */
+.mobile-search-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999993;
+  /* From index.css --bg-base */
+  background: var(--bg-base, #09090b);
+  display: flex;
+  flex-direction: column;
+  transform: translateY(-100%);
+  opacity: 0;
+  /* Same ease as sidebar: cubic-bezier(0.16, 1, 0.3, 1) */
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.mobile-search-overlay.is-open {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 🪤 A full-screen search panel must never be see-through, and `--bg-base` is
+   NOT a safe way to say "opaque". Under a PRO theme that token is deliberately
+   thinned to ~0.3 alpha so the backdrop reads through page chrome — correct for
+   a page, fatal for an overlay: the whole app showed through the search panel
+   (founder, 08-03). pro-theme-studio.css states the rule for exactly this case
+   ("overlays/menus stay near-opaque — legibility law") and parks it on
+   `--bg-overlay`; this surface just wasn't reading that token.
+
+   Frosted rather than flat so a themed user still sees their backdrop behind
+   the search, the way every other themed overlay behaves. */
+.app.pro-glass .mobile-search-overlay,
+.app.pro-paper .mobile-search-overlay {
+  background: var(--bg-overlay, #09090b);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+}
+
+/* ══════════════════════════════════════════════════════════
+   HEADER BAR — back + search input
+   From header.css .search-input-bar
+   ══════════════════════════════════════════════════════════ */
+.mso-header {
+  display: flex;
+  align-items: center;
+  /* Same gap as .search-input-bar: 12px */
+  gap: 10px;
+  padding: 8px 12px;
+  /* Safe area for notch */
+  padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
+  flex-shrink: 0;
+  /* From header.css divider between search bar and results */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* ── Back button — From navigation-sidebar-link:
+   radius 10px, border transparent, color 0.62 ── */
+.mso-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  /* Override global touch-min (app-store-ready.css) */
+  min-width: 0 !important;
+  min-height: 0 !important;
+  /* navigation-sidebar-link values */
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.62);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+  padding: 0;
+}
+
+/* navigation-sidebar-link:hover */
+.mso-back:active {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.mso-back svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.5;
+}
+
+/* ── Input wrap — From header.css .search-input-bar ── */
+.mso-input-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  /* From .search-input-bar: padding 12px 14px, bg 0.03, border 0.05, radius 9999px */
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(245, 245, 247, 0.05);
+  border-radius: 9999px;
+  padding: 0 6px 0 14px;
+  gap: 10px;
+  overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* From .search-input-bar:focus-within */
+.mso-input-wrap:focus-within {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(245, 245, 247, 0.07);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 0 3px rgba(245, 245, 247, 0.06);
+}
+
+/* Search icon — from header.css .search-input-icon */
+.mso-search-icon {
+  display: flex;
+  align-items: center;
+  color: rgba(245, 245, 247, 0.35);
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+.mso-input-wrap:focus-within .mso-search-icon {
+  color: rgba(245, 245, 247, 0.6);
+}
+
+.mso-search-icon svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.5;
+}
+
+/* Input — from header.css .search-input-v2 */
+.mso-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  background: none;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  /* From .search-input-v2: 1rem, weight 500, color #f5f5f7 */
+  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif);
+  font-size: 16px; /* 1rem — also prevents iOS zoom */
+  font-weight: 500;
+  color: #f5f5f7;
+  height: 44px;
+  padding: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Ellipsis when input has a long value and parent is tight */
+.mso-input::placeholder {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* From .search-input-v2::placeholder */
+.mso-input::placeholder {
+  color: rgba(245, 245, 247, 0.35);
+  font-weight: 400;
+}
+
+.mso-input:focus::placeholder {
+  opacity: 0.6;
+}
+
+/* Clear button — small circle */
+.mso-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+  color: rgba(245, 245, 247, 0.4);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.mso-clear:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mso-clear svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   INPUT ACTIONS — right side: whisper · clear · close
+   Mirrors desktop .search-input-actions (header.css L1993)
+   ══════════════════════════════════════════════════════════ */
+.mso-input-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-right: 2px;
+}
+
+/* Chip button base — smaller so chips don't hug the pill border.
+   !important overrides the global touch-min (44px) rule in app-store-ready.css
+   for these inline pill chips specifically. */
+.mso-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(245, 245, 247, 0.03);
+  border-radius: 7px;
+  color: rgba(245, 245, 247, 0.65);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition:
+    background 150ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 150ms cubic-bezier(0.16, 1, 0.3, 1),
+    color 150ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mso-action-btn svg {
+  width: 12px;
+  height: 12px;
+}
+
+.mso-whisper-toggle svg {
+  width: 12px;
+  height: 12px;
+}
+
+.mso-close-btn svg {
+  width: 11px;
+  height: 11px;
+}
+
+.mso-action-btn svg {
+  display: block;
+}
+
+.mso-action-btn:active {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(245, 245, 247, 0.06);
+  color: #f5f5f7;
+  transform: scale(0.95);
+}
+
+/* Whisper AI toggle (star) — same chip frame, accent when active */
+.mso-whisper-toggle.active {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Inline clear-query chip */
+.mso-clear-input {
+  color: rgba(245, 245, 247, 0.55);
+}
+
+/* Close button — slightly brighter X for visibility */
+.mso-close-btn {
+  color: rgba(245, 245, 247, 0.75);
+}
+
+/* Whisper glow on input bar when active */
+.mso-input-wrap.mso-whisper-glow {
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 0 3px rgba(255, 255, 255, 0.06);
+}
+
+.mso-search-icon.mso-search-icon-whisper {
+  color: var(--text-primary);
+}
+
+/* Whisper badges (AI + asset pill) */
+.mso-whisper-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.mso-whisper-ai-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  border-radius: 6px;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.mso-whisper-asset-pill {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.mso-whisper-asset-pill.crypto {
+  color: rgba(245, 245, 247, 0.75);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mso-whisper-asset-pill.stocks {
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+/* Whisper results wrap */
+.mso-whisper-wrap {
+  padding: 8px 10px 16px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   BODY — scrollable content area
+   ══════════════════════════════════════════════════════════ */
+.mso-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+}
+
+/* Scrollbar — matches sidebar: 4px */
+.mso-body::-webkit-scrollbar { width: 4px; }
+.mso-body::-webkit-scrollbar-track { background: transparent; }
+.mso-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 9999px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   SECTION HEADER — label + clear button
+   From navigation-sidebar.css .nav-category-header
+   ══════════════════════════════════════════════════════════ */
+.mso-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* From header.css .search-section-header: padding 16px 20px 10px */
+  padding: 16px 16px 8px;
+}
+
+/* Category label — exact: 10px/600, 0.10em, uppercase */
+.mso-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Clear button — from header.css .clear-btn-v2 */
+.mso-clear-btn {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+
+.mso-clear-btn:active {
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ══════════════════════════════════════════════════════════
+   DIVIDER — From side-drawer.css .side-drawer-divider
+   ══════════════════════════════════════════════════════════ */
+.mso-divider {
+  height: 1px;
+  margin: 4px 16px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255, 255, 255, 0.04) 30%,
+    rgba(255, 255, 255, 0.04) 70%,
+    transparent);
+}
+
+/* ══════════════════════════════════════════════════════════
+   TOKEN LIST — rows
+   ══════════════════════════════════════════════════════════ */
+.mso-token-list {
+  padding: 4px 10px;
+}
+
+/* ── Token row — From header.css .token-card-v2:
+   gap 12px, bg 0.015, border 0.03, radius 14px ── */
+.mso-token-row {
+  display: flex;
+  align-items: center;
+  /* Exact .token-card-v2 gap */
+  gap: 12px;
+  width: 100%;
+  /* Simplified padding (no left strip on mobile) */
+  padding: 10px 12px;
+  margin: 2px 0;
+  /* From .token-card-v2 */
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(245, 245, 247, 0.03);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  text-align: left;
+  /* Same transition as .token-card-v2 */
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Staggered fade-in animation */
+  animation: msoRowFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes msoRowFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* From .token-card-v2:hover — adapted to :active for mobile */
+.mso-token-row:active {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(245, 245, 247, 0.05);
+  transform: scale(0.98);
+}
+
+/* ── Token logo — From header.css .token-logo-v2:
+   40px, radius 10px, border 0.08 ── */
+.mso-token-logo {
+  width: 40px;
+  height: 40px;
+  /* From .token-logo-v2 */
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: rgba(18, 18, 22, 1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.mso-token-logo-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* From .token-logo-v2 bg */
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 15px;
+  font-weight: 600;
+  color: #f5f5f7;
+}
+
+/* ── Token info ── */
+.mso-token-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* From header.css .token-symbol-v2: 0.9375rem, weight 650, color 0.92 */
+.mso-token-symbol {
+  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.92);
+  letter-spacing: -0.01em;
+  /* A hostile ticker must never reflow the row. The mapper caps the string,
+     this keeps ANY long symbol on one line and lets it shrink beside the
+     chain badge instead of pushing through the price column. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* From header.css .token-name-v2: 0.8125rem, weight 450, color 0.6 */
+.mso-token-name {
+  font-size: 12px;
+  font-weight: 450;
+  color: rgba(245, 245, 247, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Info row — symbol + network inline ── */
+.mso-token-info-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  /* Without this the flex item refuses to shrink below its content width and
+     the symbol's ellipsis never engages. */
+  min-width: 0;
+}
+
+/* ── Stats column — price + change + mcap, right-aligned ── */
+.mso-token-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.mso-token-price {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.92);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.mso-token-change {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.mso-token-change.positive {
+  color: var(--bull, #10B981);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.mso-token-change.negative {
+  color: var(--bear, #EF4444);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.mso-token-change svg {
+  flex-shrink: 0;
+}
+
+.mso-token-meta {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.4);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.mso-meta-sep {
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.2);
+}
+
+.mso-price-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.mso-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+}
+
+.mso-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+/* ── Contract address pill — from header.css .token-address-v2 ── */
+.mso-token-address {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 2px 6px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.45);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(245, 245, 247, 0.04);
+  border-radius: 6px;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s ease;
+}
+
+.mso-token-address::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(245, 245, 247, 0.35);
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.mso-token-address:active {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.7);
+}
+
+.mso-token-address-static {
+  cursor: default;
+}
+
+.mso-token-address-static::before {
+  display: none;
+}
+
+/* ── Network badge — From header.css .token-network-badge ── */
+.mso-token-network {
+  /* From .token-network-badge */
+  font-size: 9px;
+  font-weight: 600;
+  padding: 3px 7px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(245, 245, 247, 0.03);
+  border-radius: var(--radius-sm);
+  color: rgba(245, 245, 247, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════════
+   EMPTY STATE
+   ══════════════════════════════════════════════════════════ */
+.mso-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 56px 24px;
+  text-align: center;
+}
+
+.mso-empty-icon {
+  color: rgba(245, 245, 247, 0.2);
+}
+
+.mso-empty-icon svg {
+  width: 28px;
+  height: 28px;
+  stroke-width: 1.5;
+}
+
+.mso-empty-text {
+  /* From navigation-sidebar link text: 13px/450, 0.005em */
+  font-size: 13px;
+  font-weight: 450;
+  color: rgba(245, 245, 247, 0.35);
+  margin: 0;
+  line-height: 1.5;
+  letter-spacing: 0.005em;
+}
+
+/* ══════════════════════════════════════════════════════════
+   SHIMMER LOADING — skeleton loaders, not spinners
+   ══════════════════════════════════════════════════════════ */
+.mso-shimmer-list {
+  padding: 8px 10px;
+}
+
+.mso-shimmer-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin: 2px 0;
+}
+
+.mso-shimmer-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.mso-shimmer-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mso-shimmer-line-short {
+  width: 50px;
+  height: 12px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.mso-shimmer-line-long {
+  width: 100px;
+  height: 10px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.mso-shimmer-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.mso-shimmer-price {
+  width: 60px;
+  height: 12px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.mso-shimmer-change {
+  width: 42px;
+  height: 10px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Shimmer animation — from design-system */
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Composite-only opacity pulse — see PERF_PLAN_P3.md. */
+@keyframes shimmer {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   DAY MODE — From navigation-sidebar.css + header.css day values
+   ══════════════════════════════════════════════════════════ */
+.app.app-day-mode .mobile-search-overlay {
+  background: #ffffff;
+}
+
+/* Day: header */
+.app.app-day-mode .mso-header {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+/* Day: back button */
+.app.app-day-mode .mso-back {
+  color: #64748b;
+}
+
+.app.app-day-mode .mso-back:active {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: #0f172a;
+}
+
+/* Day: input wrap */
+.app.app-day-mode .mso-input-wrap {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.app.app-day-mode .mso-input-wrap:focus-within {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(0, 0, 0, 0.02),
+    0 0 0 3px rgba(0, 0, 0, 0.04);
+}
+
+.app.app-day-mode .mso-search-icon {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.app.app-day-mode .mso-input {
+  color: #0f172a;
+}
+
+.app.app-day-mode .mso-input::placeholder {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.app.app-day-mode .mso-clear {
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.4);
+}
+
+/* Day: input action buttons */
+.app.app-day-mode .mso-action-btn {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.app.app-day-mode .mso-action-btn:active {
+  background: rgba(0, 0, 0, 0.06);
+  color: #0f172a;
+}
+
+.app.app-day-mode .mso-whisper-toggle.active {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.06);
+  box-shadow: none;
+}
+
+.app.app-day-mode .mso-input-wrap.mso-whisper-glow {
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(0, 0, 0, 0.02),
+    0 0 0 3px rgba(15, 23, 42, 0.06);
+}
+
+.app.app-day-mode .mso-search-icon.mso-search-icon-whisper {
+  color: #0f172a;
+}
+
+.app.app-day-mode .mso-whisper-ai-badge {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.06);
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+.app.app-day-mode .mso-whisper-asset-pill.crypto {
+  color: rgba(15, 23, 42, 0.75);
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.app.app-day-mode .mso-whisper-asset-pill.stocks {
+  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.22);
+}
+
+/* Day: section header */
+.app.app-day-mode .mso-section-label {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+.app.app-day-mode .mso-clear-btn {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.app.app-day-mode .mso-clear-btn:active {
+  color: #0f172a;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* Day: divider */
+.app.app-day-mode .mso-divider {
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(0, 0, 0, 0.06) 30%,
+    rgba(0, 0, 0, 0.06) 70%,
+    transparent);
+}
+
+/* Day: token row */
+.app.app-day-mode .mso-token-row {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.04);
+}
+
+.app.app-day-mode .mso-token-row:active {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Day: token logo */
+.app.app-day-mode .mso-token-logo {
+  background: #f0f0f2;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.app.app-day-mode .mso-token-logo-fallback {
+  background: rgba(0, 0, 0, 0.06);
+  color: #0f172a;
+}
+
+/* Day: token text */
+.app.app-day-mode .mso-token-symbol {
+  color: #0f172a;
+}
+
+.app.app-day-mode .mso-token-name {
+  color: #64748b;
+}
+
+.app.app-day-mode .mso-token-network {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: #94a3b8;
+}
+
+/* Day: price + stats */
+.app.app-day-mode .mso-token-price {
+  color: #0f172a;
+}
+
+.app.app-day-mode .mso-token-change.positive {
+  color: var(--bull, #10B981);
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.app.app-day-mode .mso-token-change.negative {
+  color: var(--bear, #EF4444);
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.app.app-day-mode .mso-token-meta {
+  color: #94a3b8;
+}
+
+.app.app-day-mode .mso-meta-sep {
+  color: rgba(0, 0, 0, 0.2);
+}
+
+.app.app-day-mode .mso-token-address {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: #64748b;
+}
+
+.app.app-day-mode .mso-token-address::before {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.app.app-day-mode .mso-token-address:active {
+  background: rgba(0, 0, 0, 0.06);
+  color: #0f172a;
+}
+
+/* Day: shimmer stats */
+.app.app-day-mode .mso-shimmer-price {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.app.app-day-mode .mso-shimmer-change {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+/* Day: empty state */
+.app.app-day-mode .mso-empty-icon {
+  color: rgba(0, 0, 0, 0.2);
+}
+
+.app.app-day-mode .mso-empty-text {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+/* Day: shimmer */
+.app.app-day-mode .mso-shimmer-logo {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.app.app-day-mode .mso-shimmer-line-short {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.app.app-day-mode .mso-shimmer-line-long {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.app.app-day-mode .animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.06) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* Day: scrollbar */
+.app.app-day-mode .mso-body::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.06);
+}

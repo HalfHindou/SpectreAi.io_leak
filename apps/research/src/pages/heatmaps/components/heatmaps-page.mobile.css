@@ -1,0 +1,886 @@
+/* ═══════════════════════════════════════════
+   HEATMAPS PAGE — MOBILE LAYOUT
+   Prefix: mhm- (mobile heatmaps)
+   Cinematic design language: L1-L4 patterns
+   ═══════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  /* Kill parent padding - mobile owns layout */
+  .heatmaps-page.mhm-page {
+    padding: 0 !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    min-height: 100dvh;
+    gap: 0 !important;
+  }
+
+  /* Hide desktop ambient glow */
+  .heatmaps-page.mhm-page .heatmaps-hero::before,
+  .heatmaps-page.mhm-page .heatmaps-hero::after {
+    display: none;
+  }
+
+  /* Content container. NOTE: no env(safe-area-inset-top) here — the app
+     shell's .app-main-content already pays the safe-area inset (mobile-2026
+     browser + PWA-standalone paths both). Adding it again here stacked a
+     second notch-height of dead space under the fixed header on iPhone. */
+  .mhm-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--m-xs, 4px);
+    padding: calc(var(--m-header-h, 52px) + 6px) 0 0 0;
+  }
+
+  /* Header spacer */
+  .mhm-header-spacer {
+    flex-shrink: 0;
+    height: 0;
+    width: 100%;
+  }
+
+  /* Section with side padding */
+  .mhm-section {
+    padding: 0 var(--m-sm, 8px);
+  }
+
+  /* Full-bleed section */
+  .mhm-section-flush {
+    padding: 0;
+  }
+
+  /* Money Flow is a framed surface, not full-bleed — give it the same side
+     gutter the rest of the phone layout uses. */
+  .mhm-section-flush > .mfx {
+    padding: 0 var(--m-sm, 8px);
+  }
+
+  /* Bottom spacer for nav clearance */
+  .mhm-bottom-spacer {
+    height: calc(var(--m-bottom-nav-h, 76px) + env(safe-area-inset-bottom, 0px) + 16px);
+    flex-shrink: 0;
+  }
+
+  /* ── Hero — ONE tight two-row band ──
+       row 1   CRYPTO HEATMAP · 100 tokens .............. [view switcher]
+       row 2   ↑ $14.85B added / Liquidity flow · 24H
+     It used to wrap into three ragged lines (title row, a lone "100 tokens",
+     then the pulse) around a switcher the 38px touch floor had inflated. */
+  .mhm-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    /* REAL horizontal inset. The themed veil turns this hero into a rounded
+       card, and with `padding: 2px 0 0` its content rows started flush at
+       x=0 of the card — the title's first letter sat on the curved edge and
+       the liquidity live-dot rendered ON the border (founder, 08-05: "the
+       banner is cutting into the first letter"). */
+    padding: 8px 12px 10px;
+  }
+
+  /* Title row pairs the back button with the section label — prevents the
+     arrow from sitting alone above the hero. */
+  .mhm-title-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    height: 30px;
+  }
+
+  /* View switch — lives in the title row so grid/treemap/bars/dual are visible
+     the instant the page opens (previously buried at the end of the pill
+     scroll). Compact glass chips, full-round like every other toggle. */
+  .mhm-views {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: auto;
+    flex-shrink: 0;
+    padding: 2px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.015) 100%);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    border: 0.5px solid rgba(255, 255, 255, 0.07);
+    border-radius: 999px;
+    box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+  }
+  .mhm-view-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 26px;
+    background: transparent;
+    border: none;
+    border-radius: 999px;
+    color: rgba(245, 245, 247, 0.4);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .mhm-view-btn.active {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.05) 100%);
+    color: #f5f5f7;
+    box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.18), 0 1px 4px rgba(0, 0, 0, 0.3);
+  }
+  .mhm-view-btn:active {
+    transform: scale(0.94);
+  }
+
+  /* L3: Section headers - uppercase labels */
+  .mhm-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(245, 245, 247, 0.4);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  /* the count rides in the left column beside the label, never on its own
+     orphan line */
+  .mhm-title-dot {
+    flex-shrink: 0;
+    font-size: 11px;
+    line-height: 1;
+    color: rgba(245, 245, 247, 0.16);
+  }
+
+  .mhm-subtitle {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: rgba(245, 245, 247, 0.3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Liquidity flow headline — compact on mobile so the map clears the fold.
+     The live-dot hides here: centred against a two-line body it floats between
+     the lines and reads misplaced; the caret + green amount already carry
+     direction and liveness. */
+  .mhm-hero .lqp-live { display: none; }
+  .mhm-hero .lqp { gap: 8px; }
+  .mhm-hero .lqp-amount { font-size: 1.25rem; }
+  .mhm-hero .lqp-body { gap: 1px; }
+  .mhm-hero .lqp-sub { font-size: 0.625rem; }
+
+  /* ── Stats row — five cards of ONE height on ONE baseline, scrolling
+     horizontally, the right edge dissolving INSIDE the row so a half-visible
+     card reads as "there is more" instead of as a broken layout. ── */
+  .mhm-stats {
+    display: flex;
+    align-items: stretch;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    /* pull the scroller out to the section's border box, then pay the gutter
+       back as padding so the first card still lands on the page's 16px rail */
+    margin: 2px calc(var(--m-sm, 8px) * -1) 0;
+    padding: 0 var(--m-sm, 8px) 4px;
+    -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 26px), transparent 100%);
+    mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 26px), transparent 100%);
+  }
+  .mhm-stats::-webkit-scrollbar { display: none; }
+
+  /* L2: Transparent card surfaces — one height for every card */
+  .mhm-stat,
+  .mhm-stat-badge {
+    height: 40px;
+    flex-shrink: 0;
+    border: none;
+    /* 12px, not 10 — pro-theme-studio.css already rounds .mhm-stat to 12px
+       under a wallpaper, and the badge has to be the same card. */
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.028);
+  }
+
+  .mhm-stat {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    padding: 0 10px;
+    min-width: 62px;
+  }
+
+  /* 🪤 mobile-2026.css carries `[class*="stat-label"] { font-size:
+     var(--m-text-xs) !important }` and `[class*="stat-value"] { font-size:
+     var(--m-text-lg) !important }` at (0,1,0) — those, not this file, were
+     printing the row at 11px/16px. Beaten with the same weapon at (0,2,0). */
+  .mhm-page .mhm-stat-label {
+    font-size: 10px !important;
+    line-height: 12px !important;
+    letter-spacing: 0.06em !important;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: rgba(245, 245, 247, 0.28);
+  }
+
+  /* L1: System font for numbers */
+  .mhm-page .mhm-stat-value {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 15px !important;
+    line-height: 18px !important;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: rgba(245, 245, 247, 0.92);
+  }
+  .mhm-stat-value.pos { color: var(--bull, #10B981); }
+  .mhm-stat-value.neg { color: var(--bear, #EF4444); }
+
+  /* Sentiment badge — same card, single line, vertically centred */
+  .mhm-stat-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 11px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: rgba(245, 245, 247, 0.5);
+  }
+
+  .mhm-stat-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(245, 245, 247, 0.3);
+  }
+
+  .mhm-sentiment-bullish { color: var(--bull, #10B981); }
+  .mhm-sentiment-bullish .mhm-stat-dot { background: var(--bull, #10B981); }
+  .mhm-sentiment-bearish { color: var(--bear, #EF4444); }
+  .mhm-sentiment-bearish .mhm-stat-dot { background: var(--bear, #EF4444); }
+  .mhm-sentiment-neutral { color: rgba(245, 245, 247, 0.5); }
+  .mhm-sentiment-neutral .mhm-stat-dot { background: rgba(245, 245, 247, 0.3); }
+
+  /* ── Controls - horizontal scroll pills ── */
+  .mhm-controls {
+    padding: 0;
+  }
+
+  .mhm-pills-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    /* the chip stays 28px; its 38px tap target comes from THIS padding.
+       (Grow the hit area, never the control.) */
+    padding: 5px var(--m-sm, 8px);
+  }
+  .mhm-pills-row::-webkit-scrollbar { display: none; }
+
+  /* The chip itself belongs to styles/unified-chips.css — do NOT restyle it
+     here, or the page forks the one toggle language.
+
+     🪤 app-store-ready.css floors EVERY <button> at
+     `min-height: var(--touch-min)` (38px) through
+     `button:not(.mobile-header-portal *):not(.mobile-bottom-nav-portal *)`,
+     which scores (0,2,1) and therefore outranks unified-chips'
+     `.mhm-pill { min-height: 0; height: 28px }` at (0,1,0). That floor — and
+     nothing else — is why the founder's filter pills and view switcher
+     rendered ~38-40px. Lift it at (0,3,0) and the unified 28px recipe paints
+     unchanged. */
+  .mhm-page .mhm-pills-row .mhm-pill,
+  .mhm-page .mhm-title-row .mhm-view-btn {
+    min-height: 0;
+  }
+
+  /* everything unified-chips does not own: pointer + the frosted backing the
+     pro wallpaper needs behind a translucent chip */
+  .mhm-pill {
+    cursor: pointer;
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+  }
+
+  .mhm-pill-icon {
+    padding: 0 8px;
+    min-width: 28px;
+  }
+
+  .mhm-pill-clear {
+    color: rgba(239, 68, 68, 0.6);
+  }
+  .mhm-pill-clear.active,
+  .mhm-pill-clear:active {
+    background: rgba(239, 68, 68, 0.08);
+    color: var(--bear, #EF4444);
+    border-color: rgba(239, 68, 68, 0.12);
+    box-shadow: none;
+  }
+
+  .mhm-pill-divider {
+    width: 1px;
+    height: 14px;
+    background: rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+    margin: 0 2px;
+    align-self: center;
+  }
+
+  /* ── Search bar (slim — one row, glass) ── */
+  .mhm-search {
+    display: flex;
+    align-items: center;
+    gap: var(--m-sm, 8px);
+    height: 34px;
+    padding: 0 12px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+    backdrop-filter: blur(14px) saturate(150%);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    border: 0.5px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--m-card-radius, 10px);
+    color: rgba(245, 245, 247, 0.3);
+    min-height: 0;
+  }
+
+  .mhm-search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary, #f5f5f7);
+    font-family: inherit;
+    min-width: 0;
+  }
+  /* 🪤 app-store-ready.css hands every mobile text input
+     `min-height: var(--touch-min); padding: 12px 14px` at (0,3,1) — that is
+     what made this bar 56px tall next to 28px chips. Beaten at (0,3,0) with
+     !important. The 16px font stays (iOS focus-zoom guard). */
+  .mhm-page .mhm-search .mhm-search-input {
+    height: 26px !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+  }
+  .mhm-search-input::placeholder {
+    color: rgba(245, 245, 247, 0.2);
+  }
+
+  .mhm-search-clear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 50%;
+    color: rgba(245, 245, 247, 0.4);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* ── Loading shimmer ── */
+  .mhm-loading {
+    display: flex;
+    flex-direction: column;
+    gap: var(--m-sm, 8px);
+    padding: var(--m-lg, 16px);
+  }
+
+  .mhm-loading-shimmer {
+    height: 200px;
+    border-radius: var(--m-card-radius, 10px);
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+  .mhm-loading-shimmer-2 {
+    height: 120px;
+    animation-delay: 0.2s;
+  }
+
+  /* ── Error state ── */
+  .mhm-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--m-md, 12px);
+    padding: var(--m-3xl, 36px) var(--m-lg, 16px);
+    color: rgba(245, 245, 247, 0.4);
+    font-size: var(--m-text-base, 0.8125rem);
+  }
+  .mhm-error button {
+    background: rgba(255, 255, 255, 0.06);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    color: #f5f5f7;
+    padding: 8px 20px;
+    border-radius: 14px;
+    font-size: var(--m-text-sm, 0.75rem);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* ── Empty state ── */
+  .mhm-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--m-md, 12px);
+    padding: var(--m-3xl, 36px) var(--m-lg, 16px);
+    color: rgba(245, 245, 247, 0.3);
+    font-size: var(--m-text-base, 0.8125rem);
+  }
+
+  /* ── Heatmap grid overrides for mobile layout ── */
+  .mhm-page .heatmaps-grid-container {
+    padding: var(--m-xs, 4px);
+    border-radius: var(--m-card-radius, 10px);
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: none;
+    box-shadow: none;
+  }
+
+  .mhm-page .heatmap-grid {
+    gap: 3px;
+    grid-template-columns: repeat(3, 1fr) !important;
+    grid-template-areas: none !important;
+    min-height: 300px;
+  }
+
+  .mhm-page .heatmap-tile {
+    padding: 8px 8px 10px;
+    border-radius: 8px;
+    min-height: 52px;
+  }
+  .mhm-page .heatmap-tile-rank { font-size: 7px; }
+  .mhm-page .heatmap-tile-logo { width: 20px; height: 20px; }
+
+  /* Logo fallback disc. The grid used to hide a failed <img> outright, which
+     is exactly the empty grey circle on the founder's screenshot — the disc
+     stayed, the glyph never came. Now the disc carries the token's initial on
+     its own brand tint (--tlf-rgb is per-token data, set inline by the
+     tile). Shared by the grid, bars and dual rows. */
+  .mhm-page .heatmap-tile-logo-fallback,
+  .mhm-page .heatmap-chart-logo-fallback,
+  .mhm-page .hdc-row-logo-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(var(--tlf-rgb, 100, 116, 139), 0.6) 0%, rgba(var(--tlf-rgb, 100, 116, 139), 0.26) 100%);
+    color: #f5f5f7;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  }
+  .mhm-page .heatmap-tile--hero .heatmap-tile-logo-fallback { font-size: 11px; }
+  .mhm-page .heatmap-tile-symbol { font-size: 11px; }
+  .mhm-page .heatmap-tile-name { display: none; }
+  .mhm-page .heatmap-tile-vol-bar { display: none; }
+
+  /* L1: System font for tile prices */
+  .mhm-page .heatmap-tile-price {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 9px;
+  }
+  .mhm-page .heatmap-tile-change {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 9px;
+    padding: 2px 5px;
+  }
+
+  /* Hero tiles slightly larger */
+  .mhm-page .heatmap-tile--hero { padding: 10px; }
+  .mhm-page .heatmap-tile--hero .heatmap-tile-logo { width: 24px; height: 24px; }
+  .mhm-page .heatmap-tile--hero .heatmap-tile-symbol { font-size: 13px; }
+  .mhm-page .heatmap-tile--hero .heatmap-tile-price { font-size: 11px; }
+  .mhm-page .heatmap-tile--hero .heatmap-tile-change { font-size: 10px; }
+  .mhm-page .heatmap-tile--hero .heatmap-tile-name {
+    display: block;
+    font-size: 9px;
+  }
+
+  /* ── Treemap container ── */
+  .mhm-page .heatmaps-grid-container--treemap {
+    border-radius: var(--m-card-radius, 10px);
+    overflow: hidden;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
+  /* ── Chart view ── */
+  .mhm-page .heatmap-chart-view {
+    padding: var(--m-xs, 4px) 0;
+  }
+  .mhm-page .heatmap-chart-header {
+    grid-template-columns: 90px 1fr 60px;
+    padding: var(--m-xs, 4px) var(--m-sm, 8px);
+  }
+  .mhm-page .heatmap-chart-header-price { display: none; }
+  .mhm-page .heatmap-chart-row {
+    grid-template-columns: 90px 1fr 60px;
+    height: 36px;
+    padding: 0 var(--m-sm, 8px);
+  }
+  .mhm-page .heatmap-chart-price { display: none; }
+  .mhm-page .heatmap-chart-rank { display: none; }
+  .mhm-page .heatmap-chart-logo { width: 20px; height: 20px; }
+  .mhm-page .heatmap-chart-symbol { font-size: 12px; }
+  .mhm-page .heatmap-chart-name { display: none; }
+
+  /* L1: System font for chart change values */
+  .mhm-page .heatmap-chart-change {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 11px;
+  }
+
+  /* ── Dual view ── */
+  .mhm-page .hdc-view {
+    grid-template-columns: 1fr auto 1fr;
+    padding: var(--m-xs, 4px) 0;
+  }
+  .mhm-page .hdc-row {
+    grid-template-columns: 72px 1fr 50px;
+  }
+  .mhm-page .hdc-column--bear .hdc-row {
+    grid-template-columns: 50px 1fr 72px;
+    height: 32px;
+    padding: 0 6px;
+  }
+  .mhm-page .hdc-row-logo { width: 18px; height: 18px; }
+  .mhm-page .hdc-row-symbol { font-size: 11px; }
+  .mhm-page .hdc-row-bar-area { padding: 0 4px; }
+  .mhm-page .hdc-row-bar-track { height: 14px; }
+  .mhm-page .hdc-col-badge { font-size: 10px; padding: 2px 8px; }
+  .mhm-page .hdc-col-header { padding: 0 6px 6px; }
+  .mhm-page .hdc-row-change {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 10px;
+  }
+
+  /* ── Pagination ── */
+  .mhm-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--m-md, 12px);
+    padding: var(--m-sm, 8px) 0;
+  }
+
+  .mhm-page-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    color: rgba(245, 245, 247, 0.5);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .mhm-page-btn:disabled {
+    opacity: 0.2;
+    cursor: default;
+  }
+  .mhm-page-btn:active:not(:disabled) {
+    transform: scale(0.92);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .mhm-page-info {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: var(--m-text-sm, 0.75rem);
+    color: rgba(245, 245, 247, 0.35);
+    min-width: 48px;
+    text-align: center;
+  }
+
+  /* ── Top movers ── */
+  .mhm-movers {
+    display: flex;
+    gap: var(--m-sm, 8px);
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: var(--m-xs, 4px) 0;
+  }
+  .mhm-movers::-webkit-scrollbar { display: none; }
+
+  .mhm-mover {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex-shrink: 0;
+    min-width: 80px;
+  }
+
+  .mhm-mover-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: rgba(245, 245, 247, 0.25);
+  }
+
+  .mhm-mover-token {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: var(--m-text-base, 0.8125rem);
+    font-weight: 600;
+    color: rgba(245, 245, 247, 0.9);
+  }
+
+  .mhm-mover-logo {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+  }
+
+  /* L1: System font for mover values */
+  .mhm-mover-change,
+  .mhm-mover-val {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: var(--m-text-sm, 0.75rem);
+    font-weight: 600;
+  }
+  .mhm-mover-change.pos { color: var(--bull, #10B981); }
+  .mhm-mover-change.neg { color: var(--bear, #EF4444); }
+  .mhm-mover-val { color: rgba(245, 245, 247, 0.6); }
+
+
+  /* ═══════════════════════════════════════════
+     DAY MODE
+     ═══════════════════════════════════════════ */
+
+  /* Section label */
+  .app.app-day-mode .mhm-section-label,
+  .heatmaps-page.day-mode .mhm-section-label {
+    color: rgba(0, 0, 0, 0.35);
+  }
+
+  .app.app-day-mode .mhm-subtitle,
+  .heatmaps-page.day-mode .mhm-subtitle {
+    color: rgba(0, 0, 0, 0.3);
+  }
+
+  /* Stats */
+  .app.app-day-mode .mhm-stat,
+  .heatmaps-page.day-mode .mhm-stat {
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  .app.app-day-mode .mhm-stat-label,
+  .heatmaps-page.day-mode .mhm-stat-label {
+    color: rgba(0, 0, 0, 0.35);
+  }
+
+  .app.app-day-mode .mhm-stat-value,
+  .heatmaps-page.day-mode .mhm-stat-value {
+    color: #0f172a;
+  }
+  .app.app-day-mode .mhm-stat-value.pos,
+  .heatmaps-page.day-mode .mhm-stat-value.pos { color: #059669; }
+  .app.app-day-mode .mhm-stat-value.neg,
+  .heatmaps-page.day-mode .mhm-stat-value.neg { color: #dc2626; }
+
+  /* Sentiment badge */
+  .app.app-day-mode .mhm-stat-badge,
+  .heatmaps-page.day-mode .mhm-stat-badge {
+    background: rgba(0, 0, 0, 0.04);
+    color: #475569;
+  }
+  .app.app-day-mode .mhm-stat-dot,
+  .heatmaps-page.day-mode .mhm-stat-dot {
+    background: #475569;
+  }
+  .app.app-day-mode .mhm-sentiment-bullish,
+  .heatmaps-page.day-mode .mhm-sentiment-bullish { color: #059669; }
+  .app.app-day-mode .mhm-sentiment-bullish .mhm-stat-dot,
+  .heatmaps-page.day-mode .mhm-sentiment-bullish .mhm-stat-dot { background: #059669; }
+  .app.app-day-mode .mhm-sentiment-bearish,
+  .heatmaps-page.day-mode .mhm-sentiment-bearish { color: #dc2626; }
+  .app.app-day-mode .mhm-sentiment-bearish .mhm-stat-dot,
+  .heatmaps-page.day-mode .mhm-sentiment-bearish .mhm-stat-dot { background: #dc2626; }
+
+  /* Pills — dark-tint glass on light (the base white-tint glass vanishes) */
+  .app.app-day-mode .mhm-pill,
+  .heatmaps-page.day-mode .mhm-pill {
+    color: rgba(15, 23, 42, 0.45);
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.035) 0%, rgba(0, 0, 0, 0.015) 100%);
+    border-color: rgba(0, 0, 0, 0.05);
+    box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.5);
+  }
+  .app.app-day-mode .mhm-pill.active,
+  .heatmaps-page.day-mode .mhm-pill.active {
+    background: rgba(0, 0, 0, 0.08);
+    color: #0f172a;
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: none;
+  }
+
+  /* View switch (title row) */
+  .app.app-day-mode .mhm-views,
+  .heatmaps-page.day-mode .mhm-views {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.015) 100%);
+    border-color: rgba(0, 0, 0, 0.07);
+    box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.6);
+  }
+  .app.app-day-mode .mhm-view-btn,
+  .heatmaps-page.day-mode .mhm-view-btn {
+    color: rgba(15, 23, 42, 0.45);
+  }
+  .app.app-day-mode .mhm-view-btn.active,
+  .heatmaps-page.day-mode .mhm-view-btn.active {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+  }
+
+  .app.app-day-mode .mhm-pill-divider,
+  .heatmaps-page.day-mode .mhm-pill-divider {
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  .app.app-day-mode .mhm-pill-clear,
+  .heatmaps-page.day-mode .mhm-pill-clear {
+    color: rgba(220, 38, 38, 0.5);
+  }
+
+  /* Search */
+  .app.app-day-mode .mhm-search,
+  .heatmaps-page.day-mode .mhm-search {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: rgba(15, 23, 42, 0.45);
+  }
+  .app.app-day-mode .mhm-search-input,
+  .heatmaps-page.day-mode .mhm-search-input {
+    color: #0f172a;
+  }
+  .app.app-day-mode .mhm-search-input::placeholder,
+  .heatmaps-page.day-mode .mhm-search-input::placeholder {
+    color: rgba(15, 23, 42, 0.4);
+  }
+  .app.app-day-mode .mhm-search-clear,
+  .heatmaps-page.day-mode .mhm-search-clear {
+    background: rgba(0, 0, 0, 0.06);
+    color: rgba(15, 23, 42, 0.55);
+  }
+
+  /* Loading shimmer */
+  .app.app-day-mode .mhm-loading-shimmer,
+  .heatmaps-page.day-mode .mhm-loading-shimmer {
+    background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.04) 50%, transparent 100%);
+    background-size: 200% 100%;
+  }
+
+  /* Error / Empty */
+  .app.app-day-mode .mhm-error,
+  .heatmaps-page.day-mode .mhm-error,
+  .app.app-day-mode .mhm-empty,
+  .heatmaps-page.day-mode .mhm-empty {
+    color: #475569;
+  }
+  .app.app-day-mode .mhm-error button,
+  .heatmaps-page.day-mode .mhm-error button {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #0f172a;
+  }
+
+  /* Pagination */
+  .app.app-day-mode .mhm-page-btn,
+  .heatmaps-page.day-mode .mhm-page-btn {
+    background: rgba(0, 0, 0, 0.04);
+    color: #475569;
+  }
+  .app.app-day-mode .mhm-page-btn:active:not(:disabled),
+  .heatmaps-page.day-mode .mhm-page-btn:active:not(:disabled) {
+    background: rgba(0, 0, 0, 0.08);
+  }
+  .app.app-day-mode .mhm-page-info,
+  .heatmaps-page.day-mode .mhm-page-info {
+    color: #475569;
+  }
+
+  /* Movers */
+  .app.app-day-mode .mhm-mover-label,
+  .heatmaps-page.day-mode .mhm-mover-label {
+    color: rgba(0, 0, 0, 0.35);
+  }
+  .app.app-day-mode .mhm-mover-token,
+  .heatmaps-page.day-mode .mhm-mover-token {
+    color: #0f172a;
+  }
+  .app.app-day-mode .mhm-mover-change.pos,
+  .heatmaps-page.day-mode .mhm-mover-change.pos { color: #059669; }
+  .app.app-day-mode .mhm-mover-change.neg,
+  .heatmaps-page.day-mode .mhm-mover-change.neg { color: #dc2626; }
+  .app.app-day-mode .mhm-mover-val,
+  .heatmaps-page.day-mode .mhm-mover-val { color: #475569; }
+
+  /* Title-row count separator */
+  .app.app-day-mode .mhm-title-dot,
+  .heatmaps-page.day-mode .mhm-title-dot {
+    color: rgba(15, 23, 42, 0.2);
+  }
+
+  /* Logo fallback disc — the brand tint has to bite harder on white */
+  .app.app-day-mode .mhm-page .heatmap-tile-logo-fallback,
+  .app.app-day-mode .mhm-page .heatmap-chart-logo-fallback,
+  .app.app-day-mode .mhm-page .hdc-row-logo-fallback,
+  .heatmaps-page.day-mode.mhm-page .heatmap-tile-logo-fallback,
+  .heatmaps-page.day-mode.mhm-page .heatmap-chart-logo-fallback,
+  .heatmaps-page.day-mode.mhm-page .hdc-row-logo-fallback {
+    background: linear-gradient(135deg, rgba(var(--tlf-rgb, 100, 116, 139), 0.92) 0%, rgba(var(--tlf-rgb, 100, 116, 139), 0.62) 100%);
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(15, 23, 42, 0.35);
+  }
+
+  /* Grid tiles day mode */
+  .app.app-day-mode .mhm-page .heatmaps-grid-container,
+  .heatmaps-page.day-mode.mhm-page .heatmaps-grid-container {
+    background: transparent;
+  }
+
+  /* Chart view day mode */
+  .app.app-day-mode .mhm-page .heatmap-chart-change,
+  .heatmaps-page.day-mode.mhm-page .heatmap-chart-change {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+
+
+  /* ═══════════════════════════════════════════
+     REDUCED MOTION
+     ═══════════════════════════════════════════ */
+
+  @media (prefers-reduced-motion: reduce) {
+    .mhm-pill,
+    .mhm-page-btn,
+    .mhm-loading-shimmer {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+
+}

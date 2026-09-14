@@ -1,0 +1,620 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   MobileTokenList — CoinMarketCap-mobile "Markets", in Spectre's dark glass.
+
+   ONE grid template drives the column-header row AND every token row, so the
+   labels sit exactly over the columns they name:
+
+     star | rank | 22px logo | SYMBOL/mcap | price | spark over 24h%
+
+   🪤 That order lives in `--mtl-grid`, which is REDEFINED in both width tiers
+   at the bottom of this file. A column added or moved here must be moved in
+   ALL THREE templates — a tier left on the old order silently re-maps every
+   child (the identity block lands in the price track and the price crushes to
+   an ellipsis).
+
+   The list is a single continuous surface: hairline dividers, no per-row
+   card, no per-row border. Depth comes from the compartment around it.
+
+   🪤 app-store-ready.css puts `min-height: var(--touch-min)` (38px) on EVERY
+   button/[role=button]. A bare `button:not(.x *):not(.y *)` is (0,2,1), but the
+   SAME rule also lists `[role="button"]:not(.x *):not(.y *)` = (0,3,0) - so an
+   element carrying role="button" (our row) needs (0,4,0), not (0,3,0), and the
+   row selector doubles its own class to get there. `.mtl-filter`, `.mtl-col`
+   and `.mtl-star` are plain <button>s, so (0,3,0) is enough for them.
+   Same file also has `[class*="-list"] { gap: 8px }` - see `.mtl .mtl-list`.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.mtl {
+  /* star | rank | logo | identity | price | trend. The price column is sized
+     for a 6-figure quote with cents ($62,997.41) — narrower and BTC ellipses.
+
+     SCALE: CMC's mobile Markets row is a ~50px pitch with a ~22px mark.
+     Everything here is sized off that, not off a desktop table shrunk down —
+     the row is a line of type with a logo, not a card.
+
+     `--mtl-pad` is the row's own horizontal inset. The list is full-bleed now
+     (no page gutter, no card border), so this padding IS the screen margin. */
+  /* Star leads the row (CMC/CoinGecko model): it is the one control in here,
+     so it gets the thumb-reachable edge instead of being buried between the
+     price and the sparkline. Rank widened 15->17px and CENTRED - right-aligned
+     in a 15px box left it crushed against the screen edge. */
+  /* Where the price SITS is set here, not by its text-align: the track is
+     pinned to the right of the row, so centring the text inside it can only
+     move the number a couple of px. Founder, 08-04: still "too much to the
+     left". The track itself therefore moves right — the trend column gives up
+     10px, which walks the whole price column 8px toward the middle of the row
+     AND widens it 6px so a 6-figure quote stops ellipsing. The gap to the
+     sparkline is unchanged (6px of grid gap), so this does not undo the
+     earlier "price is too close to the mini charts" fix. */
+  --mtl-grid: 26px 17px 22px minmax(0, 1fr) 94px 62px;
+  --mtl-gap: 6px;
+  /* 16px read as jammed against the compartment edge — founder, twice:
+     "favorites market cap still feel like they encroach on the border too
+     much". 🪤 This CANNOT be fixed by insetting the pills alone: `.mtl-cols`
+     shares `--mtl-grid` with the rows, so a header on a different pad slides
+     every label off the column it names, which is the exact failure the file
+     header warns about. The whole block moves together instead. */
+  --mtl-pad: 20px;
+  --mtl-logo: 22px;
+  --mtl-row-h: 50px;
+  --mtl-spark-h: 24px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* ── Filter pills — CMC's control stack: compact rounded rects with a caret ── */
+
+.mtl-filters-scroll {
+  /* NO TRACK — a full-bleed sort row (founder, 09-02: "убрать обводку и
+     сделать на всю ширину"). History of this row stays on file so it stops
+     cycling:
+       v1  track material + plain pills — the track's square-ish corner cut the
+           tab hairline ("extra border shader");
+       v2  no track, every pill a chip — read as loose pills overlaying the
+           page, "going left and right", fitted to nothing;
+       v3  a full-round glass capsule clipping quiet pills — a segmented
+           control, but a second outlined box stacked under the tab row and the
+           category chips, inset from both;
+       v4  (this) no material at all. The row runs edge to edge like the two
+           rows above it and the ACTIVE pill is the only lit thing — the same
+           logic as the tab underline. Gutter moves to `.mtl-filters` so the
+           first pill still lines up with the column headers below. */
+  margin: 0 0 10px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  /* 🪤 NO mask. A mask applies to the element's OWN background and border, not
+     just its content. The radius + overflow clip carry the containment: a pill
+     mid-scroll is cut by the capsule's curve, which is what "fitted into the
+     frame" means. */
+}
+.mtl-filters-scroll::-webkit-scrollbar { display: none; }
+
+.mtl-filters {
+  display: flex;
+  gap: 5px;
+  white-space: nowrap;
+  /* The gutter lives on the CONTENT, matched to `--mtl-pad` so the row lines up
+     with the column headers and the star column below it, and with the category
+     chip row above — one gutter down the whole block instead of the old 4.5px
+     drift that read as "not fitted".
+     🪤 `width: max-content` is load-bearing: a scroll container's own
+     `padding-right` is dropped at the scroll end in Blink/WebKit when the
+     children overflow a full-width child, so the trailing gutter has to sit on a
+     box that actually WRAPS the pills. `min-width: 100%` keeps the row
+     full-bleed when there are too few pills to overflow (stocks mode).
+     Full-bleed is deliberate: the last pill clips at the screen edge — that cut
+     is what says "there is more" — instead of ending short of it as an isolated
+     floating fragment. */
+  width: max-content;
+  min-width: 100%;
+  box-sizing: border-box;
+  /* The row is full-bleed, so the gutter is back on the content: the first
+     pill lines up with `#`/star column below and with the category chips
+     above, and the last one clips at the screen edge (that cut is what says
+     "there is more"). */
+  padding: 0 var(--mtl-pad);
+}
+
+/* Inside the capsule the resting pills are QUIET — text on the shared track,
+   no material of their own (the track is the material). Outranks the unified
+   chip recipe on purpose: (0,2,0)+!important over its (0,1,0)+!important.
+   Border-width stays 1px via the recipe so the active swap never shifts
+   layout — only the colour goes transparent here. */
+.mtl-filters-scroll .mtl-filter {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  border-radius: 999px !important;
+}
+.mtl-filters-scroll .mtl-filter.is-active {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.05) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  color: #f5f5f7 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 0 12px rgba(245, 245, 247, 0.06) !important;
+}
+/* day mode: ink text, white active chip (no track) */
+.app.app-day-mode .mtl-filters-scroll {
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+.app.app-day-mode .mtl-filters-scroll .mtl-filter {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: #64748b;
+}
+.app.app-day-mode .mtl-filters-scroll .mtl-filter.is-active {
+  background: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.14) !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 6px rgba(15, 23, 42, 0.1) !important;
+}
+
+.mtl .mtl-filters .mtl-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  height: 26px;
+  min-height: 26px;
+  padding: 0 8px;
+  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.005em;
+  color: rgba(245, 245, 247, 0.5);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: all var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.mtl .mtl-filters .mtl-filter svg { opacity: 0.45; }
+.mtl .mtl-filters .mtl-filter:active { transform: scale(0.95); }
+.mtl .mtl-filters .mtl-filter.is-active {
+  color: #f5f5f7;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.mtl .mtl-filters .mtl-filter.is-active svg { opacity: 1; }
+
+/* ── Column headers ── */
+
+.mtl-cols {
+  display: grid;
+  grid-template-columns: var(--mtl-grid);
+  gap: var(--mtl-gap);
+  align-items: center;
+  /* Top padding gives the labels air under the filter pills; the hairline
+     below then belongs to the header rather than crowding it. */
+  padding: 2px var(--mtl-pad) 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.mtl .mtl-cols .mtl-col {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: rgba(245, 245, 247, 0.3);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.mtl .mtl-cols .mtl-col.is-active { color: rgba(245, 245, 247, 0.62); }
+.mtl .mtl-cols .mtl-col:active { color: #f5f5f7; }
+
+/* "# Market Cap" spans the rank + logo + identity columns it labels. */
+.mtl-col--name { grid-column: 1 / 5; justify-content: flex-start; }
+.mtl-col-hash { margin-right: 4px; color: rgba(245, 245, 247, 0.22); }
+/* Centred to sit over the centred prices — a flex-end header above a centred
+   column is exactly the misalignment this file exists to prevent. */
+.mtl-col--price { grid-column: 5; justify-content: center; }
+.mtl-col--chg { grid-column: 6; justify-content: flex-end; }
+.mtl-caret { display: inline-flex; align-items: center; }
+
+/* ── The list surface ── */
+
+/* 🪤 app-store-ready.css has `[class*="-list"] { gap: 8px }` at (0,1,0), which
+   TIES `.mtl-list` and wins on source order — it was silently adding 8px to
+   every row pitch. This list separates with hairlines, not gaps. */
+.mtl .mtl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* 🪤 The doubled class is load-bearing. The row carries `role="button"`, and
+   app-store-ready's touch-target rule lists `[role="button"]:not(.a *):not(.b *)`
+   — that branch is (0,3,0), the SAME as a three-class selector, so it wins the
+   tie on source order and floors this row at 38px. (0,4,0) is the real bar
+   here, not the (0,3,0) the header comment used to claim. */
+.mtl .mtl-list .mtl-row.mtl-row {
+  display: grid;
+  grid-template-columns: var(--mtl-grid);
+  gap: var(--mtl-gap);
+  align-items: center;
+  min-height: var(--mtl-row-h);
+  padding: 4px var(--mtl-pad);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+  transition: background var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.mtl .mtl-list .mtl-row:last-child { border-bottom: none; }
+.mtl .mtl-list .mtl-row:active { background: rgba(255, 255, 255, 0.035); }
+.mtl .mtl-list .mtl-row:focus { outline: none; }
+.mtl .mtl-list .mtl-row:focus-visible { outline: 2px solid rgba(245, 245, 247, 0.25); outline-offset: -2px; }
+
+.mtl-rank {
+  font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.28);
+  text-align: center;
+}
+
+.mtl-logo {
+  width: var(--mtl-logo);
+  height: var(--mtl-logo);
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* See watchlists-page.mobile.css: fade the logo in as it decodes rather than
+   snapping it on. The wrapper also carries a neutral disc so a row never shows
+   an empty hole while the image is still in flight. */
+.mtl-logo img[data-settled="0"] { opacity: 0; }
+.mtl-logo img {
+  transition: opacity 180ms ease;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.mtl-logo-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.72);
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+}
+
+/* SYMBOL over MARKET CAP — CMC stacks the cap under the ticker, not the name,
+   and the two lines sit TIGHT: one identity block, not two stacked fields. */
+.mtl-id {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+}
+.mtl-sym {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.012em;
+  color: #f5f5f7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mtl-mcap {
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+  color: rgba(245, 245, 247, 0.36);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mtl-price {
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.018em;
+  color: #f5f5f7;
+  /* CENTRED in its track, not right-aligned (founder asked twice, 08-03).
+     Right-aligning parked every number hard against the sparkline; the 6px of
+     padding that first tried to fix it wasn't enough, because a short price
+     like "$1.00" still sat at the far right. Centring puts the gap on BOTH
+     sides and is what actually reads as "away from the chart".
+     Tabular figures keep the digits themselves aligned, so the column still
+     scans cleanly without the hard right edge.
+     No padding: the 2px that used to sit on the right pulled the number a pixel
+     off centre in the one direction the founder was already complaining about. */
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 220ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+/* Live-tick tint (CMC). Fires only when the streamed price actually moves. */
+.mtl-price--up { color: var(--bull-bright, #34D399); }
+.mtl-price--down { color: var(--bear-bright, #F87171); }
+
+.mtl .mtl-list .mtl-star {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;   /* the same global rule floors min-width at 38px */
+  min-height: 22px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  color: rgba(245, 245, 247, 0.18);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+              transform var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.mtl .mtl-list .mtl-star:active { transform: scale(0.86); color: rgba(245, 245, 247, 0.5); }
+.mtl .mtl-list .mtl-star.is-active { color: #F59E0B; }
+/* The visual chip is 24px so it sits inside a 52px row; the hit box is padded
+   back out to 44px with an overlay so the tap target still clears Apple HIG. */
+.mtl .mtl-list .mtl-star::after {
+  content: '';
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+.mtl .mtl-list .mtl-star { position: relative; }
+.mtl-star--placeholder { pointer-events: none; }
+.mtl-star--placeholder::after { content: none; }
+
+/* Sparkline over the 24h change — CMC's far-right column. */
+.mtl-trend {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+.mtl-trend-spark {
+  width: 100%;
+  height: var(--mtl-spark-h);
+}
+.mtl-spark {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+}
+.mtl-chg {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1;
+}
+.mtl-chg.positive { color: var(--bull, #10B981); }
+.mtl-chg.negative { color: var(--bear, #EF4444); }
+.mtl-chg-arrow { flex-shrink: 0; }
+
+/* ── Skeleton — same grid, same shapes ── */
+
+.mtl-row--skeleton { cursor: default; }
+/* Two classes so the tint beats `.animate-shimmer`'s own base colour without
+   an !important — the shimmer overlay (::after) still rides on top. */
+.mtl-row--skeleton .mtl-sk {
+  display: block;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+.mtl-sk-rank { width: 11px; height: 9px; margin: 0 auto; }
+.mtl-sk-logo { width: var(--mtl-logo); height: var(--mtl-logo); border-radius: 50%; }
+.mtl-sk-sym { width: 42px; height: 11px; margin-bottom: 3px; }
+.mtl-sk-mcap { width: 58px; height: 9px; }
+.mtl-sk-price { width: 100%; height: 11px; }
+.mtl-sk-spark { width: 100%; height: var(--mtl-spark-h); border-radius: 5px; }
+.mtl-sk-chg { width: 40px; height: 9px; }
+
+.mtl-sentinel {
+  width: 100%;
+  height: 1px;
+}
+
+.mtl-empty {
+  padding: 40px 16px;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Width tiers — the grid is the only thing that changes
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 359px) {
+  .mtl {
+    /* star | rank | logo | identity | price | trend — MUST stay in the same
+       order as the base template above. */
+    --mtl-grid: 22px 15px 20px minmax(0, 1fr) 82px 54px;
+    --mtl-gap: 5px;
+    --mtl-pad: 15px;
+    --mtl-logo: 20px;
+    --mtl-row-h: 46px;
+    --mtl-spark-h: 22px;
+  }
+  .mtl-sym { font-size: 13px; }
+  .mtl-mcap { font-size: 10.5px; }
+  .mtl-price { font-size: 12.5px; }
+  .mtl-chg { font-size: 11px; }
+}
+
+/* Wider phones get wider COLUMNS, not a taller row — the density is the
+   product, and a 6.9" screen is not a reason to grow the type. */
+@media (min-width: 430px) {
+  .mtl {
+    /* star | rank | logo | identity | price | trend — MUST stay in the same
+       order as the base template above. */
+    --mtl-grid: 28px 19px 24px minmax(0, 1fr) 104px 72px;
+    --mtl-gap: 7px;
+    --mtl-pad: 22px;
+    --mtl-logo: 24px;
+    --mtl-row-h: 52px;
+    --mtl-spark-h: 26px;
+  }
+}
+
+/* Desktop never mounts this component, but the guard stays as a fence. */
+@media (min-width: 769px) {
+  .mtl { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Day mode — CMC's light Markets look
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* No day-mode counterpart for `.mtl-filters-scroll` — it paints nothing in
+   either theme now (see the rule above). The chips carry both looks, from
+   styles/unified-chips.css. */
+
+.app.app-day-mode .mtl .mtl-filters .mtl-filter,
+.mtl.mtl--day .mtl-filters .mtl-filter {
+  color: #64748b;
+  background: linear-gradient(135deg, #ffffff 0%, #f4f6f9 100%);
+  border-color: rgba(15, 23, 42, 0.09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.app.app-day-mode .mtl .mtl-filters .mtl-filter.is-active,
+.mtl.mtl--day .mtl-filters .mtl-filter.is-active {
+  color: #0f172a;
+  background: linear-gradient(135deg, #eef2f7 0%, #e2e8f0 100%);
+  border-color: rgba(15, 23, 42, 0.16);
+}
+
+.app.app-day-mode .mtl-cols,
+.mtl.mtl--day .mtl-cols {
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+}
+.app.app-day-mode .mtl .mtl-cols .mtl-col,
+.mtl.mtl--day .mtl-cols .mtl-col { color: #94a3b8; }
+.app.app-day-mode .mtl .mtl-cols .mtl-col.is-active,
+.mtl.mtl--day .mtl-cols .mtl-col.is-active { color: #475569; }
+.app.app-day-mode .mtl-col-hash,
+.mtl.mtl--day .mtl-col-hash { color: #cbd5e1; }
+
+.app.app-day-mode .mtl .mtl-list .mtl-row,
+.mtl.mtl--day .mtl-list .mtl-row {
+  border-bottom-color: rgba(15, 23, 42, 0.06);
+}
+.app.app-day-mode .mtl .mtl-list .mtl-row:active,
+.mtl.mtl--day .mtl-list .mtl-row:active { background: rgba(15, 23, 42, 0.025); }
+
+.app.app-day-mode .mtl-rank,
+.mtl.mtl--day .mtl-rank { color: #94a3b8; }
+.app.app-day-mode .mtl-sym,
+.mtl.mtl--day .mtl-sym { color: #0f172a; }
+.app.app-day-mode .mtl-mcap,
+.mtl.mtl--day .mtl-mcap { color: #64748b; }
+.app.app-day-mode .mtl-price,
+.mtl.mtl--day .mtl-price { color: #0f172a; }
+.app.app-day-mode .mtl-logo-fallback,
+.mtl.mtl--day .mtl-logo-fallback {
+  background: rgba(15, 23, 42, 0.06);
+  color: #475569;
+}
+.app.app-day-mode .mtl .mtl-list .mtl-star,
+.mtl.mtl--day .mtl-list .mtl-star { color: rgba(15, 23, 42, 0.18); }
+.app.app-day-mode .mtl .mtl-list .mtl-star.is-active,
+.mtl.mtl--day .mtl-list .mtl-star.is-active { color: #D97706; }
+
+.app.app-day-mode .mtl-row--skeleton .mtl-sk,
+.mtl.mtl--day .mtl-row--skeleton .mtl-sk { background-color: rgba(15, 23, 42, 0.07); }
+
+.app.app-day-mode .mtl-empty,
+.mtl.mtl--day .mtl-empty { color: #94a3b8; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Reduced motion
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .mtl .mtl-filters .mtl-filter,
+  .mtl .mtl-cols .mtl-col,
+  .mtl .mtl-list .mtl-row,
+  .mtl .mtl-list .mtl-star,
+  .mtl-price {
+    transition: none !important;
+  }
+}
+
+
+/* ── Favorites pill: leads the sort row, reads as a MODE not a sort key ── */
+.mtl .mtl-filters .mtl-filter--fav {
+  gap: 5px;
+  padding-left: 9px;
+}
+.mtl .mtl-filters .mtl-filter--fav svg { opacity: 0.6; }
+.mtl .mtl-filters .mtl-filter--fav.is-active {
+  background: rgba(245, 197, 66, 0.16);
+  border-color: rgba(245, 197, 66, 0.34);
+  color: #f5c542;
+}
+.mtl .mtl-filters .mtl-filter--fav.is-active svg { opacity: 1; color: #f5c542; }
+.app.app-day-mode .mtl .mtl-filters .mtl-filter--fav.is-active,
+.mtl.mtl--day .mtl-filters .mtl-filter--fav.is-active {
+  background: rgba(202, 138, 4, 0.12);
+  border-color: rgba(202, 138, 4, 0.3);
+  color: #a16207;
+}
+
+/* Favorites view with nothing starred — the list would otherwise be blank */
+.mtl .mtl-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 44px 24px 48px;
+  text-align: center;
+  color: rgba(245, 245, 247, 0.34);
+}
+.mtl .mtl-empty svg { opacity: 0.35; margin-bottom: 2px; }
+.mtl .mtl-empty p { margin: 0; font-size: 14px; font-weight: 600; color: rgba(245, 245, 247, 0.62); }
+.mtl .mtl-empty span { font-size: 12.5px; }
+.app.app-day-mode .mtl .mtl-empty p,
+.mtl.mtl--day .mtl-empty p { color: #475569; }
+.app.app-day-mode .mtl .mtl-empty,
+.mtl.mtl--day .mtl-empty { color: #94a3b8; }

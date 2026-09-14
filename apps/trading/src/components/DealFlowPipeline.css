@@ -1,0 +1,1876 @@
+/* =========================================
+   DealFlowPipeline - Premium Deal Room
+   Apple-style glass cards with stage accents,
+   clean hierarchy, cinematic entrance.
+   ========================================= */
+
+.dfp {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  /* Bound to the column - prevents children with intrinsic content
+     width (like the stages pill bar) from inflating the page. */
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* ── Stage tabs - pill bar ── */
+.dfp-stages {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 0;
+  /* Hard-bound so overflow-x:auto actually engages instead of the
+     bar inflating its parent to fit content. */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+
+.dfp-stages::-webkit-scrollbar { display: none; }
+
+/* Each stage pill stays at its natural size, never shrinks. */
+.dfp-stage-tab {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.dfp-stage-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 9999px;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  background: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dfp-stage-tab:hover {
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dfp-stage-tab.is-active {
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.dfp-stage-tab-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.dfp-stage-tab-count {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: rgba(255, 255, 255, 0.2);
+  margin-left: 2px;
+}
+
+.dfp-stage-tab.is-active .dfp-stage-tab-count {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* ══════════════════════════════════════
+   Cards Grid
+   ══════════════════════════════════════ */
+.dfp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+/* ══════════════════════════════════════
+   Deal Card - Glass surface with
+   stage-colored top accent edge
+   ══════════════════════════════════════ */
+.dfp-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px 20px 20px;
+  background: rgba(255, 255, 255, 0.02);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  cursor: pointer;
+  overflow: hidden;
+  /* Entrance */
+  opacity: 0;
+  transform: translateY(16px);
+  filter: blur(4px);
+  transition:
+    opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.dfp-card.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+.dfp-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+  transform: translateY(-2px);
+}
+
+.dfp-card.is-visible:hover {
+  transform: translateY(-2px);
+}
+
+/* ── Top accent edge - gradient bar per stage ── */
+.dfp-card-accent {
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  height: 1px;
+  border-radius: 0 0 1px 1px;
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
+}
+
+.dfp-card:hover .dfp-card-accent {
+  opacity: 0.8;
+}
+
+/* Stage-specific accent colors */
+.dfp-card--sourced .dfp-card-accent {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+}
+.dfp-card--diligence .dfp-card-accent {
+  background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.4), transparent);
+}
+.dfp-card--conviction .dfp-card-accent {
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.4), transparent);
+}
+.dfp-card--positioned .dfp-card-accent {
+  background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.4), transparent);
+}
+
+/* ── Stage badge ── */
+.dfp-card-stage {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+}
+
+.dfp-card-stage-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Stage dot colors */
+.dfp-card--sourced .dfp-card-stage-dot {
+  background: rgba(255, 255, 255, 0.3);
+}
+.dfp-card--diligence .dfp-card-stage-dot {
+  background: #FBBF24;
+  box-shadow: 0 0 6px rgba(251, 191, 36, 0.3);
+}
+.dfp-card--conviction .dfp-card-stage-dot {
+  background: #10B981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.3);
+}
+.dfp-card--positioned .dfp-card-stage-dot {
+  background: #60A5FA;
+  box-shadow: 0 0 6px rgba(96, 165, 250, 0.3);
+}
+
+.dfp-card-stage-label {
+  font-family: var(--font-body);
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* ── Token header ── */
+.dfp-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dfp-card-token {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dfp-card-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dfp-card-logo--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.dfp-card-names {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.dfp-card-symbol {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: 0.02em;
+}
+
+.dfp-card-name {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* ── Risk grade - pill badge ── */
+.dfp-card-risk {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* ── Thesis ── */
+.dfp-card-thesis {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+/* ── Metrics row ── */
+.dfp-card-metrics {
+  display: flex;
+  gap: 0;
+  padding: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.dfp-card-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  padding: 10px 0;
+  text-align: center;
+}
+
+.dfp-card-metric + .dfp-card-metric {
+  border-left: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.dfp-card-metric-label {
+  font-family: var(--font-body);
+  font-size: 0.5625rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.25);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.dfp-card-metric-value {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.dfp-card-metric-value.is-bull { color: var(--bull); }
+.dfp-card-metric-value.is-bear { color: var(--bear); }
+
+/* ── Smart money signal ── */
+.dfp-card-signal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.dfp-card-signal--bullish {
+  background: rgba(16, 185, 129, 0.04);
+  border-color: rgba(16, 185, 129, 0.08);
+}
+
+.dfp-card-signal--bearish {
+  background: rgba(239, 68, 68, 0.04);
+  border-color: rgba(239, 68, 68, 0.08);
+}
+
+/* Pulse dot */
+.dfp-card-signal-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.dfp-card-signal--bullish .dfp-card-signal-pulse {
+  background: #10B981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+  animation: signalPulse 2s ease-in-out infinite;
+}
+
+.dfp-card-signal--bearish .dfp-card-signal-pulse {
+  background: #EF4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes signalPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px rgba(16, 185, 129, 0.3); }
+  50%      { opacity: 0.6; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+}
+
+.dfp-card-signal-label {
+  font-family: var(--font-body);
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.3);
+  white-space: nowrap;
+}
+
+.dfp-card-signal-text {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.65);
+  margin-left: auto;
+}
+
+.dfp-card-signal--bullish .dfp-card-signal-text {
+  color: var(--bull);
+}
+
+.dfp-card-signal--bearish .dfp-card-signal-text {
+  color: var(--bear);
+}
+
+/* ── Catalyst ── */
+.dfp-card-catalyst {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.dfp-card-catalyst-label {
+  font-family: var(--font-body);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+
+.dfp-card-catalyst-text {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 1.4;
+}
+
+/* ── P&L (positioned deals) ── */
+.dfp-card-pnl {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: rgba(16, 185, 129, 0.03);
+  border-radius: 10px;
+  border: 1px solid rgba(16, 185, 129, 0.06);
+}
+
+.dfp-card-pnl-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dfp-card-pnl-row--total {
+  padding-top: 6px;
+  margin-top: 2px;
+  border-top: 1px solid rgba(16, 185, 129, 0.08);
+}
+
+.dfp-card-pnl-label {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.dfp-card-pnl-value {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.dfp-card-pnl-value.is-bull {
+  color: var(--bull);
+  font-weight: 700;
+}
+
+/* ── Sector pill ── */
+.dfp-card-sector {
+  align-self: flex-start;
+  font-family: var(--font-body);
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.3);
+  padding: 3px 10px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* ══════════════════════════════════════
+   States
+   ══════════════════════════════════════ */
+
+/* Search highlight */
+.dfp-card.is-highlighted {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* Search dim */
+.dfp-card.is-dimmed {
+  opacity: 0.25;
+  pointer-events: none;
+  filter: blur(1px);
+}
+
+/* ══════════════════════════════════════
+   Responsive
+   ══════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .dfp-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .dfp-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .dfp-stages {
+    gap: 4px;
+  }
+
+  .dfp-stage-tab {
+    padding: 5px 10px;
+    font-size: 0.6875rem;
+  }
+
+  .dfp-card {
+    padding: 18px 16px 16px;
+    border-radius: 14px;
+  }
+}
+
+/* ══════════════════════════════════════
+   Deal Modal - Enhanced cinematic popup
+   Glass surface, ambient stage glow,
+   staggered content reveal, micro-interactions
+   ══════════════════════════════════════ */
+
+/* ── Overlay backdrop - radial vignette for depth ── */
+.dfp-overlay {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at center, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.58) 100%);
+  -webkit-backdrop-filter: blur(6px) saturate(120%);
+  backdrop-filter: blur(6px) saturate(120%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99990;
+  padding: 24px;
+  animation: dfpOverlayIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dfpOverlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Modal container - deep black cinematic, wide layout ── */
+.dfp-modal {
+  position: relative;
+  width: 100%;
+  max-width: 920px;
+  max-height: 92vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 32px 36px 28px;
+  background: rgba(9, 9, 11, 0.97);
+  -webkit-backdrop-filter: blur(40px) saturate(130%);
+  backdrop-filter: blur(40px) saturate(130%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 24px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 8px 24px -4px rgba(0, 0, 0, 0.5),
+    0 32px 64px -16px rgba(0, 0, 0, 0.6),
+    0 64px 120px -32px rgba(0, 0, 0, 0.4);
+  animation: dfpModalIn 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dfp-modal::-webkit-scrollbar { display: none; }
+
+@keyframes dfpModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── Staggered child entrance ── */
+.dfp-modal-stagger {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: dfpStaggerIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(0.06s + var(--stagger, 0) * 0.045s);
+}
+
+@keyframes dfpStaggerIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Ambient stage glow - radial wash at top ── */
+.dfp-modal-glow {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 140px;
+  border-radius: 24px 24px 0 0;
+  pointer-events: none;
+  opacity: 0.35;
+}
+
+.dfp-modal--sourced .dfp-modal-glow {
+  background: radial-gradient(ellipse at 50% -20%, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+}
+.dfp-modal--diligence .dfp-modal-glow {
+  background: radial-gradient(ellipse at 50% -20%, rgba(251, 191, 36, 0.1) 0%, transparent 70%);
+}
+.dfp-modal--conviction .dfp-modal-glow {
+  background: radial-gradient(ellipse at 50% -20%, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+}
+.dfp-modal--positioned .dfp-modal-glow {
+  background: radial-gradient(ellipse at 50% -20%, rgba(96, 165, 250, 0.1) 0%, transparent 70%);
+}
+
+/* ── Top accent edge - stage color (brighter) ── */
+.dfp-modal-accent {
+  position: absolute;
+  top: 0;
+  left: 24px;
+  right: 24px;
+  height: 1px;
+  border-radius: 0 0 1px 1px;
+  opacity: 0.7;
+}
+
+.dfp-modal--sourced .dfp-modal-accent {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+}
+.dfp-modal--diligence .dfp-modal-accent {
+  background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.55), transparent);
+}
+.dfp-modal--conviction .dfp-modal-accent {
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.55), transparent);
+}
+.dfp-modal--positioned .dfp-modal-accent {
+  background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.55), transparent);
+}
+
+/* ── Gradient divider - whisper-thin separator ── */
+.dfp-modal-divider {
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.04) 75%,
+    transparent 100%
+  );
+}
+
+/* ── Top bar: stage badge + close ── */
+.dfp-modal-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dfp-modal-stage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dfp-modal-stage-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dfp-modal--sourced .dfp-modal-stage-dot {
+  background: rgba(255, 255, 255, 0.35);
+}
+.dfp-modal--diligence .dfp-modal-stage-dot {
+  background: #FBBF24;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+}
+.dfp-modal--conviction .dfp-modal-stage-dot {
+  background: #10B981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+.dfp-modal--positioned .dfp-modal-stage-dot {
+  background: #60A5FA;
+  box-shadow: 0 0 10px rgba(96, 165, 250, 0.4);
+}
+
+.dfp-modal-stage-label {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.dfp-modal-stage-sep {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+}
+
+.dfp-modal-stage-sub {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* Close button - 44px touch target per WCAG */
+.dfp-modal-close {
+  width: 36px;
+  height: 36px;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: none;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  transition:
+    background 0.15s ease-out,
+    color 0.15s ease-out,
+    transform 0.15s ease-out;
+}
+
+.dfp-modal-close:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.6);
+  transform: scale(1.05);
+}
+
+.dfp-modal-close:active {
+  transform: scale(0.95);
+}
+
+/* ── Token identity ── */
+.dfp-modal-identity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dfp-modal-token {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Logo wrap with ambient ring */
+.dfp-modal-logo-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.dfp-modal-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
+  position: relative;
+  z-index: 1;
+}
+
+.dfp-modal-logo--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Ambient ring behind logo */
+.dfp-modal-logo-ring {
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: none;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.04) 0%, transparent 70%);
+}
+
+.dfp-modal-names {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dfp-modal-symbol {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: 0.01em;
+}
+
+.dfp-modal-name {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* Risk grade - with color-matched ambient */
+.dfp-modal-risk-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.dfp-modal-risk-label {
+  font-family: var(--font-body);
+  font-size: 0.5625rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.dfp-modal-risk {
+  font-family: var(--font-mono);
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  padding: 5px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: none;
+  box-shadow: 0 0 20px color-mix(in srgb, var(--risk-color, #fff) 12%, transparent);
+}
+
+/* ── Section labels ── */
+.dfp-modal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dfp-modal-section-label {
+  font-family: var(--font-body);
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* Thesis - cinematic quote feel */
+.dfp-modal-thesis {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+  letter-spacing: 0.005em;
+}
+
+/* ── Metrics grid - auto-fill columns, borderless ── */
+.dfp-modal-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Wide variant: auto-fit to fill the full width */
+.dfp-modal-metrics--wide {
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+}
+
+.dfp-modal-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 6px;
+  text-align: center;
+  background: rgba(9, 9, 11, 0.6);
+  transition: background 0.15s ease-out;
+}
+
+.dfp-modal-metric:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.dfp-modal-metric-label {
+  font-family: var(--font-body);
+  font-size: 0.5625rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.dfp-modal-metric-value {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.dfp-modal-metric-value.is-bull { color: var(--bull); }
+.dfp-modal-metric-value.is-bear { color: var(--bear); }
+
+/* ── Side-by-side row container ── */
+.dfp-modal-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+/* Equal-height children */
+.dfp-modal-row--equal > * {
+  min-height: 0;
+}
+
+/* Compact section - tighter gaps when inside a row */
+.dfp-modal-section--compact {
+  gap: 6px;
+}
+
+/* ── Smart money signal - borderless glass ── */
+.dfp-modal-signal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: none;
+  transition: background 0.2s ease-out;
+  flex: 1;
+}
+
+.dfp-modal-signal:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dfp-modal-signal--bullish {
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.dfp-modal-signal--bullish:hover {
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.dfp-modal-signal--bearish {
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.dfp-modal-signal--bearish:hover {
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.dfp-modal-signal-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dfp-modal-signal-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.dfp-modal-signal--bullish .dfp-modal-signal-pulse {
+  background: #10B981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.45);
+  animation: dfpSignalPulse 2s ease-in-out infinite;
+}
+
+.dfp-modal-signal--bearish .dfp-modal-signal-pulse {
+  background: #EF4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.45);
+  animation: dfpSignalPulse 2s ease-in-out infinite;
+}
+
+@keyframes dfpSignalPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.6; transform: scale(1.2); }
+}
+
+.dfp-modal-signal-title {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.dfp-modal-signal-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dfp-modal-signal-amount {
+  font-family: var(--font-mono);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.dfp-modal-signal--bullish .dfp-modal-signal-amount {
+  color: var(--bull);
+}
+
+.dfp-modal-signal--bearish .dfp-modal-signal-amount {
+  color: var(--bear);
+}
+
+.dfp-modal-signal-dir {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  padding: 4px 12px;
+  border-radius: 9999px;
+}
+
+.dfp-modal-signal-dir--bullish {
+  color: var(--bull);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.dfp-modal-signal-dir--bearish {
+  color: var(--bear);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* ── Catalyst - borderless ── */
+.dfp-modal-catalyst {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: none;
+  transition: background 0.15s ease-out;
+}
+
+.dfp-modal-catalyst:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dfp-modal-catalyst-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(251, 191, 36, 0.06);
+  border: none;
+  flex-shrink: 0;
+}
+
+.dfp-modal-catalyst-icon {
+  color: rgba(251, 191, 36, 0.7);
+}
+
+.dfp-modal-catalyst-text {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.5;
+}
+
+/* ── P&L section - enhanced cells ── */
+.dfp-modal-pnl {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dfp-modal-pnl-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.dfp-modal-pnl-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 14px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: none;
+  text-align: center;
+  transition: background 0.15s ease-out;
+}
+
+.dfp-modal-pnl-cell:hover {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.dfp-modal-pnl-cell--highlight {
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.dfp-modal-pnl-cell--highlight:hover {
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.dfp-modal-pnl-label {
+  font-family: var(--font-body);
+  font-size: 0.5625rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.dfp-modal-pnl-value {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.dfp-modal-pnl-value.is-bull {
+  color: var(--bull);
+  font-weight: 700;
+}
+
+/* ── Chain badge - inline pill ── */
+.dfp-modal-chain-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 5px 12px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.dfp-modal-chain-icon {
+  color: rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+}
+
+/* ── Strengths / Risks lists - borderless ── */
+.dfp-modal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.dfp-modal-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(9, 9, 11, 0.5);
+  transition: background 0.15s ease-out;
+}
+
+.dfp-modal-list-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.dfp-modal-list-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+.dfp-modal-list-dot--green {
+  background: #10B981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.3);
+}
+
+.dfp-modal-list-dot--amber {
+  background: #FBBF24;
+  box-shadow: 0 0 6px rgba(251, 191, 36, 0.3);
+}
+
+.dfp-modal-list-text {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Strengths container tint */
+.dfp-modal-list--strengths {
+  background: rgba(16, 185, 129, 0.02);
+}
+
+/* Risks container tint */
+.dfp-modal-list--risks {
+  background: rgba(251, 191, 36, 0.02);
+}
+
+/* ── Backers - inline pill list ── */
+.dfp-modal-backers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.dfp-modal-backer-pill {
+  font-family: var(--font-body);
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  white-space: nowrap;
+  transition: background 0.15s ease-out, color 0.15s ease-out;
+}
+
+.dfp-modal-backer-pill:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ── Footer: sector + chain + backers + address ── */
+.dfp-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 0;
+}
+
+.dfp-modal-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.dfp-modal-sector {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.3);
+  padding: 5px 14px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.03);
+  border: none;
+  flex-shrink: 0;
+}
+
+.dfp-modal-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.dfp-modal-address {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.2);
+  cursor: default;
+  flex-shrink: 0;
+}
+
+/* ── Social icon links ── */
+.dfp-modal-socials {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dfp-modal-social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.03);
+  border: none;
+  text-decoration: none;
+  transition:
+    color 0.15s ease-out,
+    background 0.15s ease-out,
+    transform 0.15s ease-out;
+}
+
+.dfp-modal-social-link:hover {
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.07);
+  transform: translateY(-1px);
+}
+
+.dfp-modal-social-link:active {
+  transform: scale(0.95);
+}
+
+/* ── Modal responsive - stack on tablets ── */
+@media (max-width: 960px) {
+  .dfp-modal {
+    max-width: 600px;
+  }
+
+  .dfp-modal-metrics--wide {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .dfp-modal-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Modal responsive - bottom sheet on mobile ── */
+@media (max-width: 640px) {
+  .dfp-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .dfp-modal {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 24px 24px 0 0;
+    padding: 24px 20px 20px;
+    gap: 14px;
+  }
+
+  .dfp-modal-glow {
+    border-radius: 24px 24px 0 0;
+  }
+
+  .dfp-modal-metrics,
+  .dfp-modal-metrics--wide {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dfp-modal-pnl-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dfp-modal-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dfp-modal-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .dfp-card {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .dfp-card-signal-pulse {
+    animation: none;
+  }
+
+  .dfp-overlay {
+    animation: none;
+  }
+
+  .dfp-modal {
+    animation: none;
+  }
+
+  .dfp-modal-stagger {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+
+  .dfp-modal-signal-pulse {
+    animation: none;
+  }
+}
+
+/* =========================================
+   Light Theme - DealFlowPipeline
+   ========================================= */
+
+/* Stage tabs */
+body.theme-light .dfp-stage-tab {
+  color: rgba(17, 17, 19, 0.40);
+}
+
+body.theme-light .dfp-stage-tab:hover {
+  color: rgba(17, 17, 19, 0.60);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .dfp-stage-tab.is-active {
+  color: #111113;
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .dfp-stage-tab-count {
+  color: rgba(17, 17, 19, 0.24);
+}
+
+body.theme-light .dfp-stage-tab.is-active .dfp-stage-tab-count {
+  color: rgba(17, 17, 19, 0.50);
+}
+
+/* Cards */
+body.theme-light .dfp-card {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(0, 0, 0, 0.05);
+}
+
+body.theme-light .dfp-card:hover {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(0, 0, 0, 0.10);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
+}
+
+/* Sourced accent - subtle in light mode */
+body.theme-light .dfp-card--sourced .dfp-card-accent {
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.10), transparent);
+}
+
+body.theme-light .dfp-card-stage-label {
+  color: rgba(17, 17, 19, 0.36);
+}
+
+body.theme-light .dfp-card--sourced .dfp-card-stage-dot {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+/* Token header */
+body.theme-light .dfp-card-logo {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .dfp-card-logo--fallback {
+  color: rgba(17, 17, 19, 0.50);
+}
+
+body.theme-light .dfp-card-symbol {
+  color: #111113;
+}
+
+body.theme-light .dfp-card-name {
+  color: rgba(17, 17, 19, 0.40);
+}
+
+/* Risk grade */
+body.theme-light .dfp-card-risk {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Thesis */
+body.theme-light .dfp-card-thesis {
+  color: rgba(17, 17, 19, 0.54);
+}
+
+/* Metrics row */
+body.theme-light .dfp-card-metrics {
+  border-top-color: rgba(0, 0, 0, 0.04);
+  border-bottom-color: rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .dfp-card-metric + .dfp-card-metric {
+  border-left-color: rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .dfp-card-metric-label {
+  color: rgba(17, 17, 19, 0.30);
+}
+
+body.theme-light .dfp-card-metric-value {
+  color: rgba(17, 17, 19, 0.80);
+}
+
+/* Smart money signal */
+body.theme-light .dfp-card-signal {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .dfp-card-signal--bullish {
+  background: rgba(16, 185, 129, 0.05);
+  border-color: rgba(16, 185, 129, 0.10);
+}
+
+body.theme-light .dfp-card-signal--bearish {
+  background: rgba(239, 68, 68, 0.05);
+  border-color: rgba(239, 68, 68, 0.10);
+}
+
+body.theme-light .dfp-card-signal-pulse {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+body.theme-light .dfp-card-signal-label {
+  color: rgba(17, 17, 19, 0.36);
+}
+
+body.theme-light .dfp-card-signal-text {
+  color: rgba(17, 17, 19, 0.65);
+}
+
+/* Catalyst */
+body.theme-light .dfp-card-catalyst-label {
+  color: rgba(17, 17, 19, 0.24);
+}
+
+body.theme-light .dfp-card-catalyst-text {
+  color: rgba(17, 17, 19, 0.50);
+}
+
+/* P&L */
+body.theme-light .dfp-card-pnl-label {
+  color: rgba(17, 17, 19, 0.36);
+}
+
+body.theme-light .dfp-card-pnl-value {
+  color: rgba(17, 17, 19, 0.60);
+}
+
+/* Sector pill */
+body.theme-light .dfp-card-sector {
+  color: rgba(17, 17, 19, 0.36);
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Highlight/dim */
+body.theme-light .dfp-card.is-highlighted {
+  border-color: rgba(0, 0, 0, 0.14);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Modal ── */
+
+/* Overlay */
+body.theme-light .dfp-overlay {
+  background:
+    radial-gradient(ellipse at center, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0.52) 100%);
+}
+
+/* Modal container */
+body.theme-light .dfp-modal {
+  background: rgba(255, 255, 255, 0.97);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 8px 24px -4px rgba(0, 0, 0, 0.08),
+    0 32px 64px -16px rgba(0, 0, 0, 0.10),
+    0 64px 120px -32px rgba(0, 0, 0, 0.06);
+}
+
+/* Modal glow - lighter ambient */
+body.theme-light .dfp-modal--sourced .dfp-modal-glow {
+  background: radial-gradient(ellipse at 50% -20%, rgba(0, 0, 0, 0.03) 0%, transparent 70%);
+}
+
+body.theme-light .dfp-modal--diligence .dfp-modal-glow {
+  background: radial-gradient(ellipse at 50% -20%, rgba(251, 191, 36, 0.06) 0%, transparent 70%);
+}
+
+body.theme-light .dfp-modal--conviction .dfp-modal-glow {
+  background: radial-gradient(ellipse at 50% -20%, rgba(16, 185, 129, 0.06) 0%, transparent 70%);
+}
+
+body.theme-light .dfp-modal--positioned .dfp-modal-glow {
+  background: radial-gradient(ellipse at 50% -20%, rgba(96, 165, 250, 0.06) 0%, transparent 70%);
+}
+
+/* Divider */
+body.theme-light .dfp-modal-divider {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.06) 25%,
+    rgba(0, 0, 0, 0.06) 75%,
+    transparent 100%
+  );
+}
+
+/* Stage label + close */
+body.theme-light .dfp-modal-stage-label {
+  color: rgba(17, 17, 19, 0.50);
+}
+
+body.theme-light .dfp-modal--sourced .dfp-modal-stage-dot {
+  background: rgba(0, 0, 0, 0.28);
+}
+
+body.theme-light .dfp-modal-stage-sep {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+body.theme-light .dfp-modal-stage-sub {
+  color: rgba(17, 17, 19, 0.24);
+}
+
+body.theme-light .dfp-modal-close {
+  background: rgba(0, 0, 0, 0.03);
+  color: rgba(17, 17, 19, 0.30);
+}
+
+body.theme-light .dfp-modal-close:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(17, 17, 19, 0.60);
+}
+
+/* Identity */
+body.theme-light .dfp-modal-logo {
+  background: rgba(0, 0, 0, 0.03);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .dfp-modal-logo--fallback {
+  color: rgba(17, 17, 19, 0.50);
+}
+
+body.theme-light .dfp-modal-logo-ring {
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.02) 0%, transparent 70%);
+}
+
+body.theme-light .dfp-modal-symbol {
+  color: #111113;
+}
+
+body.theme-light .dfp-modal-name {
+  color: rgba(17, 17, 19, 0.40);
+}
+
+/* Risk */
+body.theme-light .dfp-modal-risk-label {
+  color: rgba(17, 17, 19, 0.24);
+}
+
+body.theme-light .dfp-modal-risk {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+/* Section labels */
+body.theme-light .dfp-modal-section-label {
+  color: rgba(17, 17, 19, 0.24);
+}
+
+/* Thesis */
+body.theme-light .dfp-modal-thesis {
+  color: rgba(17, 17, 19, 0.58);
+}
+
+/* Metrics grid */
+body.theme-light .dfp-modal-metrics {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+body.theme-light .dfp-modal-metric {
+  background: rgba(255, 255, 255, 0.80);
+}
+
+body.theme-light .dfp-modal-metric:hover {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+body.theme-light .dfp-modal-metric-label {
+  color: rgba(17, 17, 19, 0.30);
+}
+
+body.theme-light .dfp-modal-metric-value {
+  color: rgba(17, 17, 19, 0.85);
+}
+
+/* Signal */
+body.theme-light .dfp-modal-signal {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+body.theme-light .dfp-modal-signal:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .dfp-modal-signal--bullish {
+  background: rgba(16, 185, 129, 0.05);
+}
+
+body.theme-light .dfp-modal-signal--bullish:hover {
+  background: rgba(16, 185, 129, 0.07);
+}
+
+body.theme-light .dfp-modal-signal--bearish {
+  background: rgba(239, 68, 68, 0.05);
+}
+
+body.theme-light .dfp-modal-signal--bearish:hover {
+  background: rgba(239, 68, 68, 0.07);
+}
+
+body.theme-light .dfp-modal-signal-pulse {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+body.theme-light .dfp-modal-signal-title {
+  color: rgba(17, 17, 19, 0.40);
+}
+
+body.theme-light .dfp-modal-signal-amount {
+  color: rgba(17, 17, 19, 0.78);
+}
+
+body.theme-light .dfp-modal-signal-dir--bullish {
+  background: rgba(16, 185, 129, 0.12);
+}
+
+body.theme-light .dfp-modal-signal-dir--bearish {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+/* Catalyst */
+body.theme-light .dfp-modal-catalyst {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+body.theme-light .dfp-modal-catalyst:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .dfp-modal-catalyst-icon-wrap {
+  background: rgba(251, 191, 36, 0.08);
+}
+
+body.theme-light .dfp-modal-catalyst-text {
+  color: rgba(17, 17, 19, 0.58);
+}
+
+/* P&L cells */
+body.theme-light .dfp-modal-pnl-cell {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+body.theme-light .dfp-modal-pnl-cell:hover {
+  background: rgba(0, 0, 0, 0.035);
+}
+
+body.theme-light .dfp-modal-pnl-cell--highlight {
+  background: rgba(16, 185, 129, 0.05);
+}
+
+body.theme-light .dfp-modal-pnl-cell--highlight:hover {
+  background: rgba(16, 185, 129, 0.07);
+}
+
+body.theme-light .dfp-modal-pnl-label {
+  color: rgba(17, 17, 19, 0.30);
+}
+
+body.theme-light .dfp-modal-pnl-value {
+  color: rgba(17, 17, 19, 0.72);
+}
+
+/* Chain badge */
+body.theme-light .dfp-modal-chain-badge {
+  color: rgba(17, 17, 19, 0.45);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .dfp-modal-chain-icon {
+  color: rgba(17, 17, 19, 0.35);
+}
+
+/* Lists */
+body.theme-light .dfp-modal-list {
+  background: rgba(0, 0, 0, 0.015);
+}
+
+body.theme-light .dfp-modal-list--strengths {
+  background: rgba(16, 185, 129, 0.03);
+}
+
+body.theme-light .dfp-modal-list--risks {
+  background: rgba(251, 191, 36, 0.03);
+}
+
+body.theme-light .dfp-modal-list-item {
+  background: rgba(255, 255, 255, 0.70);
+}
+
+body.theme-light .dfp-modal-list-item:hover {
+  background: rgba(255, 255, 255, 0.90);
+}
+
+body.theme-light .dfp-modal-list-text {
+  color: rgba(17, 17, 19, 0.54);
+}
+
+/* Backers */
+body.theme-light .dfp-modal-backer-pill {
+  color: rgba(17, 17, 19, 0.40);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .dfp-modal-backer-pill:hover {
+  background: rgba(0, 0, 0, 0.07);
+  color: rgba(17, 17, 19, 0.65);
+}
+
+/* Footer */
+body.theme-light .dfp-modal-sector {
+  color: rgba(17, 17, 19, 0.36);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .dfp-modal-address {
+  color: rgba(17, 17, 19, 0.24);
+}
+
+/* Social links */
+body.theme-light .dfp-modal-social-link {
+  color: rgba(17, 17, 19, 0.30);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .dfp-modal-social-link:hover {
+  color: rgba(17, 17, 19, 0.72);
+  background: rgba(0, 0, 0, 0.07);
+}

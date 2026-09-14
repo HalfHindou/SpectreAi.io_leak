@@ -1,0 +1,147 @@
+/* The theme orb — one component, two hosts.
+   Extracted from pro-theme-studio.css 2026-08-08 so Spectre LITE can mount the
+   SAME globe without pulling the PRO skin sheet (1.6k lines of `.app.pro-*`
+   rules it can never match) into its chunk. Visuals unchanged. */
+
+/* The globe — the always-there entry (founder 08-04: "nice styled globe on the
+   right side, not too big"). Docked to the right EDGE at mid-height, where no
+   page parks content; unlike the old bottom-right fab it cannot sit on a
+   Top Coins row or the watchlist Add tile. */
+.pro-theme-globe {
+  position: fixed;
+  /* default: stacked above the Monarch fab (52px at 24/24), centres aligned */
+  right: 30px;
+  bottom: 92px;
+  z-index: 240;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: grab;
+  touch-action: none; /* the orb is draggable — it owns its gestures */
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    left 0.3s cubic-bezier(0.16, 1, 0.3, 1), top 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* the SPHERE (v5 — "more animated and better looking"): deep glass, floats
+   gently; two iridescent sheens counter-rotate inside; a chromatic glow
+   breathes behind it. Every animation is transform/opacity — compositor-only —
+   and lives on child layers so the button's hover/drag transforms stay clean. */
+.pro-theme-globe-body {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(130% 130% at 34% 26%, #2e3140 0%, #14151d 46%, #0a0b10 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -8px 14px rgba(0, 0, 0, 0.38),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.12),
+    0 4px 16px rgba(0, 0, 0, 0.35);
+  animation: ptgFloat 5.5s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+/* the breathing chromatic glow, BEHIND the sphere */
+.pro-theme-globe-glow {
+  position: absolute;
+  inset: -9px;
+  border-radius: 50%;
+  background:
+    radial-gradient(60% 60% at 35% 30%, rgba(94, 234, 212, 0.35) 0%, transparent 70%),
+    radial-gradient(60% 60% at 70% 65%, rgba(139, 116, 250, 0.4) 0%, transparent 70%),
+    radial-gradient(70% 70% at 50% 50%, rgba(56, 189, 248, 0.25) 0%, transparent 75%);
+  filter: blur(7px);
+  animation: ptgBreathe 4.5s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+/* twin sheens — light moving through the glass, opposite directions */
+.pro-theme-globe-swirl {
+  position: absolute;
+  inset: -16%;
+  border-radius: 50%;
+  background:
+    conic-gradient(from 210deg,
+      transparent 0deg,
+      rgba(94, 234, 212, 0.2) 55deg,
+      rgba(125, 145, 255, 0.28) 110deg,
+      rgba(244, 114, 182, 0.18) 165deg,
+      transparent 220deg,
+      transparent 360deg);
+  filter: blur(4px);
+  animation: ptgSpin 14s linear infinite;
+  pointer-events: none;
+}
+.pro-theme-globe-swirl--b {
+  background:
+    conic-gradient(from 30deg,
+      transparent 0deg,
+      rgba(251, 191, 36, 0.12) 70deg,
+      rgba(56, 189, 248, 0.16) 140deg,
+      transparent 210deg,
+      transparent 360deg);
+  animation: ptgSpinBack 23s linear infinite;
+}
+/* the specular — an honest glass highlight up-left */
+.pro-theme-globe-core {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(38% 28% at 32% 22%, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.14) 52%, transparent 74%);
+  pointer-events: none;
+}
+@keyframes ptgSpin { to { transform: rotate(360deg); } }
+@keyframes ptgSpinBack { to { transform: rotate(-360deg); } }
+@keyframes ptgFloat { from { transform: translateY(-1.5px); } to { transform: translateY(1.5px); } }
+@keyframes ptgBreathe { from { opacity: 0.45; } to { opacity: 0.95; } }
+@media (prefers-reduced-motion: reduce) {
+  .pro-theme-globe-swirl,
+  .pro-theme-globe-body,
+  .pro-theme-globe-glow { animation: none; }
+}
+.pro-theme-globe:hover { transform: scale(1.06); }
+.pro-theme-globe:hover .pro-theme-globe-glow { animation-duration: 2.6s; }
+.pro-theme-globe:active { transform: scale(0.94); cursor: grabbing; }
+.pro-theme-globe.is-dragging {
+  transition: none;
+  cursor: grabbing;
+  transform: scale(1.08);
+}
+.pro-theme-globe.is-dragging .pro-theme-globe-body {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -8px 14px rgba(0, 0, 0, 0.38),
+    0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 768px) {
+  .pro-theme-globe {
+    /* default: above the watchlist star fab AND clear of the home watchlist
+       Add tile (the collision that killed the old fab) — draggable from there */
+    top: auto;
+    bottom: calc(var(--m-bottom-nav-h, 76px) + env(safe-area-inset-bottom, 0px) + 236px);
+    right: 8px;
+    width: 36px;
+    height: 36px;
+  }
+  .pro-theme-globe svg { width: 17px; height: 17px; }
+  .pro-theme-globe:hover { transform: none; }
+  .pro-theme-globe:active { transform: scale(0.94); }
+}
+
+/* light chrome counterparts — the sphere stays (it is the identity); the
+   glow softens so it doesn't smoke on a white page */
+.app.app-day-mode .pro-theme-globe-glow,
+.app.pro-paper .pro-theme-globe-glow {
+  filter: blur(7px) opacity(0.7);
+}
+.app.app-day-mode .pro-theme-globe-body,
+.app.pro-paper .pro-theme-globe-body {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -8px 14px rgba(0, 0, 0, 0.3),
+    0 4px 14px rgba(15, 23, 42, 0.25);
+}

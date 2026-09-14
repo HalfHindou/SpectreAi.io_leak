@@ -1,0 +1,1734 @@
+/* ═══════════════════════════════════════════
+   BUBBLES PAGE — Apple Cinematic Professional
+   Glass morphism, warm-white, cinematic depth
+   ═══════════════════════════════════════════ */
+
+.bubbles-page {
+  flex: 1;
+  /* PageLayout's .page-layout__content is display:block, so flex:1 alone can't
+     fill it — pin the page to the viewport below the fixed 74px header so the
+     viz reaches the bottom at any zoom. */
+  min-height: calc(100dvh - 74px);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  gap: 16px;
+  padding: 16px 14px;
+  position: relative;
+}
+/* Beat `.page-layout__content > * { min-height: 0 }` so the page fills the
+   viewport and the viz (bubbles + cosmos) reaches the bottom. Desktop-only: the
+   `!important` would otherwise override the mobile 100dvh rule and leave a 74px
+   dead strip (mobile has no desktop 74px header). */
+@media (min-width: 769px) {
+  .page-layout__content > .bubbles-page { min-height: calc(100dvh - 74px) !important; }
+}
+
+/* ═══════════════════════════════════════════
+   ENTRANCE ANIMATIONS
+   ═══════════════════════════════════════════ */
+
+@keyframes bubbleFadeUp {
+  from { opacity: 0; transform: translateY(24px); filter: blur(4px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+}
+/* The arena is a huge (full-width) surface that ALREADY carries a 24px
+   backdrop-filter — animating transform+filter on it re-filters ~2000×700px
+   every frame (the "load lag"). It gets a compositor-only opacity fade;
+   the small chrome rows keep the rich lift. */
+@keyframes bubbleFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.bubbles-hero       { animation: bubbleFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.bubbles-controls   { animation: bubbleFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both; }
+.bubbles-container  { animation: bubbleFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both; }
+.bubbles-movers     { animation: bubbleFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.24s both; }
+
+/* ═══════════════════════════════════════════
+   HERO
+   ═══════════════════════════════════════════ */
+
+.bubbles-hero {
+  padding: 28px 32px 20px;
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.016) 13%, transparent 42%),
+    rgba(9, 10, 13, 0.7);
+  backdrop-filter: blur(30px) saturate(185%);
+  -webkit-backdrop-filter: blur(30px) saturate(185%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.12),
+    0 20px 60px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  position: relative;
+  overflow: hidden;
+  max-width: none;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Subtle ambient glow behind hero */
+.bubbles-hero::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  left: 20%;
+  width: 60%;
+  height: 120px;
+  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Top highlight line */
+.bubbles-hero::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  pointer-events: none;
+}
+
+.bubbles-hero-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  position: relative;
+  z-index: 1;
+}
+.bubbles-hero-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bubbles-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif);
+  font-size: clamp(1.4rem, 2.5vw, 1.75rem);
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  color: #f5f5f7;
+}
+
+.bubbles-title-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: rgba(245, 245, 247, 0.85);
+  filter: drop-shadow(0 0 6px rgba(245, 245, 247, 0.4));
+}
+.bubbles-title-icon svg {
+  width: 100%;
+  height: 100%;
+}
+.bubbles-subtitle {
+  font-size: 0.82rem;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  margin: 0;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+}
+/* ── Hero Stats ── */
+.bubbles-hero-stats {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ── Sentiment badge ── */
+.bubbles-sentiment-badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.bubbles-sentiment-badge.bias-bullish {
+  color: var(--bull-bright, #34D399);
+  border-color: rgba(16, 185, 129, 0.12);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%);
+}
+.bubbles-sentiment-badge.bias-bearish {
+  color: var(--bear-bright, #F87171);
+  border-color: rgba(239, 68, 68, 0.12);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%);
+}
+.bubbles-sentiment-badge.bias-neutral {
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+}
+.bubbles-sentiment-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+  animation: bubbleSentPulse 2s ease-in-out infinite;
+}
+@keyframes bubbleSentPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px currentColor; }
+  50% { opacity: 0.6; box-shadow: 0 0 16px currentColor; }
+}
+
+.bubbles-hero-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  min-width: 72px;
+  transition: border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.bubbles-hero-stat:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.bubbles-hero-stat-val {
+  font-family: var(--font-mono, var(--font-mono));
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.bubbles-hero-stat-val.val-green {
+  color: var(--bull-bright, #34D399);
+}
+.bubbles-hero-stat-val.val-red {
+  color: var(--bear-bright, #F87171);
+}
+.bubbles-hero-stat-lbl {
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+/* ═══════════════════════════════════════════
+   CONTROLS BAR
+   ═══════════════════════════════════════════ */
+
+.bubbles-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: none;
+  margin: 0 auto;
+  width: 100%;
+  flex-wrap: wrap;
+}
+.bubbles-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.bubbles-controls-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.bubbles-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bubbles-pill-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.bubbles-pill-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.bubbles-pills {
+  display: flex;
+  gap: 3px;
+}
+.bubbles-pill {
+  padding: 6px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+.bubbles-pill:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+.bubbles-pill.active {
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Fullscreen button */
+.bubble-fullscreen-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.bubble-fullscreen-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5f5f7;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+}
+
+/* ═══════════════════════════════════════════
+   LOADING / ERROR
+   ═══════════════════════════════════════════ */
+
+.bubbles-loading {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: 24px 0;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  font-size: 0.82rem;
+}
+.bubbles-skeleton {
+  width: 100%;
+  max-width: 100%;
+  min-height: 600px;
+  border-radius: 16px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.06) 50%, rgba(255, 255, 255, 0.02) 100%);
+  background-size: 200% 100%;
+  animation: bubblesShimmer 2s linear infinite;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+@keyframes bubblesShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.bubbles-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 120px 0;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  font-size: 0.82rem;
+}
+.bubbles-error button {
+  padding: 8px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.bubbles-error button:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ═══════════════════════════════════════════
+   BUBBLE CONTAINER
+   ═══════════════════════════════════════════ */
+
+.bubbles-container {
+  max-width: none;
+  margin: 0 auto;
+  width: 100%;
+  /* Fill the remaining viewport height (like the heatmap) instead of a fixed
+     65vh that leaves dead space below. */
+  flex: 1 1 auto;
+  min-height: 520px;
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.016) 13%, transparent 42%),
+    rgba(9, 10, 13, 0.7);
+  backdrop-filter: blur(30px) saturate(185%);
+  -webkit-backdrop-filter: blur(30px) saturate(185%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.12),
+    0 20px 60px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  padding: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.bubbles-arena {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* ═══════════════════════════════════════════
+   BUBBLE NODE — Apple Cinematic Glass Orb
+   ═══════════════════════════════════════════ */
+
+.bubble-node {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  z-index: 1;
+  opacity: 0;
+
+  /* ── 3D glass sphere — deep cinematic orb ── */
+  background:
+    /* Top-left specular catch light */
+    radial-gradient(ellipse 50% 40% at 28% 20%,
+      rgba(255, 255, 255, 0.20) 0%,
+      rgba(255, 255, 255, 0.05) 45%,
+      transparent 70%),
+    /* Ambient fill with color tint */
+    radial-gradient(ellipse 100% 100% at 50% 40%,
+      var(--bubble-bg-top, rgba(255, 255, 255, 0.06)) 0%,
+      var(--bubble-bg, rgba(255, 255, 255, 0.035)) 45%,
+      var(--bubble-bg-bottom, rgba(0, 0, 0, 0.10)) 100%);
+
+  border: 1px solid var(--bubble-border, rgba(255, 255, 255, 0.08));
+
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.20),
+    0 10px 28px rgba(0, 0, 0, 0.18),
+    0 0 0 0.5px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -6px 14px rgba(0, 0, 0, 0.10);
+
+  cursor: grab;
+  will-change: transform, opacity;
+  transition:
+    box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.22s ease,
+    filter 0.22s ease,
+    opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Idle breathing — subtle pulsing when at rest ── */
+@keyframes bubbleBreathe {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.06); }
+}
+.bubble-node.settled {
+  animation: bubbleBreathe 4s ease-in-out infinite;
+  animation-delay: var(--breathe-delay, 0s);
+}
+
+/* ── Glass sphere specular highlight — concentrated top-left shine ── */
+.bubble-node::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    /* Primary specular — bright, tight crescent */
+    radial-gradient(ellipse 42% 32% at 28% 18%,
+      rgba(255, 255, 255, 0.42) 0%,
+      rgba(255, 255, 255, 0.12) 30%,
+      transparent 58%),
+    /* Secondary specular — softer, wider wash */
+    radial-gradient(ellipse 70% 50% at 35% 25%,
+      rgba(255, 255, 255, 0.06) 0%,
+      transparent 60%),
+    /* Rim light — bottom-right edge catch */
+    radial-gradient(ellipse 55% 28% at 78% 82%,
+      rgba(255, 255, 255, 0.05) 0%,
+      transparent 55%);
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* ── Brand glow aura — subtle at rest, stronger on hover ── */
+.bubble-node::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(var(--bubble-brand-rgb), 0.12) 0%,
+    rgba(var(--bubble-brand-rgb), 0.03) 55%,
+    transparent 80%);
+  opacity: 0.25;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  filter: blur(6px);
+  z-index: 0;
+}
+
+/* ── Positive (green) resting glow ── */
+.bubble-node.positive {
+  box-shadow:
+    0 0 14px rgba(16, 185, 129, 0.14),
+    0 2px 6px rgba(0, 0, 0, 0.20),
+    0 10px 28px rgba(0, 0, 0, 0.18),
+    0 0 0 0.5px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -6px 14px rgba(0, 0, 0, 0.10);
+}
+
+/* ── Negative (red) resting glow ── */
+.bubble-node.negative {
+  box-shadow:
+    0 0 14px rgba(239, 68, 68, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.20),
+    0 10px 28px rgba(0, 0, 0, 0.18),
+    0 0 0 0.5px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -6px 14px rgba(0, 0, 0, 0.10);
+}
+
+/* ── Hover state - Apple lift with brand glow ── */
+.bubble-node:hover {
+  z-index: 10;
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 0 22px rgba(var(--bubble-brand-rgb), 0.25),
+    0 4px 10px rgba(0, 0, 0, 0.16),
+    0 16px 48px rgba(0, 0, 0, 0.28),
+    0 0 0 0.5px rgba(255, 255, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -6px 14px rgba(0, 0, 0, 0.08);
+  filter: brightness(1.15);
+}
+.bubble-node:hover::after { opacity: 0.85; }
+
+/* ── Drag state - cinematic lift ── */
+.bubble-node.dragging,
+.bubble-node.dragging:hover {
+  z-index: 100;
+  cursor: grabbing;
+  filter: brightness(1.14);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 0 28px rgba(var(--bubble-brand-rgb), 0.25),
+    0 8px 16px rgba(0, 0, 0, 0.18),
+    0 24px 64px rgba(0, 0, 0, 0.32),
+    0 0 0 0.5px rgba(255, 255, 255, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -6px 14px rgba(0, 0, 0, 0.08);
+}
+.bubble-node.dragging::after { opacity: 0.8; }
+
+/* ═══════════════════════════════════════════
+   BUBBLE CONTENT
+   ═══════════════════════════════════════════ */
+
+.bubble-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  z-index: 4;
+  position: relative;
+  text-align: center;
+  pointer-events: none;
+  padding: 6px;
+  overflow: hidden;
+}
+
+.bubble-logo {
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.20);
+}
+.bubble-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.bubble-logo span {
+  font-size: 8px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.bubble-symbol {
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif);
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.bubble-name {
+  font-weight: 500;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.50));
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 85%;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.bubble-change {
+  font-family: var(--font-mono, var(--font-mono));
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.bubble-change.pos { color: var(--bull-bright, #34D399); }
+.bubble-change.neg { color: var(--bear-bright, #F87171); }
+
+/* ── Mini sparkline inside bubble ── */
+.bubble-sparkline {
+  flex-shrink: 0;
+  opacity: 0.6;
+  margin-top: 1px;
+}
+
+/* ═══════════════════════════════════════════
+   TOOLTIP — Apple Cinematic Glass Card
+   ═══════════════════════════════════════════ */
+
+.bubble-tooltip {
+  padding: 16px 20px;
+  border-radius: 14px;
+  min-width: 220px;
+  max-width: 280px;
+
+  background: rgba(18, 18, 22, 0.92);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.20),
+    0 16px 48px rgba(0, 0, 0, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  animation: tooltipIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle top highlight */
+.bubble-tooltip::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 10%,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent 90%);
+  pointer-events: none;
+}
+
+@keyframes tooltipIn {
+  from { opacity: 0; transform: translateY(8px); filter: blur(4px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+.bubble-tooltip-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  z-index: 1;
+}
+
+.bubble-tooltip-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.bubble-tooltip-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f5f5f7;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+.bubble-tooltip-rank {
+  font-size: 0.75rem;
+  color: rgba(245, 245, 247, 0.4);
+  line-height: 1.3;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.bubble-tooltip-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  position: relative;
+  z-index: 1;
+}
+
+.bubble-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: rgba(245, 245, 247, 0.45);
+  font-weight: 500;
+}
+
+.bubble-tooltip-row span:last-child {
+  font-family: var(--font-mono, var(--font-mono));
+  font-weight: 600;
+  color: #f5f5f7;
+  font-size: 0.82rem;
+  letter-spacing: -0.02em;
+}
+
+.bubble-tooltip-row .pos {
+  color: var(--bull-bright, #34D399) !important;
+}
+.bubble-tooltip-row .neg {
+  color: var(--bear-bright, #F87171) !important;
+}
+
+/* ── Tooltip sparkline chart ── */
+.bubble-tooltip-chart {
+  position: relative;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  height: 40px;
+}
+.bubble-tooltip-chart svg {
+  width: 100%;
+  height: 40px;
+  display: block;
+}
+.bubble-tooltip-chart-label {
+  position: absolute;
+  top: 12px;
+  right: 0;
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.25);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ═══════════════════════════════════════════
+   TOP MOVERS STRIP
+   ═══════════════════════════════════════════ */
+
+.bubbles-movers {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  max-width: none;
+  margin: 0 auto;
+  width: 100%;
+  padding: 14px 28px;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.016) 13%, transparent 42%),
+    rgba(9, 10, 13, 0.7);
+  backdrop-filter: blur(30px) saturate(185%);
+  -webkit-backdrop-filter: blur(30px) saturate(185%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.bubbles-mover-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bubbles-mover-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.bubbles-mover-token {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #f5f5f7;
+}
+.bubbles-mover-logo {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.bubbles-mover-change {
+  font-family: var(--font-mono, var(--font-mono));
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.bubbles-mover-change.pos { color: var(--bull-bright, #34D399); }
+.bubbles-mover-change.neg { color: var(--bear-bright, #F87171); }
+.bubbles-mover-val {
+  font-family: var(--font-mono, var(--font-mono));
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #f5f5f7;
+}
+.bubbles-movers-divider {
+  width: 1px;
+  height: 24px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+}
+
+/* ═══════════════════════════════════════════
+   FULLSCREEN OVERLAY
+   ═══════════════════════════════════════════ */
+
+.bubbles-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  animation: bubblesFsIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes bubblesFsIn {
+  from { opacity: 0; transform: scale(0.97); filter: blur(4px); }
+  to   { opacity: 1; transform: scale(1);    filter: blur(0); }
+}
+
+.bubbles-fullscreen-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 32px;
+  overflow: hidden;
+}
+.bubbles-fullscreen-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  flex-shrink: 0;
+}
+.bubbles-fullscreen-title {
+  font-family: var(--font-display, -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.bubbles-fullscreen-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.bubbles-fullscreen-arena {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+/* ═══════════════════════════════════════════
+   DAY MODE
+   ═══════════════════════════════════════════ */
+
+.bubbles-page.day-mode::before {
+  background:
+    radial-gradient(ellipse 600px 400px at 30% 20%, rgba(0, 0, 0, 0.02) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 350px at 70% 75%, rgba(0, 0, 0, 0.015) 0%, transparent 65%);
+}
+
+.bubbles-page.day-mode .bubbles-hero {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.bubbles-page.day-mode .bubbles-hero::before { display: none; }
+.bubbles-page.day-mode .bubbles-hero::after {
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.04), transparent);
+}
+.bubbles-page.day-mode .bubbles-title {
+  color: #1a1a1d;
+}
+.bubbles-page.day-mode .bubbles-title-icon {
+  color: rgba(17, 17, 19, 0.54);
+  filter: none;
+}
+.bubbles-page.day-mode .bubbles-subtitle { color: #64748b; }
+.bubbles-page.day-mode .bubbles-sentiment-badge {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.03) 0%, rgba(0, 0, 0, 0.01) 100%);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: #64748b;
+}
+.bubbles-page.day-mode .bubbles-sentiment-badge.bias-bullish {
+  color: #15803d;
+  border-color: rgba(21, 128, 61, 0.28);
+  background: linear-gradient(135deg, rgba(22, 163, 74, 0.12) 0%, rgba(22, 163, 74, 0.05) 100%);
+}
+.bubbles-page.day-mode .bubbles-sentiment-badge.bias-bearish {
+  color: #b91c1c;
+  border-color: rgba(185, 28, 28, 0.28);
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.12) 0%, rgba(220, 38, 38, 0.05) 100%);
+}
+.bubbles-page.day-mode .bubbles-hero-stat {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.03) 0%, rgba(0, 0, 0, 0.01) 100%);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: none;
+}
+.bubbles-page.day-mode .bubbles-hero-stat-val { color: #0f172a; }
+.bubbles-page.day-mode .bubbles-hero-stat-val.val-green { color: #15803d; text-shadow: none; }
+.bubbles-page.day-mode .bubbles-hero-stat-val.val-red { color: #b91c1c; text-shadow: none; }
+.bubbles-page.day-mode .bubbles-hero-stat-lbl { color: #64748b; }
+
+.bubbles-page.day-mode .bubbles-pill-label { color: #64748b; }
+.bubbles-page.day-mode .bubbles-pill {
+  border-color: rgba(0, 0, 0, 0.06);
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.03) 0%, rgba(0, 0, 0, 0.01) 100%);
+  color: #64748b;
+  box-shadow: none;
+}
+.bubbles-page.day-mode .bubbles-pill:hover {
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #334155;
+}
+.bubbles-page.day-mode .bubbles-pill.active {
+  color: #0f172a;
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: none;
+}
+
+.bubbles-page.day-mode .bubble-fullscreen-btn {
+  border-color: rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.02);
+  color: #94a3b8;
+}
+.bubbles-page.day-mode .bubble-fullscreen-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #1a1a1d;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.bubbles-page.day-mode .bubbles-container {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+/* ── Day mode bubble orb ── */
+.bubbles-page.day-mode .bubble-node {
+  /* Keep the JS-computed green/red tint border (var(--bubble-border)) —
+     a flat neutral here washed the bubbles out in day mode. */
+  border-color: var(--bubble-border, rgba(0, 0, 0, 0.06));
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.bubbles-page.day-mode .bubble-node.positive {
+  box-shadow:
+    0 0 10px rgba(22, 163, 74, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.bubbles-page.day-mode .bubble-node.negative {
+  box-shadow:
+    0 0 10px rgba(220, 38, 38, 0.06),
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.bubbles-page.day-mode .bubble-node::before {
+  background:
+    radial-gradient(ellipse 55% 40% at 30% 20%,
+      rgba(255, 255, 255, 0.6) 0%,
+      rgba(255, 255, 255, 0.15) 40%,
+      transparent 70%);
+}
+.bubbles-page.day-mode .bubble-node:hover {
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.10),
+    0 12px 32px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  filter: brightness(1.04);
+}
+.bubbles-page.day-mode .bubble-node.dragging,
+.bubbles-page.day-mode .bubble-node.dragging:hover {
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.12),
+    0 24px 56px rgba(0, 0, 0, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  filter: brightness(1.06);
+}
+
+.bubbles-page.day-mode .bubble-symbol {
+  color: #0f172a;
+  text-shadow: none;
+}
+.bubbles-page.day-mode .bubble-name { color: #334155; }
+.bubbles-page.day-mode .bubble-change.pos { color: #14532d; text-shadow: none; }
+.bubbles-page.day-mode .bubble-change.neg { color: #7f1d1d; text-shadow: none; }
+
+/* ── Day mode tooltip ── */
+.bubbles-page.day-mode .bubble-tooltip {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.10),
+    0 16px 48px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.bubbles-page.day-mode .bubble-tooltip::before {
+  display: none;
+}
+.bubbles-page.day-mode .bubble-tooltip-header { border-bottom-color: rgba(0, 0, 0, 0.06); }
+.bubbles-page.day-mode .bubble-tooltip-logo {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+.bubbles-page.day-mode .bubble-tooltip-name { color: #0f172a; }
+.bubbles-page.day-mode .bubble-tooltip-rank { color: #64748b; }
+.bubbles-page.day-mode .bubble-tooltip-row { color: #64748b; }
+.bubbles-page.day-mode .bubble-tooltip-row span:last-child { color: #0f172a; }
+.bubbles-page.day-mode .bubble-tooltip-row .pos { color: #15803d !important; text-shadow: none; }
+.bubbles-page.day-mode .bubble-tooltip-row .neg { color: #b91c1c !important; text-shadow: none; }
+.bubbles-page.day-mode .bubble-tooltip-chart { border-top-color: rgba(0, 0, 0, 0.06); }
+.bubbles-page.day-mode .bubble-tooltip-chart-label { color: rgba(0, 0, 0, 0.25); }
+
+.bubbles-page.day-mode .bubbles-movers {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.bubbles-page.day-mode .bubbles-mover-label { color: #64748b; }
+.bubbles-page.day-mode .bubbles-mover-token { color: #1e293b; }
+.bubbles-page.day-mode .bubbles-mover-val { color: #1e293b; }
+.bubbles-page.day-mode .bubbles-mover-change.pos { color: #15803d; }
+.bubbles-page.day-mode .bubbles-mover-change.neg { color: #b91c1c; }
+.bubbles-page.day-mode .bubbles-movers-divider { background: rgba(0, 0, 0, 0.08); }
+
+.bubbles-page.day-mode .bubbles-loading { color: #64748b; }
+.bubbles-page.day-mode .bubbles-skeleton {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.02) 0%, rgba(0, 0, 0, 0.06) 50%, rgba(0, 0, 0, 0.02) 100%);
+  background-size: 200% 100%;
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+/* ═══════════════════════════════════════════
+   DAY MODE - FULLSCREEN OVERLAY (portaled to body)
+   The overlay sits outside .bubbles-page, so scope
+   day-mode rules to .bubbles-fullscreen-container.day-mode
+   ═══════════════════════════════════════════ */
+
+.bubbles-fullscreen-overlay:has(.bubbles-fullscreen-container.day-mode) {
+  background: rgba(248, 250, 252, 0.92);
+}
+
+.bubbles-fullscreen-container.day-mode .bubbles-fullscreen-title {
+  color: #475569;
+}
+
+.bubbles-fullscreen-container.day-mode .bubbles-pill {
+  border-color: rgba(0, 0, 0, 0.06);
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.03) 0%, rgba(0, 0, 0, 0.01) 100%);
+  color: #64748b;
+  box-shadow: none;
+}
+.bubbles-fullscreen-container.day-mode .bubbles-pill:hover {
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #334155;
+}
+.bubbles-fullscreen-container.day-mode .bubbles-pill.active {
+  color: #0f172a;
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: none;
+}
+
+.bubbles-fullscreen-container.day-mode .bubbles-view-toggle {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+.bubbles-fullscreen-container.day-mode .bubbles-view-toggle .bubbles-pill {
+  background: none;
+  border: none;
+  color: #64748b;
+  box-shadow: none;
+}
+.bubbles-fullscreen-container.day-mode .bubbles-view-toggle .bubbles-pill:hover {
+  background: none;
+  color: #0f172a;
+}
+.bubbles-fullscreen-container.day-mode .bubbles-view-toggle .bubbles-pill.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.bubbles-fullscreen-container.day-mode .bubble-fullscreen-btn {
+  border-color: rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.02);
+  color: #94a3b8;
+}
+.bubbles-fullscreen-container.day-mode .bubble-fullscreen-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #0f172a;
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: none;
+}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════ */
+
+/* ── Narrow desktop (sidebar expanded squeezes content) ──
+   Between mobile (768px) and full desktop, the single-row hero
+   (title left, stats right) runs out of width: the title wraps and
+   the stats cram. Stack the title above a wrapping stats row. ── */
+@media (max-width: 1200px) and (min-width: 769px) {
+  .bubbles-hero-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .bubbles-hero-stats {
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 8px;
+  }
+  .bubbles-hero-stat {
+    flex: 1 1 auto;
+  }
+}
+
+@media (max-width: 1024px) {
+  .bubbles-page { padding: 36px 20px 40px; }
+  .bubbles-controls-left { gap: 12px; }
+  .bubbles-container { min-height: 450px; height: 55vh; }
+}
+
+@media (max-width: 768px) {
+  .bubbles-page {
+    padding: 4px 6px 8px;
+    gap: 6px;
+  }
+
+  /* ── Hero: compact single-row ── */
+  .bubbles-hero {
+    padding: 10px 12px;
+    border-radius: 12px;
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+  }
+  .bubbles-hero::before { display: none; }
+  .bubbles-hero-inner {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+  .bubbles-hero-left {
+    flex-shrink: 1;
+    min-width: 0;
+  }
+  .bubbles-title {
+    font-size: 1rem;
+    gap: 6px;
+  }
+  .bubbles-title-icon {
+    width: 16px;
+    height: 16px;
+  }
+  .bubbles-subtitle {
+    font-size: 0.68rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bubbles-hero-stats {
+    flex-wrap: nowrap;
+    gap: 4px;
+    flex-shrink: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .bubbles-hero-stats::-webkit-scrollbar { display: none; }
+  .bubbles-sentiment-badge {
+    padding: 6px 10px;
+    font-size: 0.6rem;
+    gap: 5px;
+    border-radius: 8px;
+  }
+  .bubbles-hero-stat {
+    padding: 6px 10px;
+    min-width: 52px;
+    border-radius: 8px;
+    gap: 3px;
+  }
+  .bubbles-hero-stat-val {
+    font-size: 0.85rem;
+  }
+  .bubbles-hero-stat-lbl {
+    font-size: 0.5rem;
+  }
+
+  /* ── Controls: 2-row layout ──
+     Row 1: Timeframe + Range + Sort + View + Fullscreen (scrollable)
+     Row 2: Category / Sector (scrollable)
+     ── */
+  .bubbles-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .bubbles-controls-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .bubbles-controls-row::-webkit-scrollbar { display: none; }
+  .bubbles-pill-label {
+    display: none;
+  }
+  .bubbles-pill-group {
+    gap: 0;
+    flex-shrink: 0;
+  }
+  .bubbles-pills {
+    gap: 2px;
+  }
+  .bubbles-pill {
+    padding: 5px 10px;
+    font-size: 0.68rem;
+    border-radius: 8px;
+  }
+  .bubbles-controls-right {
+    flex-shrink: 0;
+    gap: 4px;
+    margin-left: auto;
+  }
+  .bubble-fullscreen-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+  }
+  /* View toggle: icon-only on mobile */
+  .bubbles-view-toggle {
+    gap: 1px;
+    padding: 1px;
+    border-radius: 8px;
+  }
+  .bubbles-view-toggle .bubbles-pill {
+    padding: 6px !important;
+    font-size: 0 !important;
+    gap: 0 !important;
+    justify-content: center;
+    line-height: 0;
+  }
+  .bubbles-view-toggle .bubbles-pill svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  /* ── Container: maximize space ── */
+  .bubbles-container {
+    min-height: 320px;
+    height: 65vh;
+    padding: 6px;
+    border-radius: 12px;
+    backdrop-filter: blur(8px) saturate(150%);
+    -webkit-backdrop-filter: blur(8px) saturate(150%);
+  }
+
+  /* ── Movers: compact horizontal ── */
+  .bubbles-movers {
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .bubbles-movers::-webkit-scrollbar { display: none; }
+  .bubbles-movers-divider { display: none; }
+  .bubbles-mover-item {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .bubbles-mover-label {
+    font-size: 0.58rem;
+  }
+  .bubbles-mover-token {
+    font-size: 0.75rem;
+    gap: 4px;
+  }
+  .bubbles-mover-logo {
+    width: 16px;
+    height: 16px;
+  }
+  .bubbles-mover-change {
+    font-size: 0.7rem;
+  }
+  .bubbles-mover-val {
+    font-size: 0.75rem;
+  }
+
+  /* Fullscreen — mobile */
+  .bubbles-fullscreen-overlay {
+    background: #000;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .bubbles-fullscreen-container {
+    padding: 6px 6px env(safe-area-inset-bottom, 6px);
+  }
+  .bubbles-fullscreen-toolbar {
+    padding-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .bubbles-fullscreen-title { display: none; }
+  .bubbles-fullscreen-controls {
+    gap: 3px;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .bubbles-fullscreen-controls .bubbles-pill {
+    padding: 5px 10px;
+    font-size: 0.68rem;
+  }
+  /* Fullscreen view toggle: icon-only */
+  .bubbles-fullscreen-controls .bubbles-view-toggle {
+    gap: 1px;
+    padding: 1px;
+    border-radius: 8px;
+  }
+  .bubbles-fullscreen-controls .bubbles-view-toggle .bubbles-pill {
+    padding: 6px !important;
+    font-size: 0 !important;
+    gap: 0 !important;
+    justify-content: center;
+    line-height: 0;
+  }
+  .bubbles-fullscreen-controls .bubbles-view-toggle .bubbles-pill svg {
+    width: 14px;
+    height: 14px;
+  }
+  /* Hide inline dividers on mobile */
+  .bubbles-fullscreen-controls > div[style] { display: none; }
+  .bubbles-fullscreen-arena { border-radius: 8px; }
+}
+
+@media (max-width: 480px) {
+  .bubbles-page {
+    padding: 2px 4px 6px;
+    gap: 4px;
+  }
+
+  /* Hero: even tighter */
+  .bubbles-hero {
+    padding: 8px 10px;
+    border-radius: 10px;
+  }
+  .bubbles-title { font-size: 0.92rem; }
+  .bubbles-subtitle { display: none; }
+  /* Hide gainers/losers stat boxes */
+  .bubbles-hero-stat:nth-child(n+4) {
+    display: none;
+  }
+  .bubbles-hero-stat {
+    padding: 5px 8px;
+    min-width: 48px;
+  }
+  .bubbles-hero-stat-val { font-size: 0.78rem; }
+
+  /* Container fills remaining space */
+  .bubbles-container {
+    min-height: 280px;
+    height: 68vh;
+    border-radius: 10px;
+    padding: 4px;
+  }
+
+  /* Hide movers on smallest screens */
+  .bubbles-movers { display: none; }
+
+  .bubbles-fullscreen-container { padding: 4px; }
+  .bubbles-fullscreen-toolbar { padding-bottom: 4px; }
+  .bubbles-fullscreen-controls .bubbles-pill { padding: 4px 8px; font-size: 0.62rem; }
+  .bubbles-fullscreen-arena { border-radius: 6px; }
+}
+
+/* ═══════════════════════════════════════════
+   STOCKS MODE
+   ═══════════════════════════════════════════ */
+
+/* Stock bubble logo - white backdrop for corporate logos */
+.stock-bubble .bubble-logo {
+  background: rgba(255, 255, 255, 0.92);
+  padding: 2px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.15),
+    0 0 10px rgba(var(--bubble-brand-rgb), 0.3),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.stock-bubble .bubble-logo img {
+  border-radius: 50%;
+  object-fit: contain;
+  background: #fff;
+}
+
+/* Stock ticker letter fallback (no logo) */
+.stock-ticker-letter {
+  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Sector label inside bubbles */
+.bubble-sector {
+  display: block;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-top: -1px;
+  opacity: 0.8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Market state badge in hero */
+.bubbles-market-state {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.bubbles-market-state-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.bubbles-market-state.val-green {
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.25);
+  background: rgba(52, 211, 153, 0.08);
+}
+.bubbles-market-state.val-green .bubbles-market-state-dot {
+  background: #34d399;
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+.bubbles-market-state.val-yellow {
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.25);
+  background: rgba(251, 191, 36, 0.08);
+}
+.bubbles-market-state.val-yellow .bubbles-market-state-dot {
+  background: #fbbf24;
+}
+.bubbles-market-state.val-dim {
+  color: rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+.bubbles-market-state.val-dim .bubbles-market-state-dot {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Stock tooltip logo - white background for corporate logos */
+.stock-tooltip .bubble-tooltip-logo {
+  background: #fff;
+  padding: 3px;
+  object-fit: contain;
+}
+
+/* Stock mover logo - white background */
+.stocks-mode .bubbles-mover-logo {
+  background: #fff;
+  padding: 2px;
+  object-fit: contain;
+}
+
+/* Stock tooltip extra rows */
+.stock-tooltip .bubble-tooltip-grid {
+  gap: 5px;
+}
+
+/* Day mode for stock-specific elements */
+.bubbles-page.day-mode .stock-ticker-letter {
+  color: rgba(30, 41, 59, 0.85);
+}
+.bubbles-page.day-mode .bubbles-market-state.val-green {
+  background: rgba(52, 211, 153, 0.12);
+  border-color: rgba(52, 211, 153, 0.3);
+}
+.bubbles-page.day-mode .bubbles-market-state.val-dim {
+  color: rgba(30, 41, 59, 0.5);
+  background: rgba(30, 41, 59, 0.06);
+  border-color: rgba(30, 41, 59, 0.12);
+}
+
+
+/* ═══════════════════════════════════════════
+   COMPACT MODE - Embedded widget
+   ═══════════════════════════════════════════ */
+
+.bubbles-page.compact {
+  flex: none;
+  min-height: unset;
+  height: auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+  gap: 0;
+}
+
+.bubbles-page.compact .bubbles-container {
+  flex: 1;
+  min-height: clamp(300px, 45vw, 500px);
+  height: auto;
+  max-width: none;
+  width: 100%;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-radius: 0;
+}
+
+.bubbles-page.compact .bubbles-loading {
+  flex: 1;
+  min-height: 200px;
+}
+
+.bubbles-page.compact .bubbles-error {
+  flex: 1;
+  min-height: 200px;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   COSMOS MODE
+   ═══════════════════════════════════════════════════════ */
+
+/* Suppress ambient orbs in cosmos mode */
+.bubbles-page.cosmos-active::before {
+  opacity: 0.1;
+}
+
+/* ── View Toggle ── */
+.bubbles-view-toggle {
+  display: flex;
+  gap: 0;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+/* Segments sit on a clean track - no per-segment border/background.
+   Only the active segment gets a solid "thumb". */
+.bubbles-view-toggle .bubbles-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  padding: 5px 12px;
+  border: none;
+  background: none;
+  box-shadow: none;
+  color: var(--text-muted, rgba(245, 245, 247, 0.4));
+}
+.bubbles-view-toggle .bubbles-pill svg {
+  opacity: 0.7;
+  transition: opacity 0.2s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.bubbles-view-toggle .bubbles-pill:hover {
+  background: none;
+  border: none;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+}
+.bubbles-view-toggle .bubbles-pill:hover svg { opacity: 1; }
+.bubbles-view-toggle .bubbles-pill.active {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #f5f5f7;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.bubbles-view-toggle .bubbles-pill.active svg { opacity: 1; }
+
+.bubbles-page.day-mode .bubbles-view-toggle {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+.bubbles-page.day-mode .bubbles-view-toggle .bubbles-pill {
+  color: #64748b;
+}
+.bubbles-page.day-mode .bubbles-view-toggle .bubbles-pill:hover {
+  color: #0f172a;
+}
+.bubbles-page.day-mode .bubbles-view-toggle .bubbles-pill.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ── Container override ── */
+.bubbles-container.cosmos-mode {
+  background:
+    radial-gradient(ellipse at 50% 50%,
+      rgba(8, 8, 20, 1) 0%,
+      rgba(4, 4, 12, 1) 40%,
+      rgba(2, 2, 6, 1) 70%,
+      rgba(0, 0, 2, 1) 100%);
+  border-color: rgba(99, 102, 241, 0.06);
+  box-shadow:
+    inset 0 0 0 1px rgba(99, 102, 241, 0.03),
+    inset 0 0 80px rgba(99, 102, 241, 0.02),
+    0 4px 16px rgba(0, 0, 0, 0.5);
+}
+.bubbles-page.day-mode .bubbles-container.cosmos-mode {
+  background:
+    radial-gradient(ellipse at 50% 50%,
+      rgba(248, 250, 252, 1) 0%,
+      rgba(241, 245, 249, 1) 40%,
+      rgba(226, 232, 240, 1) 100%);
+  border-color: rgba(99, 102, 241, 0.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(99, 102, 241, 0.04),
+    0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Shimmer placeholder while the lazy three.js chunk streams in.
+   Lives here (not cosmos.css) because it must paint BEFORE the chunk loads. */
+.cosmos-fallback {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.04) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Fullscreen cosmos background */
+.bubbles-fullscreen-container.cosmos-mode {
+  background: rgba(2, 2, 8, 1);
+}
+.bubbles-fullscreen-container.cosmos-mode.day-mode {
+  background: rgba(241, 245, 249, 1);
+}
+.bubbles-fullscreen-arena.cosmos-mode {
+  background: transparent;
+}

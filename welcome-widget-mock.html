@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Spectre AI — Welcome Widget</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&display=swap" rel="stylesheet" />
+<style>
+/* ════════════════════════════════════════════════════════════════════════════
+   TOKENS
+   ════════════════════════════════════════════════════════════════════════════ */
+:root {
+  --bg-void: #000000;
+  --bg-base: #0a0a0f;
+  --bg-surface: #111116;
+  --bg-elevated: #18181e;
+  --bg-overlay: #222228;
+
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255,255,255,0.72);
+  --text-tertiary: rgba(255,255,255,0.48);
+  --text-muted: rgba(255,255,255,0.32);
+  --text-dim: rgba(255,255,255,0.18);
+
+  --bull: #10B981; --bull-bright: #34D399;
+  --bull-muted: rgba(16,185,129,0.12);
+  --bear: #EF4444; --bear-bright: #F87171;
+  --bear-muted: rgba(239,68,68,0.12);
+
+  --accent: #8B5CF6; --accent-s: #A78BFA;
+  --accent-muted: rgba(139,92,246,0.12);
+  --accent-glow: rgba(139,92,246,0.4);
+
+  --btc: #f7931a; --eth: #627eea; --sol: #9945ff;
+  --amber: #fbbf24;
+
+  --font-glass: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+  --font-display: 'Space Grotesk', sans-serif;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --sentiment-rgb: 16, 120, 75;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-glass);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   LIVING SENTIMENT WALL — ambient background
+   ════════════════════════════════════════════════════════════════════════════ */
+.sentiment-bg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+}
+.sentiment-bg .bg-gradient {
+  position: absolute; top: -50%; left: -50%; right: -50%; bottom: -50%;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 25%, rgba(var(--sentiment-rgb), 0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 30% at 80% 20%, rgba(var(--sentiment-rgb), 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 45% at 25% 55%, rgba(16,185,129,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 65% 40% at 80% 65%, rgba(139,92,246,0.05) 0%, transparent 55%);
+  animation: bgShift 30s ease-in-out infinite;
+  transition: background 4s ease;
+}
+.sentiment-bg .bg-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 60% 50% at 50% 40%, black 20%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 40%, black 20%, transparent 70%);
+}
+@keyframes bgShift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(1%, -1%, 0) scale(1.02); }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   MAIN CONTAINER
+   ════════════════════════════════════════════════════════════════════════════ */
+.app {
+  position: relative; z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SECTION 1 — HERO GREETING
+   ════════════════════════════════════════════════════════════════════════════ */
+.hero {
+  text-align: center;
+  padding: 72px 0 48px;
+  position: relative;
+}
+.hero-greeting {
+  font-family: var(--font-glass);
+  font-size: clamp(64px, 10vw, 120px);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+  animation: heroIn 1s var(--ease) backwards;
+}
+.hero-greeting .dot {
+  color: var(--accent);
+}
+.hero-tagline {
+  font-family: var(--font-serif);
+  font-size: clamp(16px, 1.8vw, 22px);
+  font-weight: 300;
+  font-style: italic;
+  color: var(--text-tertiary);
+  line-height: 1.7;
+  max-width: 620px;
+  margin: 0 auto;
+  animation: heroIn 1s var(--ease) 0.15s backwards;
+}
+@keyframes heroIn {
+  from { opacity: 0; transform: translateY(32px); }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SECTION 2 — GLOBAL MARKET STATS (8 metrics, 2 rows of 4)
+   ════════════════════════════════════════════════════════════════════════════ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 32px;
+  animation: heroIn 0.8s var(--ease) 0.3s backwards;
+}
+.stat-cell {
+  background: rgba(10,10,15,0.95);
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  transition: background 0.3s ease;
+}
+.stat-cell:hover {
+  background: rgba(18,18,26,0.95);
+}
+.stat-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.stat-value {
+  font-family: var(--font-mono);
+  font-size: clamp(18px, 2vw, 26px);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.stat-change {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-variant-numeric: tabular-nums;
+}
+.stat-change.positive { color: var(--bull); background: var(--bull-muted); }
+.stat-change.negative { color: var(--bear); background: var(--bear-muted); }
+
+.stat-label-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stat-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+.stat-edu-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 8px rgba(251,191,36,0.4);
+  cursor: help;
+  transition: transform 0.2s var(--ease-spring);
+  position: relative;
+}
+.stat-edu-dot:hover {
+  transform: scale(1.6);
+}
+/* Tooltip */
+.stat-edu-dot::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.95);
+  background: rgba(18,18,26,0.96);
+  border: 1px solid rgba(251,191,36,0.25);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-family: var(--font-glass);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  max-width: 280px;
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  transition: all 0.25s var(--ease);
+  z-index: 100;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  backdrop-filter: blur(16px);
+}
+.stat-edu-dot:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SECTION 3 — TERMINAL COMMAND BAR
+   A reimagined welcome bar as a live trading terminal interface.
+   Inspired by Bloomberg Terminal / HUD cockpit — pure data density.
+   ════════════════════════════════════════════════════════════════════════════ */
+.terminal-bar {
+  display: grid;
+  grid-template-columns: 200px 1fr 1fr 1fr 1fr 1fr;
+  gap: 0;
+  background: linear-gradient(180deg, rgba(8,8,14,0.98) 0%, rgba(4,4,8,0.99) 100%);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 32px;
+  animation: heroIn 0.8s var(--ease) 0.45s backwards;
+  font-family: var(--font-mono);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.8),
+    0 12px 40px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+/* Top scanline accent — thin gradient across entire width */
+.terminal-bar::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    var(--btc) 0%, var(--btc) 16.66%,
+    var(--eth) 16.66%, var(--eth) 33.33%,
+    var(--sol) 33.33%, var(--sol) 50%,
+    var(--bull) 50%, var(--bull) 66.66%,
+    var(--bear) 66.66%, var(--bear) 83.33%,
+    var(--accent) 83.33%, var(--accent) 100%);
+  opacity: 0.6;
+}
+/* Bottom scanline */
+.terminal-bar::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+}
+
+/* Generic terminal cell */
+.t-cell {
+  padding: 16px 18px;
+  border-right: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  transition: background 0.2s ease;
+}
+.t-cell:last-child { border-right: none; }
+.t-cell:hover { background: rgba(255,255,255,0.02); }
+/* Cell header label — monospace screaming uppercase */
+.t-cell-head {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.t-cell-head .t-live {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--bull);
+  box-shadow: 0 0 6px var(--bull);
+  animation: tLivePulse 2s ease-in-out infinite;
+}
+@keyframes tLivePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ── Terminal Profile ── */
+.t-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px 20px;
+  background: linear-gradient(180deg, rgba(139,92,246,0.04) 0%, transparent 100%);
+  border-right: 1px solid rgba(139,92,246,0.12);
+}
+.t-profile-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.t-avatar {
+  width: 40px; height: 40px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(59,130,246,0.1));
+  border: 1px solid rgba(139,92,246,0.35);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+.t-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.t-avatar svg { width: 18px; height: 18px; color: rgba(255,255,255,0.25); }
+/* Corner L-bracket on avatar */
+.t-avatar::before {
+  content: '';
+  position: absolute; top: 2px; left: 2px;
+  width: 8px; height: 8px;
+  border-top: 1px solid rgba(139,92,246,0.5);
+  border-left: 1px solid rgba(139,92,246,0.5);
+}
+.t-avatar::after {
+  content: '';
+  position: absolute; bottom: 2px; right: 2px;
+  width: 8px; height: 8px;
+  border-bottom: 1px solid rgba(139,92,246,0.5);
+  border-right: 1px solid rgba(139,92,246,0.5);
+}
+.t-profile-info { display: flex; flex-direction: column; gap: 1px; }
+.t-profile-tag {
+  font-size: 7px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--accent-s);
+  opacity: 0.7;
+}
+.t-profile-name {
+  font-family: var(--font-glass);
+  font-size: 15px; font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+.t-profile-status {
+  font-size: 9px;
+  color: var(--text-muted);
+  display: flex; align-items: center; gap: 4px;
+}
+.t-profile-status .online-dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--bull);
+  box-shadow: 0 0 4px var(--bull);
+}
+.t-mood {
+  font-family: var(--font-serif);
+  font-size: 10px;
+  font-style: italic;
+  color: rgba(255,255,255,0.22);
+  line-height: 1.4;
+}
+
+/* ── Terminal Price Tape ── */
+.t-prices {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+}
+.t-price-row {
+  display: grid;
+  grid-template-columns: 52px 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  transition: background 0.15s;
+  cursor: pointer;
+}
+.t-price-row:last-child { border-bottom: none; }
+.t-price-row:hover { background: rgba(var(--brand-rgb), 0.06); }
+
+.t-price-sym {
+  display: flex; align-items: center; gap: 6px;
+}
+.t-price-sym img {
+  width: 16px; height: 16px; border-radius: 50%;
+}
+.t-price-sym span {
+  font-size: 11px; font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.06em;
+}
+.t-price-val {
+  font-size: 12px; font-weight: 700;
+  color: var(--text-primary);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.t-price-chg {
+  font-size: 10px; font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  min-width: 52px;
+}
+.t-price-chg.up { color: var(--bull-bright); }
+.t-price-chg.dn { color: var(--bear-bright); }
+.t-mini-spark { width: 40px; height: 16px; }
+.t-mini-spark polyline {
+  fill: none; stroke-width: 1.2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* ── Terminal Gauge Cell (Fear & Greed) ── */
+.t-gauge { padding: 14px 18px; }
+.t-gauge-value {
+  font-size: 28px; font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.t-gauge-value.greed {
+  color: var(--bull-bright);
+  text-shadow: 0 0 20px rgba(34,197,94,0.15);
+}
+.t-gauge-class {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+.t-gauge-class.greed { color: var(--bull); }
+/* Terminal gradient bar */
+.t-gradient-bar {
+  height: 3px;
+  border-radius: 0;
+  background: rgba(255,255,255,0.04);
+  position: relative;
+  margin-bottom: 10px;
+}
+.t-gradient-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ef4444, #eab308, #22c55e);
+  transition: width 0.8s var(--ease);
+  position: relative;
+}
+/* Needle indicator */
+.t-gradient-bar-fill::after {
+  content: '';
+  position: absolute;
+  right: -1px; top: -3px;
+  width: 2px; height: 9px;
+  background: #fff;
+  box-shadow: 0 0 6px rgba(255,255,255,0.5);
+}
+/* Dominance inline */
+.t-dom-inline {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.t-dom-chip {
+  display: flex; align-items: center; gap: 3px;
+  font-size: 9px;
+  color: var(--text-muted);
+}
+.t-dom-chip .dot {
+  width: 4px; height: 4px; border-radius: 50%;
+}
+.t-dom-chip .dot.btc { background: var(--btc); }
+.t-dom-chip .dot.eth { background: var(--eth); }
+.t-dom-chip .dot.sol { background: var(--sol); }
+.t-dom-chip .dot.alts { background: var(--accent); }
+.t-dom-chip .pct {
+  font-weight: 700;
+  color: var(--text-tertiary);
+}
+
+/* ── Terminal US Market Cell ── */
+.t-market-status {
+  display: flex; align-items: center; gap: 5px;
+  margin-bottom: 4px;
+}
+.t-status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+}
+.t-status-dot.closed {
+  background: var(--bear-bright);
+  box-shadow: 0 0 4px rgba(248,113,113,0.5);
+}
+.t-status-dot.open {
+  background: var(--bull-bright);
+  box-shadow: 0 0 6px rgba(52,211,153,0.5);
+  animation: tLivePulse 2s ease-in-out infinite;
+}
+.t-market-label {
+  font-size: 11px; font-weight: 700;
+  color: var(--text-primary);
+}
+.t-market-tag {
+  font-size: 7px; font-weight: 800;
+  padding: 1px 4px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.t-market-tag.closed { color: var(--bear); background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); }
+.t-market-tag.open { color: var(--bull); background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); }
+.t-market-time {
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.t-market-countdown {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--accent-s);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+/* ── Terminal Catalyst Cell ── */
+.t-catalyst-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 7px; font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--bear-bright);
+  margin-bottom: 6px;
+}
+.t-catalyst-pulse {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--bear);
+  box-shadow: 0 0 6px var(--bear);
+  animation: tCatPulse 1.5s ease-in-out infinite;
+}
+@keyframes tCatPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
+  50% { opacity: 0.6; box-shadow: 0 0 0 4px rgba(239,68,68,0); }
+}
+.t-catalyst-name {
+  font-family: var(--font-glass);
+  font-size: 13px; font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.t-catalyst-meta {
+  font-size: 8px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  letter-spacing: 0.03em;
+}
+.t-catalyst-countdown {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--bear-bright);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 12px rgba(239,68,68,0.2);
+  letter-spacing: 0.06em;
+}
+
+/* ── Terminal AI Bias Cell ── */
+.t-ai-bias-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.t-ai-ring-outer {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  animation: tAiPulse 3s ease-in-out infinite;
+}
+.t-ai-ring-outer.bullish {
+  border-color: var(--bull);
+  box-shadow: 0 0 16px rgba(16,185,129,0.25), inset 0 0 8px rgba(16,185,129,0.08);
+}
+@keyframes tAiPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.92); opacity: 0.7; }
+}
+.t-ai-ring-inner {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--bull);
+  box-shadow: 0 0 8px var(--bull);
+}
+.t-ai-label {
+  font-size: 10px; font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--bull-bright);
+}
+.t-ai-conf {
+  font-size: 8px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+.t-ai-meter {
+  width: 100%;
+  height: 2px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 0;
+  margin-top: 4px;
+  overflow: hidden;
+}
+.t-ai-meter-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--bear) 0%, var(--amber) 50%, var(--bull) 100%);
+  transition: width 0.8s var(--ease);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SECTION 4 — AI BRIEF (Serif editorial statement)
+   ════════════════════════════════════════════════════════════════════════════ */
+.ai-brief {
+  position: relative;
+  padding: 40px 48px 36px;
+  text-align: center;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 18px;
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+  margin-bottom: 32px;
+  animation: heroIn 0.8s var(--ease) 0.6s backwards;
+}
+/* Sentiment accent line */
+.ai-brief::before {
+  content: '';
+  position: absolute; top: 0; left: 10%; right: 10%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(var(--sentiment-rgb), 0.6), transparent);
+}
+/* Corner bracket top-left */
+.ai-brief::after {
+  content: '';
+  position: absolute; top: 12px; left: 12px;
+  width: 28px; height: 28px;
+  border-top: 1.5px solid rgba(var(--sentiment-rgb), 0.35);
+  border-left: 1.5px solid rgba(var(--sentiment-rgb), 0.35);
+  border-radius: 2px 0 0 0;
+}
+/* Corner bracket bottom-right */
+.ai-brief-corner {
+  position: absolute; bottom: 12px; right: 12px;
+  width: 28px; height: 28px;
+  border-bottom: 1.5px solid rgba(var(--sentiment-rgb), 0.35);
+  border-right: 1.5px solid rgba(var(--sentiment-rgb), 0.35);
+  border-radius: 0 0 2px 0;
+}
+.ai-brief-glow {
+  position: absolute;
+  top: -40%; left: 50%; transform: translateX(-50%);
+  width: 500px; height: 250px;
+  background: radial-gradient(ellipse, rgba(var(--sentiment-rgb), 0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.ai-brief-eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.ai-brief-pulse {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: rgb(var(--sentiment-rgb));
+  box-shadow: 0 0 10px rgba(var(--sentiment-rgb), 0.6);
+  animation: briefPulse 2s ease-in-out infinite;
+}
+@keyframes briefPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+.ai-brief-tag {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(var(--sentiment-rgb), 0.75);
+}
+.ai-brief-live {
+  font-size: 8px; font-weight: 800;
+  color: #22c55e;
+  border: 1px solid rgba(34,197,94,0.3);
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-shadow: 0 0 8px rgba(34,197,94,0.3);
+}
+.ai-brief-time {
+  font-family: var(--font-mono);
+  font-size: 10px; color: var(--text-dim);
+}
+
+.ai-brief-statement {
+  font-family: var(--font-serif);
+  font-size: clamp(20px, 2.4vw, 32px);
+  font-weight: 300;
+  font-style: italic;
+  color: rgba(255,255,255,0.92);
+  line-height: 1.55;
+  max-width: 780px;
+  margin: 0 auto 20px;
+  letter-spacing: -0.01em;
+}
+.ai-brief-quote {
+  color: rgba(var(--sentiment-rgb), 0.3);
+  font-size: 1.15em;
+}
+.ai-brief-attribution {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+.ai-brief-attr-name {
+  font-weight: 600;
+  color: rgba(var(--sentiment-rgb), 0.65);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-size: 9px;
+}
+
+.ai-brief-chips {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.ai-brief-chip {
+  padding: 10px 16px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.35s var(--ease);
+  min-width: 80px;
+}
+.ai-brief-chip:hover {
+  transform: translateY(-2px);
+  background: rgba(var(--chip-rgb, 255,255,255), 0.06);
+  border-color: rgba(var(--chip-rgb, 255,255,255), 0.2);
+}
+.ai-brief-chip-label {
+  font-size: 8px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+.ai-brief-chip-value {
+  font-family: var(--font-display);
+  font-size: 15px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.ai-brief-chip-value.green { color: var(--bull-bright); }
+.ai-brief-chip-value.red { color: var(--bear-bright); }
+.ai-brief-chip-value.purple { color: var(--accent-s); }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SECTION 5 — SENTIMENT CARDS (Side-by-side glass cards)
+   ════════════════════════════════════════════════════════════════════════════ */
+.sentiment-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 32px;
+  animation: heroIn 0.8s var(--ease) 0.7s backwards;
+}
+
+.sentiment-card {
+  padding: 24px;
+  border-radius: 20px;
+  background: linear-gradient(168deg,
+    rgba(7,6,10,0.92) 0%,
+    rgba(9,8,13,0.95) 35%,
+    rgba(4,3,6,0.98) 70%,
+    rgba(2,1,3,1) 100%);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 4px 16px rgba(0,0,0,0.4);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  transition: all 0.35s var(--ease);
+}
+.sentiment-card:hover {
+  border-color: rgba(255,255,255,0.12);
+  transform: translateY(-2px);
+}
+
+/* Orb glow */
+.sentiment-card::before {
+  content: '';
+  position: absolute;
+  width: 160%; height: 160%;
+  top: -40%; right: -40%;
+  border-radius: 50%;
+  opacity: 0.3;
+  filter: blur(40px);
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+.sentiment-card:hover::before { opacity: 0.45; }
+.sentiment-card.greed::before {
+  background: radial-gradient(circle at 30% 30%, rgba(34,197,94,0.5), transparent 70%);
+}
+.sentiment-card.neutral::before {
+  background: radial-gradient(circle at 30% 30%, rgba(251,191,36,0.35), transparent 70%);
+}
+
+.sc-label {
+  font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  position: relative;
+}
+.sc-value {
+  font-family: var(--font-mono);
+  font-size: 36px; font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-bottom: 4px;
+  position: relative;
+}
+.sc-value.greed { color: var(--bull-bright); text-shadow: 0 0 32px rgba(34,197,94,0.2); }
+.sc-value.neutral { color: var(--amber); text-shadow: 0 0 28px rgba(251,191,36,0.15); }
+.sc-class {
+  font-size: 12px; font-weight: 600;
+  margin-bottom: 12px;
+  position: relative;
+}
+.sc-class.greed { color: var(--bull-bright); }
+.sc-class.neutral { color: var(--amber); }
+
+.sc-bar {
+  height: 5px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+  position: relative;
+}
+.sc-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #ef4444 0%, #eab308 50%, #22c55e 100%);
+  transition: width 0.6s var(--ease);
+}
+
+.sc-shares {
+  display: flex; gap: 12px;
+  margin-top: 10px;
+  position: relative;
+}
+.sc-share {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 10px; color: var(--text-tertiary);
+}
+.sc-share-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+}
+.sc-share-dot.btc { background: var(--btc); box-shadow: 0 0 6px rgba(247,147,26,0.5); }
+.sc-share-dot.eth { background: var(--eth); box-shadow: 0 0 6px rgba(98,126,234,0.5); }
+.sc-share-pct { font-weight: 700; color: var(--text-secondary); }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SECTION 6 — MARKET DOMINANCE (Full width stacked bar)
+   ════════════════════════════════════════════════════════════════════════════ */
+.dominance-panel {
+  padding: 24px 28px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 32px;
+  animation: heroIn 0.8s var(--ease) 0.8s backwards;
+}
+.dom-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.dom-title {
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+.dom-bar-wrap {
+  display: flex; height: 10px;
+  border-radius: 9999px;
+  overflow: hidden; gap: 2px;
+  margin-bottom: 16px;
+}
+.dom-seg {
+  height: 100%; border-radius: 9999px;
+  transition: width 0.8s var(--ease);
+}
+.dom-seg.btc { background: var(--btc); }
+.dom-seg.eth { background: var(--eth); }
+.dom-seg.sol { background: linear-gradient(135deg, #9945ff, #14f195); }
+.dom-seg.alts { background: var(--accent); }
+
+.dom-legend {
+  display: flex; gap: 24px;
+}
+.dom-legend-item {
+  display: flex; align-items: center; gap: 6px;
+}
+.dom-legend-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.dom-legend-dot.btc { background: var(--btc); box-shadow: 0 0 8px rgba(247,147,26,0.5); }
+.dom-legend-dot.eth { background: var(--eth); box-shadow: 0 0 8px rgba(98,126,234,0.5); }
+.dom-legend-dot.sol { background: #9945ff; box-shadow: 0 0 8px rgba(153,69,255,0.5); }
+.dom-legend-dot.alts { background: var(--accent); box-shadow: 0 0 8px rgba(139,92,246,0.4); }
+.dom-legend-text {
+  font-size: 11px; color: var(--text-tertiary);
+}
+.dom-legend-text strong {
+  color: var(--text-secondary); font-weight: 700;
+}
+.dom-legend-text span {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   FOOTER
+   ════════════════════════════════════════════════════════════════════════════ */
+.mock-footer {
+  text-align: center;
+  padding: 48px 0 32px;
+  color: var(--text-dim);
+  font-size: 11px;
+  animation: heroIn 0.8s var(--ease) 0.9s backwards;
+}
+.mock-footer span { color: var(--accent-s); font-weight: 600; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ════════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 1100px) {
+  .terminal-bar {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .t-profile {
+    grid-column: span 3;
+    flex-direction: row;
+    align-items: center;
+    border-right: none;
+    border-bottom: 1px solid rgba(139,92,246,0.12);
+  }
+}
+@media (max-width: 900px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .terminal-bar { grid-template-columns: repeat(2, 1fr); }
+  .t-profile { grid-column: span 2; }
+  .sentiment-row { grid-template-columns: 1fr; }
+  .dom-legend { flex-wrap: wrap; gap: 12px; }
+}
+@media (max-width: 600px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .hero { padding: 48px 0 32px; }
+  .terminal-bar { grid-template-columns: 1fr; }
+  .t-profile { grid-column: span 1; }
+  .ai-brief { padding: 28px 20px 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Living Sentiment Wall -->
+<div class="sentiment-bg">
+  <div class="bg-gradient"></div>
+  <div class="bg-grid"></div>
+</div>
+
+<div class="app">
+
+  <!-- ══ HERO GREETING ══ -->
+  <section class="hero">
+    <h1 class="hero-greeting" id="greeting">Good Evening<span class="dot">.</span></h1>
+    <p class="hero-tagline">
+      Explore DeFi the way investors explore startups.<br/>
+      The best projects compound in silence. Find them early.
+    </p>
+  </section>
+
+  <!-- ══ GLOBAL MARKET STATS ══ -->
+  <div class="stats-grid">
+    <div class="stat-cell">
+      <div class="stat-value-row">
+        <span class="stat-value">$3.42T</span>
+        <span class="stat-change positive">+2.1%</span>
+      </div>
+      <div class="stat-label-row">
+        <span class="stat-label">Market Cap</span>
+        <span class="stat-edu-dot" data-tip="Total value of all cryptocurrencies combined — like the entire crypto industry's market size."></span>
+      </div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-value-row">
+        <span class="stat-value">$127.8B</span>
+        <span class="stat-change negative">-5.3%</span>
+      </div>
+      <div class="stat-label-row">
+        <span class="stat-label">24h Volume</span>
+        <span class="stat-edu-dot" data-tip="How much crypto was traded in the last 24 hours — higher means more activity."></span>
+      </div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-value-row">
+        <span class="stat-value">56.4%</span>
+        <span class="stat-change negative">-0.3%</span>
+      </div>
+      <div class="stat-label-row">
+        <span class="stat-label">BTC Dom</span>
+        <span class="stat-edu-dot" data-tip="Bitcoin's share of the total crypto market — when it drops, money is flowing into altcoins."></span>
+      </div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-value-row">
+        <span class="stat-value">17.2%</span>
+        <span class="stat-change positive">+0.2%</span>
+      </div>
+      <div class="stat-label-row">
+        <span class="stat-label">ETH Dom</span>
+        <span class="stat-edu-dot" data-tip="Ethereum's share of the total market — reflects DeFi and smart contract ecosystem strength."></span>
+      </div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-value-row">
+        <span class="stat-value">$115.0B</span>
+        <span class="stat-change positive">+3.4%</span>
+      </div>
+      <div class="stat-label-row">
+        <span class="stat-label">DeFi MCap</span>
+        <span class="stat-edu-dot" data-tip="Total value of all decentralized finance protocols — lending, DEXs, yield platforms."></span>
+      </div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-value-row">
+        <span class="stat-value">$8.5B</span>
+        <span class="stat-change negative">-2.1%</span>
+      </div>
+      <div class="stat-label-row">
+        <span class="stat-label">DeFi Volume</span>
+        <span class="stat-edu-dot" data-tip="Trading volume across decentralized exchanges — shows on-chain trading demand."></span>
+      </div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-value-row">
+        <span class="stat-value">3.87%</span>
+        <span class="stat-change positive">+0.1%</span>
+      </div>
+      <div class="stat-label-row">
+        <span class="stat-label">DeFi Dom</span>
+        <span class="stat-edu-dot" data-tip="DeFi's share of total crypto market — rising means decentralized finance is gaining ground."></span>
+      </div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-value-row">
+        <span class="stat-value">24,891</span>
+        <span class="stat-change positive">+0.8%</span>
+      </div>
+      <div class="stat-label-row">
+        <span class="stat-label">Active Tokens</span>
+        <span class="stat-edu-dot" data-tip="Number of tokens actively trading right now — a measure of market breadth and participation."></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TERMINAL COMMAND BAR ══ -->
+  <div class="terminal-bar">
+
+    <!-- Profile -->
+    <div class="t-profile">
+      <div class="t-profile-top">
+        <div class="t-avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <div class="t-profile-info">
+          <span class="t-profile-tag">Operator</span>
+          <span class="t-profile-name">Sunny</span>
+          <span class="t-profile-status"><span class="online-dot"></span> Active session</span>
+        </div>
+      </div>
+      <span class="t-mood">Markets breathing green tonight</span>
+    </div>
+
+    <!-- Price Tape -->
+    <div class="t-cell t-prices">
+      <div class="t-cell-head"><span class="t-live"></span> Price Feed</div>
+      <div class="t-price-row" style="--brand-rgb: 247,147,26;">
+        <div class="t-price-sym">
+          <img src="https://assets.coingecko.com/coins/images/1/small/bitcoin.png" alt="" />
+          <span>BTC</span>
+        </div>
+        <svg class="t-mini-spark" viewBox="0 0 40 16"><polyline points="0,14 4,12 8,13 12,10 16,9 20,10 24,7 28,6 32,4 36,3 40,2" stroke="#34d399"/></svg>
+        <span class="t-price-val">$96,432</span>
+        <span class="t-price-chg up">+2.34%</span>
+      </div>
+      <div class="t-price-row" style="--brand-rgb: 98,126,234;">
+        <div class="t-price-sym">
+          <img src="https://assets.coingecko.com/coins/images/279/small/ethereum.png" alt="" />
+          <span>ETH</span>
+        </div>
+        <svg class="t-mini-spark" viewBox="0 0 40 16"><polyline points="0,3 4,4 8,3 12,5 16,4 20,7 24,6 28,9 32,10 36,13 40,14" stroke="#f87171"/></svg>
+        <span class="t-price-val">$2,681</span>
+        <span class="t-price-chg dn">-1.12%</span>
+      </div>
+      <div class="t-price-row" style="--brand-rgb: 153,69,255;">
+        <div class="t-price-sym">
+          <img src="https://assets.coingecko.com/coins/images/4128/small/solana.png" alt="" />
+          <span>SOL</span>
+        </div>
+        <svg class="t-mini-spark" viewBox="0 0 40 16"><polyline points="0,15 4,12 8,13 12,9 16,8 20,9 24,6 28,5 32,3 36,2 40,1" stroke="#34d399"/></svg>
+        <span class="t-price-val">$176.42</span>
+        <span class="t-price-chg up">+4.56%</span>
+      </div>
+    </div>
+
+    <!-- Fear & Greed + Dominance -->
+    <div class="t-cell t-gauge">
+      <div class="t-cell-head">Sentiment</div>
+      <div class="t-gauge-value greed">72</div>
+      <div class="t-gauge-class greed">Greed</div>
+      <div class="t-gradient-bar">
+        <div class="t-gradient-bar-fill" style="width: 72%;"></div>
+      </div>
+      <div class="t-dom-inline">
+        <span class="t-dom-chip"><span class="dot btc"></span> <span class="pct">57.2</span></span>
+        <span class="t-dom-chip"><span class="dot eth"></span> <span class="pct">12.8</span></span>
+        <span class="t-dom-chip"><span class="dot sol"></span> <span class="pct">4.1</span></span>
+        <span class="t-dom-chip"><span class="dot alts"></span> <span class="pct">25.9</span></span>
+      </div>
+    </div>
+
+    <!-- US Market -->
+    <div class="t-cell">
+      <div class="t-cell-head">Equities</div>
+      <div class="t-market-status">
+        <span class="t-status-dot closed"></span>
+        <span class="t-market-label">US Market</span>
+        <span class="t-market-tag closed">Closed</span>
+      </div>
+      <span class="t-market-time">Opens 9:30 AM ET</span>
+      <span class="t-market-countdown">06:42:18</span>
+    </div>
+
+    <!-- Next Catalyst -->
+    <div class="t-cell">
+      <div class="t-catalyst-tag">
+        <span class="t-catalyst-pulse"></span>
+        In Progress
+      </div>
+      <span class="t-catalyst-name">FOMC Minutes</span>
+      <span class="t-catalyst-meta">Tue, Feb 18 · 2:00 PM ET · Critical</span>
+      <span class="t-catalyst-countdown">LIVE NOW</span>
+    </div>
+
+    <!-- AI Bias -->
+    <div class="t-cell">
+      <div class="t-ai-bias-wrap">
+        <div class="t-cell-head" style="margin-bottom:4px;">AI Signal</div>
+        <div class="t-ai-ring-outer bullish">
+          <div class="t-ai-ring-inner"></div>
+        </div>
+        <span class="t-ai-label">Bullish</span>
+        <span class="t-ai-conf">78% confidence</span>
+        <div class="t-ai-meter">
+          <div class="t-ai-meter-fill" style="width: 78%;"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ AI BRIEF ══ -->
+  <div class="ai-brief">
+    <div class="ai-brief-glow"></div>
+    <div class="ai-brief-corner"></div>
+    <div class="ai-brief-eyebrow">
+      <span class="ai-brief-pulse"></span>
+      <span class="ai-brief-tag">AI Brief</span>
+      <span class="ai-brief-live">LIVE</span>
+      <span class="ai-brief-time" id="brief-time">22:18</span>
+    </div>
+    <blockquote class="ai-brief-statement">
+      <span class="ai-brief-quote">&ldquo;</span>Bitcoin holds above the $96K shelf as FOMC minutes loom — funding rates remain healthy, whale accumulation continues on Coinbase, and the fear-greed index signals conviction not euphoria. Risk-on posture favored into the weekly close.<span class="ai-brief-quote">&rdquo;</span>
+    </blockquote>
+    <div class="ai-brief-attribution">
+      &mdash; <span class="ai-brief-attr-name">Spectre AI</span> · Just Now
+    </div>
+    <div class="ai-brief-chips">
+      <div class="ai-brief-chip" style="--chip-rgb: 34,197,94;">
+        <span class="ai-brief-chip-label">F&amp;G</span>
+        <span class="ai-brief-chip-value green">72</span>
+      </div>
+      <div class="ai-brief-chip" style="--chip-rgb: 16,185,129;">
+        <span class="ai-brief-chip-label">Bias</span>
+        <span class="ai-brief-chip-value green">Bullish</span>
+      </div>
+      <div class="ai-brief-chip" style="--chip-rgb: 247,147,26;">
+        <span class="ai-brief-chip-label">BTC</span>
+        <span class="ai-brief-chip-value green">$96.4K</span>
+      </div>
+      <div class="ai-brief-chip" style="--chip-rgb: 98,126,234;">
+        <span class="ai-brief-chip-label">ETH</span>
+        <span class="ai-brief-chip-value red">$2,681</span>
+      </div>
+      <div class="ai-brief-chip" style="--chip-rgb: 153,69,255;">
+        <span class="ai-brief-chip-label">SOL</span>
+        <span class="ai-brief-chip-value green">$176.4</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SENTIMENT CARDS ══ -->
+  <div class="sentiment-row">
+    <div class="sentiment-card greed">
+      <div class="sc-label">Fear &amp; Greed Index</div>
+      <div class="sc-value greed">72</div>
+      <div class="sc-class greed">Greed</div>
+      <div class="sc-bar"><div class="sc-bar-fill" style="width: 72%;"></div></div>
+    </div>
+    <div class="sentiment-card neutral">
+      <div class="sc-label">Alt Season Index</div>
+      <div class="sc-value neutral">48</div>
+      <div class="sc-class neutral">Neutral</div>
+      <div class="sc-bar"><div class="sc-bar-fill" style="width: 48%;"></div></div>
+      <div class="sc-shares">
+        <div class="sc-share"><div class="sc-share-dot btc"></div> BTC <span class="sc-share-pct">57.2%</span></div>
+        <div class="sc-share"><div class="sc-share-dot eth"></div> ETH <span class="sc-share-pct">12.8%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MARKET DOMINANCE ══ -->
+  <div class="dominance-panel">
+    <div class="dom-header">
+      <span class="dom-title">Market Dominance</span>
+    </div>
+    <div class="dom-bar-wrap">
+      <div class="dom-seg btc" style="width: 57.2%;"></div>
+      <div class="dom-seg eth" style="width: 12.8%;"></div>
+      <div class="dom-seg sol" style="width: 4.1%;"></div>
+      <div class="dom-seg alts" style="width: 25.9%;"></div>
+    </div>
+    <div class="dom-legend">
+      <div class="dom-legend-item">
+        <div class="dom-legend-dot btc"></div>
+        <span class="dom-legend-text"><strong>BTC</strong> <span>57.2%</span></span>
+      </div>
+      <div class="dom-legend-item">
+        <div class="dom-legend-dot eth"></div>
+        <span class="dom-legend-text"><strong>ETH</strong> <span>12.8%</span></span>
+      </div>
+      <div class="dom-legend-item">
+        <div class="dom-legend-dot sol"></div>
+        <span class="dom-legend-text"><strong>SOL</strong> <span>4.1%</span></span>
+      </div>
+      <div class="dom-legend-item">
+        <div class="dom-legend-dot alts"></div>
+        <span class="dom-legend-text"><strong>Alts</strong> <span>25.9%</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="mock-footer">
+    <span>Spectre AI</span> — Welcome Widget Design Mock
+  </div>
+
+</div>
+
+<script>
+// Time-based greeting (matching the app's logic)
+const hour = new Date().getHours();
+const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
+document.getElementById('greeting').innerHTML = greeting + '<span class="dot">.</span>';
+
+// Brief time
+const now = new Date();
+document.getElementById('brief-time').textContent =
+  now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+
+// Scanline animation on terminal bar
+const tbar = document.querySelector('.terminal-bar');
+if (tbar) {
+  const scanline = document.createElement('div');
+  scanline.style.cssText = 'position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(139,92,246,0.15),transparent);pointer-events:none;z-index:10;animation:scanlineMove 4s linear infinite;';
+  tbar.appendChild(scanline);
+  const style = document.createElement('style');
+  style.textContent = '@keyframes scanlineMove{0%{top:0}100%{top:100%}}';
+  document.head.appendChild(style);
+}
+</script>
+</body>
+</html>

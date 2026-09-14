@@ -1,0 +1,576 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   MobileContentTabs — Swipeable tab system for mobile Command Center
+   Glass container, horizontal scroll tabs, animated indicator, swipe content
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Outer container — flush with page, no card feel ── */
+.mct {
+  position: relative;
+  background: transparent;
+  border-radius: 0;
+  overflow-x: hidden;  /* clip horizontal swipe bleed, allow vertical content to flow */
+}
+
+@keyframes mctEnter {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* No top edge highlight — flush section */
+.mct::before {
+  display: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Section Header
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.mct-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 var(--m-lg) var(--m-sm);
+}
+
+.mct-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mct-header-icon {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  flex-shrink: 0;
+}
+
+.mct-header-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.mct-header-title {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary, #f5f5f7);
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.mct-header-expand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm, 8px);
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mct-header-expand:active {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.7);
+  transform: scale(0.92);
+}
+
+/* Pin button */
+.mct-header-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm, 8px);
+  color: var(--text-muted, rgba(245, 245, 247, 0.35));
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mct-header-pin:active {
+  transform: scale(0.92);
+}
+
+.mct-header-pin--active {
+  color: rgba(245, 245, 247, 0.8);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Tab Bar
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.mct-bar-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.05);
+  background: transparent;
+}
+
+.mct-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 38px;
+  padding: 0 var(--m-lg);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y; /* NOT pan-x alone: that permits ONLY horizontal
+     panning from a touch starting here, so a vertical drag on this strip scrolls
+     NOTHING. Measured 2026-08-04: a drag from the market-pulse ticker or the
+     Command Center tab row moved the page 0px — the founder's "i cant scroll at
+     times", since these full-bleed bands are exactly where a thumb lands. With
+     both axes allowed the browser still locks to one after the first movement, so
+     the strip keeps scrolling sideways. */
+
+  /* Hide scrollbar — all browsers */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mct-bar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Individual tab button ── */
+.mct-tab {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 38px;
+  padding: 0 10px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.5));
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.mct-tab:active {
+  transform: scale(0.95);
+}
+
+.mct-tab.active {
+  color: var(--text-primary, #f5f5f7);
+  font-weight: 600;
+}
+
+/* ── Tab icon ── */
+.mct-tab-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.mct-tab-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ── Tab label ── */
+.mct-tab-label {
+  display: inline;
+}
+
+/* ── Active indicator line - spring movement ── */
+.mct-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(245, 245, 247, 0.6), var(--text-primary, #f5f5f7), rgba(245, 245, 247, 0.6));
+  border-radius: 1px 1px 0 0;
+  transition: transform 0.45s var(--spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)),
+              width 0.35s var(--spring-gentle, cubic-bezier(0.16, 1, 0.3, 1));
+  pointer-events: none;
+  z-index: 1;
+  box-shadow: 0 0 8px rgba(245, 245, 247, 0.15);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Content Area
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.mct-content {
+  position: relative;
+  min-height: 200px;
+  overflow-x: hidden;  /* clip horizontal swipe, allow vertical scroll */
+  /* Prevent content from bleeding horizontally during swipe */
+  touch-action: pan-y pinch-zoom;
+}
+
+.mct-content-inner {
+  min-height: 200px;
+  /* ONE gutter for every tab panel (founder, 09-02: "пересмотри все табы").
+     Each panel used to decide its own side inset, so the twelve of them read
+     as twelve different pages: ETF and Wallets ran hard against both screen
+     edges, the Calendar clipped its Mon and Sun columns, Sectors sat at 8px.
+     The gutter belongs to the CONTAINER — a panel that genuinely wants to
+     bleed cancels it with `margin-inline: calc(-1 * var(--mct-gutter))` —
+     the AI Brief is the only one today, and its rule lives with the rest of
+     its mobile treatment in welcome-page.mobile.css (that file owns the
+     brief's `max-width: 100% !important`, so the cancel has to sit there to
+     win). 16px is the page gutter the section labels stand on. */
+  --mct-gutter: var(--m-lg, 16px);
+  padding: var(--m-md) var(--mct-gutter);
+  box-sizing: border-box;
+}
+
+/* Sections within tab content need breathing room */
+.mct-content-inner > * + * {
+  margin-top: 20px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Panel-body collapse
+   The section rail above folds the WHOLE Command Center. This folds only the
+   tab panel, so the tab row stays on screen and you can park on a tab without
+   carrying its full-height body down the page. Deliberately NOT a second rail
+   — a chevron riding at the end of the tab row, one level quieter than the
+   rail's chevron chip.
+
+   🪤 app-store-ready.css floors every button at 38x38 with (0,2,1), so the
+   22px chip is anchored at (0,3,0) and its tap target is restored with an
+   invisible ::after overlay instead of by inflating the visual.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.mct .mct-bar-wrapper .mct-panel-toggle {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
+  margin: 0 var(--m-md, 12px) 0 4px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: rgba(245, 245, 247, 0.32);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.mct .mct-bar-wrapper .mct-panel-toggle::after {
+  content: '';
+  position: absolute;
+  top: -11px;
+  bottom: -11px;
+  left: -11px;
+  right: -11px;
+}
+
+.mct .mct-bar-wrapper .mct-panel-toggle svg {
+  transition: transform var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.mct .mct-bar-wrapper .mct-panel-toggle--open svg {
+  transform: rotate(180deg);
+}
+
+.mct .mct-bar-wrapper .mct-panel-toggle:active {
+  color: rgba(245, 245, 247, 0.72);
+}
+
+/* Same 1fr -> 0fr grid collapse the section rails use, so the two levels move
+   with one motion language. */
+.mct-content {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows var(--duration-slow, 400ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.mct-content-inner {
+  overflow: hidden;
+}
+
+.mct--panel-closed .mct-content {
+  grid-template-rows: 0fr;
+  min-height: 0;
+}
+
+/* The inner carries a 200px min-height and vertical padding of its own; both
+   would floor the 0fr track open. Visibility lands after the height animation
+   so collapsed content leaves the tab order without skipping a reveal frame. */
+.mct--panel-closed .mct-content-inner {
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  visibility: hidden;
+  transition: visibility 0s linear var(--duration-slow, 400ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mct-content,
+  .mct .mct-bar-wrapper .mct-panel-toggle svg {
+    transition: none;
+  }
+  .mct--panel-closed .mct-content-inner {
+    transition-delay: 0s;
+  }
+}
+
+/* Day mode */
+.app.app-day-mode .mct .mct-bar-wrapper .mct-panel-toggle,
+.mct.mct--day .mct-bar-wrapper .mct-panel-toggle {
+  color: rgba(15, 23, 42, 0.34);
+}
+.app.app-day-mode .mct .mct-bar-wrapper .mct-panel-toggle:active,
+.mct.mct--day .mct-bar-wrapper .mct-panel-toggle:active {
+  color: #0f172a;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Narrow phones — tighter padding */
+@media (max-width: 374px) {
+  .mct-header {
+    padding: 0 var(--m-md) 6px;
+  }
+
+  .mct-bar {
+    padding: 0 var(--m-md);
+  }
+
+  .mct-tab {
+    padding: 0 10px;
+    font-size: var(--m-text-sm);
+    gap: var(--m-xs);
+  }
+
+  .mct-tab-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .mct-content-inner {
+    --mct-gutter: var(--m-md, 12px);
+    padding: var(--m-sm) var(--mct-gutter);
+  }
+}
+
+/* Wider phones — a little more breathing room */
+@media (min-width: 430px) {
+  .mct-tab {
+    padding: 0 var(--m-lg);
+  }
+}
+
+/* ── Command Center — seamless section, not a widget ── */
+.mct-header-icon {
+  display: none;
+}
+
+.mct-header-expand {
+  display: none !important;
+}
+
+.mct-header {
+  padding: 0 var(--m-lg, 16px) var(--m-sm, 8px);
+}
+
+/* Hide on desktop — this component is mobile-only */
+@media (min-width: 769px) {
+  .mct {
+    display: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Full Page CTA — bottom of each tab panel
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.mct-full-page-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  margin: 0;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.6));
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.mct-full-page-cta:active {
+  background: rgba(255, 255, 255, 0.06);
+  transform: scale(0.98);
+}
+
+.mct-full-page-cta svg {
+  opacity: 0.5;
+  transition: transform var(--duration-fast, 150ms) var(--ease-out);
+}
+
+.mct-full-page-cta:active svg {
+  transform: translateX(2px);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Focus — keyboard accessibility
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.mct-tab:focus-visible {
+  outline: 2px solid var(--accent, #f5f5f7);
+  outline-offset: -2px;
+  border-radius: var(--radius-xs, 4px);
+}
+
+.mct-header-expand:focus-visible,
+.mct-header-pin:focus-visible {
+  outline: 2px solid var(--accent, #f5f5f7);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm, 8px);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Day Mode
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.app.app-day-mode .mct,
+.mct.mct--day {
+  background: transparent;
+}
+
+.app.app-day-mode .mct::before,
+.mct.mct--day::before {
+  display: none;
+}
+
+/* Header */
+.app.app-day-mode .mct-header-icon,
+.mct.mct--day .mct-header-icon {
+  color: rgba(17, 17, 19, 0.4);
+}
+
+.app.app-day-mode .mct-header-title,
+.mct.mct--day .mct-header-title {
+  color: #0f172a;
+}
+
+.app.app-day-mode .mct-header-expand,
+.mct.mct--day .mct-header-expand {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: rgba(17, 17, 19, 0.4);
+}
+
+.app.app-day-mode .mct-header-expand:active,
+.mct.mct--day .mct-header-expand:active {
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(17, 17, 19, 0.7);
+}
+
+.app.app-day-mode .mct-header-pin,
+.mct.mct--day .mct-header-pin {
+  color: rgba(17, 17, 19, 0.3);
+}
+
+.app.app-day-mode .mct-header-pin--active,
+.mct.mct--day .mct-header-pin--active {
+  color: rgba(17, 17, 19, 0.7);
+}
+
+/* Tab bar border */
+.app.app-day-mode .mct-bar-wrapper,
+.mct.mct--day .mct-bar-wrapper {
+  background: linear-gradient(168deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 0.5px 2px rgba(0, 0, 0, 0.04);
+}
+
+/* Tabs */
+.app.app-day-mode .mct-tab,
+.mct.mct--day .mct-tab {
+  color: #64748b;
+}
+
+.app.app-day-mode .mct-tab.active,
+.mct.mct--day .mct-tab.active {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* Indicator */
+.app.app-day-mode .mct-indicator,
+.mct.mct--day .mct-indicator {
+  background: #0f172a;
+}
+
+/* Full page CTA */
+.app.app-day-mode .mct-full-page-cta,
+.mct.mct--day .mct-full-page-cta {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: #475569;
+}
+
+.app.app-day-mode .mct-full-page-cta:active,
+.mct.mct--day .mct-full-page-cta:active {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* ─── Showcase lock state (iframe-embedded mode) ─────────────────────
+   Mirrors the desktop Command Center .cc-tab-locked styling: dim the
+   tab and stamp a small lock icon. Tap still fires - it dispatches the
+   showcase-lock event so the toast can surface "Available in Beta". */
+.mct-tab.mct-tab--locked {
+  opacity: 0.42;
+  cursor: not-allowed;
+  filter: grayscale(0.35);
+}
+.mct-tab.mct-tab--locked:hover,
+.mct-tab.mct-tab--locked:active {
+  background: transparent;
+}
+.mct-tab-lock {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 5px;
+  color: currentColor;
+  opacity: 0.7;
+}
+.mct-tab-lock svg {
+  width: 10px;
+  height: 10px;
+}

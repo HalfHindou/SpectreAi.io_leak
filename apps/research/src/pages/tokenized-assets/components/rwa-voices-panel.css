@@ -1,0 +1,249 @@
+/* ════════════════════════════════════════════════════════════════════════
+   RWA Voices — right-edge slide-out (prefix rvp-)
+
+   PERF CONTRACT (this panel rides over a live, scrolling board):
+   - The open/close animation touches ONLY transform + opacity, so it stays on
+     the compositor. Never animate width/right/left here.
+   - `will-change` is applied for the duration of the transition and then
+     released (.rvp--open drops it). A permanently promoted full-height layer
+     is real GPU cost for a panel that is closed 99% of the time.
+   - The right-edge HANDLE that opens this panel is styled in
+     tokenized-assets-page.css, NOT here: this file only loads with the lazy
+     panel chunk, so a handle styled here would render naked until first open.
+   - No backdrop-filter anywhere in this file. A large blurred surface over a
+     scrolling data board is the documented jank engine in this app; the
+     near-opaque fill carries the glass read on its own.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── Scrim ── */
+.rvp-scrim {
+  position: fixed;
+  inset: 0;
+  /* 999/1000 matches shared/ta-drawer.css — the app header is z-index 300
+     (--z-header) and WILL swallow clicks on this panel's own close button at
+     anything lower. Measured: at 71 the header intercepted every click. */
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.42);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+.rvp-scrim--on { opacity: 1; pointer-events: auto; }
+
+/* ── Panel ── */
+.rvp {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  width: min(420px, 92vw);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border-strong);
+  box-shadow: -24px 0 60px rgba(0, 0, 0, 0.5);
+  transform: translateX(100%);
+  will-change: transform;
+  transition: transform var(--duration-slow) var(--ease-out);
+  outline: none;
+}
+.rvp--open {
+  transform: translateX(0);
+  will-change: auto; /* release the promoted layer once parked */
+}
+@media (prefers-reduced-motion: reduce) {
+  .rvp { transition: none; }
+  .rvp-scrim { transition: none; }
+}
+
+.rvp-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  /* safe-area: Sunny's primary is an iOS home-screen PWA, where a top:0 fixed
+     sheet would tuck its title under the status bar. */
+  padding: calc(var(--sp-4) + env(safe-area-inset-top, 0px)) var(--sp-4) 0;
+}
+.rvp-head-titles { display: flex; flex-direction: column; gap: 2px; margin-right: auto; min-width: 0; }
+.rvp-eyebrow {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text-tertiary);
+}
+.rvp-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+.rvp-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: color var(--duration-base) var(--ease-out),
+              background var(--duration-base) var(--ease-out);
+}
+.rvp-icon-btn svg { width: 15px; height: 15px; }
+.rvp-icon-btn:hover:not(:disabled) { color: var(--text-primary); background: rgba(255, 255, 255, 0.05); }
+.rvp-icon-btn:disabled { opacity: 0.45; cursor: default; }
+
+.rvp-sub {
+  margin: 6px 0 0;
+  padding: 0 var(--sp-4);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.rvp-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;   /* no scroll chaining into the board behind */
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  padding-bottom: calc(var(--sp-6) + env(safe-area-inset-bottom, 0px));
+}
+
+.rvp-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 13px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.02);
+}
+.rvp-card-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+.rvp-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  object-fit: cover;
+  background: var(--bg-elevated);
+}
+.rvp-avatar--ph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+.rvp-who { display: flex; flex-direction: column; gap: 1px; min-width: 0; margin-right: auto; }
+.rvp-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rvp-verified { width: 13px; height: 13px; flex-shrink: 0; color: #5EEAD4; }
+.rvp-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  min-width: 0;
+}
+.rvp-followers { color: var(--text-secondary); font-weight: 500; }
+.rvp-user { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rvp-age { font-size: 0.75rem; color: var(--text-tertiary); flex-shrink: 0; }
+
+.rvp-text {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.rvp-project {
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-default);
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+}
+
+.rvp-skel { height: 92px; border-radius: var(--radius-md); }
+.rvp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.84rem;
+  color: var(--text-tertiary);
+}
+.rvp-retry {
+  padding: 6px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.rvp-retry:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.05); }
+
+/* ── Small screens: full-width sheet. (The handle's own small-screen rule
+      lives in tokenized-assets-page.css with the rest of the handle.) ── */
+@media (max-width: 640px) {
+  .rvp { width: 100vw; border-left: none; }
+}
+
+/* ── Day mode (self-contained: this panel is portaled outside .app, so it
+      cannot inherit .app.app-day-mode — the page passes the flag down) ── */
+.rvp.rvp--day {
+  background: #ffffff;
+  border-left-color: rgba(15, 23, 42, 0.1);
+  box-shadow: -24px 0 60px rgba(15, 23, 42, 0.14);
+}
+.rvp-scrim.rvp--day { background: rgba(15, 23, 42, 0.28); }
+.rvp--day .rvp-title,
+.rvp--day .rvp-name { color: #0f172a; }
+.rvp--day .rvp-sub,
+.rvp--day .rvp-text,
+.rvp--day .rvp-followers { color: #475569; }
+.rvp--day .rvp-eyebrow,
+.rvp--day .rvp-meta,
+.rvp--day .rvp-age,
+.rvp--day .rvp-project,
+.rvp--day .rvp-empty,
+.rvp--day .rvp-icon-btn { color: #64748b; }
+.rvp--day .rvp-card {
+  background: rgba(15, 23, 42, 0.025);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+.rvp--day .rvp-icon-btn { border-color: rgba(15, 23, 42, 0.1); }
+.rvp--day .rvp-icon-btn:hover:not(:disabled) { color: #0f172a; background: rgba(15, 23, 42, 0.05); }
+.rvp--day .rvp-retry { border-color: rgba(15, 23, 42, 0.1); color: #475569; }

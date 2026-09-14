@@ -1,0 +1,731 @@
+/**
+ * Positioning — glass on the same theme-aware token layer as the seasonal
+ * board and The Crossing. Every plane and hairline is mixed from a handful of
+ * variables, so the PRO Theme Studio retints this by redefining --pro-ink /
+ * --pro-edge and the skin blocks stay variable swaps, not stylesheet copies.
+ *
+ * The canvas cannot read CSS variables on its own, so the term structure's
+ * colours are published as --po-canvas-* and read with getComputedStyle —
+ * otherwise the chart keeps dark-mode ink under pro-paper.
+ */
+
+.po-root {
+  max-width: 1600px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  --po-ink: 14, 15, 19;
+  --po-ink-a: 0.42;
+  --po-sheen: 255, 255, 255;
+  --po-sheen-a: 0.085;
+  --po-sheen-a2: 0.022;
+  --po-hi: 255, 255, 255;
+  --po-hi-a: 0.16;
+  --po-edge: 255, 255, 255;
+  --po-edge-a: 0.1;
+  --po-well-a: 0.04;
+  --po-well-edge-a: 0.06;
+  --po-blur: 22px;
+  --po-lift: 0 1px 2px rgba(0, 0, 0, 0.34), 0 16px 36px -16px rgba(0, 0, 0, 0.62);
+  --po-radius: 18px;
+
+  --po-call: 16, 185, 129;
+  --po-put: 239, 68, 68;
+  --po-mark: 251, 191, 36;
+  --po-vol: 129, 140, 248;
+
+  --po-canvas-grid: rgba(255, 255, 255, 0.075);
+  --po-canvas-label: rgba(255, 255, 255, 0.42);
+  --po-canvas-line: rgba(129, 140, 248, 0.95);
+  --po-canvas-fill0: rgba(129, 140, 248, 0.26);
+  --po-canvas-fill1: rgba(129, 140, 248, 0.02);
+  --po-canvas-mark: rgba(251, 191, 36, 0.95);
+  --po-canvas-ema-fast: rgba(34, 211, 238, 0.9);
+  --po-canvas-ema-slow: rgba(245, 245, 247, 0.5);
+  --po-canvas-sr: rgba(148, 163, 184, 0.13);
+  --po-canvas-sr-ink: rgba(148, 163, 184, 0.75);
+}
+
+/* ═══ glass primitives ═══ */
+.po-panel {
+  position: relative;
+  border-radius: var(--po-radius);
+  padding: 16px 18px 18px;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    linear-gradient(158deg,
+      rgba(var(--po-sheen), var(--po-sheen-a)) 0%,
+      rgba(var(--po-sheen), var(--po-sheen-a2)) 46%,
+      rgba(var(--po-sheen), calc(var(--po-sheen-a) * 0.55)) 100%),
+    rgba(var(--po-ink), var(--po-ink-a));
+  border: 1px solid rgba(var(--po-edge), var(--po-edge-a));
+  box-shadow:
+    inset 0 1px 0 rgba(var(--po-hi), var(--po-hi-a)),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+    var(--po-lift);
+  backdrop-filter: blur(var(--po-blur)) saturate(165%);
+  -webkit-backdrop-filter: blur(var(--po-blur)) saturate(165%);
+  animation: po-rise 0.5s var(--ease-out) both;
+}
+.po-panel::before {
+  content: '';
+  position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(120% 90% at 0% 0%, rgba(var(--po-sheen), 0.07), transparent 62%);
+}
+@keyframes po-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+.po-panel-head {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  padding-bottom: 11px; margin-bottom: 14px;
+  border-bottom: 1px solid rgba(var(--po-edge), calc(var(--po-edge-a) * 0.75));
+}
+.po-panel-head h3 {
+  margin: 0; font-family: var(--font-display); font-size: 0.95rem;
+  font-weight: 640; letter-spacing: -0.02em; color: var(--text-primary);
+}
+.po-panel-sub { font-size: 0.72rem; color: var(--text-muted); }
+.po-legend {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.65rem; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase;
+}
+.po-key { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+.po-key--mark { background: rgba(var(--po-mark), 0.85); }
+
+.po-note {
+  margin: 12px 0 0; font-size: 0.7rem; line-height: 1.55; color: var(--text-muted);
+}
+.po-note b { color: var(--text-secondary); font-weight: 600; }
+.po-note--caveat { font-style: italic; opacity: 0.85; }
+
+/* Plain-language scaffolding — the board's audience includes readers who have
+   never traded an option, so every section states what it is in one line. */
+.po-primer {
+  margin: 0; font-size: 0.78rem; line-height: 1.6; color: var(--text-tertiary); max-width: 78ch;
+}
+/* Inside .po-read the panel's own column gap spaces it; in a plain panel
+   (dealer gamma) it needs its own breathing room under the head. */
+.po-panel:not(.po-read) > .po-primer { margin: -4px 0 14px; }
+.po-primer b { color: var(--text-secondary); font-weight: 600; }
+.po-event p.po-plain { margin-top: 10px; color: var(--text-tertiary); font-size: 0.74rem; }
+.po-stat-g {
+  margin-top: 2px; font-size: 0.6rem; line-height: 1.45; color: var(--text-muted); opacity: 0.8;
+}
+.po-empty { margin: 0; padding: 22px 0; text-align: center; font-size: 0.78rem; color: var(--text-muted); }
+
+.up { color: var(--bull-bright); }
+.down { color: var(--bear-bright); }
+
+/* ═══ picker ═══ */
+.po-picker {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 18px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(var(--po-ink), calc(var(--po-ink-a) * 0.8));
+  border: 1px solid rgba(var(--po-edge), calc(var(--po-edge-a) * 0.8));
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+}
+/* min-width:0 is load-bearing: a flex item will not shrink below its content,
+   so without it the megacap group refuses to wrap and the last pills are
+   clipped by the picker's edge rather than moving to a second line. */
+.po-pgroup { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.po-pgroup-label {
+  font-size: 0.58rem; font-weight: 600; letter-spacing: 0.11em;
+  text-transform: uppercase; color: var(--text-disabled);
+}
+.po-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+.po-pill {
+  padding: 6px 11px; min-height: 30px;
+  border-radius: 8px;
+  border: 1px solid rgba(var(--po-edge), var(--po-well-edge-a));
+  background: rgba(var(--po-edge), var(--po-well-a));
+  color: var(--text-secondary);
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
+}
+.po-pill:hover { background: rgba(var(--po-edge), calc(var(--po-well-a) * 2.4)); color: var(--text-primary); }
+.po-pill.is-active {
+  background: rgba(var(--po-vol), 0.22);
+  border-color: rgba(var(--po-vol), 0.5);
+  color: var(--text-primary);
+}
+.po-pill:focus-visible, .po-epill:focus-visible, .po-input:focus-visible {
+  outline: 2px solid rgba(var(--po-vol), 0.7); outline-offset: 2px;
+}
+.po-pgroup--form { min-width: 130px; flex: 0 1 160px; }
+.po-input {
+  min-height: 30px; padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(var(--po-edge), var(--po-well-edge-a));
+  background: rgba(var(--po-edge), var(--po-well-a));
+  color: var(--text-primary);
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; width: 100%;
+}
+.po-input::placeholder { color: var(--text-disabled); letter-spacing: 0.04em; }
+
+/* ═══ boot / error ═══ */
+.po-boot { display: flex; flex-direction: column; gap: 12px; min-height: 220px; }
+.po-boot span {
+  height: 16px; border-radius: 6px;
+  background: linear-gradient(90deg,
+    rgba(var(--po-edge), 0.05) 25%, rgba(var(--po-edge), 0.11) 50%, rgba(var(--po-edge), 0.05) 75%);
+  background-size: 220% 100%;
+  animation: po-shimmer 1.4s linear infinite;
+}
+.po-boot span:nth-child(2) { width: 62%; }
+.po-boot span:nth-child(3) { width: 38%; }
+@keyframes po-shimmer { to { background-position: -220% 0; } }
+.po-error h3 { margin: 0 0 6px; font-size: 0.9rem; color: var(--text-primary); }
+.po-error p { margin: 0; font-size: 0.75rem; color: var(--text-muted); }
+
+/* ═══ the read ═══ */
+.po-read { display: flex; flex-direction: column; gap: 16px; }
+.po-read-lead {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid rgba(var(--po-edge), calc(var(--po-edge-a) * 0.75));
+}
+.po-sym { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.po-sym h2 {
+  margin: 0; font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3.4vw, 2.1rem); font-weight: 700;
+  letter-spacing: -0.045em; line-height: 1; color: var(--text-primary);
+}
+.po-spot {
+  font-size: clamp(1rem, 2vw, 1.25rem); font-weight: 600;
+  font-variant-numeric: tabular-nums; color: var(--text-secondary);
+}
+.po-src { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.po-src-note { font-size: 0.68rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+.po-chip {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px; border-radius: 999px;
+  font-size: 0.6rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase;
+  border: 1px solid rgba(var(--po-edge), var(--po-well-edge-a));
+  background: rgba(var(--po-edge), var(--po-well-a));
+  color: var(--text-muted);
+}
+.po-chip--strong { background: rgba(var(--po-mark), 0.18); border-color: rgba(var(--po-mark), 0.42); color: var(--text-primary); }
+.po-chip--moderate { background: rgba(var(--po-edge), calc(var(--po-well-a) * 2)); color: var(--text-secondary); }
+
+.po-event {
+  padding: 14px 16px; border-radius: 13px;
+  background: rgba(var(--po-edge), var(--po-well-a));
+  border: 1px solid rgba(var(--po-edge), var(--po-well-edge-a));
+}
+.po-event.is-strong {
+  background: rgba(var(--po-mark), 0.075);
+  border-color: rgba(var(--po-mark), 0.28);
+}
+.po-event-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.po-event-head h3 {
+  margin: 0; font-family: var(--font-display); font-size: 1.02rem;
+  font-weight: 660; letter-spacing: -0.025em; color: var(--text-primary);
+}
+.po-event p { margin: 0; font-size: 0.78rem; line-height: 1.6; color: var(--text-secondary); max-width: 78ch; }
+
+/* the cone — the priced move as two real prices, not a percentage */
+.po-cone {
+  padding: 13px 16px 12px; border-radius: 13px;
+  background: rgba(var(--po-edge), var(--po-well-a));
+  border: 1px solid rgba(var(--po-edge), var(--po-well-edge-a));
+}
+.po-cone-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.po-cone-title { font-size: 0.74rem; font-weight: 640; color: var(--text-primary); letter-spacing: -0.01em; }
+.po-cone-sub { font-size: 0.66rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.po-cone-track {
+  position: relative; height: 10px; border-radius: 5px;
+  background: rgba(var(--po-edge), 0.07);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.28);
+}
+.po-cone-band {
+  position: absolute; inset: 0; border-radius: 5px;
+  background: linear-gradient(90deg,
+    rgba(var(--po-put), 0.34) 0%,
+    rgba(var(--po-edge), 0.05) 50%,
+    rgba(var(--po-call), 0.34) 100%);
+}
+.po-cone-mid {
+  position: absolute; left: 50%; top: -5px; width: 2px; height: 20px; border-radius: 1px;
+  background: var(--text-primary); transform: translateX(-1px);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.55);
+}
+.po-cone-pain, .po-cone-flip {
+  position: absolute; top: -2px; width: 8px; height: 14px; border-radius: 3px;
+  transform: translateX(-4px);
+}
+.po-cone-pain { background: rgba(var(--po-mark), 0.9); }
+.po-cone-flip { background: rgba(var(--po-vol), 0.9); }
+.po-cone-scale {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-top: 9px; font-size: 0.7rem; font-variant-numeric: tabular-nums;
+}
+.po-cone-lo { color: var(--bear-bright); font-weight: 600; }
+.po-cone-hi { color: var(--bull-bright); font-weight: 600; }
+.po-cone-pct { color: var(--text-secondary); font-weight: 640; }
+
+.po-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.po-stat {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 11px 13px; border-radius: 12px;
+  background: rgba(var(--po-edge), var(--po-well-a));
+  border: 1px solid rgba(var(--po-edge), var(--po-well-edge-a));
+}
+.po-stat-k {
+  font-size: 0.6rem; font-weight: 600; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--text-disabled);
+}
+.po-stat-v {
+  font-size: 1.15rem; font-weight: 680; letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums; color: var(--text-primary);
+}
+.po-stat-n { font-size: 0.64rem; color: var(--text-muted); line-height: 1.4; }
+
+/* ═══ term structure ═══ */
+.po-canvas-host { width: 100%; }
+
+/* ═══ the book ═══ */
+.po-expiry-pick { margin-left: auto; display: flex; flex-wrap: wrap; gap: 4px; }
+.po-epill {
+  padding: 4px 9px; min-height: 26px;
+  border-radius: 7px;
+  border: 1px solid rgba(var(--po-edge), var(--po-well-edge-a));
+  background: rgba(var(--po-edge), var(--po-well-a));
+  color: var(--text-muted);
+  font-size: 0.65rem; font-weight: 600; font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+}
+.po-epill:hover { color: var(--text-primary); }
+.po-epill.is-active { background: rgba(var(--po-vol), 0.22); border-color: rgba(var(--po-vol), 0.5); color: var(--text-primary); }
+.po-epill.is-event:not(.is-active) { border-color: rgba(var(--po-mark), 0.42); color: var(--text-secondary); }
+
+.po-book { display: flex; flex-direction: column; gap: 2px; }
+.po-book-head {
+  display: grid; grid-template-columns: 1fr 74px 1fr; gap: 8px;
+  padding-bottom: 7px; margin-bottom: 4px;
+  border-bottom: 1px solid rgba(var(--po-edge), calc(var(--po-edge-a) * 0.6));
+}
+.po-book-h {
+  font-size: 0.58rem; font-weight: 600; letter-spacing: 0.11em;
+  text-transform: uppercase; color: var(--text-disabled);
+}
+.po-book-h--p { text-align: right; }
+.po-book-h--k { text-align: center; }
+.po-book-h--c { text-align: left; }
+
+.po-book-row {
+  display: grid; grid-template-columns: 1fr 74px 1fr; gap: 8px;
+  align-items: center; min-height: 22px;
+  border-radius: 6px;
+}
+.po-book-row.is-marked { background: rgba(var(--po-mark), 0.055); }
+.po-bar { position: relative; height: 18px; display: flex; align-items: center; }
+.po-bar--p { justify-content: flex-end; }
+.po-bar--c { justify-content: flex-start; }
+.po-bar-fill {
+  position: absolute; top: 2px; bottom: 2px; border-radius: 3px;
+}
+.po-bar--p .po-bar-fill {
+  right: 0;
+  background: linear-gradient(270deg, rgba(var(--po-put), 0.62), rgba(var(--po-put), 0.26));
+}
+.po-bar--c .po-bar-fill {
+  left: 0;
+  background: linear-gradient(90deg, rgba(var(--po-call), 0.62), rgba(var(--po-call), 0.26));
+}
+.po-bar-val {
+  position: relative; z-index: 1;
+  padding: 0 6px; font-size: 0.64rem; font-weight: 600;
+  font-variant-numeric: tabular-nums; color: var(--text-secondary);
+}
+.po-book-k {
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  font-size: 0.68rem; font-weight: 640; font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.po-k-tags { display: inline-flex; gap: 3px; }
+.po-tag {
+  font-style: normal; font-size: 0.52rem; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 1px 4px; border-radius: 4px;
+}
+.po-tag--pain { background: rgba(var(--po-mark), 0.22); color: rgb(var(--po-mark)); }
+.po-tag--wall { background: rgba(var(--po-vol), 0.24); color: rgb(var(--po-vol)); letter-spacing: 0.08em; }
+.po-tag--event { margin-left: 6px; background: rgba(var(--po-mark), 0.2); color: rgb(var(--po-mark)); }
+
+.po-spot-rule {
+  position: relative; height: 1px; margin: 5px 0;
+  background: rgba(var(--po-edge), 0.34);
+}
+.po-spot-rule span {
+  position: absolute; right: 0; top: -8px;
+  padding: 1px 7px; border-radius: 5px;
+  font-size: 0.58rem; font-weight: 640; letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  background: rgba(var(--po-ink), 0.9);
+  border: 1px solid rgba(var(--po-edge), 0.22);
+}
+
+/* ═══ gamma ═══ */
+.po-gam { display: grid; grid-template-columns: minmax(190px, 0.8fr) minmax(260px, 1.2fr); gap: 18px; align-items: start; }
+.po-gam-lead {
+  display: flex; flex-direction: column; gap: 5px;
+  padding: 14px 16px; border-radius: 13px;
+  background: rgba(var(--po-edge), var(--po-well-a));
+  border: 1px solid rgba(var(--po-edge), var(--po-well-edge-a));
+}
+.po-gam-lead.is-long { border-color: rgba(var(--po-call), 0.3); background: rgba(var(--po-call), 0.06); }
+.po-gam-lead.is-short { border-color: rgba(var(--po-put), 0.3); background: rgba(var(--po-put), 0.06); }
+.po-gam-head {
+  font-size: 0.7rem; font-weight: 640; letter-spacing: 0.01em; color: var(--text-secondary);
+}
+.po-gam-net {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 700;
+  letter-spacing: -0.04em; line-height: 1.05;
+  font-variant-numeric: tabular-nums; color: var(--text-primary);
+  display: flex; flex-direction: column; gap: 2px;
+}
+.po-gam-net i {
+  font-style: normal; font-family: var(--font-sans);
+  font-size: 0.6rem; font-weight: 600; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--text-disabled);
+}
+.po-gam-body p { margin: 0 0 12px; font-size: 0.78rem; line-height: 1.6; color: var(--text-secondary); max-width: 68ch; }
+.po-gam-wells { display: flex; flex-wrap: wrap; gap: 8px; }
+.po-well {
+  display: inline-flex; align-items: baseline; gap: 8px;
+  padding: 7px 12px; border-radius: 9px;
+  background: rgba(var(--po-edge), var(--po-well-a));
+  border: 1px solid rgba(var(--po-edge), var(--po-well-edge-a));
+  font-size: 0.72rem; font-weight: 640; font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.po-well b {
+  font-size: 0.6rem; font-weight: 600; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--text-disabled);
+}
+
+/* ═══ table ═══ */
+.po-table-wrap { overflow-x: auto; }
+.po-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.po-table th {
+  text-align: right; padding: 0 10px 8px; white-space: nowrap;
+  font-size: 0.58rem; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-disabled);
+  border-bottom: 1px solid rgba(var(--po-edge), calc(var(--po-edge-a) * 0.7));
+}
+.po-table th:first-child { text-align: left; }
+.po-table td {
+  text-align: right; padding: 8px 10px; white-space: nowrap;
+  font-size: 0.74rem; font-weight: 560; color: var(--text-secondary);
+  border-bottom: 1px solid rgba(var(--po-edge), calc(var(--po-edge-a) * 0.3));
+}
+.po-table td:first-child { text-align: left; color: var(--text-primary); font-weight: 620; }
+.po-table tr.is-focus td { background: rgba(var(--po-edge), 0.045); }
+.po-table tr.is-event td { background: rgba(var(--po-mark), 0.075); }
+.po-table tbody tr:last-child td { border-bottom: none; }
+
+/* ═══ theme skins ═══ */
+.app.app-day-mode .po-root {
+  --po-canvas-up: rgba(5, 150, 105, 0.95);
+  --po-canvas-dn: rgba(220, 38, 38, 0.95);
+  --po-ink: 255, 255, 255; --po-ink-a: 0.66;
+  --po-sheen-a: 0.62; --po-sheen-a2: 0.3;
+  --po-hi-a: 0.9;
+  --po-edge: 15, 23, 42; --po-edge-a: 0.11;
+  --po-well-a: 0.035; --po-well-edge-a: 0.07;
+  --po-lift: 0 1px 2px rgba(15, 23, 42, 0.06), 0 14px 30px -16px rgba(15, 23, 42, 0.18);
+  --po-mark: 180, 120, 8;
+  --po-vol: 79, 70, 229;
+  --po-canvas-grid: rgba(15, 23, 42, 0.09);
+  --po-canvas-label: rgba(15, 23, 42, 0.5);
+  --po-canvas-line: rgba(79, 70, 229, 0.95);
+  --po-canvas-fill0: rgba(79, 70, 229, 0.2);
+  --po-canvas-fill1: rgba(79, 70, 229, 0.015);
+  --po-canvas-mark: rgba(180, 120, 8, 0.95);
+  --po-canvas-ema-fast: rgba(8, 145, 178, 0.95);
+  --po-canvas-ema-slow: rgba(15, 23, 42, 0.45);
+  --po-canvas-sr: rgba(15, 23, 42, 0.06);
+  --po-canvas-sr-ink: rgba(71, 85, 105, 0.9);
+}
+.app.app-day-mode .po-panel { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), var(--po-lift); }
+.app.app-day-mode .po-spot-rule span { background: rgba(255, 255, 255, 0.94); }
+.app.pro-glass .po-root {
+  --po-ink: var(--pro-ink); --po-ink-a: var(--pro-a-card);
+  --po-sheen-a: 0.07; --po-sheen-a2: 0.018; --po-hi-a: 0.18;
+  --po-edge: var(--pro-edge); --po-edge-a: calc(var(--pro-a-edge) + 0.03);
+  --po-blur: 26px;
+}
+.app.pro-paper .po-root {
+  --po-ink: var(--pro-ink); --po-ink-a: var(--pro-a-card);
+  --po-sheen-a: 0.5; --po-sheen-a2: 0.24; --po-hi-a: 0.85;
+  --po-edge: var(--pro-edge); --po-edge-a: calc(var(--pro-a-edge) + 0.03);
+  --po-well-a: 0.035; --po-well-edge-a: 0.075;
+  --po-blur: 24px;
+}
+
+/* ═══ responsive ═══ */
+@media (max-width: 1080px) {
+  .po-stats { grid-template-columns: 1fr 1fr; }
+  .po-gam { grid-template-columns: 1fr; gap: 14px; }
+}
+@media (max-width: 640px) {
+  .po-root { gap: 12px; }
+  .po-panel { padding: 14px 13px 15px; border-radius: 15px; }
+  /* Wrapped, the picker stood 330px tall on a 390px screen — 40% of the
+     viewport before a single number. One scrollable row per group holds every
+     symbol at a full-size tap target and gives that height back. */
+  .po-picker { gap: 10px; padding: 11px 0 11px 12px; }
+  .po-pgroup { width: 100%; }
+  .po-pills {
+    flex-wrap: nowrap; overflow-x: auto; padding-right: 12px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none; -ms-overflow-style: none;
+  }
+  .po-pills::-webkit-scrollbar { display: none; }
+  .po-pill { flex: 0 0 auto; scroll-snap-align: start; }
+  .po-pgroup--form { flex: 1 1 100%; padding-right: 12px; }
+  /* Two up, not one: stacked, the four stats ran 800px down a 390px screen
+     for eight numbers. */
+  .po-stats { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .po-stat { padding: 10px 11px; }
+  .po-stat-v { font-size: 1.02rem; }
+  .po-book-head, .po-book-row { grid-template-columns: 1fr 62px 1fr; gap: 5px; }
+  .po-bar-val { padding: 0 4px; font-size: 0.6rem; }
+  .po-expiry-pick { margin-left: 0; width: 100%; }
+  .po-panel-head { gap: 7px; }
+  .po-cone-scale { font-size: 0.66rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .po-panel { animation: none; }
+  .po-pill, .po-epill { transition: none; }
+  .po-boot span { animation: none; }
+}
+
+/* The term-structure read: the live sentence leads, the general explanation
+   follows it in the quieter note voice. */
+.po-term-read { margin-top: 12px; display: flex; flex-direction: column; gap: 7px; }
+.po-term-read .po-note { margin: 0; }
+.po-note--lead {
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-width: 82ch;
+}
+
+/* ── the priced-move chart ───────────────────────────────────────────────
+   Candle colours are published as tokens because a canvas cannot read a class;
+   getComputedStyle on the element is the only way the chart sees the theme. */
+.po-root {
+  --po-canvas-up: rgba(16, 185, 129, 0.92);
+  --po-canvas-dn: rgba(239, 68, 68, 0.92);
+}
+.po-chart-host { width: 100%; }
+.po-chart-boot {
+  height: 320px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; color: var(--text-disabled);
+  background: linear-gradient(90deg,
+    rgba(var(--po-edge), 0.04) 25%, rgba(var(--po-edge), 0.09) 50%, rgba(var(--po-edge), 0.04) 75%);
+  background-size: 220% 100%;
+  animation: po-shimmer 1.4s linear infinite;
+}
+.po-chart-boot.is-error { animation: none; background: rgba(var(--po-edge), var(--po-well-a)); }
+.po-key--cone { background: linear-gradient(90deg, rgba(var(--po-vol), 0.12), rgba(var(--po-vol), 0.6)); }
+.po-key--ema-fast { background: var(--po-canvas-ema-fast); }
+.po-key--ema-slow { background: var(--po-canvas-ema-slow); }
+.po-key--sr { background: var(--po-canvas-sr-ink); opacity: 0.55; }
+@media (max-width: 640px) { .po-chart-boot { height: 240px; } }
+@media (prefers-reduced-motion: reduce) { .po-chart-boot { animation: none; } }
+
+/* ── the earnings calendar ───────────────────────────────────────────────
+   Two boxes on one line: the runway answers "what is next", the month answers
+   "when does it get busy". A single list flattened a cluster into twelve
+   identical rows and made the page scroll to hold them. */
+.po-cal-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  /* Stretch, not start: a month grid ending 200px above the runway beside it
+     left a dead corner, which is the "half-empty box" note from the tile pass.
+     The grid absorbs the slack by growing its own cells. */
+  align-items: stretch;
+}
+.po-cal-box {
+  display: flex; flex-direction: column;
+  padding: 13px 14px 14px;
+  border-radius: 13px;
+  background: rgba(var(--po-edge), var(--po-well-a));
+  border: 1px solid rgba(var(--po-edge), var(--po-well-edge-a));
+  min-width: 0;
+}
+.po-cal-eyebrow {
+  font-size: 0.58rem; font-weight: 600; letter-spacing: 0.11em;
+  text-transform: uppercase; color: var(--text-disabled);
+  margin-bottom: 8px;
+}
+.po-cal-eyebrow--after { margin-top: 14px; }
+
+/* the logo, and its honest fallback */
+.po-logo {
+  border-radius: 6px; flex: 0 0 auto; object-fit: contain;
+  background: rgba(var(--po-sheen), 0.06);
+}
+.po-logo--text {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.58rem; font-weight: 700; letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+
+/* next up */
+.po-next {
+  display: flex; align-items: center; gap: 13px;
+  width: 100%; padding: 12px 13px;
+  border-radius: 11px;
+  border: 1px solid rgba(var(--po-mark), 0.26);
+  background: rgba(var(--po-mark), 0.08);
+  text-align: left; cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+}
+.po-next:hover { background: rgba(var(--po-mark), 0.13); }
+.po-next.is-active { border-color: rgba(var(--po-mark), 0.55); }
+.po-next:focus-visible { outline: 2px solid rgba(var(--po-vol), 0.7); outline-offset: 2px; }
+.po-next-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.po-next-top { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+.po-next-top b {
+  font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;
+  letter-spacing: -0.03em; color: var(--text-primary);
+}
+.po-next-count {
+  font-style: normal; font-size: 0.7rem; font-weight: 640;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted);
+}
+.po-next-count.is-soon { color: rgb(var(--po-mark)); }
+.po-next-when { font-size: 0.74rem; color: var(--text-secondary); }
+.po-next-est { font-size: 0.68rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.po-next-est i { font-style: normal; color: var(--text-disabled); }
+
+/* The rest of the runway — capped so it cannot set the page height, and capped
+   at a WHOLE number of rows: 218px cut the sixth row at 11% of its height,
+   which reads as a clipping bug rather than as a list that scrolls. */
+.po-cal-rows {
+  --po-row-h: 34px;
+  --po-row-gap: 2px;
+  display: flex; flex-direction: column; gap: var(--po-row-gap);
+  max-height: calc(6 * var(--po-row-h) + 5 * var(--po-row-gap));
+  overflow-y: auto;
+  scrollbar-width: thin;
+  position: relative;
+}
+/* macOS hides overlay scrollbars at rest, so a clean cut gives no sign there is
+   more. The fade is applied from JS only when the list actually overflows —
+   applied unconditionally it would dim the last row of a short list. */
+.po-cal-rows.is-scrollable {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 26px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 26px), transparent);
+}
+.po-cal-row {
+  display: grid;
+  grid-template-columns: 20px 56px minmax(0, 1fr) auto;
+  gap: 9px; align-items: center;
+  padding: 6px 8px; border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent; text-align: left; cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+.po-cal-row:hover { background: rgba(var(--po-edge), calc(var(--po-well-a) * 2.4)); }
+.po-cal-row:focus-visible { outline: 2px solid rgba(var(--po-vol), 0.7); outline-offset: 1px; }
+.po-cal-row.is-active { background: rgba(var(--po-vol), 0.16); border-color: rgba(var(--po-vol), 0.4); }
+.po-cal-row.is-soon .po-cr-count { color: rgb(var(--po-mark)); }
+.po-cr-sym { font-size: 0.74rem; font-weight: 660; color: var(--text-primary); }
+.po-cr-when { font-size: 0.7rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.po-cr-count { font-size: 0.68rem; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+
+/* the month */
+.po-mon-head {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; margin-bottom: 11px;
+}
+.po-mon-nav {
+  width: 26px; height: 26px; flex: 0 0 auto;
+  border-radius: 7px;
+  border: 1px solid rgba(var(--po-edge), var(--po-well-edge-a));
+  background: rgba(var(--po-edge), var(--po-well-a));
+  color: var(--text-secondary); font-size: 0.9rem; line-height: 1;
+  cursor: pointer;
+}
+.po-mon-nav:hover { color: var(--text-primary); background: rgba(var(--po-edge), calc(var(--po-well-a) * 2.4)); }
+.po-mon-nav:focus-visible { outline: 2px solid rgba(var(--po-vol), 0.7); outline-offset: 2px; }
+.po-mon-label {
+  display: flex; flex-direction: column; gap: 1px; text-align: center;
+  min-width: 118px;
+  font-family: var(--font-display); font-size: 0.85rem; font-weight: 640;
+  letter-spacing: -0.02em; color: var(--text-primary);
+}
+.po-mon-label i {
+  font-style: normal; font-family: var(--font-sans);
+  font-size: 0.6rem; font-weight: 500; letter-spacing: 0.04em;
+  color: var(--text-disabled); text-transform: none;
+}
+.po-mon-dow, .po-mon-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+.po-mon-grid { flex: 1; grid-auto-rows: minmax(46px, 1fr); align-content: stretch; }
+.po-mon-dow { margin-bottom: 5px; }
+.po-mon-dow span {
+  font-size: 0.56rem; font-weight: 600; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--text-disabled); text-align: center;
+}
+.po-mon-cell {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  min-height: 46px; padding: 5px 3px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: rgba(var(--po-edge), calc(var(--po-well-a) * 0.7));
+  font-variant-numeric: tabular-nums;
+}
+.po-mon-cell.is-blank { background: none; }
+.po-mon-cell.has-print {
+  background: rgba(var(--po-mark), 0.09);
+  border-color: rgba(var(--po-mark), 0.22);
+  cursor: pointer;
+}
+.po-mon-cell.has-print:hover { background: rgba(var(--po-mark), 0.16); }
+.po-mon-cell.has-print:focus-visible { outline: 2px solid rgba(var(--po-vol), 0.7); outline-offset: 1px; }
+.po-mon-cell.is-active { border-color: rgba(var(--po-vol), 0.55); }
+.po-mon-cell.is-today .po-mon-day {
+  color: var(--text-primary); font-weight: 700;
+  box-shadow: 0 0 0 1px rgba(var(--po-edge), 0.4);
+  border-radius: 999px; padding: 0 5px;
+}
+.po-mon-day { font-size: 0.66rem; color: var(--text-muted); }
+.po-mon-marks { display: flex; align-items: center; gap: 2px; }
+.po-mon-more { font-style: normal; font-size: 0.55rem; font-weight: 700; color: rgb(var(--po-mark)); }
+.po-mon-note { margin: 9px 0 0; font-size: 0.65rem; color: var(--text-muted); }
+
+@media (max-width: 900px) {
+  /* Below this the two boxes stop being a line and become a stack — which is
+     fine, because stacked they are still two compartments, not one long list. */
+  .po-cal-split { grid-template-columns: 1fr; }
+  .po-cal-rows { --po-row-h: 38px; max-height: calc(4 * var(--po-row-h) + 3 * var(--po-row-gap)); }
+}
+@media (max-width: 640px) {
+  .po-cal-box { padding: 11px 11px 12px; }
+  .po-cal-row { grid-template-columns: 20px 50px minmax(0, 1fr) auto; gap: 7px; }
+  .po-mon-cell { min-height: 40px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .po-next, .po-cal-row, .po-mon-nav { transition: none; }
+}

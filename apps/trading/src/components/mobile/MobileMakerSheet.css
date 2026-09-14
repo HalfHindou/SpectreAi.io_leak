@@ -1,0 +1,275 @@
+/* ============================================
+   MobileMakerSheet — maker action sheet. Prefix: mmk-
+   ============================================ */
+
+.mmk-root {
+  position: fixed;
+  inset: 0;
+  /* Above the Spectre Agent FAB (z 5000) - it floated over the sheet footer. */
+  z-index: 5100;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+.mmk-root > * { pointer-events: auto; }
+
+.mmk-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  border: none;
+  cursor: pointer;
+  animation: mmkBackdropIn 0.2s var(--ease-out) both;
+}
+@keyframes mmkBackdropIn { from { opacity: 0; } to { opacity: 1; } }
+
+.mmk-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: var(--ob-surface-1);
+  border-top-left-radius: var(--r-lg);
+  border-top-right-radius: var(--r-lg);
+  border-top: 1px solid var(--glass-border-lit);
+  box-shadow: var(--shadow-3);
+  padding: 8px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  animation: mmkSheetIn var(--dur-base) var(--ease-out) both;
+}
+@keyframes mmkSheetIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+/* Drag-to-dismiss hit region. The bar itself is only 4px tall - the padded
+   wrapper is what the thumb actually lands on. `none`, not `pan-y`: pan-y let
+   the browser read the drag as a page pull and fire its own pull-to-refresh.
+   JS touch events fire either way. */
+.mmk-grabber-region {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  padding: 2px 0 12px;
+  touch-action: none;
+  cursor: grab;
+}
+.mmk-grabber {
+  width: 44px;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--glass-highlight);
+}
+
+/* Kill the browser's double-tap-zoom wait (~300ms) on every control in the
+   sheet. The app viewport is zoomable (no maximum-scale), so without this a
+   tap on Close is held back while the browser waits for a possible second
+   tap - it read as the sheet lagging on dismiss. */
+.mmk-close,
+.mmk-action,
+.mmk-explorer,
+.mmk-backdrop {
+  touch-action: manipulation;
+}
+.mmk-close:active { opacity: 0.7; }
+
+.mmk-addr-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--glass-border);
+}
+.mmk-addr {
+  font-family: var(--font-num-chip);
+  font-size: 13px;
+  color: var(--text-2);
+  word-break: break-all;
+  line-height: 1.3;
+}
+.mmk-close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+/* ── Trade ledger (Bought / Sold / PNL / Unrealized) ── */
+.mmk-ledger {
+  padding: 2px 2px 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--glass-border);
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+}
+.mmk-ledger-row {
+  display: grid;
+  grid-template-columns: 92px 1fr auto auto;
+  align-items: baseline;
+  gap: 10px;
+  padding: 4px 0;
+}
+.mmk-ledger-label {
+  font-size: 12.5px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.mmk-sign { font-style: normal; opacity: 0.7; margin-right: 2px; }
+.mmk-ledger-usd { font-size: 14px; font-weight: 600; color: var(--text-1); }
+.mmk-ledger-usd--buy { color: var(--up, #34e89e); }
+.mmk-ledger-usd--sell { color: var(--down, #ff5169); }
+.mmk-ledger-usd--up { color: var(--up, #34e89e); }
+.mmk-ledger-usd--down { color: var(--down, #ff5169); }
+.mmk-ledger-amt { font-size: 12px; color: var(--text-2); text-align: right; }
+.mmk-ledger-count { font-size: 11.5px; color: var(--text-3); text-align: right; white-space: nowrap; }
+.mmk-ledger-row--pnl { border-top: 1px dashed var(--glass-border); margin-top: 3px; padding-top: 7px; }
+.mmk-ledger-note {
+  margin-top: 6px;
+  font-family: var(--font-body, system-ui);
+  font-size: 10.5px;
+  color: var(--text-3);
+}
+
+/* ── Identity block: tier glyph + descriptors ── */
+.mmk-id {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 2px 2px 12px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--glass-border);
+}
+.mmk-id-icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+}
+.mmk-id-icon--buy { color: var(--up, #34e89e); }
+.mmk-id-icon--sell { color: var(--down, #ff5169); }
+.mmk-id-icon--flat { color: var(--text-2); }
+.mmk-id-lines { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.mmk-id-addr {
+  font-family: var(--font-num-chip);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+.mmk-id-tier { font-size: 12.5px; color: var(--text-2); }
+.mmk-id-since { font-size: 12px; color: var(--text-3); }
+.mmk-id-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fbbf24;
+}
+.mmk-id-new svg { color: #fbbf24; }
+
+/* ── Explorer CTA ── */
+.mmk-explorer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border-lit, rgba(255, 255, 255, 0.1));
+  color: var(--text-1);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.mmk-explorer:active { opacity: 0.85; }
+.mmk-explorer svg { color: var(--text-3); }
+
+.mmk-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.mmk-actions--row { flex-direction: row; gap: 8px; }
+.mmk-actions--row .mmk-action {
+  flex: 1 1 0;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 8px;
+  font-size: 13.5px;
+  background: transparent;
+  border: 1px solid var(--glass-border);
+}
+.mmk-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: var(--text-1);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--dur-micro) var(--ease-out);
+}
+.mmk-action:active { background: var(--glass-fill); }
+.mmk-action svg { color: var(--text-3); flex-shrink: 0; }
+.mmk-action--active {
+  color: var(--accent);
+}
+.mmk-action--active svg { color: var(--accent); }
+
+/* Day mode */
+body.theme-light .mmk-backdrop { background: rgba(0, 0, 0, 0.35); }
+body.theme-light .mmk-sheet {
+  background: #ffffff;
+  border-top-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.18);
+}
+body.theme-light .mmk-addr { color: rgba(15, 23, 42, 0.7); }
+body.theme-light .mmk-addr-row { border-bottom-color: rgba(0, 0, 0, 0.06); }
+body.theme-light .mmk-action { color: #0f172a; }
+body.theme-light .mmk-action:active { background: rgba(0, 0, 0, 0.04); }
+body.theme-light .mmk-close {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: rgba(15, 23, 42, 0.85);
+}
+body.theme-light .mmk-grabber { background: rgba(0, 0, 0, 0.18); }
+body.theme-light .mmk-ledger,
+body.theme-light .mmk-id { border-bottom-color: rgba(0, 0, 0, 0.06); }
+body.theme-light .mmk-ledger-label,
+body.theme-light .mmk-ledger-count,
+body.theme-light .mmk-ledger-note,
+body.theme-light .mmk-id-since { color: rgba(15, 23, 42, 0.45); }
+body.theme-light .mmk-ledger-usd { color: #0f172a; }
+body.theme-light .mmk-ledger-amt,
+body.theme-light .mmk-id-tier { color: rgba(15, 23, 42, 0.6); }
+body.theme-light .mmk-ledger-row--pnl { border-top-color: rgba(0, 0, 0, 0.08); }
+body.theme-light .mmk-id-icon { background: rgba(0, 0, 0, 0.04); border-color: rgba(0, 0, 0, 0.08); }
+body.theme-light .mmk-id-icon--flat { color: rgba(15, 23, 42, 0.6); }
+body.theme-light .mmk-id-addr { color: #0f172a; }
+body.theme-light .mmk-id-new { color: #b45309; }
+body.theme-light .mmk-id-new svg { color: #b45309; }
+body.theme-light .mmk-explorer {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #0f172a;
+}
+body.theme-light .mmk-actions--row .mmk-action { border-color: rgba(0, 0, 0, 0.1); }

@@ -1,0 +1,133 @@
+/* XDashUpdatingNotice — the "X Dash is updating" surface for the landing-page
+   panels (Command Center social map, Discover → Social).
+
+   The /x-dash page has its own .xd-updating block inside x-dash-page.css; this
+   is the same voice at panel scale, self-contained so a home-page tab never has
+   to import that 2,400-line stylesheet to say one honest sentence. */
+
+.xdun {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px 20px;
+  min-height: 180px;
+  text-align: center;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-lg, 14px);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  box-shadow: var(--shadow-inner), var(--shadow-md);
+}
+.xdun--flush { min-height: 0; padding: 22px 18px; }
+
+.xdun__beacon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid var(--border-accent, rgba(255, 255, 255, 0.16));
+  background: rgba(255, 255, 255, 0.03);
+}
+.xdun__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--text-primary, #f5f5f7);
+  animation: xdunPulse 2s ease-in-out infinite;
+}
+@keyframes xdunPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 12px rgba(245, 245, 247, 0.45); }
+  50% { opacity: 0.4; box-shadow: 0 0 3px rgba(245, 245, 247, 0.1); }
+}
+
+.xdun__title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary, #f5f5f7);
+}
+.xdun__detail {
+  max-width: 44ch;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--text-tertiary, rgba(245, 245, 247, 0.55));
+}
+
+/* Three bars re-drawing themselves: the board rebuilding, not a spinner
+   implying this request is still in flight — it isn't, the answer arrived and
+   was empty. */
+.xdun__bars {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: min(230px, 70%);
+  margin-top: 6px;
+}
+.xdun__bar {
+  height: 6px;
+  width: 100%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.13) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: xdunSweep 1.8s ease-in-out infinite;
+}
+.xdun__bar:nth-child(2) { width: 82%; animation-delay: 160ms; }
+.xdun__bar:nth-child(3) { width: 58%; animation-delay: 320ms; }
+@keyframes xdunSweep {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.xdun__action { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.xdun__btn {
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  /* 38px is the app-wide --touch-min; match it so the button is not the one
+     control on the page that fails a thumb. */
+  min-height: 38px;
+  padding: 0 14px;
+  color: var(--text-primary, #f5f5f7);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+  border-radius: 999px;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+.xdun__btn:hover { background: rgba(255, 255, 255, 0.11); }
+
+/* day mode */
+.app.app-day-mode .xdun {
+  background: rgba(15, 23, 42, 0.028);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+.app.app-day-mode .xdun__beacon { border-color: rgba(15, 23, 42, 0.14); background: rgba(15, 23, 42, 0.02); }
+.app.app-day-mode .xdun__dot { background: #0f172a; }
+.app.app-day-mode .xdun__bar {
+  background: linear-gradient(90deg, rgba(15,23,42,0.05) 0%, rgba(15,23,42,0.12) 50%, rgba(15,23,42,0.05) 100%);
+  background-size: 200% 100%;
+}
+.app.app-day-mode .xdun__btn {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.12);
+}
+.app.app-day-mode .xdun__btn:hover { background: rgba(15, 23, 42, 0.08); }
+
+@media (max-width: 768px) {
+  .xdun { padding: 24px 16px; min-height: 150px; }
+  .xdun__detail { font-size: 0.78125rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xdun__dot, .xdun__bar { animation: none; }
+}

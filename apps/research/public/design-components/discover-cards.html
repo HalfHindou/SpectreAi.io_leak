@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discover Cinema Token Cards - Spectre AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            background: #0a0a0f;
+        }
+
+        body {
+            background: #0a0a0f;
+            font-family: -apple-system, 'SF Pro Display', system-ui, -webkit-system-font, sans-serif;
+            padding: 40px 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .discover-section {
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .section-header {
+            margin-bottom: 32px;
+            padding: 0 12px;
+        }
+
+        .section-title {
+            font-size: 28px;
+            font-style: italic;
+            font-family: 'Georgia', 'Playfair Display', serif;
+            background: linear-gradient(135deg, #a78bfa 0%, #e0e7ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .section-subtitle {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 400;
+            letter-spacing: 0.3px;
+        }
+
+        .cards-container {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding: 12px;
+            margin: 0 -12px;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .cards-container::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .cards-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+            margin: 0 12px;
+        }
+
+        .cards-container::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.3);
+            border-radius: 3px;
+        }
+
+        .cards-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 92, 246, 0.5);
+        }
+
+        .token-card {
+            flex: 0 0 220px;
+            height: 300px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .token-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .token-card:hover {
+            transform: translateY(-10px) scale(1.03);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+            border-color: rgba(139, 92, 246, 0.4);
+        }
+
+        .token-card:hover::before {
+            opacity: 1;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .token-logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .token-info {
+            flex: 1;
+        }
+
+        .token-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #f5f5f7;
+            margin-bottom: 2px;
+            letter-spacing: -0.3px;
+        }
+
+        .token-symbol {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .price-section {
+            margin-bottom: 20px;
+        }
+
+        .price-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 4px;
+        }
+
+        .price-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #f5f5f7;
+            letter-spacing: -0.5px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .change-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .change-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .change-value {
+            font-size: 16px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.3px;
+        }
+
+        .change-positive {
+            color: #30D158;
+        }
+
+        .change-negative {
+            color: #FF453A;
+        }
+
+        .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 16px;
+            border-top: 1px solid rgba(139, 92, 246, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+
+        .footer-label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.35);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            font-weight: 500;
+        }
+
+        .footer-action {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background: rgba(139, 92, 246, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(167, 139, 250, 0.8);
+            font-size: 12px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .footer-action:hover {
+            background: rgba(139, 92, 246, 0.25);
+            color: #a78bfa;
+        }
+
+        /* Token-specific colors */
+        .btc-logo {
+            background: #F7931A;
+        }
+
+        .eth-logo {
+            background: #627EEA;
+        }
+
+        .sol-logo {
+            background: #9945FF;
+        }
+
+        .xrp-logo {
+            background: #23292F;
+        }
+
+        .ada-logo {
+            background: #0033AD;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .section-title {
+                font-size: 24px;
+            }
+
+            .token-card {
+                flex: 0 0 200px;
+                height: 280px;
+                padding: 16px;
+            }
+
+            .price-value {
+                font-size: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 24px 12px;
+            }
+
+            .section-header {
+                margin-bottom: 24px;
+            }
+
+            .section-title {
+                font-size: 20px;
+            }
+
+            .section-subtitle {
+                font-size: 12px;
+            }
+
+            .token-card {
+                flex: 0 0 180px;
+                height: 260px;
+                padding: 14px;
+                border-radius: 16px;
+            }
+
+            .token-logo {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+
+            .token-name {
+                font-size: 13px;
+            }
+
+            .price-value {
+                font-size: 18px;
+            }
+
+            .change-value {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="discover-section">
+        <div class="section-header">
+            <h2 class="section-title">Trending Now</h2>
+            <p class="section-subtitle">Hot tokens making moves</p>
+        </div>
+
+        <div class="cards-container">
+            <!-- Bitcoin Card -->
+            <div class="token-card">
+                <div class="card-header">
+                    <div class="token-logo btc-logo">₿</div>
+                    <div class="token-info">
+                        <div class="token-name">Bitcoin</div>
+                        <div class="token-symbol">BTC</div>
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="price-section">
+                        <div class="price-label">Current Price</div>
+                        <div class="price-value">$97,245</div>
+                    </div>
+
+                    <div class="change-section">
+                        <span class="change-label">24h Change</span>
+                        <span class="change-value change-positive">+2.4%</span>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <span class="footer-label">Trade Now</span>
+                    <div class="footer-action">→</div>
+                </div>
+            </div>
+
+            <!-- Ethereum Card -->
+            <div class="token-card">
+                <div class="card-header">
+                    <div class="token-logo eth-logo">Ξ</div>
+                    <div class="token-info">
+                        <div class="token-name">Ethereum</div>
+                        <div class="token-symbol">ETH</div>
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="price-section">
+                        <div class="price-label">Current Price</div>
+                        <div class="price-value">$3,445</div>
+                    </div>
+
+                    <div class="change-section">
+                        <span class="change-label">24h Change</span>
+                        <span class="change-value change-positive">+1.8%</span>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <span class="footer-label">Trade Now</span>
+                    <div class="footer-action">→</div>
+                </div>
+            </div>
+
+            <!-- Solana Card -->
+            <div class="token-card">
+                <div class="card-header">
+                    <div class="token-logo sol-logo">◎</div>
+                    <div class="token-info">
+                        <div class="token-name">Solana</div>
+                        <div class="token-symbol">SOL</div>
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="price-section">
+                        <div class="price-label">Current Price</div>
+                        <div class="price-value">$198</div>
+                    </div>
+
+                    <div class="change-section">
+                        <span class="change-label">24h Change</span>
+                        <span class="change-value change-positive">+5.2%</span>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <span class="footer-label">Trade Now</span>
+                    <div class="footer-action">→</div>
+                </div>
+            </div>
+
+            <!-- XRP Card -->
+            <div class="token-card">
+                <div class="card-header">
+                    <div class="token-logo xrp-logo">✕</div>
+                    <div class="token-info">
+                        <div class="token-name">XRP</div>
+                        <div class="token-symbol">XRP</div>
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="price-section">
+                        <div class="price-label">Current Price</div>
+                        <div class="price-value">$2.34</div>
+                    </div>
+
+                    <div class="change-section">
+                        <span class="change-label">24h Change</span>
+                        <span class="change-value change-negative">-0.8%</span>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <span class="footer-label">Trade Now</span>
+                    <div class="footer-action">→</div>
+                </div>
+            </div>
+
+            <!-- Cardano Card -->
+            <div class="token-card">
+                <div class="card-header">
+                    <div class="token-logo ada-logo">₳</div>
+                    <div class="token-info">
+                        <div class="token-name">Cardano</div>
+                        <div class="token-symbol">ADA</div>
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="price-section">
+                        <div class="price-label">Current Price</div>
+                        <div class="price-value">$0.72</div>
+                    </div>
+
+                    <div class="change-section">
+                        <span class="change-label">24h Change</span>
+                        <span class="change-value change-positive">+3.1%</span>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <span class="footer-label">Trade Now</span>
+                    <div class="footer-action">→</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

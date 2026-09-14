@@ -1,0 +1,330 @@
+/* MobileTokenRow — dense screener row (prefix mrow-). Numbers ride
+   var(--font-num-chip) + tabular-nums; color only on data. */
+
+.mrow {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+}
+
+/* live price flash — brief wash across the row */
+.mrow--flash-up .mrow-track {
+  background: linear-gradient(rgba(52, 232, 158, 0.05), rgba(52, 232, 158, 0.05)) var(--ob-surface-1, #09090b);
+}
+.mrow--flash-down .mrow-track {
+  background: linear-gradient(rgba(255, 81, 105, 0.05), rgba(255, 81, 105, 0.05)) var(--ob-surface-1, #09090b);
+}
+
+/* ---- swipe underlays ---- */
+.mrow-under {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 18px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  opacity: 0.55;
+  transition: opacity 120ms ease;
+}
+.mrow-under.is-armed { opacity: 1; }
+.mrow-under--right {
+  justify-content: flex-start;
+  color: var(--up, #34E89E);
+  background: rgba(52, 232, 158, 0.10);
+}
+.mrow-under--left {
+  justify-content: flex-end;
+  color: var(--down, #FF5169);
+  background: rgba(255, 81, 105, 0.10);
+}
+
+/* ---- sliding track ---- */
+.mrow-track {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 7px 14px;
+  background: var(--ob-surface-1, #09090b);
+  border: none;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1), background 400ms ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: pan-y;
+}
+.mrow-track:active { background: #101013; }
+
+.mrow-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+/* DexScreener left stack: chain icon (line 1) + age badge (line 2) */
+.mrow-chaincol {
+  flex: 0 0 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding-top: 2px;
+}
+.mrow-chainic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.mrow-chainic--none { background: rgba(255, 255, 255, 0.03); }
+/* ETH's mark is faceted dark grays — invisible on the dark chip. Invert
+   preserves the facets while flipping them light (colorful icons untouched). */
+.mrow-chainic--eth svg { filter: invert(1); }
+body.theme-light .mrow-chainic--eth svg { filter: none; }
+
+/* ---- zone 1: logo column (avatar + age badge underneath) ---- */
+.mrow-left {
+  flex: 0 0 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.mrow-logo {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.mrow-logo img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.04);
+}
+.mrow-logo-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.7);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* ---- body ---- */
+.mrow-body { flex: 1; min-width: 0; }
+
+.mrow-line1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.mrow-sym {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mrow-age {
+  flex-shrink: 0;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 9px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.5);
+  line-height: 1.4;
+}
+.mrow-star {
+  flex-shrink: 0;
+  color: #f5f5f7;
+  opacity: 0.85;
+}
+.mrow-star--pop { animation: mrowStarPop 480ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes mrowStarPop {
+  0% { transform: scale(0.2); opacity: 0; }
+  60% { transform: scale(1.5); opacity: 1; }
+  100% { transform: scale(1); }
+}
+/* right numbers cluster on line 1: MC + 1H + 24H (DexScreener) */
+.mrow-nums {
+  display: grid;
+  grid-template-columns: minmax(64px, auto) 54px 58px;
+  align-items: baseline;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+  text-align: right;
+}
+.mrow-price {
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 650;
+  color: #f5f5f7;
+  white-space: nowrap;
+}
+.mrow-price-tag {
+  font-style: normal;
+  margin-right: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: rgba(245, 245, 247, 0.35);
+}
+
+.mrow-line2 {
+  display: flex;
+  /* baseline, not center: the 12px name and the 10.5px chip values must sit
+     on ONE text line — box-centering left the name reading a few px lower */
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 4px;
+  min-width: 0;
+}
+.mrow-chips { align-items: baseline; }
+.mrow-name {
+  flex: 1 1 auto;
+  min-width: 84px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mrow-chg {
+  font-size: 9px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.3);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.mrow-chg b {
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 2px;
+}
+
+/* magnitude grading (B2) */
+.mrow-chg-val.neutral { color: rgba(245, 245, 247, 0.4); }
+.mrow-chg-val.up.g0 { color: rgba(52, 232, 158, 0.4); }
+.mrow-chg-val.up.g1 { color: rgba(52, 232, 158, 0.7); }
+.mrow-chg-val.up.g2 { color: var(--up, #34E89E); }
+.mrow-chg-val.up.g3,
+.mrow-chg-val.up.g4 { color: var(--up, #34E89E); text-shadow: 0 0 12px rgba(52, 232, 158, 0.35); }
+.mrow-chg-val.down.g0 { color: rgba(255, 81, 105, 0.4); }
+.mrow-chg-val.down.g1 { color: rgba(255, 81, 105, 0.7); }
+.mrow-chg-val.down.g2 { color: var(--down, #FF5169); }
+.mrow-chg-val.down.g3,
+.mrow-chg-val.down.g4 { color: var(--down, #FF5169); text-shadow: 0 0 12px rgba(255, 81, 105, 0.35); }
+
+/* ---- boxed metric chips — inline on line 2, right after the name ---- */
+.mrow-chips {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  margin-left: auto;
+  flex: 0 1 176px;
+  min-width: 0;
+}
+.mrow-chip-empty { display: block; }
+
+.mrow-price2 {
+  flex: 0 0 auto;
+  margin-left: auto;
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.72);
+  white-space: nowrap;
+}
+body.theme-light .mrow-price2 { color: rgba(15, 23, 42, 0.72); }
+.mrow-sub {
+  font-size: 8px;
+  vertical-align: sub;
+}
+.mrow-chip {
+  padding: 2px 5.5px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 8.5px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: rgba(245, 245, 247, 0.38);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+.mrow-chip b {
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.78);
+  margin-left: 2px;
+}
+
+/* ================= day mode ================= */
+body.theme-light .mrow { border-bottom-color: rgba(15, 23, 42, 0.06); }
+body.theme-light .mrow-track { background: #f5f6f8; }
+body.theme-light .mrow-track:active { background: #eceef2; }
+body.theme-light .mrow--flash-up .mrow-track {
+  background: linear-gradient(rgba(16, 185, 129, 0.07), rgba(16, 185, 129, 0.07)) #f5f6f8;
+}
+body.theme-light .mrow--flash-down .mrow-track {
+  background: linear-gradient(rgba(239, 68, 68, 0.07), rgba(239, 68, 68, 0.07)) #f5f6f8;
+}
+body.theme-light .mrow-sym,
+body.theme-light .mrow-price { color: #0f172a; }
+body.theme-light .mrow-price-tag { color: rgba(15, 23, 42, 0.4); }
+body.theme-light .mrow-name { color: rgba(15, 23, 42, 0.5); }
+body.theme-light .mrow-chg { color: rgba(15, 23, 42, 0.4); }
+body.theme-light .mrow-age { background: rgba(15, 23, 42, 0.05); color: rgba(15, 23, 42, 0.55); }
+body.theme-light .mrow-star { color: #0f172a; }
+body.theme-light .mrow-chainic { background: rgba(15, 23, 42, 0.05); }
+body.theme-light .mrow-logo-fallback { background: rgba(15, 23, 42, 0.06); color: rgba(15, 23, 42, 0.6); }
+
+body.theme-light .mrow-chip {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.06);
+  color: rgba(15, 23, 42, 0.45);
+}
+body.theme-light .mrow-chip b { color: rgba(15, 23, 42, 0.8); }
+body.theme-light .mrow-chg-val.up.g0 { color: rgba(5, 150, 105, 0.45); }
+body.theme-light .mrow-chg-val.up.g1 { color: rgba(5, 150, 105, 0.75); }
+body.theme-light .mrow-chg-val.up.g2,
+body.theme-light .mrow-chg-val.up.g3,
+body.theme-light .mrow-chg-val.up.g4 { color: #059669; text-shadow: none; }
+body.theme-light .mrow-chg-val.down.g0 { color: rgba(220, 38, 38, 0.45); }
+body.theme-light .mrow-chg-val.down.g1 { color: rgba(220, 38, 38, 0.75); }
+body.theme-light .mrow-chg-val.down.g2,
+body.theme-light .mrow-chg-val.down.g3,
+body.theme-light .mrow-chg-val.down.g4 { color: #dc2626; text-shadow: none; }

@@ -1,0 +1,486 @@
+/* ═══════════════════════════════════════════════════════════════════
+   RWA Overview tab — cinematic redesign (scoped to .rwa-ov2)
+   ───────────────────────────────────────────────────────────────────
+   Desktop Overview landing only. Everything is namespaced under
+   `.rwa-ov2` so it can't bleed into the other RWA tabs or the mobile
+   render. We re-organize the page into 6 deliberately-paced sections and
+   add premium-shell polish WITHOUT editing the shared component
+   internals or the global card rule (mobile + other tabs share it).
+
+   6 sections (top → bottom narrative):
+     1. Hero band        full-width: total value + KPIs (left) · chart (right)
+     2. Composition      3 equal cards: class alloc · net flows · chains
+     3. AI + Trend       Spectre Brain rail · Active Mcap chart
+     4. Leaders          RWA Screener (dominant) · Top Issuers
+     5. Thesis           full-width editorial band
+     6. Intel & Social   Flow Board · Pulse · Voices (capped/scrolled feed)
+
+   Every dark rule has an .app.app-day-mode counterpart where it sets color.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Page rhythm: deliberate vertical cadence (air between sections). ── */
+.rwa-ov2 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+/* ── Section entrance — Apple-cinematic unfurl. The hero is instant
+   (above the fold); the lower sections fade up as the page settles. ── */
+.rwa-ov2-row,
+.rwa-ov2-trend {
+  animation: rwa-ov2-rise var(--duration-slow) var(--ease-out) both;
+}
+.rwa-ov2-row--composition { animation-delay: 40ms; }
+.rwa-ov2-trend            { animation-delay: 80ms; }
+.rwa-ov2-row--read        { animation-delay: 120ms; }
+.rwa-ov2-row--leaders     { animation-delay: 150ms; }
+.rwa-ov2-row--intel       { animation-delay: 180ms; }
+@keyframes rwa-ov2-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rwa-ov2-row, .rwa-ov2-trend { animation: none; }
+}
+
+/* ── Canonical glass-card shell (scoped to .rwa-ov2 — does NOT touch the
+   global card rule that mobile + other RWA tabs share).
+   The base RWA shell is a heavy solid-dark gradient + 28px blur, which reads
+   heavier/darker than the rest of Spectre. This swaps every Overview card to
+   the design-system `.glass-card` treatment so the tab matches the app:
+   white-gradient glass, 20px blur, near-invisible border, 16px radius,
+   inset highlight + layered shadow, -1px hover lift. ── */
+.rwa-ov2 .rca,
+.rwa-ov2 .rnf,
+.rwa-ov2 .rgh,
+.rwa-ov2 .rcd,
+.rwa-ov2 .rfb,
+.rwa-ov2 .rpc,
+.rwa-ov2 .rbc,
+.rwa-ov2 .rtw,
+.rwa-ov2 .ramc,
+.rwa-ov2 .rwa-cmd-screener {
+  /* Deep, neutral near-black surface (R≈G≈B — no blue/purple cast), with
+     layered depth + inset highlight. Reads as rich dark, not grey glass and
+     not the blue-tinted welcome-widget gradient. */
+  background: linear-gradient(180deg, rgba(23, 23, 24, 0.96) 0%, rgba(16, 16, 17, 0.97) 50%, rgba(11, 11, 12, 0.98) 100%);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    0 6px 20px rgba(0, 0, 0, 0.4),
+    0 16px 40px rgba(0, 0, 0, 0.28);
+}
+.rwa-ov2 .rca:hover,
+.rwa-ov2 .rnf:hover,
+.rwa-ov2 .rgh:hover,
+.rwa-ov2 .rcd:hover,
+.rwa-ov2 .rfb:hover,
+.rwa-ov2 .rpc:hover,
+.rwa-ov2 .rbc:hover,
+.rwa-ov2 .rtw:hover,
+.rwa-ov2 .ramc:hover {
+  border-color: rgba(255, 255, 255, 0.09);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 10px 28px rgba(0, 0, 0, 0.5),
+    0 20px 50px rgba(0, 0, 0, 0.32);
+  transform: translateY(-1px);
+}
+/* Day-mode glass — white cards, hairline dark border (design-system H). */
+.app.app-day-mode .rwa-ov2 .rca,
+.app.app-day-mode .rwa-ov2 .rnf,
+.app.app-day-mode .rwa-ov2 .rgh,
+.app.app-day-mode .rwa-ov2 .rcd,
+.app.app-day-mode .rwa-ov2 .rfb,
+.app.app-day-mode .rwa-ov2 .rpc,
+.app.app-day-mode .rwa-ov2 .rbc,
+.app.app-day-mode .rwa-ov2 .rtw,
+.app.app-day-mode .rwa-ov2 .ramc,
+.app.app-day-mode .rwa-ov2 .rwa-cmd-screener {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+/* ── Generic row grid ── */
+.rwa-ov2-row {
+  display: grid;
+  gap: var(--sp-4);
+  align-items: stretch;
+  min-height: 0;
+}
+
+/* ═══ SECTION 1 — MARKET HERO ═══
+   The global hero is normally a vertical stack (head / chart / stats).
+   For the full-width band we re-flow it into a two-column command layout:
+   the headline total + KPI grid live in a left rail, the chart fills the
+   right and spans both rows. Kills the old "number floating in a void". */
+.rwa-ov2-hero { min-height: 0; }
+.rwa-ov2 .rgh {
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "head  stage"
+    "stats stage";
+  column-gap: var(--sp-8);
+  row-gap: var(--sp-4);
+  padding: var(--sp-6);
+  min-height: 400px;
+}
+.rwa-ov2 .rgh__head {
+  grid-area: head;
+  align-items: flex-start;
+  text-align: left;
+  gap: var(--sp-2);
+}
+.rwa-ov2 .rgh__eyebrow { font-size: 0.72rem; }
+.rwa-ov2 .rgh__total {
+  font-size: clamp(2.8rem, 4vw, 3.7rem);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.0;
+  margin: 4px 0 0;
+  /* Signature: a warm-white-to-teal sheen on the headline figure, with a
+     soft glow that survives the text clip (text-shadow can't, so drop-shadow). */
+  background: linear-gradient(174deg, #ffffff 0%, #dbfbf3 52%, #5EEAD4 128%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: drop-shadow(0 2px 26px rgba(94, 234, 212, 0.18));
+}
+.rwa-ov2 .rgh__chart {
+  grid-area: stage;
+  align-self: stretch;
+  min-height: 320px;
+}
+.rwa-ov2 .rgh__stage {
+  flex: 1;
+  min-height: 280px;
+}
+.rwa-ov2 .rgh__stats {
+  grid-area: stats;
+  align-self: end;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sp-3) var(--sp-5);
+}
+.rwa-ov2 .rgh__stat-val { font-size: 1.02rem; }
+
+/* ═══ SECTION 2 — COMPOSITION (allocation · flows · chains) ═══
+   2026-08-03: the row was 340px+ of shell around ~3 numbers per card (the old
+   donuts covered ~9% of their card and left a dead lower half). With the
+   stack/diverging-bar rebuild the content sets the height and the floor only
+   guards against a short-data card collapsing out of alignment. */
+.rwa-ov2-row--composition {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.rwa-ov2-row--composition > * { min-height: 280px; }
+/* Shared internal rhythm: every card in this row opens with head → lead
+   readout, then its chart, then its list. Consistent gap so the three read
+   as one row rather than three unrelated widgets. */
+.rwa-ov2-row--composition > * { gap: var(--sp-3); }
+.rwa-ov2 .rca__lead,
+.rwa-ov2 .rnf__lead { margin-top: 2px; }
+/* The chain card (7 rows) is the tallest and sets the row height via grid
+   stretch. The legacy allocation feed has only 4 classes, so its legend takes
+   the slack instead of leaving a void under the last row. */
+.rwa-ov2 .rca__legend {
+  flex: 1 1 auto;
+  justify-content: space-evenly;
+}
+
+/* ═══ SECTION 3 — TREND (Active Mcap, full width) ═══
+   The stacked mcap chart loves width; full-width kills the old void that
+   sat next to it when it was crammed into a side column. */
+.rwa-ov2-trend { min-height: 0; }
+.rwa-ov2 .rwa-ov2-trend .ramc { min-height: 480px; }
+
+/* ═══ SECTION 4 — INTELLIGENCE (Spectre Brain · Thesis) ═══
+   Two reading panels of similar weight; stretch so they share one height
+   instead of leaving a void beside the taller one. */
+/* 2026-08-03: one full-width Brain card (the old two-panel read row died
+   with the Editorial-primer duplicate). */
+.rwa-ov2-row--read {
+  grid-template-columns: 1fr;
+  align-items: stretch;
+}
+
+/* ═══ SECTION 4 — LEADERS (screener dominant + top issuers) ═══
+   Screener grows to content (it carries its own Load-more + foot);
+   the 7D Flow Board rail stretches alongside it (2026-08-03: replaced the
+   Top Issuers card, which duplicated the screener's list). */
+.rwa-ov2-row--leaders {
+  grid-template-columns: minmax(0, 1fr) 340px;
+  align-items: start;
+}
+.rwa-ov2-row--leaders > * { min-height: 480px; overflow: visible; }
+/* Keep the promoted Flow Board from outgrowing the rail — internal scroll. */
+.rwa-ov2-row--leaders .rfb { max-height: 640px; overflow: hidden; }
+
+/* ═══ SECTION 5 — THESIS (full-width editorial band) ═══ */
+.rwa-ov2-thesis { min-height: 0; }
+
+/* ═══ SECTION 6 — INTEL & SOCIAL ═══
+   Two-up (2026-08-03: the Flow Board moved to the screener rail): Pulse +
+   Voices, each capped + scrolling internally so the columns share a height. */
+.rwa-ov2-row--intel {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.rwa-ov2-row--intel > * {
+  min-height: 420px;
+  max-height: 540px;
+  overflow: hidden;
+}
+/* Voices: cap the card, let the list own its overflow. */
+.rwa-ov2 .rtw { overflow: hidden; }
+.rwa-ov2 .rtw__list {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+/* Flow board list can scroll too if it ever overflows. */
+.rwa-ov2 .rfb__list { min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+/* ── Screener header: tighten + give it an eyebrow rhythm. ── */
+.rwa-ov2 .rwa-cmd-screener__title-block {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.rwa-ov2 .rwa-cmd-screener__title {
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  letter-spacing: -0.02em;
+}
+.rwa-ov2 .rwa-cmd-screener__count {
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Screener foot: intentional full-width affordance, not a stray link. ── */
+.rwa-ov2 .rwa-cmd-screener__foot {
+  justify-content: stretch;
+  padding-top: var(--sp-3);
+  margin-top: auto;
+}
+.rwa-ov2 .rwa-cmd-screener__more {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 0;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid var(--ta-glass-border, rgba(255, 255, 255, 0.05));
+  border-radius: var(--radius-md);
+  transition: color var(--duration-base) var(--ease-out),
+              border-color var(--duration-base) var(--ease-out),
+              background var(--duration-base) var(--ease-out),
+              transform var(--duration-base) var(--ease-out);
+}
+.rwa-ov2 .rwa-cmd-screener__more:hover {
+  color: var(--text-primary);
+  border-color: var(--ta-glass-border-hover, rgba(255, 255, 255, 0.09));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.03) 100%);
+  transform: translateY(-1px);
+}
+.rwa-ov2 .rwa-cmd-screener__more:active { transform: translateY(0); }
+.rwa-ov2 .rwa-cmd-screener__more span[aria-hidden] {
+  transition: transform var(--duration-base) var(--ease-out);
+}
+.rwa-ov2 .rwa-cmd-screener__more:hover span[aria-hidden] { transform: translateX(3px); }
+
+/* ═══ Refinement pass — typography rhythm + varied data encoding ═══ */
+
+/* Composition · Chain Breakdown as ranked bars — neutralize the component's
+   own nested box so it blends into the .rcd shell, and harmonize the header
+   with its donut siblings (Class Allocation / Net Flows use a 0.95rem
+   display title, not the bars' default 0.69rem uppercase micro-label). */
+.rwa-ov2 .rwa-ov2-bars-card { gap: var(--sp-3); }
+.rwa-ov2 .rwa-ov2-bars-card .rwa-hbars {
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  flex: 1 1 auto;
+  gap: var(--sp-3);
+}
+.rwa-ov2 .rwa-ov2-bars-card .rwa-hbars-head {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  margin-bottom: var(--sp-1);
+}
+.rwa-ov2 .rwa-ov2-bars-card .rwa-hbars-title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--text-primary);
+}
+.rwa-ov2 .rwa-ov2-bars-card .rwa-hbars-sub {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+.rwa-ov2 .rwa-ov2-bars-card .rwa-hbars-list {
+  flex: 1 1 auto;
+  justify-content: space-around;
+  gap: 2px;
+}
+.rwa-ov2 .rwa-ov2-bars-card .rwa-hbar-row { padding: 7px 6px; gap: 8px; }
+.rwa-ov2 .rwa-ov2-bars-card .rwa-hbar-label { font-size: 0.8125rem; max-width: 96px; }
+.rwa-ov2 .rwa-ov2-bars-card .rwa-hbar-track { height: 10px; }
+.rwa-ov2 .rwa-ov2-bars-card .rwa-hbar-value { font-size: 0.8125rem; }
+.rwa-ov2 .rwa-ov2-bars-card .rwa-hbar-pct { font-size: 0.72rem; }
+
+/* Hero · sharpen the focal hierarchy + consistent KPI micro-cap labels. */
+.rwa-ov2 .rgh__eyebrow {
+  letter-spacing: 0.1em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+/* Live pulse dot — the page reads as a running index, not a static report. */
+.rwa-ov2 .rgh__live {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #5EEAD4;
+  flex-shrink: 0;
+  animation: rgh-live-pulse 2.4s var(--ease-out) infinite;
+}
+@keyframes rgh-live-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(94, 234, 212, 0.5); }
+  70%  { box-shadow: 0 0 0 7px rgba(94, 234, 212, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(94, 234, 212, 0); }
+}
+@media (prefers-reduced-motion: reduce) { .rwa-ov2 .rgh__live { animation: none; } }
+/* Editorial lede under the figure — gives the number meaning, not just a metric. */
+.rwa-ov2 .rgh__lede-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin-top: var(--sp-1);
+}
+.rwa-ov2 .rgh__lede {
+  font-size: 0.92rem;
+  line-height: 1.3;
+  color: var(--text-secondary);
+  letter-spacing: -0.01em;
+  max-width: 24ch;
+}
+.rwa-ov2 .rgh__stat-label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.62rem;
+}
+
+/* ═══ Hero chart — custom draw-in + live pulse (premium polish) ═══ */
+.rwa-ov2 .rgh__line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: rgh-draw 1000ms var(--ease-out) 80ms forwards;
+}
+@keyframes rgh-draw { to { stroke-dashoffset: 0; } }
+.rwa-ov2 .rgh__area { animation: rgh-area-in 1100ms var(--ease-out) both; }
+@keyframes rgh-area-in { from { opacity: 0; } to { opacity: 1; } }
+.rwa-ov2 .rgh__enddot-halo { animation: rgh-enddot 2.6s var(--ease-out) infinite; }
+@keyframes rgh-enddot { 0%, 100% { opacity: 0.10; } 50% { opacity: 0.34; } }
+@media (prefers-reduced-motion: reduce) {
+  .rwa-ov2 .rgh__line { animation: none; stroke-dashoffset: 0; }
+  .rwa-ov2 .rgh__area { animation: none; }
+  .rwa-ov2 .rgh__enddot-halo { animation: none; }
+}
+
+/* ═══ Allocation stack — segments sweep out from the left on mount ═══ */
+.rwa-ov2 .rca__stack-seg {
+  transform-origin: left center;
+  animation: ta-bar-grow 760ms var(--ease-out) both;
+}
+
+/* ═══ Chain bars — staggered grow-in + hover brighten ═══ */
+.rwa-ov2 .rwa-ov2-bars-card .rwa-hbar-fill {
+  transform-origin: left center;
+  animation: ta-bar-grow 760ms var(--ease-out) both;
+}
+@keyframes ta-bar-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.rwa-ov2 .rwa-ov2-bars-card .rwa-hbar-row { transition: background var(--duration-base) var(--ease-out); }
+.rwa-ov2 .rwa-ov2-bars-card .rwa-hbar-row:hover { background: rgba(255, 255, 255, 0.04); }
+.rwa-ov2 .rwa-ov2-bars-card .rwa-hbar-row:hover .rwa-hbar-fill { filter: brightness(1.18); }
+@media (prefers-reduced-motion: reduce) {
+  .rwa-ov2 .rca__stack-seg { animation: none; }
+  .rwa-ov2 .rwa-ov2-bars-card .rwa-hbar-fill { animation: none; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 1280px) {
+  /* Hero back to a vertical stack. */
+  .rwa-ov2 .rgh {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      "head"
+      "stage"
+      "stats";
+    column-gap: 0;
+  }
+  .rwa-ov2 .rgh__head { align-items: center; text-align: center; }
+  .rwa-ov2 .rgh__stats { grid-template-columns: repeat(3, 1fr); }
+  .rwa-ov2-row--read,
+  .rwa-ov2-row--leaders { grid-template-columns: 1fr; }
+  .rwa-ov2-row--read > *,
+  .rwa-ov2-row--leaders > * { min-height: 0; }
+  .rwa-ov2-row--intel { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 900px) {
+  .rwa-ov2-row--composition,
+  .rwa-ov2-row--intel { grid-template-columns: 1fr; }
+  .rwa-ov2-row--intel > * { max-height: none; }
+  .rwa-ov2 .rgh__stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── Day-mode counterparts ── */
+/* Number sheen: swap the white-led gradient (invisible on white) for a
+   dark-slate-to-teal one, and drop the glow. */
+.app.app-day-mode .rwa-ov2 .rgh__total {
+  background: linear-gradient(174deg, #0f172a 0%, #0e7490 130%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: none;
+}
+.app.app-day-mode .rwa-ov2 .rgh__lede { color: #475569; }
+/* Chain Breakdown bars card — the text-* vars stay light in day mode, so the
+   scoped overrides above need explicit dark counterparts (mirrors the donut
+   siblings, which set their own day-mode title/legend colors). */
+.app.app-day-mode .rwa-ov2 .rwa-ov2-bars-card .rwa-hbars-title { color: #0f172a; }
+.app.app-day-mode .rwa-ov2 .rwa-ov2-bars-card .rwa-hbars-sub { color: #64748b; }
+.app.app-day-mode .rwa-ov2 .rwa-ov2-bars-card .rwa-hbar-label { color: #334155; }
+.app.app-day-mode .rwa-ov2 .rwa-ov2-bars-card .rwa-hbar-value { color: #0f172a; }
+.app.app-day-mode .rwa-ov2 .rwa-ov2-bars-card .rwa-hbar-pct { color: #94a3b8; }
+.app.app-day-mode .rwa-ov2 .rwa-ov2-bars-card .rwa-hbar-rank { color: #94a3b8; }
+.app.app-day-mode .rwa-ov2 .rwa-cmd-screener__more {
+  color: #64748b;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.03) 0%, rgba(15, 23, 42, 0.01) 100%);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+.app.app-day-mode .rwa-ov2 .rwa-cmd-screener__more:hover {
+  color: #0f172a;
+  border-color: rgba(0, 0, 0, 0.12);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.05) 0%, rgba(15, 23, 42, 0.02) 100%);
+}
+.app.app-day-mode .rwa-ov2 .rwa-cmd-screener__count { color: #94a3b8; }

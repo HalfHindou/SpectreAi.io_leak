@@ -1,0 +1,56 @@
+/* RailGutter - zero-width grid child; the hit strip straddles the grid gap. */
+
+.rail-gutter {
+  position: relative;
+  width: 0;
+  min-width: 0;
+  grid-row: 1 / -1;
+  overflow: visible;
+  z-index: 90;
+  pointer-events: none;
+}
+
+.rail-gutter--left {
+  grid-column: 1;
+  justify-self: end;
+}
+
+.rail-gutter--right {
+  grid-column: 3;
+  justify-self: start;
+}
+
+.rail-gutter__hit {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  cursor: col-resize;
+  pointer-events: auto;
+  /* Accent line appears on hover / during drag (GMGN look) */
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.rail-gutter--left .rail-gutter__hit { left: 0; }
+.rail-gutter--right .rail-gutter__hit { right: 0; }
+
+.rail-gutter__hit::after {
+  content: '';
+  width: 2px;
+  border-radius: 2px;
+  background: transparent;
+  transition: background-color 100ms ease;
+}
+
+.rail-gutter__hit:hover::after,
+.layout-resizing .rail-gutter__hit::after {
+  background: color-mix(in srgb, var(--accent, #f5f5f7) 45%, transparent);
+}
+
+/* Kill the grid-columns transition while a gutter drag live-writes widths -
+   otherwise the 200ms ease rubber-bands behind the pointer. */
+.main-layout.layout-resizing {
+  transition: none;
+}

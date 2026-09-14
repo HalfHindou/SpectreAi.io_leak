@@ -1,0 +1,801 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   MARKET CINEMA — prefix cnm-
+
+   DARK ONLY, DELIBERATELY. Full-bleed outside the .app day-mode cascade; it
+   declares every colour itself. There is no .app.app-day-mode counterpart and
+   there must not be one — the composition depends on a near-black ground: the
+   rain, the tape and the whale lane are all luminance against black, and on
+   white they would have to be re-authored as a different picture, not
+   re-tinted. Verify the page still reads under pro-paper / pro-bright (it must
+   IGNORE the skin — nothing here inherits a pro-theme surface, and the root is
+   an opaque plate). Arena (arn-) and World State (wst-) DO carry day-mode —
+   do not generalise from this file.
+
+   NUMBERS. Every figure on this page is wrapped in .cnm-num: var(--font-mono),
+   tabular-nums AND the 'tnum' feature. Both are needed — `font-variant-numeric`
+   is ignored by some webfont/feature combinations, and without fixed advance
+   widths a per-second age label and a right-aligned size column visibly jitter
+   as digits change. Never put a price, size, count or clock in the body face.
+
+   NO backdrop-filter anywhere in this file. The chrome floats over a canvas
+   repainting at 30fps; a blurred backdrop re-composites the stage every frame
+   for a texture the near-black ground does not need. Translucent FILL only.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cnm-root {
+  /* Local ink ramp — the page owns its palette because it sits outside the
+     app's theme cascade entirely. */
+  --cnm-ink: rgba(245, 245, 247, 0.95);
+  --cnm-ink-2: rgba(245, 245, 247, 0.72);
+  --cnm-ink-3: rgba(245, 245, 247, 0.44);
+  --cnm-ink-4: rgba(245, 245, 247, 0.26);
+  --cnm-hair: rgba(255, 255, 255, 0.05);
+  --cnm-hair-2: rgba(255, 255, 255, 0.11);
+  --cnm-bull: #10b981;
+  --cnm-bear: #ef4444;
+  --cnm-fill: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  --cnm-gutter: 30px;
+
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: #060607;
+  overflow: hidden;
+  overscroll-behavior: none;
+  color: var(--cnm-ink-2);
+  font-family: var(--font-body);
+  -webkit-tap-highlight-color: transparent;
+  opacity: 1;
+  transition: opacity 250ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+/* Leaving is the only whole-page motion: the stage fades before the route
+   changes, so the exit is a cut to black rather than a snap to the app. */
+.cnm-root--leaving { opacity: 0; }
+
+/* The app's own floating chrome must not sit on top of the stage. Scoped to
+   the page's lifetime by the body class, so nothing leaks to other routes.
+
+   🪤 .cnm-root's z-index: 10000 does NOT protect it. `.app` is
+   `position: relative; z-index: 1`, so 10000 is resolved INSIDE that stacking
+   context and any fixed chrome mounted OUTSIDE `.app` wins with a z-index as
+   low as 2. Measured 2026-08-13: `.pro-theme-globe` (z-index 240, 40×40 at the
+   bottom-right) was painting on the stage over the meta rail. Every new global
+   fab has to be added here by hand — there is no z-index that covers them. */
+body.cnm-open .monarch-fab,
+body.cnm-open .pro-theme-globe { display: none; }
+
+.cnm-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: -0.01em;
+}
+
+/* ── stage ──────────────────────────────────────────────────────────────── */
+
+.cnm-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  /* There is nothing to scroll on this page, so the browser's scroll/zoom
+     gestures are given up entirely — ONLY here. The HUD keeps pan-x pan-y. */
+  touch-action: none;
+}
+
+.cnm-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── shared HUD behaviour ───────────────────────────────────────────────── */
+
+.cnm-brand,
+.cnm-ctl,
+.cnm-meta,
+.cnm-title,
+.cnm-hint,
+.cnm-faults,
+.cnm-tape-stamp,
+.cnm-lane-empty,
+.cnm-thrift {
+  position: absolute;
+  z-index: 5;
+  touch-action: pan-x pan-y;
+}
+
+.cnm-log,
+.cnm-narr,
+.cnm-rail {
+  position: absolute;
+  z-index: 5;
+  touch-action: pan-x pan-y;
+}
+
+/* Idle fade: 4s (6s on touch, set in JS) → 0.18 over 600ms; any input → 1
+   over 150ms. The log, the narration, the provenance line and the lane rails
+   are exempt — they are the page's reading, not its controls. */
+.cnm-brand,
+.cnm-ctl,
+.cnm-meta {
+  transition: opacity 150ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.cnm-root--dim .cnm-brand,
+.cnm-root--dim .cnm-ctl,
+.cnm-root--dim .cnm-meta {
+  opacity: 0.18;
+  transition: opacity 600ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+/* ── entry choreography (the chrome half; the tape reveal is on canvas) ──
+   0–0.8s black · 0.8–2.0s the tape draws itself · 2.0s title + brand ·
+   2.5s log/meta/rails · 6.2s title recedes, narration arrives.
+   These sit AFTER the dim rules on purpose — equal specificity, later wins. */
+.cnm-root[data-phase='black'] .cnm-brand,
+.cnm-root[data-phase='tape'] .cnm-brand,
+.cnm-root[data-phase='black'] .cnm-ctl,
+.cnm-root[data-phase='tape'] .cnm-ctl,
+.cnm-root[data-phase='black'] .cnm-hint,
+.cnm-root[data-phase='tape'] .cnm-hint,
+.cnm-root[data-phase='black'] .cnm-log,
+.cnm-root[data-phase='tape'] .cnm-log,
+.cnm-root[data-phase='title'] .cnm-log,
+.cnm-root[data-phase='black'] .cnm-meta,
+.cnm-root[data-phase='tape'] .cnm-meta,
+.cnm-root[data-phase='title'] .cnm-meta,
+.cnm-root[data-phase='black'] .cnm-rail,
+.cnm-root[data-phase='tape'] .cnm-rail,
+.cnm-root[data-phase='title'] .cnm-rail,
+.cnm-root[data-phase='black'] .cnm-tape-stamp,
+.cnm-root[data-phase='tape'] .cnm-tape-stamp,
+.cnm-root[data-phase='title'] .cnm-tape-stamp,
+.cnm-root[data-phase='black'] .cnm-narr,
+.cnm-root[data-phase='tape'] .cnm-narr,
+.cnm-root[data-phase='title'] .cnm-narr,
+.cnm-root[data-phase='live'] .cnm-narr {
+  opacity: 0;
+  transition: opacity 600ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+/* ── top-left: brand · live state · asset filter ────────────────────────── */
+
+.cnm-brand {
+  top: 26px;
+  left: var(--cnm-gutter);
+  max-width: 340px;
+}
+
+.cnm-brand__row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.cnm-brand__mark {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--cnm-ink-2);
+}
+
+/* Infinite animation 1 of exactly 2 on a settled screen. */
+.cnm-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--cnm-ink);
+}
+.cnm-dot--live { animation: cnm-breathe 2.6s var(--ease-in-out, cubic-bezier(0.4, 0, 0.2, 1)) infinite; }
+.cnm-dot--stale { background: var(--cnm-ink-3); }
+.cnm-dot--down { background: none; box-shadow: inset 0 0 0 1px var(--cnm-ink-4); }
+
+@keyframes cnm-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.34; }
+}
+
+.cnm-filter {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 4px 0 0 -6px;
+}
+
+.cnm-chip {
+  appearance: none;
+  background: none;
+  border: 0;
+  margin: 0;
+  padding: 8px 6px;
+  height: 44px;              /* hit area from padding — the visual is the span */
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--cnm-ink-3);
+}
+.cnm-chip__v {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  transition: all var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.cnm-chip:hover .cnm-chip__v {
+  color: var(--cnm-ink);
+  border-color: var(--cnm-hair);
+  transform: translateY(-1px);
+}
+.cnm-chip__v--on {
+  color: var(--cnm-ink);
+  border-color: var(--cnm-hair-2);
+  background: var(--cnm-fill);
+}
+
+/* The title card, after it recedes: the computed fact lives here permanently. */
+.cnm-brand__fact {
+  margin: 9px 0 0;
+  max-width: 300px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--cnm-ink-3);
+  animation: cnm-in 600ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+@keyframes cnm-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ── top-right: floor · pause · fullscreen · exit ───────────────────────── */
+
+.cnm-ctl {
+  top: 22px;
+  right: 26px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+/* 44px transparent box, 28px visual on the inner span. This is the house rule
+   (hit area from padding, never from the design's size) AND the only shape
+   that survives app-store-ready.css's blanket `button { min-height: 38px }` at
+   (0,2,1) — a designed 28px box would be silently inflated, and the exemption
+   list in that file cannot override a rule of that specificity from outside. */
+.cnm-btn {
+  appearance: none;
+  background: none;
+  border: 0;
+  margin: 0;
+  padding: 8px;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--cnm-ink-3);
+}
+.cnm-btn__v {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--cnm-hair);
+  border-radius: 7px;
+  background: var(--cnm-fill);
+  transition: all var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.cnm-btn__v svg { width: 13px; height: 13px; fill: currentColor; }
+.cnm-btn:hover { color: var(--cnm-ink); }
+.cnm-btn:hover .cnm-btn__v {
+  transform: translateY(-1px);
+  border-color: var(--cnm-hair-2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+.cnm-btn:focus-visible .cnm-btn__v { border-color: rgba(255, 255, 255, 0.22); outline: none; }
+.cnm-btn__v--on { color: var(--cnm-ink); border-color: var(--cnm-hair-2); }
+
+.cnm-btn--wide { width: auto; min-width: 52px; }
+.cnm-btn--wide .cnm-btn__v {
+  width: auto;
+  padding: 0 9px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* The overflow sheet is a phone affordance only. */
+.cnm-btn--sheet { display: none; }
+
+.cnm-hint {
+  top: 68px;
+  right: 30px;
+  margin: 0;
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  color: var(--cnm-ink-4);
+  opacity: 0;
+  transition: opacity 500ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  pointer-events: none;
+}
+.cnm-hint--in { opacity: 1; }
+
+/* ── the title card ─────────────────────────────────────────────────────── */
+
+/* The editorial register, borrowed from welcome cinema-mode: Playfair Display
+   ROMAN, never italic (a serif italic hero was rejected outright — see
+   feedback-no-serif-hero-lines). The entry beat sets the computed fact like a
+   film title; after 6.2s it recedes to .cnm-brand__fact at caption size, and
+   that recession is the whole point of spending 32px here. */
+.cnm-title {
+  top: clamp(112px, 21vh, 240px);
+  left: var(--cnm-gutter);
+  margin: 0;
+  max-width: min(620px, 48vw);
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: clamp(21px, 2.8vw, 32px);
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.26;
+  letter-spacing: -0.012em;
+  color: rgba(245, 245, 247, 0.95);
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 700ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+              transform 700ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  pointer-events: none;
+}
+.cnm-title--in { opacity: 1; transform: none; }
+
+/* ── lane rails: FIXED endpoints, they never follow a streak ────────────── */
+
+.cnm-rail {
+  top: clamp(84px, 15.5vh, 190px);
+  width: min(262px, 23vw);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: none;
+}
+.cnm-rail-l { left: var(--cnm-gutter); align-items: flex-start; text-align: left; }
+.cnm-rail-r { right: var(--cnm-gutter); align-items: flex-end; text-align: right; }
+
+/* The labeled endpoints are the crown jewels — a named counterparty is the one
+   thing on this stage no competitor prints. They read from across a room now:
+   the eyebrow at 0.8125rem, the name at 0.9375rem/600 in full warm-white. */
+.cnm-rail__cap {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--cnm-ink-3);
+}
+.cnm-rail__v {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.008em;
+  color: var(--cnm-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  /* settle: 250ms crossfade when a streak resolves onto the rail. */
+  animation: cnm-settle 250ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+@keyframes cnm-settle {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.cnm-lane-empty {
+  top: clamp(84px, 15.5vh, 190px);
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--cnm-ink-4);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ── the tape's own axis stamp ──────────────────────────────────────────── */
+
+.cnm-tape-stamp {
+  top: calc(68% + 12px);
+  right: var(--cnm-gutter);
+  margin: 0;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--cnm-ink-4);
+  pointer-events: none;
+  transition: opacity 600ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.cnm-tape-stamp__a {
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--cnm-ink-3);
+}
+
+/* ── per-lane failure lines ─────────────────────────────────────────────── */
+
+.cnm-faults {
+  top: 120px;
+  left: var(--cnm-gutter);
+  pointer-events: none;
+}
+.cnm-faults__l {
+  margin: 0 0 3px;
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  color: var(--cnm-ink-4);
+}
+
+/* ── bottom-left: the event log ─────────────────────────────────────────── */
+
+.cnm-log {
+  bottom: 26px;
+  left: var(--cnm-gutter);
+  width: min(430px, 34vw);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  pointer-events: none;
+}
+
+.cnm-log__r {
+  display: grid;
+  grid-template-columns: 62px 46px 44px 72px minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 8px;
+  height: 19px;
+  font-size: 10.5px;
+  line-height: 19px;
+  position: relative;
+  isolation: isolate;
+  /* arrive: a one-shot wash on the row that changed, opacity only, never on a
+     surrounding surface. Runs once because React mounts the row once. */
+  animation: cnm-arrive 600ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) 1;
+}
+.cnm-log__r::after {
+  content: '';
+  position: absolute;
+  inset: -1px -6px;
+  z-index: -1;
+  border-radius: 4px;
+  background: #f5f5f7;
+  opacity: 0;
+  animation: cnm-wash 600ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) 1;
+}
+
+/* Leading edge: a 2px bar in the side's own colour, full at mount, gone over
+   600ms. Opacity only — no width, no transform, nothing that moves the row.
+   It exists so a new labeled event registers PERIPHERALLY while the eye is on
+   the stage; the wash above says "a row changed", this says which way. */
+.cnm-log__r::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 1px;
+  bottom: 1px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--cnm-ink-3);
+  opacity: 0;
+  animation: cnm-edge 600ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) 1;
+}
+.cnm-log__r--long::before { background: var(--cnm-bear); }
+.cnm-log__r--short::before { background: var(--cnm-bull); }
+.cnm-log__r--deposit::before { background: rgba(239, 68, 68, 0.8); }
+.cnm-log__r--withdrawal::before { background: rgba(16, 185, 129, 0.8); }
+
+@keyframes cnm-arrive { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cnm-wash { from { opacity: 0.14; } to { opacity: 0; } }
+@keyframes cnm-edge { from { opacity: 1; } to { opacity: 0; } }
+
+.cnm-log__t { color: var(--cnm-ink-4); }
+.cnm-log__a { font-weight: 600; letter-spacing: 0.06em; color: var(--cnm-ink-2); }
+.cnm-log__s {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cnm-ink-4);
+}
+.cnm-log__s--long { color: rgba(239, 68, 68, 0.75); }
+.cnm-log__s--short { color: rgba(16, 185, 129, 0.75); }
+.cnm-log__s--deposit { color: rgba(239, 68, 68, 0.6); }
+.cnm-log__s--withdrawal { color: rgba(16, 185, 129, 0.6); }
+.cnm-log__v { text-align: right; color: var(--cnm-ink); }
+.cnm-log__l {
+  color: var(--cnm-ink-4);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── bottom-centre: narration + permanent provenance ────────────────────── */
+
+.cnm-narr {
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  /* 39vw clears the event log's column at 1440 (measured overlap: 42px). */
+  width: min(560px, 39vw);
+  text-align: center;
+  pointer-events: none;
+}
+
+/* The sentence is editorial (Playfair roman, same register as the title card);
+   the attribution under it stays sans. That split is the register — a serif
+   claim, a sans receipt. */
+.cnm-narr__line {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 1.0625rem;
+  font-style: normal;
+  line-height: 1.5;
+  letter-spacing: -0.004em;
+  color: rgba(245, 245, 247, 0.88);
+  /* settle: the narration crossfades when the ladder changes rung. */
+  animation: cnm-settle 250ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+.cnm-narr__line--quiet,
+.cnm-narr__line--down,
+.cnm-narr__line--window { color: var(--cnm-ink-3); }
+
+.cnm-narr__src {
+  margin: 6px 0 0;
+  font-family: var(--font-body);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--cnm-ink-4);
+}
+
+/* Permanent chrome. Never fades, never moves, never abbreviates. */
+.cnm-prov {
+  margin: 9px 0 0;
+  font-size: 10px;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  color: rgba(245, 245, 247, 0.3);
+}
+
+/* ── bottom-right: replay window · counts · floor · age ─────────────────── */
+
+.cnm-meta {
+  bottom: 26px;
+  right: 26px;
+  width: min(340px, 26vw);
+  text-align: right;
+}
+
+.cnm-meta__line {
+  margin: 0 0 3px;
+  font-size: 10.5px;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  color: var(--cnm-ink-4);
+}
+.cnm-meta__line:last-child { margin-bottom: 0; }
+.cnm-meta__line--auto { color: rgba(245, 245, 247, 0.62); }
+.cnm-meta__line--note { color: rgba(245, 245, 247, 0.62); }
+.cnm-meta__line--dim { color: rgba(245, 245, 247, 0.2); }
+.cnm-meta__line--dust {
+  margin-top: 7px;
+  color: rgba(245, 245, 247, 0.3);
+  animation: cnm-settle 400ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+.cnm-meta__act {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--cnm-ink-2);
+  cursor: pointer;
+  border-bottom: 1px solid var(--cnm-hair-2);
+  transition: color var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.cnm-meta__act:hover { color: var(--cnm-ink); border-bottom-color: rgba(255, 255, 255, 0.28); }
+
+/* ── data-saver hold (degradation ladder step 5) ────────────────────────── */
+
+.cnm-thrift {
+  appearance: none;
+  bottom: 118px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  border: 1px solid var(--cnm-hair);
+  border-radius: 10px;
+  background: rgba(12, 12, 14, 0.92);
+  font: inherit;
+  font-size: 12px;
+  color: var(--cnm-ink-2);
+  cursor: pointer;
+  transition: all var(--duration-base, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.cnm-thrift:hover { transform: translate(-50%, -1px); border-color: var(--cnm-hair-2); }
+.cnm-thrift__go {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cnm-ink);
+}
+
+/* ── the reduced-motion reading (a first-class render path) ─────────────── */
+
+.cnm-stage--static {
+  display: flex;
+  justify-content: center;
+  padding: 96px var(--cnm-gutter) 190px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+.cnm-static { width: 100%; max-width: 900px; }
+
+.cnm-static__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--cnm-hair);
+}
+.cnm-static__eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.19em;
+  text-transform: uppercase;
+  color: var(--cnm-ink-3);
+}
+.cnm-static__n { font-size: 10.5px; color: var(--cnm-ink-4); }
+
+.cnm-static__list { list-style: none; margin: 0; padding: 0; }
+
+.cnm-static__row {
+  display: grid;
+  grid-template-columns: 74px 56px 62px 84px minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 14px;
+  height: 30px;
+  font-size: 11.5px;
+  line-height: 30px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.025);
+}
+.cnm-static__t { color: var(--cnm-ink-4); }
+.cnm-static__a { font-weight: 600; letter-spacing: 0.06em; color: var(--cnm-ink-2); }
+.cnm-static__s {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cnm-ink-4);
+}
+.cnm-static__s--long { color: rgba(239, 68, 68, 0.75); }
+.cnm-static__s--short { color: rgba(16, 185, 129, 0.75); }
+.cnm-static__s--deposit { color: rgba(239, 68, 68, 0.6); }
+.cnm-static__s--withdrawal { color: rgba(16, 185, 129, 0.6); }
+.cnm-static__v { text-align: right; color: var(--cnm-ink); }
+.cnm-static__l {
+  color: var(--cnm-ink-4);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Three rows maximum before data, shaped like the row they will become. */
+.cnm-static__row--wait { align-items: center; }
+.cnm-static__bar {
+  height: 8px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.045);
+}
+.cnm-static__empty {
+  margin: 20px 0 0;
+  font-size: 12px;
+  color: var(--cnm-ink-4);
+}
+
+/* ── phone control sheet (the liqp pattern, opaque instead of blurred) ──── */
+
+.cnm-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.55);
+  animation: cnm-settle 180ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.cnm-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--m-bottom-nav-h, 48px) + env(safe-area-inset-bottom, 0px));
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 16px 16px;
+  background: rgba(13, 13, 16, 0.99);
+  border-top: 1px solid var(--cnm-hair);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.6);
+  animation: cnm-sheet-up 220ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+@keyframes cnm-sheet-up {
+  from { transform: translateY(14px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.cnm-sheet__grip {
+  width: 34px;
+  height: 3px;
+  margin: 4px auto 10px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.cnm-sheet__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 48px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+}
+.cnm-sheet__row:last-child { border-bottom: 0; }
+.cnm-sheet__label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cnm-ink-4);
+}
+.cnm-sheet__act {
+  appearance: none;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--cnm-hair);
+  border-radius: 8px;
+  background: var(--cnm-fill);
+  font: inherit;
+  font-size: 12px;
+  color: var(--cnm-ink);
+  cursor: pointer;
+}
+
+/* ── reduced motion: the two infinite animations stop, enters are instant ─ */
+
+@media (prefers-reduced-motion: reduce) {
+  .cnm-dot--live { animation: none; }
+  .cnm-log__r,
+  .cnm-log__r::after,
+  .cnm-log__r::before,
+  .cnm-rail__v,
+  .cnm-narr__line,
+  .cnm-brand__fact,
+  .cnm-meta__line--dust,
+  .cnm-sheet,
+  .cnm-scrim { animation: none; }
+  .cnm-title { transition: none; }
+  .cnm-log__r::after,
+  .cnm-log__r::before { opacity: 0; }
+}

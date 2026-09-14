@@ -1,0 +1,804 @@
+/**
+ * TokenTicker Styles
+ * Matched to Research app ticker - Apple cinematic style
+ */
+
+.token-ticker {
+  /* H4 P2 — ticker scrolls with the page, only the Header stays
+     sticky at the top. Absolute (positioned relative to .app which
+     is position:relative) so it sits at the right initial offset
+     but scrolls away with the rest of the content. */
+  position: absolute;
+  top: var(--header-height, 68px);
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: var(--ticker-height, 44px);
+  /* Obsidian & Lime: glass strip floating over the void canvas. */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 60%),
+    color-mix(in srgb, var(--ob-surface-1) 88%, transparent);
+  border-bottom: 1px solid var(--glass-border);
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 99;
+  will-change: transform;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  transition: opacity var(--dur-base) var(--ease-out), visibility var(--dur-base) var(--ease-out);
+}
+
+body.theme-light .token-ticker {
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border-bottom-color: rgba(17, 17, 19, 0.10);
+  box-shadow: 0 8px 20px rgba(17, 17, 19, 0.06);
+}
+
+/* Dim ticker when search is open */
+body.search-open .token-ticker {
+  opacity: 0.4;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+/* Sentiment-based animated gradient background */
+.ticker-sentiment-bg {
+  display: none;
+}
+
+@keyframes sentimentWave {
+  0%, 100% {
+    transform: translateX(-10%);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateX(10%);
+    opacity: 0.5;
+  }
+}
+
+/* Hidden legacy elements */
+.ticker-pulse { display: none; }
+
+/* ── Ticker labels (left + right) ── */
+.ticker-label-left,
+.ticker-label-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  z-index: 14;
+  pointer-events: auto;
+}
+
+.ticker-label-left {
+  left: 16px;
+  gap: 6px;
+}
+
+.ticker-label-right {
+  right: 16px;
+}
+
+.ticker-label-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--up);
+  box-shadow: 0 0 6px var(--up-glow);
+  flex-shrink: 0;
+}
+
+.ticker-label-text {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+body.theme-light .ticker-label-text {
+  color: #94a3b8;
+}
+body.theme-light .ticker-label-dot {
+  box-shadow: 0 0 4px rgba(16, 185, 129, 0.3);
+}
+
+/* Chain picker - replaces the old static LIVE label/dot. Obsidian chip with a
+   brand chain icon, matching the token-page chip language. */
+.ticker-chain-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4px 8px 4px 7px;
+  margin: 0;
+  border-radius: 9px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease;
+}
+.ticker-chain-trigger:hover {
+  background: rgba(255, 255, 255, 0.075);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.ticker-chain-icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--text-1);
+}
+.ticker-chain-text {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-1);
+  white-space: nowrap;
+}
+.ticker-chain-chevron {
+  color: var(--text-2);
+  transition: transform 0.16s ease;
+  flex-shrink: 0;
+  margin-left: 1px;
+}
+.ticker-chain-chevron.open { transform: rotate(180deg); }
+
+/* Right-side trending count - terminal chip echoing the chain trigger (no
+   hover, lighter border = reads as a label, not a button). */
+.ticker-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+.ticker-top-label {
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.ticker-top-count {
+  font-family: var(--font-num-chip);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-1);
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+}
+body.theme-light .ticker-top {
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+body.theme-light .ticker-top-label { color: #94a3b8; }
+body.theme-light .ticker-top-count { color: #0f172a; }
+
+.ticker-chain-menu {
+  z-index: 2147483600;
+  min-width: 198px;
+  max-height: 72vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  /* Near-black glass so it reads as part of the terminal canvas, not a grey
+     popover. Heavy blur + deep shadow = the modern obsidian dropdown look. */
+  background: color-mix(in srgb, var(--ob-surface-1, #08090a) 90%, transparent);
+  backdrop-filter: blur(26px) saturate(140%);
+  -webkit-backdrop-filter: blur(26px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.72), 0 2px 8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  animation: tickerChainIn 0.15s var(--ease-out, ease);
+}
+.ticker-chain-menu::-webkit-scrollbar { width: 6px; }
+.ticker-chain-menu::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 6px; }
+@keyframes tickerChainIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.ticker-chain-eyebrow {
+  padding: 6px 11px 7px;
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-4);
+}
+.ticker-chain-divider {
+  height: 1px;
+  margin: 4px 9px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.ticker-chain-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 11px;
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  color: var(--text-2);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.13s ease, color 0.13s ease;
+}
+.ticker-chain-option .opt-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  flex-shrink: 0;
+  color: var(--text-2);
+  transition: color 0.13s ease;
+}
+.ticker-chain-option .opt-label {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 0;
+}
+.ticker-chain-option .opt-hint {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-4);
+  letter-spacing: 0.02em;
+}
+.ticker-chain-option .opt-check { color: var(--up); flex-shrink: 0; }
+.ticker-chain-option:hover { background: rgba(255, 255, 255, 0.055); color: var(--text-1); }
+.ticker-chain-option:hover .opt-icon { color: var(--text-1); }
+.ticker-chain-option.selected { background: rgba(255, 255, 255, 0.05); color: var(--text-1); }
+.ticker-chain-option.selected .opt-icon { color: var(--text-1); }
+.ticker-chain-option.selected::before {
+  content: '';
+  position: absolute;
+  left: 1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.5px;
+  height: 15px;
+  border-radius: 0 3px 3px 0;
+  background: var(--up);
+}
+
+body.theme-light .ticker-chain-trigger {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+body.theme-light .ticker-chain-trigger:hover {
+  background: rgba(15, 23, 42, 0.07);
+  border-color: rgba(15, 23, 42, 0.16);
+}
+body.theme-light .ticker-chain-icon,
+body.theme-light .ticker-chain-chevron { color: #94a3b8; }
+body.theme-light .ticker-chain-text { color: #0f172a; }
+body.theme-light .ticker-chain-menu {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.16);
+}
+body.theme-light .ticker-chain-divider { background: rgba(15, 23, 42, 0.08); }
+body.theme-light .ticker-chain-option { color: #475569; }
+body.theme-light .ticker-chain-option .opt-icon,
+body.theme-light .ticker-chain-option .opt-hint { color: #94a3b8; }
+body.theme-light .ticker-chain-option:hover { background: rgba(15, 23, 42, 0.05); color: #0f172a; }
+/* Ticker item hover used --glass-fill-hover (white in light mode) - no feedback. */
+body.theme-light .ticker-item-inner:hover,
+body.theme-light .ticker-item.top-gainer .ticker-item-inner:hover { background: rgba(15, 23, 42, 0.05); }
+body.theme-light .ticker-chain-option.selected { background: rgba(15, 23, 42, 0.05); color: #0f172a; }
+body.theme-light .ticker-chain-eyebrow { color: #94a3b8; }
+body.theme-light .ticker-chain-divider { background: rgba(15, 23, 42, 0.1); }
+body.theme-light .ticker-chain-menu::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, 0.18); }
+
+.ticker-pulse-dot {
+  width: 6px;
+  height: 6px;
+  background: #10b981;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+  animation: pulseDot 2s ease-in-out infinite;
+}
+
+.pulse-ring {
+  display: none;
+}
+
+.ticker-pulse-label {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+.trending-icon {
+  width: 16px;
+  height: 16px;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.trending-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Edge fade effects */
+.ticker-glow-left,
+.ticker-glow-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 13;
+  pointer-events: none;
+}
+
+.ticker-glow-left {
+  left: 0;
+  /* Wide + SOLID behind the chain chip (~150px) so scrolling tokens fully fade
+     into the bar background before they reach the dropdown button, then a soft
+     tail so they don't pop in abruptly. */
+  width: 250px;
+  background: linear-gradient(
+    90deg,
+    var(--ob-surface-1) 0%,
+    var(--ob-surface-1) 60%,
+    color-mix(in srgb, var(--ob-surface-1) 65%, transparent) 78%,
+    color-mix(in srgb, var(--ob-surface-1) 20%, transparent) 91%,
+    transparent 100%
+  );
+}
+
+.ticker-glow-right {
+  right: 0;
+  /* Mirror of the left mask: solid behind the TOP-20 label, soft tail, so
+     tokens dissolve into the bar before reaching it. */
+  width: 250px;
+  background: linear-gradient(
+    270deg,
+    var(--ob-surface-1) 0%,
+    var(--ob-surface-1) 60%,
+    color-mix(in srgb, var(--ob-surface-1) 65%, transparent) 78%,
+    color-mix(in srgb, var(--ob-surface-1) 20%, transparent) 91%,
+    transparent 100%
+  );
+}
+
+body.theme-light .ticker-glow-left {
+  background: linear-gradient(
+    90deg,
+    rgba(241, 245, 249, 1) 0%,
+    rgba(241, 245, 249, 1) 60%,
+    rgba(241, 245, 249, 0.6) 78%,
+    rgba(241, 245, 249, 0.18) 91%,
+    transparent 100%
+  );
+}
+
+body.theme-light .ticker-glow-right {
+  background: linear-gradient(
+    270deg,
+    rgba(241, 245, 249, 1) 0%,
+    rgba(241, 245, 249, 1) 60%,
+    rgba(241, 245, 249, 0.6) 78%,
+    rgba(241, 245, 249, 0.18) 91%,
+    transparent 100%
+  );
+}
+
+/* Scrolling track */
+.ticker-track {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: max-content;
+  padding-left: 80px;
+  will-change: transform;
+}
+
+/* Container for each set of tokens */
+.ticker-content-set {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+/* Individual token item */
+.ticker-item {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 4px;
+}
+
+.ticker-item-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--r-sm);
+  background: transparent;
+  border: 1px solid transparent;
+  transition:
+    background var(--dur-micro) var(--ease-out),
+    border-color var(--dur-micro) var(--ease-out),
+    transform var(--dur-micro) var(--ease-out);
+  cursor: pointer;
+  position: relative;
+}
+
+/* Remove all gamified effects */
+.holographic-shimmer { display: none; }
+.gainer-glow { display: none; }
+.featured-ring { display: none; }
+
+/* All token states - flat, no special treatment */
+.ticker-item.top-gainer .ticker-item-inner,
+.ticker-item.loser .ticker-item-inner,
+.ticker-item.featured .ticker-item-inner {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+/* Selected token - lime wash + spine */
+.ticker-item.selected .ticker-item-inner {
+  background: var(--accent-wash);
+  border-color: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.ticker-item.selected::before { display: none; }
+
+/* Hover - glass lift + hairline */
+.ticker-item-inner:hover,
+.ticker-item.top-gainer .ticker-item-inner:hover,
+.ticker-item.loser .ticker-item-inner:hover,
+.ticker-item.featured .ticker-item-inner:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-lit);
+  transform: translateY(-1px);
+  box-shadow: none;
+}
+
+/* Rank - a small key chip in chip numerals (round zero), one tone above
+   the bar; the top three step up a tone and go white. Never --font-mono
+   here: Geist Mono's slashed zero is the "crossing line" font Gleb rejects
+   on sight, and #10 / #20 render it. */
+.ticker-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  min-width: 24px;
+  padding: 0 5px;
+  border-radius: 5px;
+  background: #1A1B1F;
+  font-family: var(--font-num-chip);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: rgba(245, 245, 247, 0.62);
+  opacity: 1;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+
+.ticker-rank.top-three {
+  background: #25262B;
+  color: #ffffff;
+  opacity: 1;
+  text-shadow: none;
+}
+
+.ticker-item-inner:hover .ticker-rank {
+  opacity: 1;
+  background: #25262B;
+  color: #ffffff;
+}
+
+.ticker-item-inner:hover .ticker-rank.top-three {
+  color: #ffffff;
+  text-shadow: none;
+}
+
+body.theme-light .ticker-rank { background: #eaeaef; color: rgba(15, 23, 42, 0.62); }
+body.theme-light .ticker-rank.top-three,
+body.theme-light .ticker-item-inner:hover .ticker-rank { background: #0f172a; color: #ffffff; }
+
+/* Token logo */
+.ticker-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  box-shadow: var(--shadow-1);
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+.ticker-item-inner:hover .ticker-logo {
+  transform: scale(1.06);
+  border-color: var(--glass-border-lit);
+}
+
+.ticker-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Token info */
+.ticker-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 65px;
+}
+
+.ticker-symbol {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.ticker-name {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* Mini sparkline chart */
+.ticker-sparkline {
+  width: 48px;
+  height: 20px;
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    filter var(--dur-base) var(--ease-out);
+}
+
+.ticker-item-inner:hover .ticker-sparkline {
+  opacity: 1;
+  /* Lime-tinted glow signals "alive" on hover, < 5% screen rule preserved */
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 22%, transparent));
+}
+
+.sparkline-path {
+  filter: none;
+}
+
+.sparkline-dot {
+  display: none;
+}
+
+/* Price section */
+.ticker-price-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  min-width: 75px;
+}
+
+/* Mcap / price in chip numerals (round zero) - see the rank note above. */
+.ticker-price {
+  font-family: var(--font-num-chip);
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Live data indicator - static, no animation */
+.live-indicator {
+  display: none;
+}
+.live-indicator.live-indicator-bear {
+  display: none;
+}
+
+.ticker-change {
+  /* Delta-chip typography — see `--font-num-chip` token. */
+  font-family: var(--font-num-chip);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  transition: color 0.3s ease;
+}
+
+/* Text money pair (the tape's approved green/red), not the mint/coral fills. */
+.ticker-change.positive {
+  color: var(--up-text, #46B87D);
+  background: none;
+}
+
+.ticker-change.negative {
+  color: var(--down-text, #DE5759);
+  background: none;
+}
+
+body.theme-light .ticker-change.positive { color: #047857; }
+body.theme-light .ticker-change.negative { color: #b91c1c; }
+
+.change-arrow {
+  font-size: 0.8125rem;
+}
+
+/* Subtle divider between items */
+.ticker-divider {
+  width: 1px;
+  height: 24px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    var(--glass-border-lit) 50%,
+    transparent 100%
+  );
+  margin-left: 4px;
+  opacity: 0.6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .token-ticker {
+    height: 52px;
+  }
+
+  .ticker-item-inner {
+    gap: 8px;
+    padding: 6px 10px;
+  }
+
+  .ticker-logo {
+    width: 26px;
+    height: 26px;
+  }
+
+  .ticker-info {
+    min-width: 55px;
+  }
+
+  .ticker-symbol {
+    font-size: 0.8125rem;
+  }
+
+  .ticker-name {
+    font-size: 0.8125rem;
+  }
+
+  .ticker-sparkline {
+    width: 36px;
+    height: 16px;
+  }
+
+  .ticker-price {
+    font-size: 0.8125rem;
+  }
+
+  .ticker-change {
+    font-size: 0.8125rem;
+  }
+
+  .ticker-glow-left {
+    width: 100px;
+  }
+  .ticker-glow-right {
+    width: 100px;
+  }
+
+  .ticker-pulse {
+    display: none;
+  }
+
+  /* PERFORMANCE: Disable expensive animations on mobile */
+  .token-ticker {
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+  }
+
+  .ticker-sentiment-bg {
+    animation: none !important;
+  }
+
+  .holographic-shimmer {
+    display: none !important;
+  }
+
+  .gainer-glow {
+    display: none !important;
+  }
+
+  .ticker-item.top-gainer {
+    animation: none !important;
+  }
+
+  .featured-ring {
+    animation: none !important;
+  }
+
+  .sparkline-dot {
+    animation: none !important;
+  }
+
+  .live-indicator {
+    animation: none !important;
+  }
+
+  .change-arrow {
+    animation: none !important;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .token-ticker *,
+  .ticker-item *,
+  .ticker-track * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

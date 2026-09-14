@@ -1,0 +1,126 @@
+/*
+ * SearchEngineShell grid.
+ *
+ * The chart-clipping bug on v1 was caused by `.se-main` defaulting to
+ * `min-width: auto` — CSS Grid honors intrinsic content width unless you
+ * tell it not to, and TradingView's embedded SVG forces a huge intrinsic
+ * width that pushed everything past the right rail. Setting `min-width: 0`
+ * is the single line that fixes it.
+ *
+ * Class prefix: `se2-` (search-engine-v2). Never recycle v1's `se-` prefix.
+ * Senior frontend agent flagged this — v1's 2667-line stylesheet has some
+ * unprefixed selectors that would leak into v2 if we shared the namespace.
+ */
+
+.se2-shell {
+  --se2-max-width: 1440px;
+  --se2-rail-width: 380px;
+  --se2-gutter: 24px;
+  --se2-section-gap: 48px;
+  --se2-section-gap-wide: 72px;
+  --se2-card-padding: 24px;
+  --se2-card-padding-hero: 32px;
+
+  max-width: var(--se2-max-width);
+  margin: 0 auto;
+  padding: 32px 32px 140px; /* bottom = clearance for sticky input */
+  min-height: 100vh;
+}
+
+/* ── Hero is full-width; results grid splits into main + rail ────────── */
+
+.se2-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--se2-rail-width);
+  gap: var(--se2-gutter);
+  align-items: start;
+  margin-top: 32px;
+}
+
+/* When the active classification has no rail, center the main column. */
+.se2-shell[data-has-rail='false'] .se2-grid {
+  grid-template-columns: minmax(0, 920px);
+  justify-content: center;
+}
+
+.se2-main {
+  /* CRITICAL: min-width:0 lets the grid track shrink past the intrinsic
+     width of children (TradingView, long news titles, tables). Without it
+     the rail clips. */
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--se2-section-gap);
+}
+
+.se2-rail {
+  position: sticky;
+  top: 88px; /* AppShell header is ~72px + 16px breathing room */
+  max-height: calc(100vh - 88px - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+    
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.se2-rail::-webkit-scrollbar { width: 4px; }
+.se2-rail::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 9999px; }
+.se2-rail::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.14); }
+
+/* ── Breakpoints ─────────────────────────────────────────────────────── */
+
+@media (max-width: 1280px) {
+  .se2-shell { --se2-rail-width: 340px; padding: 28px 24px 140px; }
+}
+
+@media (max-width: 1080px) {
+  /* Rail moves above the main column — chart is the headline anyway. */
+  .se2-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .se2-rail {
+    position: static;
+    max-height: none;
+    order: -1;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: visible;
+    gap: 12px;
+    padding-bottom: 8px;
+    /* Each rail card becomes a horizontally-scrolling tile on tablet. */
+  }
+  .se2-rail > * {
+    flex: 0 0 auto;
+    width: min(360px, 80vw);
+  }
+}
+
+@media (max-width: 767px) {
+  .se2-shell {
+    padding: 20px 16px 120px;
+    --se2-section-gap: 32px;
+    --se2-section-gap-wide: 48px;
+    --se2-card-padding: 18px;
+    --se2-card-padding-hero: 22px;
+  }
+  .se2-rail {
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+    scroll-snap-type: x mandatory;
+  }
+  .se2-rail > * {
+    scroll-snap-align: start;
+    width: 88vw;
+  }
+}
+
+/* ── Day Mode ─────────────────────────────────────────────────────── */
+
+.app.app-day-mode .se2-rail {
+  }
+.app.app-day-mode .se2-rail::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, 0.12); }
+.app.app-day-mode .se2-rail::-webkit-scrollbar-thumb:hover { background: rgba(15, 23, 42, 0.2); }

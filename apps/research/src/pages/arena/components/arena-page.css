@@ -1,0 +1,1032 @@
+/* ============================================================================
+   AGENT ARENA — prefix arn- (verified free 2026-08-13)
+
+   ⚠️ PORTING WARNING: numeric cells ride `.arn-num` → var(--font-mono). In the
+   RESEARCH app that token resolves to the system sans stack (design-system.md
+   §B), which is what we want. In the TRADING app it resolves to Geist Mono with
+   slashed zeros, which is rejected on sight. Do not copy this file across.
+
+   MATERIAL RULE: cards carry a translucent FILL, never backdrop-filter. This
+   page scrolls a twelve-row board plus a live tape, and one blurred scrolling
+   wrapper was measured at 1.02 MP of GPU per frame.
+
+   MOTION RULE: exactly ONE infinite animation on this page — the masthead live
+   dot. Row states are static 6px marks. Everything else is a one-shot reveal,
+   a 250ms settle, or a 600ms arrive on a single changed cell.
+   ============================================================================ */
+
+.arn-root {
+  --arn-ink: rgba(245, 245, 247, 0.95);
+  --arn-ink-2: rgba(245, 245, 247, 0.78);
+  --arn-ink-3: rgba(245, 245, 247, 0.55);
+  --arn-ink-4: rgba(245, 245, 247, 0.34);
+  --arn-hair: rgba(255, 255, 255, 0.06);
+  --arn-fill: linear-gradient(135deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.018) 100%);
+
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: var(--sp-6) var(--sp-5) calc(var(--m-bottom-nav-h, 48px) + var(--sp-12));
+  color: var(--arn-ink);
+}
+
+.arn-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+.arn-root[data-leaving='true'] > * {
+  opacity: 0;
+  transition: opacity 150ms var(--ease-out);
+}
+
+/* ── shared type ─────────────────────────────────────────────────────── */
+.arn-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--arn-ink-3);
+}
+.arn-meta { font-size: 0.75rem; color: var(--arn-ink-3); }
+.arn-sep { color: var(--arn-ink-4); margin: 0 6px; }
+.arn-strong { color: var(--arn-ink); font-weight: 600; }
+.arn-none { color: var(--arn-ink-4); }
+.arn-none--wrap { font-size: 0.6875rem; line-height: 1.2; text-align: right; }
+.arn-mono-inline { font-family: var(--font-mono); font-size: 0.9em; color: var(--arn-ink-2); }
+
+.arn-sechead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+  min-height: 20px;
+}
+
+/* ── A · masthead ────────────────────────────────────────────────────── */
+.arn-head { min-height: 140px; margin-bottom: var(--sp-6); }
+.arn-head__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.arn-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.75rem;
+  color: var(--arn-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.arn-live.is-stale { color: var(--bear-bright); }
+.arn-live__dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--bull);
+  animation: arnPulse 2.4s var(--ease-in-out) infinite;
+}
+.arn-live.is-stale .arn-live__dot { background: var(--bear); animation: none; }
+@keyframes arnPulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.3 } }
+@media (prefers-reduced-motion: reduce) { .arn-live__dot { animation: none } }
+
+.arn-h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  color: var(--arn-ink);
+  max-width: 22ch;
+  text-wrap: balance;
+}
+.arn-settle { animation: arnSettle var(--duration-base) var(--ease-out); }
+@keyframes arnSettle { from { opacity: 0 } to { opacity: 1 } }
+
+.arn-source { margin: 10px 0 0; }
+.arn-lede {
+  margin: var(--sp-3) 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--arn-ink-2);
+  max-width: 62ch;
+}
+
+/* ── the waterline ───────────────────────────────────────────────────── */
+.arn-water { margin-top: var(--sp-5); }
+.arn-water__svg { display: block; width: 100%; height: 100px; overflow: visible; }
+.arn-water__rule {
+  stroke: rgba(245, 245, 247, 0.24);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.arn-water__tick {
+  stroke-width: 2;
+  stroke-linecap: butt;
+  vector-effect: non-scaling-stroke;
+  stroke: var(--arn-ink-3);
+}
+.arn-water__tick.is-up { stroke: var(--bull); }
+.arn-water__tick.is-down { stroke: var(--bear); }
+.arn-water__tick.is-retired { stroke: rgba(245, 245, 247, 0.4); stroke-dasharray: 3 3; }
+.arn-water__cap { margin: 10px 0 0; }
+
+/* ── B · the ledger ──────────────────────────────────────────────────── */
+.arn-ledger {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-4);
+  min-height: 116px;
+  align-content: center;
+  padding: var(--sp-4) var(--sp-5);
+  margin-bottom: var(--sp-6);
+  background: var(--arn-fill);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-inner);
+}
+.arn-lcell { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.arn-lcell__v {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  color: var(--arn-ink);
+}
+.arn-lcell__v--loud { color: var(--bear-bright); }
+.arn-lcell__k { font-size: 0.75rem; line-height: 1.35; color: var(--arn-ink-3); }
+.arn-ledger__note { margin: calc(var(--sp-5) * -1) 0 var(--sp-6); line-height: 1.5; max-width: 66ch; }
+.arn-dagger { color: var(--arn-ink-4); margin-left: 2px; }
+
+/* ── layout ──────────────────────────────────────────────────────────── */
+.arn-cols { display: block; }
+.arn-main { min-width: 0; }
+.arn-rail-col { margin-top: var(--sp-8); display: flex; flex-direction: column; gap: var(--sp-6); }
+
+@media (min-width: 1200px) {
+  .arn-cols {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-8);
+  }
+  /* flex-basis, not min-width: the query is on the VIEWPORT and the app's own
+     sidebar eats 200-260 of it, so a hard 680 floor overflows the page between
+     1200 and ~1360. The basis keeps the intent (the roster wants 680) and the
+     row grid's minmax(0, …) tracks absorb the rest. */
+  .arn-main { flex: 1 1 680px; min-width: 0; }
+  .arn-rail-col {
+    flex: 0 0 320px;
+    width: 320px;
+    margin-top: 0;
+    position: sticky;
+    top: 88px;
+  }
+}
+
+/* ── C · sort rail ───────────────────────────────────────────────────── */
+.arn-rail {
+  display: flex;
+  gap: 4px;
+  height: 40px;
+  align-items: center;
+  padding: 4px;
+  margin-bottom: var(--sp-5);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.02);
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  touch-action: pan-x pan-y;
+}
+.arn-rail::-webkit-scrollbar { display: none; }
+/* 28px visual. `.arn-rail__btn` is excluded from the 38px touch-min INSIDE the
+   main rule's :not() chain in app-store-ready.css — the hit area comes from the
+   40px track's padding, not from inflating the chip. */
+.arn-rail__btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  height: 28px;
+  padding: 0 14px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--arn-ink-3);
+  transition: color var(--duration-fast) var(--ease-out),
+              background-color var(--duration-fast) var(--ease-out);
+  touch-action: manipulation;
+}
+.arn-rail__btn:hover { color: var(--arn-ink); }
+.arn-rail__btn[aria-pressed='true'] {
+  color: var(--arn-ink);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: var(--shadow-inner);
+}
+
+/* ── D/E · the board ─────────────────────────────────────────────────── */
+.arn-book { margin-bottom: var(--sp-8); }
+.arn-book--retired { margin-top: var(--sp-10); }
+.arn-fact {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--arn-ink);
+}
+
+.arn-rows { display: flex; flex-direction: column; }
+.arn-group { position: relative; }
+
+.arn-row {
+  position: relative;
+  display: grid;
+  /* Identity gets first claim on width: the retired band's one job is naming
+     Brain_Momentum, and 204px ellipsized it. Spark/ret/win gave up 30px. */
+  grid-template-columns:
+    26px minmax(0, 1fr) minmax(0, 104px) minmax(0, 78px)
+    minmax(0, 72px) minmax(0, 64px) minmax(0, 80px) minmax(0, 44px) 12px;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "rank id   spark ret dd rdd win open chev"
+    "rank meta spark ret dd rdd win open chev";
+  align-items: center;
+  column-gap: 10px;
+  height: 64px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 -1px 0 var(--arn-hair);
+  transition: background-color var(--duration-base) var(--ease-out),
+              transform var(--duration-base) var(--ease-out);
+
+  /* State reads through the ink and the spark stroke. Never a coloured row
+     background, never a left accent rail, never a per-row live dot. */
+  --st-ink: var(--arn-ink-2);
+}
+.arn-row[data-state='retired'] { --st-ink: var(--arn-ink-3); }
+.arn-row[data-state='retired'] .arn-row__name,
+.arn-row[data-state='retired'] .arn-row__ret,
+.arn-row[data-state='retired'] .arn-row__dd { color: var(--arn-ink-3); }
+
+@media (hover: hover) {
+  .arn-row:hover { background: rgba(255, 255, 255, 0.028); transform: translateY(-1px); }
+  .arn-row:hover .arn-row__chev { color: var(--arn-ink-2); }
+}
+
+.arn-row__hit {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  padding: 0;
+}
+.arn-row__hit:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.arn-row > *:not(.arn-row__hit) { position: relative; z-index: 1; pointer-events: none; }
+.arn-row__caret { pointer-events: auto; }
+
+.arn-row__rank {
+  grid-area: rank;
+  align-self: center;
+  text-align: right;
+  font-size: 0.8125rem;
+  color: var(--arn-ink-4);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+.arn-row__building { font-size: 0.625rem; letter-spacing: 0.02em; white-space: nowrap; }
+.arn-row__delta {
+  font-size: 0.5625rem;
+  letter-spacing: 0.02em;
+  animation: arnSettle var(--duration-base) var(--ease-out);
+}
+.arn-row__delta.is-up { color: var(--bull); }
+.arn-row__delta.is-down { color: var(--bear); }
+.arn-row__subtick { width: 8px; height: 1px; background: var(--arn-hair); display: block; }
+
+.arn-row__id {
+  grid-area: id;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  align-self: end;
+  padding-bottom: 1px;
+}
+.arn-row__name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--arn-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.arn-row__meta {
+  grid-area: meta;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  font-size: 0.75rem;
+  color: var(--arn-ink-3);
+  align-self: start;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.arn-row__strat { overflow: hidden; text-overflow: ellipsis; }
+/* The phone swaps the strategy word for "building n/15"; both spans exist in
+   the DOM so the two layouts cannot drift, and CSS picks exactly one. */
+.arn-row__strat--m { display: none; }
+
+.arn-chip {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.arn-chip--gen { color: var(--arn-ink-2); border: 1px solid var(--arn-hair); }
+.arn-chip--new { color: var(--arn-ink); background: rgba(255, 255, 255, 0.09); }
+.arn-chip--off { color: var(--arn-ink-4); border: 1px solid var(--arn-hair); }
+.arn-chip--chal { color: var(--arn-ink-3); border: 1px solid var(--arn-hair); }
+.arn-chip--retired { color: var(--arn-ink-3); border: 1px solid var(--arn-hair); }
+
+.arn-row__caret {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border-radius: var(--radius-full);
+  font-size: 0.625rem;
+  color: var(--arn-ink-3);
+  flex: 0 0 auto;
+}
+.arn-row__caret:hover { color: var(--arn-ink); background: rgba(255, 255, 255, 0.05); }
+.arn-caret {
+  width: 11px; height: 11px; fill: none; stroke: currentColor;
+  stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+.arn-caret[data-open='true'] { transform: rotate(180deg); }
+
+.arn-row__spark { grid-area: spark; color: var(--st-ink); }
+.arn-row__ret { grid-area: ret; }
+.arn-row__dd { grid-area: dd; }
+.arn-row__rdd { grid-area: rdd; }
+.arn-row__win { grid-area: win; }
+.arn-row__open { grid-area: open; }
+.arn-row__chev { grid-area: chev; color: var(--arn-ink-4); display: flex; justify-content: flex-end; }
+.arn-row__chev svg {
+  width: 12px; height: 12px; fill: none; stroke: currentColor;
+  stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* Fixed-width, right-aligned numeric columns. */
+.arn-cell {
+  text-align: right;
+  font-size: 0.875rem;
+  color: var(--arn-ink);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  justify-content: center;
+}
+.arn-row__ret .is-up { color: var(--bull-bright); }
+.arn-row__ret .is-down { color: var(--bear-bright); }
+.arn-row__dd { color: var(--arn-ink-2); }
+.arn-row__n { font-size: 0.625rem; color: var(--arn-ink-4); }
+.arn-row__openw { display: none; }
+
+/* The arrive pulse: a pre-painted overlay animated on OPACITY only, on the
+   changed cell — never on the row. */
+.arn-cell::after {
+  content: '';
+  position: absolute;
+  inset: -3px -5px;
+  border-radius: 5px;
+  background: currentColor;
+  opacity: 0;
+  pointer-events: none;
+}
+.arn-cell[data-flash='true']::after { animation: arnArrive 600ms var(--ease-out); }
+@keyframes arnArrive { 0% { opacity: 0.14 } 100% { opacity: 0 } }
+@media (prefers-reduced-motion: reduce) { .arn-cell[data-flash='true']::after { animation: none } }
+
+/* R:DD micro-bar. One scale for the whole page, origin on the zero rule. */
+.arn-mb {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 64px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.arn-mb__zero {
+  position: absolute;
+  left: 50%;
+  top: -1px;
+  bottom: -1px;
+  width: 1px;
+  background: rgba(245, 245, 247, 0.28);
+}
+.arn-mb__fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  border-radius: 2px;
+  transform: scaleX(0);
+  transition: transform var(--duration-slow) var(--ease-out);
+}
+.arn-mb__fill.is-up { left: 50%; transform-origin: left center; background: var(--bull); }
+.arn-mb__fill.is-down { right: 50%; transform-origin: right center; background: var(--bear); }
+[data-in='true'] .arn-mb__fill { transform: scaleX(var(--k, 0)); }
+@media (prefers-reduced-motion: reduce) { .arn-mb__fill { transition: none } }
+
+/* ── the spark ───────────────────────────────────────────────────────── */
+.arn-spark-wrap { position: relative; width: 100%; max-width: 120px; }
+.arn-spark { display: block; width: 100%; height: 32px; overflow: visible; }
+.arn-spark__path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.arn-spark__base {
+  stroke: rgba(245, 245, 247, 0.16);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  vector-effect: non-scaling-stroke;
+}
+.arn-spark__pt { fill: currentColor; }
+.arn-spark__n {
+  position: absolute;
+  top: -2px;
+  right: 0;
+  pointer-events: none;
+  font-size: 0.5625rem;
+  letter-spacing: 0.03em;
+  color: var(--arn-ink-4);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.arn-spark--none {
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-xs);
+  font-size: 0.625rem;
+  color: var(--arn-ink-4);
+}
+
+/* ── family sub-rows ─────────────────────────────────────────────────── */
+.arn-subs {
+  position: relative;
+  padding-left: 16px;
+  animation: arnFade 150ms var(--ease-out);
+}
+.arn-subs::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 0;
+  bottom: 24px;
+  width: 1px;
+  background: var(--arn-hair);
+}
+@keyframes arnFade { from { opacity: 0 } to { opacity: 1 } }
+.arn-subs__note { padding: 6px 0 6px var(--sp-3); }
+.arn-row--sub { height: 56px; }
+
+.arn-retired-note {
+  margin: var(--sp-4) 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--arn-ink-2);
+  max-width: 68ch;
+}
+
+/* ── F · method ──────────────────────────────────────────────────────── */
+.arn-method {
+  margin-top: 72px;
+  padding-top: var(--sp-6);
+  border-top: 1px solid var(--arn-hair);
+  min-height: 120px;
+}
+.arn-method__p {
+  margin: 0 0 10px;
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  color: var(--arn-ink-3);
+  max-width: 76ch;
+}
+.arn-method__p--missing { color: var(--arn-ink-2); }
+.arn-method__p--missing .arn-eyebrow { margin-right: 4px; }
+.arn-method__foot {
+  margin: var(--sp-4) 0 0;
+  font-size: 0.75rem;
+  color: var(--arn-ink-4);
+}
+.arn-method__link { margin: 6px 0 0; font-size: 0.75rem; color: var(--arn-ink-4); }
+.arn-method__link a { color: var(--arn-ink-2); text-decoration: none; border-bottom: 1px solid var(--arn-hair); }
+.arn-method__link a:hover { color: var(--arn-ink); }
+
+/* ── rail sections ───────────────────────────────────────────────────── */
+.arn-rail__sec { min-width: 0; }
+.arn-read {
+  margin: var(--sp-3) 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--arn-ink-2);
+}
+.arn-foot-note {
+  margin: 6px 0 0;
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  color: var(--arn-ink-4);
+}
+.arn-empty-line {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--arn-ink-3);
+}
+
+/* the tape */
+.arn-newpill {
+  appearance: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 7px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--arn-ink);
+  font-size: 0.75rem;
+  font-weight: 500;
+  touch-action: manipulation;
+}
+.arn-newpill:hover { background: rgba(255, 255, 255, 0.08); }
+
+.arn-tape { list-style: none; margin: 0; padding: 0; }
+.arn-tape__row {
+  display: grid;
+  /* Asset gets the flex: at the old widths a memecoin slug rendered as two
+     characters plus an ellipsis, which reads as a broken cell. */
+  grid-template-columns: 34px 20px minmax(0, 1fr) 28px 40px 50px 54px;
+  align-items: center;
+  column-gap: 5px;
+  height: 32px;
+  padding: 0 2px;
+  font-size: 0.6875rem;
+  color: var(--arn-ink-2);
+  box-shadow: inset 0 -1px 0 var(--arn-hair);
+}
+.arn-tape--wide .arn-tape__row {
+  grid-template-columns: 54px minmax(0, 1fr) 44px 56px 64px 76px;
+  height: 34px;
+  font-size: 0.75rem;
+}
+.arn-tape__t { color: var(--arn-ink-4); }
+.arn-tape__who {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--arn-ink-3);
+}
+.arn-tape__asset {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--arn-ink);
+  font-weight: 500;
+}
+.arn-tape__side {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--arn-ink-3);
+}
+.arn-tape__side.is-short { color: var(--arn-ink-2); }
+.arn-tape__size { text-align: right; color: var(--arn-ink-3); }
+.arn-tape__pnl { text-align: right; }
+.arn-tape__pnl.is-up { color: var(--bull-bright); }
+.arn-tape__pnl.is-down { color: var(--bear-bright); }
+.arn-tape__reason {
+  text-align: right;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--arn-ink-4);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* the deaths */
+.arn-deaths { list-style: none; margin: 0; padding: 0; min-height: 120px; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+.arn-deaths__row { display: grid; grid-template-columns: 68px 1fr 22px; align-items: center; gap: 8px; }
+.arn-deaths__k {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--arn-ink-3);
+}
+.arn-deaths__k.is-doa { color: var(--bear-bright); }
+.arn-deaths__track {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.045);
+  overflow: hidden;
+}
+.arn-deaths__bar {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform: scaleX(var(--k, 0));
+  background: rgba(245, 245, 247, 0.42);
+  border-radius: 3px;
+  transition: transform var(--duration-slow) var(--ease-out);
+}
+.arn-deaths__bar.is-doa { background: var(--bear); }
+.arn-deaths__n { font-size: 0.6875rem; text-align: right; color: var(--arn-ink-3); }
+
+/* ── notices, retry, skeletons ───────────────────────────────────────── */
+.arn-notice {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.02);
+  padding: var(--sp-5);
+  text-align: center;
+}
+.arn-notice p { margin: 0 0 4px; font-size: 0.9375rem; color: var(--arn-ink-2); }
+.arn-retry {
+  appearance: none;
+  margin-top: var(--sp-3);
+  cursor: pointer;
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--arn-ink);
+  border-radius: var(--radius-full);
+  padding: 8px 18px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  touch-action: manipulation;
+}
+
+.arn-sk { border-radius: var(--radius-md); }
+.arn-sk--ledger { height: 116px; margin-bottom: var(--sp-6); }
+.arn-sk-list { display: flex; flex-direction: column; gap: 4px; }
+.arn-sk--row { height: 64px; }
+/* The house `.stagger-N` classes set animation-delay on the ELEMENT, and the
+   shimmer runs on its ::after — so the delay has to be restated on the pseudo
+   or the five rows all sweep in lockstep. */
+.arn-sk.stagger-1::after { animation-delay: 50ms; }
+.arn-sk.stagger-2::after { animation-delay: 100ms; }
+.arn-sk.stagger-3::after { animation-delay: 150ms; }
+.arn-sk.stagger-4::after { animation-delay: 200ms; }
+.arn-sk.stagger-5::after { animation-delay: 250ms; }
+
+/* ── reveal ──────────────────────────────────────────────────────────── */
+.arn-reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity var(--duration-slow) var(--ease-out),
+              transform var(--duration-slow) var(--ease-out);
+}
+.arn-reveal[data-in='true'] { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .arn-reveal { opacity: 1; transform: none; transition: none; }
+}
+
+/* ── takeover ────────────────────────────────────────────────────────── */
+.arn-takeover {
+  animation: arnUp var(--duration-slow) var(--ease-out);
+  padding-bottom: var(--sp-8);
+}
+@keyframes arnUp { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+@media (prefers-reduced-motion: reduce) { .arn-takeover { animation: none } }
+
+.arn-back {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  font-size: 0.8125rem;
+  color: var(--arn-ink-3);
+  touch-action: manipulation;
+}
+.arn-back:hover { color: var(--arn-ink); }
+.arn-back svg {
+  width: 12px; height: 12px; fill: none; stroke: currentColor;
+  stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
+}
+
+.arn-to__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-top: var(--sp-4);
+  flex-wrap: wrap;
+}
+.arn-to__id { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.arn-to__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--arn-ink);
+}
+.arn-to__rank { display: flex; align-items: baseline; gap: 7px; }
+.arn-to__rdd { font-size: 1.375rem; font-weight: 600; letter-spacing: -0.02em; }
+.arn-to__rlabel { font-size: 0.625rem; letter-spacing: 0.08em; color: var(--arn-ink-4); }
+.arn-to__sub { margin: 8px 0 0; display: flex; align-items: center; flex-wrap: wrap; }
+
+.arn-statband {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--sp-3);
+  margin: var(--sp-6) 0 var(--sp-4);
+  padding: var(--sp-4);
+  background: var(--arn-fill);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-inner);
+}
+.arn-stat { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.arn-stat__v { font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.02em; color: var(--arn-ink); }
+.arn-stat__v.is-up { color: var(--bull-bright); }
+.arn-stat__v.is-down { color: var(--bear-bright); }
+.arn-stat__v.is-loud { color: var(--bear-bright); }
+.arn-stat__k { font-size: 0.625rem; line-height: 1.35; color: var(--arn-ink-3); }
+.arn-stat__sub { color: var(--arn-ink-4); }
+
+.arn-pnlsplit {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  flex-wrap: wrap;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.02);
+}
+.arn-pnlsplit__cell { display: flex; flex-direction: column; gap: 2px; }
+.arn-pnlsplit__k { font-size: 0.625rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--arn-ink-4); }
+.arn-pnlsplit__v { font-size: 1rem; font-weight: 600; color: var(--arn-ink); }
+.arn-pnlsplit__v.is-up { color: var(--bull-bright); }
+.arn-pnlsplit__v.is-down { color: var(--bear-bright); }
+.arn-pnlsplit__note { margin: 0; flex: 1 1 260px; font-size: 0.6875rem; line-height: 1.5; color: var(--arn-ink-4); }
+
+.arn-to__sec { margin-top: var(--sp-8); }
+.arn-to__sec--deaths { max-width: 420px; }
+
+/* the curve */
+.arn-curve__plot { position: relative; height: 340px; }
+.arn-curve__svg { display: block; width: 100%; height: 340px; color: var(--arn-ink); }
+.arn-curve__path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.arn-curve__area { fill: currentColor; opacity: 0.05; }
+.arn-curve__base { stroke: rgba(245, 245, 247, 0.22); stroke-width: 1; stroke-dasharray: 3 4; }
+.arn-curve__cursor { stroke: rgba(245, 245, 247, 0.3); stroke-width: 1; }
+.arn-curve__dot { fill: var(--arn-ink); }
+.arn-curve__last { fill: var(--arn-ink); }
+.arn-curve__tag {
+  position: absolute;
+  right: 0;
+  transform: translateY(-50%);
+  font-size: 0.6875rem;
+  color: var(--arn-ink-2);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.arn-curve__tag em { font-style: normal; color: var(--arn-ink-4); margin-left: 5px; }
+.arn-curve__tag--base { color: var(--arn-ink-3); }
+.arn-curve__hover {
+  position: absolute;
+  top: 0;
+  font-size: 0.75rem;
+  color: var(--arn-ink);
+  background: rgba(9, 9, 11, 0.86);
+  border: 1px solid var(--arn-hair);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.arn-curve__hover em { font-style: normal; color: var(--arn-ink-4); margin-left: 7px; }
+.arn-curve__axis { margin: 10px 0 0; }
+
+/* positions + doctrine */
+.arn-pos { list-style: none; margin: 0; padding: 0; }
+.arn-pos__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 52px 64px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  font-size: 0.75rem;
+  color: var(--arn-ink-2);
+  box-shadow: inset 0 -1px 0 var(--arn-hair);
+}
+.arn-pos__asset { color: var(--arn-ink); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arn-pos__entry { color: var(--arn-ink-4); }
+
+.arn-doctrine {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 2px var(--sp-5);
+}
+.arn-doctrine__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: 6px 0;
+  box-shadow: inset 0 -1px 0 var(--arn-hair);
+  min-width: 0;
+}
+.arn-doctrine__row[data-wide='true'] { grid-column: 1 / -1; }
+.arn-doctrine dt { font-size: 0.75rem; color: var(--arn-ink-3); white-space: nowrap; }
+.arn-doctrine dd {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--arn-ink);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* lineage */
+.arn-lineage { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-4); margin-top: var(--sp-3); }
+.arn-lineage__col {
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.02);
+}
+.arn-lineage__col[data-self='true'] { border-color: var(--border-strong); background: rgba(255, 255, 255, 0.04); }
+.arn-lineage__name { font-size: 0.875rem; font-weight: 600; color: var(--arn-ink); margin-bottom: 10px; }
+.arn-lineage__stats { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.arn-lineage__stats > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3); }
+.arn-lineage__stats dt { font-size: 0.6875rem; color: var(--arn-ink-3); }
+.arn-lineage__stats dd { margin: 0; font-size: 0.8125rem; color: var(--arn-ink); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE STAGE — the WebGL arena that opens the page.
+
+   It is a SCREEN, not a surface: a dark plate with a hairline rim and an inset
+   vignette, so on a white day-mode page it reads as a stadium being shown
+   rather than a hole punched in the layout. The scene stays night in both
+   themes on purpose — the same call the liquidation heatmap's canvas card
+   already ships under `.liqp.day-mode`, and for the same reason: the exhibit
+   IS the night.
+
+   No backdrop-filter anywhere in here. The stage is 70vh of live GPU work and
+   the page scrolls past it.
+   ══════════════════════════════════════════════════════════════════════════ */
+.arn-stage-wrap { margin-top: var(--sp-5); }
+
+.arn-stage {
+  position: relative;
+  width: 100%;
+  height: clamp(420px, 70vh, 700px);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 22%, #0a0a14 0%, #04040a 62%, #020206 100%);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-inner), var(--shadow-lg);
+  contain: paint;
+}
+
+/* the vignette: the bowl should fall away at the edges, not stop at a border */
+.arn-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: inset 0 0 90px 30px rgba(2, 2, 6, 0.85);
+}
+
+.arn-stage__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* the runners are the affordance; the canvas itself is the hit surface */
+  touch-action: pan-x pan-y;
+}
+
+.arn-stage--sk {
+  height: clamp(420px, 70vh, 700px);
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: var(--border-subtle);
+  box-shadow: none;
+}
+.arn-stage--sk::after { box-shadow: none; }
+
+/* the reduced-motion / no-WebGL reading keeps the waterline's own geometry */
+.arn-stage--flat {
+  height: auto;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+  contain: none;
+}
+.arn-stage--flat::after { display: none; }
+.arn-stage--flat .arn-water { margin-top: 0; }
+.arn-stage--flat .arn-water__cap { display: none; }
+
+.arn-stage__cap {
+  margin: 12px 0 0;
+  line-height: 1.55;
+  max-width: 78ch;
+}
+.arn-stage__cap--2 { margin-top: 5px; color: var(--arn-ink-4); max-width: 74ch; }
+
+/* the deepest book is reachable from its own sentence */
+.arn-stage__deep {
+  appearance: none;
+  border: 0;
+  padding: 0 1px;
+  background: none;
+  font: inherit;
+  color: var(--bear-bright);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  box-shadow: inset 0 -1px 0 rgba(248, 113, 113, 0.32);
+  transition: box-shadow var(--duration-base) var(--ease-out);
+}
+@media (hover: hover) {
+  .arn-stage__deep:hover { box-shadow: inset 0 -1px 0 rgba(248, 113, 113, 0.7); }
+}
+.arn-stage__deep:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* ── day mode: the plate, not the scene ─────────────────────────────────
+   These live here rather than in arena-page.day-mode.css so the whole stage
+   reads in one place; the selector is the page-wide one either way. */
+.app.app-day-mode .arn-stage {
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 18px 40px rgba(15, 23, 42, 0.10);
+}
+.app.app-day-mode .arn-stage--sk {
+  background-color: rgba(15, 23, 42, 0.045);
+  background-image: none;
+  box-shadow: none;
+}
+.app.app-day-mode .arn-stage--flat { box-shadow: none; }
+.app.app-day-mode .arn-stage__deep {
+  color: #b91c1c;
+  box-shadow: inset 0 -1px 0 rgba(185, 28, 28, 0.3);
+}
+@media (hover: hover) {
+  .app.app-day-mode .arn-stage__deep:hover { box-shadow: inset 0 -1px 0 rgba(185, 28, 28, 0.65); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arn-stage__deep { transition: none; }
+}

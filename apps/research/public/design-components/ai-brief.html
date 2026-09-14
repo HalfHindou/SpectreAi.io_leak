@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=800">
+  <title>Spectre — AI Brief Widget</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-void: #09090b; --bg-surface: #111113; --bg-elevated: #18181b;
+      --glass-bg: rgba(9,9,11,0.88); --glass-border: rgba(255,255,255,0.04);
+      --text-primary: #f5f5f7; --text-secondary: rgba(245,245,247,0.6);
+      --text-tertiary: rgba(245,245,247,0.5); --text-muted: rgba(245,245,247,0.35);
+      --bull: #10B981; --bear: #EF4444; --cyan: #06B6D4; --violet: #A78BFA;
+      --border-subtle: rgba(255,255,255,0.03); --border-default: rgba(255,255,255,0.04);
+      --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0a0f; font-family: var(--font-body); color: var(--text-primary); -webkit-font-smoothing: antialiased; }
+    .widget { width: 720px; padding: 32px; }
+
+    .ai-brief {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 32px;
+      backdrop-filter: blur(24px) saturate(180%);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12), 0 20px 60px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.04);
+      position: relative;
+      overflow: hidden;
+    }
+    .ai-brief::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    }
+
+    .brief-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .brief-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(6,182,212,0.1));
+      border: 1px solid rgba(16,185,129,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: var(--bull);
+    }
+    .brief-label {
+      font-size: 12px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+    .brief-badge {
+      margin-left: auto;
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--bull);
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.15);
+      border-radius: 20px;
+      padding: 4px 12px;
+    }
+
+    .brief-statement {
+      font-size: 20px;
+      font-weight: 500;
+      line-height: 1.55;
+      color: var(--text-primary);
+      margin-bottom: 24px;
+      letter-spacing: -0.01em;
+    }
+    .brief-statement em {
+      font-style: normal;
+      color: var(--bull);
+      font-weight: 600;
+    }
+
+    .brief-metrics {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .metric-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-subtle);
+      font-size: 12px;
+    }
+    .metric-label { color: var(--text-muted); font-weight: 500; }
+    .metric-value { color: var(--text-primary); font-weight: 600; font-family: var(--font-mono); font-size: 12px; }
+    .metric-value.bull { color: var(--bull); }
+    .metric-value.bear { color: var(--bear); }
+
+    .brief-dots {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 24px;
+    }
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+    }
+    .dot.active {
+      background: var(--bull);
+      box-shadow: 0 0 8px rgba(16,185,129,0.4);
+      position: relative;
+    }
+    .dot.active::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(16,185,129,0.3);
+    }
+
+    .brief-attribution {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+<div class="widget">
+  <div class="ai-brief">
+    <div class="brief-header">
+      <div class="brief-icon">AI</div>
+      <div class="brief-label">AI Market Brief — Sentiment</div>
+      <div class="brief-badge">Bullish Bias</div>
+    </div>
+
+    <div class="brief-statement">
+      Bitcoin holds above <em>$97,800</em> with strong institutional inflows. ETF volumes hit a 30-day high, and the Fear & Greed index sits at <em>72 (Greed)</em>. Altcoin rotation is accelerating — <em>SOL, AVAX, and LINK</em> are leading the charge with double-digit weekly gains.
+    </div>
+
+    <div class="brief-metrics">
+      <div class="metric-chip">
+        <span class="metric-label">F&G</span>
+        <span class="metric-value bull">72 Greed</span>
+      </div>
+      <div class="metric-chip">
+        <span class="metric-label">Bias</span>
+        <span class="metric-value bull">Bullish</span>
+      </div>
+      <div class="metric-chip">
+        <span class="metric-label">BTC</span>
+        <span class="metric-value bull">$97,842 +2.5%</span>
+      </div>
+      <div class="metric-chip">
+        <span class="metric-label">ETH</span>
+        <span class="metric-value bull">$3,421 +3.2%</span>
+      </div>
+      <div class="metric-chip">
+        <span class="metric-label">VIX</span>
+        <span class="metric-value">14.2</span>
+      </div>
+    </div>
+
+    <div class="brief-dots">
+      <div class="dot active"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+
+    <div class="brief-attribution">Updated 2 min ago · Spectre AI Agent</div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,6242 @@
+/**
+ * RightPanel Styles
+ * Research Zone + Stats + Trading
+ */
+
+/* Bento "container" pattern: the outer right-panel is just a track now.
+   Surface treatment moves to the 4 child sections (token-banner-section,
+   market-stats, swap-container, deployer-security) so they float as
+   distinct cards with gaps between, matching ref 2 (Marvellous Insights).
+   No backdrop-filter — perf contract rule 4. */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2); /* 8px - gap between bento cards (tightened so the swap dock rises above the fold) */
+  overflow: visible;
+  position: relative;
+  z-index: 1;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* ---------- Bento sub-frames (v2 Observatory: translucent so gradient bleeds) ---------- */
+.right-panel > .token-banner-section,
+.right-panel > .market-stats,
+.right-panel > .swap-container,
+.right-panel > .deployer-security {
+  position: relative;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      rgba(255, 255, 255, 0.008) 45%,
+      transparent 100%
+    ),
+    var(--bg-surface, #0e0f12);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 16px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 14px 38px rgba(0, 0, 0, 0.6),
+    0 2px 6px rgba(0, 0, 0, 0.4);
+  overflow: hidden;     /* clip whisper imagery to border-radius */
+  isolation: isolate;
+  transition:
+    border-color 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  margin: 0;
+}
+
+.right-panel > .token-banner-section:hover,
+.right-panel > .swap-container:hover,
+.right-panel > .deployer-security:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 20px 48px rgba(0, 0, 0, 0.68),
+    0 3px 8px rgba(0, 0, 0, 0.48);
+  transform: translateY(-2px);
+}
+
+/* Day mode: the hover above is a hardcoded white wash + near-black drop, so on
+   a white card the border vanished and the shadow read as a smudge. Depth in
+   light mode comes from a darkened hairline and a soft slate shadow instead.
+   `.token-banner-section` is deliberately NOT listed - it already has its own
+   light hover further down this file (`border-color: rgba(17,17,19,0.14)`), and
+   overriding that at higher specificity would change a value someone chose. */
+body.theme-light .right-panel > .swap-container:hover,
+body.theme-light .right-panel > .deployer-security:hover {
+  border-color: rgba(15, 23, 42, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 20px 48px rgba(15, 23, 42, 0.14),
+    0 3px 8px rgba(15, 23, 42, 0.08);
+}
+
+/* ---------- Whisper imagery — unique faint backdrop per panel ---------- */
+/* Identity panel — soft radial behind logo (mimics moonlight reaching it) */
+.right-panel > .token-banner-section::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(
+    ellipse 60% 60% at 30% 25%,
+    rgba(255, 255, 255, 0.06),
+    transparent 60%
+  );
+}
+
+/* Market Stats — faint vertical light bars */
+.right-panel > .market-stats::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 16px,
+    rgba(255, 255, 255, 0.04) 16px,
+    rgba(255, 255, 255, 0.04) 17px
+  );
+}
+
+/* Swap container (AI Dossier + Buy/Sell) — sparse world-map dots */
+.right-panel > .swap-container::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    radial-gradient(1.1px 1.1px at 16px 24px,  rgba(255,255,255,0.05) 50%, transparent 51%),
+    radial-gradient(1.1px 1.1px at 72px 88px,  rgba(255,255,255,0.045) 50%, transparent 51%),
+    radial-gradient(1.1px 1.1px at 128px 32px, rgba(255,255,255,0.04) 50%, transparent 51%),
+    radial-gradient(1.1px 1.1px at 184px 116px, rgba(255,255,255,0.045) 50%, transparent 51%),
+    radial-gradient(1.1px 1.1px at 232px 64px,  rgba(255,255,255,0.035) 50%, transparent 51%);
+  background-size: 260px 160px;
+}
+
+/* Deployer Security — hairline blueprint grid */
+.right-panel > .deployer-security::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(to right,  rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* Ensure all direct children of the bento sub-frames sit above whisper */
+.right-panel > .token-banner-section > *,
+.right-panel > .market-stats > *,
+.right-panel > .swap-container > *,
+.right-panel > .deployer-security > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- Mount stagger: cards fade up in waves on first paint (FX3) ---- */
+@keyframes right-panel-bento-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.right-panel > .token-banner-section { animation: right-panel-bento-in 460ms cubic-bezier(0.16,1,0.3,1) 0ms   both; }
+.right-panel > .market-stats         { animation: right-panel-bento-in 460ms cubic-bezier(0.16,1,0.3,1) 80ms  both; }
+.right-panel > .swap-container       { animation: right-panel-bento-in 460ms cubic-bezier(0.16,1,0.3,1) 160ms both; }
+.right-panel > .deployer-security    { animation: right-panel-bento-in 460ms cubic-bezier(0.16,1,0.3,1) 240ms both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .right-panel > .token-banner-section,
+  .right-panel > .market-stats,
+  .right-panel > .swap-container,
+  .right-panel > .deployer-security {
+    animation: none;
+  }
+}
+
+/* Consistent internal padding across the 4 bento sub-frames.
+   .deployer-security already had `padding: 14px` (we promote it).
+   .market-stats had tight `padding: 4px 0` — bump it.
+   .token-banner-section + .swap-container already have inner padding via
+   their own children; just confirm no clipping. */
+.right-panel > .market-stats {
+  padding: 14px 16px;
+}
+
+/* Override .deployer-security's pre-existing bg/border/shadow which would
+   double-layer with the bento outer treatment. The newer +1-specificity
+   selector wins, but defensive: kill the conflicting internal box-shadow. */
+.right-panel > .deployer-security {
+  /* margin-top was 14px in the prior rule, now redundant since gap handles it. */
+  margin-top: 0;
+}
+
+/* Market stats grid — keep transparent interior, but the outer card now has
+   a surface treatment. Override .market-stats's prior `background: transparent`
+   only at the outer-card level (it already has no internal bg). */
+
+/* API error / no-data message and retry */
+.right-panel-api-message {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+.right-panel-api-message-text {
+  flex: 1;
+}
+.right-panel-api-message code {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+.right-panel-api-retry {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  background: rgba(239, 68, 68, 0.25);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.right-panel-api-retry:hover {
+  background: rgba(239, 68, 68, 0.4);
+}
+
+/* Override global neutral focus ring inside right panel (Apple-neutral) */
+.right-panel :focus-visible {
+  outline: 2px solid var(--ui-focus-ring);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* Dim token banner when search is open (keep visible) */
+body.search-open .token-banner-section {
+  opacity: 0.4 !important;
+  pointer-events: none !important;
+  transition: opacity 0.3s ease !important;
+}
+
+/* Token Banner Section - Customizable Image */
+.token-banner-section {
+  position: relative;
+  border-radius: var(--radius-xl, 24px);
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.035);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025),
+    0 12px 32px rgba(0, 0, 0, 0.38),
+    0 0 22px color-mix(in oklab, var(--banner-accent, transparent) 14%, transparent);
+  transition: border-color var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out);
+  min-height: 110px;
+}
+
+.token-banner-section:hover {
+  border-color: rgba(255, 255, 255, 0.07);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 16px 40px rgba(0, 0, 0, 0.45),
+    0 0 30px color-mix(in oklab, var(--banner-accent, transparent) 22%, transparent);
+}
+
+.token-banner-image {
+  width: 100%;
+  height: 100%;
+  min-height: 114px;
+  display: block;
+  object-fit: cover;
+  object-position: left center;
+}
+
+/* Dynamic Token Banner */
+.token-banner-dynamic {
+  width: 100%;
+  min-height: 94px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Static, restrained backdrop — no drift animation (terminal feel) */
+.banner-gradient-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Hairline grid texture — Bloomberg-terminal cue */
+.banner-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.6;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.022) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.022) 0 1px, transparent 1px 24px);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 90%);
+  mask-image: radial-gradient(ellipse at center, black 40%, transparent 90%);
+}
+
+/* Top edge polished shine — slow horizontal sweep for the wow moment */
+.banner-shine {
+  position: absolute;
+  left: -50%;
+  width: 200%;
+  top: 0;
+  height: 1px;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    transparent 38%,
+    rgba(255, 255, 255, 0.06) 47%,
+    color-mix(in oklab, var(--banner-accent, rgba(255, 255, 255, 0.5)) 70%, white) 50%,
+    rgba(255, 255, 255, 0.06) 53%,
+    transparent 62%,
+    transparent 100%
+  );
+  animation: banner-shine-sweep 21s linear infinite;
+}
+
+/* Sweep keeps its 7s speed; the remaining 14s of the 21s cycle is idle. */
+@keyframes banner-shine-sweep {
+  0%      { transform: translateX(0);   opacity: 0; }
+  3.3%    { opacity: 1; }
+  30%     { opacity: 1; }
+  33.33%  { transform: translateX(50%); opacity: 0; }
+  100%    { transform: translateX(50%); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner-shine { animation: none; transform: translateX(25%); }
+}
+
+/* Smooth fade-in for ALL token-tinted layers — banner stays on a flat dark
+   surface until the real color is ready, then every color layer fades in
+   together (no per-layer enumeration). */
+.token-banner-section .banner-bg-blur,
+.token-banner-section .banner-gradient-overlay,
+.token-banner-section .banner-accent-glow,
+.token-banner-section .banner-content::before,
+.token-banner-section .banner-logo-ring,
+.token-banner-section .banner-logo-shell::after {
+  transition: opacity 320ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.token-banner-section[data-color-ready="false"] .banner-bg-blur,
+.token-banner-section[data-color-ready="false"] .banner-gradient-overlay,
+.token-banner-section[data-color-ready="false"] .banner-accent-glow,
+.token-banner-section[data-color-ready="false"] .banner-content::before,
+.token-banner-section[data-color-ready="false"] .banner-logo-ring,
+.token-banner-section[data-color-ready="false"] .banner-logo-shell::after {
+  opacity: 0 !important;
+}
+
+/* Blurred logo background - softer halo, hover synced to 250ms */
+.banner-bg-blur {
+  position: absolute;
+  inset: -30px;
+  top: 10px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(80px) saturate(1.4) brightness(0.45);
+  opacity: 0.32;
+  transform: scale(1.4);
+  transition: opacity var(--duration-base) var(--ease-out), filter var(--duration-base) var(--ease-out);
+}
+
+.token-banner-section:hover .banner-bg-blur {
+  opacity: 0.4;
+  filter: blur(72px) saturate(1.5) brightness(0.55);
+}
+
+/* Gradient overlay on top of blurred bg */
+.banner-gradient-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Token-colored accent glow */
+.banner-accent-glow {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0.55;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.token-banner-section:hover .banner-accent-glow {
+  opacity: 0.75;
+}
+
+.banner-gradient {
+  width: 100%;
+  height: 100%;
+  min-height: 140px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Inner card — sleek optical glass, borderless for smooth blend */
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  /* Trimmed vertical padding + margin (14 -> 10) so the banner is a touch
+     shorter and the swap dock rises; horizontal margin (14) kept so the
+     width calc below and the alignment with the vitals card hold. */
+  padding: 10px 16px;
+  margin: 10px 14px;
+  position: relative;
+  z-index: 3;
+  width: calc(100% - 28px);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.022) 0%, rgba(255, 255, 255, 0.004) 100%);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid transparent;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 14px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+/* Token-tinted highlight in upper-left — barely-there optical */
+.banner-content::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 0% 0%, var(--banner-accent, rgba(255, 255, 255, 0.1)) 0%, transparent 55%);
+  opacity: 0.10;
+  border-radius: inherit;
+}
+
+.banner-logo-shell {
+  position: relative;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  padding: 2px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Logo ring — token-color accent ring */
+.banner-logo-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      from 220deg,
+      var(--banner-accent, rgba(255, 255, 255, 0.3)) 0deg,
+      transparent 110deg,
+      transparent 250deg,
+      color-mix(in oklab, var(--banner-accent, transparent) 60%, transparent) 360deg
+    );
+  opacity: 0.8;
+  z-index: 1;
+  pointer-events: none;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.token-banner-section:hover .banner-logo-ring {
+  opacity: 1;
+}
+
+.banner-logo-shell::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in oklab, var(--banner-accent, transparent) 18%, transparent) 0%, transparent 70%);
+  z-index: 0;
+  pointer-events: none;
+  filter: blur(4px);
+}
+
+.banner-token-logo {
+  position: relative;
+  z-index: 2;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  background: rgba(15, 15, 22, 0.95);
+  cursor: pointer;
+  transition: transform var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out);
+}
+
+.token-banner-section:hover .banner-token-logo {
+  transform: scale(1.04);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+}
+
+/* Live status dot — anchored to the logo's lower-right circle edge (45° offset) */
+.banner-live-status {
+  position: absolute;
+  bottom: 7px;
+  right: 7px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--bull, #10B981);
+  z-index: 4;
+  box-shadow:
+    0 0 0 2px rgba(8, 8, 12, 0.95),
+    0 0 6px rgba(16, 185, 129, 0.55);
+  animation: banner-live-breath 2.6s ease-in-out infinite;
+}
+
+@keyframes banner-live-breath {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 2px rgba(8, 8, 12, 0.95), 0 0 6px rgba(16, 185, 129, 0.55);
+  }
+  50% {
+    opacity: 0.55;
+    box-shadow: 0 0 0 2px rgba(8, 8, 12, 0.95), 0 0 2px rgba(16, 185, 129, 0.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner-live-status { animation: none; opacity: 1; }
+}
+
+/* ── Token logo lightbox ── */
+.logo-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 8, 12, 0.82);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  cursor: zoom-out;
+  animation: logo-lightbox-in 0.2s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+/* Card wrapper — anchors the close button to the logo's top-right */
+.logo-lightbox-card {
+  position: relative;
+  cursor: default;
+  animation: logo-lightbox-pop 0.22s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.logo-lightbox-img {
+  display: block;
+  width: 240px;
+  height: 240px;
+  max-width: 60vmin;
+  max-height: 60vmin;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 0 60px color-mix(in oklab, var(--banner-accent, transparent) 24%, transparent);
+  background: rgba(15, 15, 22, 0.95);
+  image-rendering: auto;
+}
+
+/* Close pill anchored to logo's top-right corner (45° offset) */
+.logo-lightbox-close {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 20, 24, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  cursor: pointer;
+  z-index: 2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  transition: background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+}
+
+.logo-lightbox-close:hover {
+  background: rgba(30, 30, 35, 1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+  transform: scale(1.06);
+}
+
+@keyframes logo-lightbox-pop {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes logo-lightbox-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-lightbox { animation: none; }
+}
+
+/* Day mode: banner logo needs dark-on-light treatment */
+body.theme-light .banner-token-logo {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+body.theme-light .token-banner-section:hover .banner-token-logo {
+  border-color: rgba(0, 0, 0, 0.18);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+body.theme-light .banner-bg-blur {
+  filter: blur(52px) saturate(1.4) brightness(1.1);
+  opacity: 0.25;
+}
+
+.banner-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.banner-symbol {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary, rgba(245, 245, 247, 0.98));
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  text-shadow: 0 2px 14px color-mix(in oklab, var(--banner-accent, transparent) 22%, transparent);
+}
+
+.banner-name {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary, rgba(245, 245, 247, 0.7));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.005em;
+}
+
+/* Live 24h-change chip anchored bottom-right inside the inner card */
+.banner-live-chip {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  border: 1px solid var(--border-subtle);
+  background: rgba(8, 8, 12, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.banner-live-chip.up {
+  color: var(--bull, #10B981);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.banner-live-chip.down {
+  color: var(--bear, #EF4444);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+/* Chain label - flat icon + text, no chrome */
+.banner-network {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  margin-top: 8px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.banner-network-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.banner-network-icon svg {
+  display: block;
+  border-radius: 50%;
+}
+
+.token-banner-section:hover .banner-network {
+  color: var(--text-secondary);
+}
+
+.banner-network::before {
+  display: none;
+}
+
+/* Customize Banner Button - 28px ghost icon, hover-revealed */
+.banner-customize-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: rgba(15, 15, 22, 0.6);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  color: rgba(245, 245, 247, 0.7);
+  font-size: 0;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), opacity var(--duration-fast) var(--ease-out);
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.banner-customize-btn .btn-text,
+.banner-customize-btn .premium-badge {
+  display: none;
+}
+
+/* Show on hover */
+.token-banner-section:hover .banner-customize-btn {
+  opacity: 1;
+  border-color: rgba(255, 255, 255, 0.14);
+  pointer-events: auto;
+}
+
+.banner-customize-btn:hover {
+  background: rgba(15, 15, 22, 0.85);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: var(--text-primary);
+}
+
+.banner-customize-btn svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Remove decorative gradients for a cleaner VC look */
+.banner-customize-btn::before { display: none; }
+
+.banner-customize-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.banner-customize-btn .premium-badge {
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(245, 245, 247, 0.75);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.banner-particles { display: none !important; }
+
+.banner-customize-btn:hover {
+  background: rgba(18, 18, 22, 0.82);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: rgba(245, 245, 247, 0.95);
+}
+
+/* Disable old hover effects */
+.banner-customize-btn:hover::before { opacity: 0; }
+
+.banner-customize-btn .btn-text {
+  position: relative;
+  z-index: 1;
+}
+
+.banner-customize-btn .premium-badge {
+  position: relative;
+  z-index: 1;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(245, 245, 247, 0.75);
+  text-shadow: none;
+}
+
+/* Banner particles/shimmer removed for calmer Apple feel */
+
+/* ═══════════════════════════════════════════════════════════
+   Market Stats - Bloomberg Terminal × Apple
+   Single solid panel, no nested borders. Grid separators only.
+   ═══════════════════════════════════════════════════════════ */
+
+.market-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 8px 4px 4px;
+  flex-shrink: 0;
+  overflow: visible;
+  position: relative;
+  z-index: 30;
+}
+
+.market-stats::before,
+.market-stats::after {
+  display: none;
+}
+
+/* Stat cells - glass tiles with hairline borders */
+.stat-item {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.045) 0%,
+    rgba(255, 255, 255, 0.018) 100%
+  );
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 12px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Subtle top hairline shine (used to be borderless terminal readout) */
+.stat-item::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.stat-item::after {
+  display: none;
+}
+
+/* Reset the legacy borderless overrides */
+.stat-item:nth-child(3n+1),
+.stat-item:nth-child(3n+2) {
+  border-right: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.stat-item:nth-child(n+4) {
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.stat-item:nth-child(1),
+.stat-item:nth-child(3),
+.stat-item:nth-child(4),
+.stat-item:nth-child(6) {
+  border-radius: 12px;
+}
+
+.stat-item:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.065) 0%,
+    rgba(255, 255, 255, 0.025) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.085);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 4px 14px rgba(0, 0, 0, 0.32);
+  transform: translateY(-1px);
+}
+
+.stat-indicator {
+  display: none;
+}
+
+.stat-item:hover .stat-indicator {
+  display: none;
+}
+
+/* Day mode */
+body.theme-light .market-stats {
+  background: transparent;
+}
+
+body.theme-light .stat-item {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.78) 100%
+  );
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+body.theme-light .stat-item::before {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(15, 23, 42, 0.06) 50%,
+    transparent 100%
+  );
+}
+
+body.theme-light .stat-item:nth-child(3n+1),
+body.theme-light .stat-item:nth-child(3n+2) {
+  border-right: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+body.theme-light .stat-item:nth-child(n+4) {
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+body.theme-light .stat-label {
+  color: rgba(15, 23, 42, 0.65);
+}
+
+body.theme-light .stat-item:hover .stat-label {
+  color: rgba(15, 23, 42, 0.80);
+}
+
+body.theme-light .panel-right .stat-value {
+  color: rgba(15, 23, 42, 0.85);
+}
+
+body.theme-light .stat-item:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0.88) 100%
+  );
+  border-color: rgba(15, 23, 42, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+body.theme-light .stat-change.up {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+body.theme-light .stat-change.down {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Stat content layout - label above value, like Liquidation section */
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  width: 100%;
+}
+
+/* Labels: terminal uppercase, whisper quiet */
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(245, 245, 247, 0.65);
+  transition: color 0.2s ease;
+}
+
+.stat-item:hover .stat-label {
+  color: rgba(245, 245, 247, 0.80);
+}
+
+/* Value row: number + change inline */
+.stat-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.stat-value-row .stat-value {
+  white-space: nowrap;
+}
+
+.stat-value-row .stat-change {
+  flex-shrink: 0;
+}
+
+.stat-change {
+  /* Delta-chip typography — see `--font-num-chip` token. */
+  font-family: var(--font-num-chip);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+  white-space: nowrap;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.stat-change.up {
+  color: var(--bull, #10B981);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.stat-change.down {
+  color: var(--bear, #EF4444);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* Values: the numbers ARE the interface */
+.panel-right .stat-value {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  transition: color 0.2s ease;
+}
+
+.panel-right .stat-item:hover .stat-value {
+  color: #f5f5f7;
+}
+
+/* Dropdown Stat Item */
+.stat-item.has-dropdown {
+  cursor: pointer;
+  position: relative;
+}
+
+.stat-item.has-dropdown.active {
+  z-index: 1001;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.stat-item.has-dropdown .stat-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stat-item.has-dropdown .dropdown-arrow {
+  width: 12px;
+  height: 12px;
+  transition: transform var(--duration-base) var(--ease-out), opacity var(--duration-fast) var(--ease-out);
+  opacity: 0.5;
+}
+
+.stat-item.has-dropdown:hover .dropdown-arrow {
+  opacity: 0.8;
+}
+
+.stat-item.has-dropdown.active .dropdown-arrow {
+  transform: rotate(180deg);
+  opacity: 1;
+}
+
+/* Volume Dropdown Panel - Terminal sheet, rendered in normal flow below stats grid */
+.volume-dropdown {
+  width: 100%;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 30%),
+    rgba(9, 9, 11, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-top-color: rgba(255, 255, 255, 0.08);
+  border-bottom-color: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 16px 40px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  animation: dropdownSlide var(--duration-base) var(--ease-out);
+}
+
+body.theme-light .volume-dropdown {
+  background: rgba(255, 255, 255, 0.97);
+  border-color: rgba(0, 0, 0, 0.06);
+  border-top-color: rgba(0, 0, 0, 0.04);
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 16px 40px rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .volume-dropdown::before {
+  background: linear-gradient(
+    135deg,
+    rgba(17, 17, 19, 0.12) 0%,
+    rgba(17, 17, 19, 0.06) 45%,
+    transparent 100%
+  );
+  opacity: 0.6;
+}
+
+body.theme-light .volume-dropdown::after {
+  background: radial-gradient(ellipse 120% 60% at 50% 0%, rgba(0, 0, 0, 0.04) 0%, transparent 62%);
+  opacity: 0.6;
+}
+
+.volume-dropdown::before,
+.volume-dropdown::after {
+  display: none;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Volume Header */
+.vol-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+  z-index: 1;
+}
+
+.vol-main {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.vol-amount {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.vol-change {
+  /* Delta-chip typography — see `--font-num-chip` token. */
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.vol-change.up {
+  color: #6EE7B7;
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.18);
+}
+
+.vol-change.down {
+  color: #FCA5A5;
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.18);
+}
+
+.vol-period-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  width: fit-content;
+  margin-top: 2px;
+  padding: 5px 10px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Timeframe Pills */
+.vol-timeframes {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.tf-pill {
+  flex: 1;
+  padding: 9px 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.tf-pill:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  transform: translateY(-1px);
+}
+
+.tf-pill.active {
+  background: linear-gradient(135deg, var(--ui-accent-muted) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border-color: var(--ui-accent-border);
+  color: rgba(245, 245, 247, 0.92);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Buy/Sell Pressure */
+.vol-pressure {
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.pressure-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.pressure-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pressure-ratio {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.pressure-bar {
+  display: flex;
+  height: 26px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pressure-fill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pressure-fill.buy {
+  background: linear-gradient(135deg, #047857 0%, #059669 100%);
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+.pressure-fill.sell {
+  background: linear-gradient(135deg, #B91C1C 0%, #DC2626 100%);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.pressure-label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.9;
+}
+
+/* Transactions Grid */
+.vol-txns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.txn-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 8px;
+  background: rgba(255, 255, 255, 0.022);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.txn-box.buy {
+  border-color: rgba(110, 231, 183, 0.12);
+  background: rgba(110, 231, 183, 0.03);
+}
+
+.txn-box.sell {
+  border-color: rgba(252, 165, 165, 0.12);
+  background: rgba(252, 165, 165, 0.03);
+}
+
+.txn-count {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.txn-box.buy .txn-count {
+  color: #6EE7B7;
+}
+
+.txn-box.sell .txn-count {
+  color: #FCA5A5;
+}
+
+.txn-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Volume Comparison Bars */
+.vol-comparison {
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+  z-index: 1;
+}
+
+.comparison-title {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+
+.comparison-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 60px;
+}
+
+.comp-bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.comp-bar:hover .comp-fill {
+  filter: brightness(1.2);
+}
+
+.comp-fill {
+  width: 100%;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 4px;
+}
+
+.comp-bar.active .comp-fill {
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.08);
+}
+
+.comp-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 6px;
+  transition: color 0.2s ease;
+}
+
+.comp-bar.active .comp-label {
+  color: rgba(245, 245, 247, 0.6);
+}
+
+.comp-bar:hover .comp-label {
+  color: var(--text-secondary);
+}
+
+/* ==================== LIQUIDITY DROPDOWN ==================== */
+.liquidity-dropdown {
+  width: 100%;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 30%),
+    rgba(9, 9, 11, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-top-color: rgba(255, 255, 255, 0.08);
+  border-bottom-color: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 16px 40px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: dropdownSlide var(--duration-base) var(--ease-out);
+}
+
+body.theme-light .liquidity-dropdown {
+  background: rgba(255, 255, 255, 0.97);
+  border-color: rgba(0, 0, 0, 0.06);
+  border-top-color: rgba(0, 0, 0, 0.04);
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 16px 40px rgba(0, 0, 0, 0.06);
+}
+
+.liquidity-dropdown::before,
+.liquidity-dropdown::after {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat-item,
+  .stat-indicator,
+  .dropdown-arrow {
+    transition: none !important;
+  }
+
+  .volume-dropdown,
+  .liquidity-dropdown {
+    animation: none !important;
+  }
+}
+
+/* --- Liquidity dropdown (VC / Apple-style, structured) --- */
+.liq-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  position: relative;
+  z-index: 1;
+}
+
+.liq-head-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.liq-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+}
+
+.liq-title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  color: rgba(245, 245, 247, 0.60);
+}
+
+.liq-metric {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.liq-amount {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: #f5f5f7;
+}
+
+.liq-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 245, 247, 0.65);
+}
+
+.liq-delta.up {
+  color: var(--bull);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.liq-delta.down {
+  color: var(--bear);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.liq-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.liq-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(245, 245, 247, 0.60);
+}
+
+.liq-meta-dot {
+  opacity: 0.45;
+}
+
+.liq-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0;
+  position: relative;
+  z-index: 1;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.liq-card {
+  min-width: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 12px;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+/* Grid separators */
+.liq-card:nth-child(odd) {
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.liq-card:nth-child(n+3) {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.liq-card:hover {
+  background: rgba(255, 255, 255, 0.03);
+  transform: none;
+}
+
+.liq-card-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.liq-card-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: rgba(245, 245, 247, 0.9);
+}
+
+.liq-pill {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.65);
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.liq-pill.pos {
+  color: var(--bull-bright);
+  background: rgba(16, 185, 129, 0.10);
+  border-color: rgba(16, 185, 129, 0.22);
+}
+
+.liq-kv {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.liq-kv-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-subtle);
+  min-width: 0;
+}
+
+.liq-kv-row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.liq-k {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  min-width: 0;
+}
+
+.liq-k-sub {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 2px 6px;
+  border-radius: 9999px;
+  border: 1px solid var(--border-subtle);
+}
+
+.liq-v {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.liq-v.pos { color: var(--bull-bright); }
+.liq-v.neg { color: var(--bear-bright); }
+
+/* Lock + depth bars: quieter, more “Apple” */
+.liq-card .lock-progress {
+  background: rgba(0, 0, 0, 0.22);
+  border-color: var(--border-subtle);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.liq-card .lock-fill.locked {
+  background: rgba(16, 185, 129, 0.75);
+}
+
+.liq-card .lock-fill.unlocked {
+  background: rgba(245, 245, 247, 0.12);
+}
+
+.liq-card .depth-bar-main {
+  height: 10px;
+  margin-top: 0;
+  background: rgba(0, 0, 0, 0.22);
+  border-color: var(--border-subtle);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.liq-card .depth-fill.buy {
+  background: rgba(16, 185, 129, 0.75);
+}
+
+.liq-card .depth-fill.sell {
+  background: rgba(239, 68, 68, 0.65);
+}
+
+.liq-legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.liq-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.liq-legend-label { color: var(--text-secondary); }
+
+.liq-legend-val {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.liq-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  border: 1px solid var(--border-default);
+  background: rgba(245, 245, 247, 0.10);
+}
+
+.liq-legend-item.buy .liq-swatch {
+  background: rgba(16, 185, 129, 0.75);
+  border-color: rgba(16, 185, 129, 0.28);
+}
+
+.liq-legend-item.sell .liq-swatch {
+  background: rgba(239, 68, 68, 0.65);
+  border-color: rgba(239, 68, 68, 0.28);
+}
+
+/* Liquidity Header */
+.liq-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.065);
+  position: relative;
+  z-index: 1;
+}
+
+.liq-main {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.liq-amount {
+  font-family: var(--font-mono);
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.liq-change {
+  /* Delta-chip typography — see `--font-num-chip` token. */
+  font-family: var(--font-num-chip);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  background: #15151a;
+}
+
+.liq-change.up {
+  color: #6EE7B7;
+  background: #0f1c16;
+}
+
+.liq-change.down {
+  color: #FCA5A5;
+  background: #1c1212;
+}
+
+.liq-subtitle {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(245, 245, 247, 0.58);
+}
+
+/* Pool Info */
+.liq-pool-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #141418;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 10px 12px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  position: relative;
+  z-index: 1;
+  transition: border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+}
+
+.liq-pool-info:hover {
+  background: #16161b;
+  border-color: rgba(255, 255, 255, 0.10);
+}
+
+.pool-header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pool-dex {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.92);
+}
+
+.pool-pair {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.pool-amounts {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+}
+
+.pool-token {
+  text-align: right;
+}
+
+.pool-value {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.pool-label {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.pool-divider {
+  color: rgba(245, 245, 247, 0.55);
+  font-size: 0.875rem;
+  font-weight: 300;
+}
+
+/* Lock Status */
+.liq-lock-status {
+  background: #141418;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 10px 12px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  position: relative;
+  z-index: 1;
+  transition: border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+}
+
+.liq-lock-status:hover {
+  background: #16161b;
+  border-color: rgba(255, 255, 255, 0.10);
+}
+
+.lock-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.lock-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.lock-title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 8px;
+  background: #101014;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.78);
+}
+
+.lock-badge {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.02em;
+}
+
+.lock-badge.locked {
+  color: #6EE7B7;
+  background: rgba(110, 231, 183, 0.15);
+  border: 1px solid rgba(110, 231, 183, 0.2);
+}
+
+.lock-badge.unlocked {
+  /* Unlocked is not “danger”; keep it neutral */
+  color: rgba(245, 245, 247, 0.78);
+  background: #15151a;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+/* Lock Progress Bar */
+.lock-progress {
+  display: flex;
+  height: 7px;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.28);
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.lock-fill {
+  transition: width 0.3s ease;
+}
+
+.lock-fill.locked {
+  background: linear-gradient(90deg, #0f513d, #137a5a, #2bbf8c);
+}
+
+.lock-fill.unlocked {
+  background: linear-gradient(90deg, #2a2a31, #3a3a45);
+}
+
+/* Lock Items */
+.lock-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 10px;
+  background: #101014;
+  border-radius: 14px;
+  margin-bottom: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+
+.lock-item:hover {
+  background: #0d0d10;
+  border-color: rgba(255, 255, 255, 0.09);
+  transform: translateY(-0.5px);
+}
+
+.lock-item:last-child {
+  margin-bottom: 0;
+}
+
+.lock-item.unlocked-item {
+  opacity: 0.85;
+}
+
+.lock-platform {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lock-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 7px;
+  background: #0c0c0f;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  color: rgba(245, 245, 247, 0.70);
+}
+
+.lock-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.lock-details {
+  text-align: right;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lock-amount {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.lock-expiry {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.lock-countdown {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #FBBF24;
+  background: rgba(251, 191, 36, 0.12);
+  padding: 3px 8px;
+  border-radius: 9999px;
+  border: 1px solid rgba(251, 191, 36, 0.16);
+}
+
+.lock-percent {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+/* Liquidity Depth & Activity Row */
+.liq-bottom-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.liq-depth {
+  background: #141418;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+}
+
+.liq-depth:hover {
+  background: #16161b;
+  border-color: rgba(255, 255, 255, 0.10);
+}
+
+.depth-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.depth-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.depth-holders {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.depth-bar-main {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 16px;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.24);
+  margin-top: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.depth-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.depth-fill.buy {
+  background: linear-gradient(90deg, #0f6b4d, #18a06f);
+}
+
+.depth-fill.sell {
+  background: linear-gradient(90deg, #8a2e2e, #d05252);
+}
+
+.depth-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 7px;
+}
+
+.depth-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  width: 32px;
+  flex-shrink: 0;
+}
+
+.depth-row.buy .depth-label {
+  color: rgba(110, 231, 183, 0.85);
+}
+
+.depth-row.sell .depth-label {
+  color: rgba(252, 165, 165, 0.85);
+}
+
+.depth-bar-single {
+  flex: 1;
+  height: 10px;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.24);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.depth-fill-single {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.depth-fill-single.buy {
+  background: linear-gradient(90deg, #0f6b4d, #18a06f);
+}
+
+.depth-fill-single.sell {
+  background: linear-gradient(90deg, #8a2e2e, #d05252);
+}
+
+.depth-percent {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  width: 40px;
+  text-align: right;
+  color: var(--text-primary);
+}
+
+/* 24h Activity */
+.liq-activity {
+  background: #141418;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+}
+
+.liq-activity:hover {
+  background: #16161b;
+  border-color: rgba(255, 255, 255, 0.10);
+}
+
+.activity-title {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.activity-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.activity-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: #101014;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  transition: background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
+}
+
+.activity-item.added {
+  border-left: 3px solid #059669;
+}
+
+.activity-item.removed {
+  border-left: 3px solid #B91C1C;
+}
+
+.activity-item:hover {
+  background: #0d0d10;
+  border-color: rgba(255, 255, 255, 0.09);
+}
+
+.activity-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  background: #0c0c0f;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  color: rgba(245, 245, 247, 0.78);
+  flex-shrink: 0;
+}
+
+.activity-item.added .activity-icon {
+  color: rgba(110, 231, 183, 0.95);
+}
+
+.activity-item.removed .activity-icon {
+  color: rgba(252, 165, 165, 0.95);
+}
+
+.activity-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-value {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Light theme: match Apple table surfaces */
+body.theme-light .liq-change {
+  background: #f2f2f4;
+  border-color: rgba(17, 17, 19, 0.10);
+}
+
+body.theme-light .liq-change.up {
+  color: #0f513d;
+  background: #e9f6f0;
+}
+
+body.theme-light .liq-change.down {
+  color: #8a2e2e;
+  background: #fdeeee;
+}
+
+body.theme-light .liq-pool-info,
+body.theme-light .liq-lock-status,
+body.theme-light .liq-depth,
+body.theme-light .liq-activity {
+  background: #f6f6f7;
+  border-color: rgba(17, 17, 19, 0.10);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.80);
+}
+
+body.theme-light .lock-item,
+body.theme-light .activity-item {
+  background: #ffffff;
+  border-color: rgba(17, 17, 19, 0.10);
+}
+
+body.theme-light .lock-title-icon,
+body.theme-light .lock-icon,
+body.theme-light .activity-icon {
+  background: #f2f2f4;
+  border-color: rgba(17, 17, 19, 0.10);
+  color: rgba(17, 17, 19, 0.70);
+}
+
+body.theme-light .lock-badge.unlocked {
+  color: rgba(17, 17, 19, 0.75);
+  background: #f2f2f4;
+  border-color: rgba(17, 17, 19, 0.12);
+}
+
+.activity-label {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* ==================== TRADING PANEL - DAY MODE ==================== */
+body.theme-light .trading-compact {
+  background: transparent;
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .toggle-btn {
+  color: rgba(15, 23, 42, 0.5);
+}
+
+body.theme-light .toggle-btn:hover:not(.active) {
+  color: rgba(15, 23, 42, 0.72);
+}
+
+/* Active buy/sell toggle in light mode: neutral white segmented pill — see the
+   winning rule near the bottom of this file (~L5536). The colored-text variant
+   that used to live here was dead-overridden by it, so it's removed. */
+
+body.theme-light .card-label {
+  color: rgba(15, 23, 42, 0.15);
+}
+
+body.theme-light .swap-action-btn.signin {
+  background: rgba(0, 0, 0, 0.02);
+  color: rgba(17, 17, 19, 0.4);
+  border: none;
+  box-shadow: none;
+}
+
+body.theme-light .swap-action-btn.signin:hover {
+  background: rgba(0, 0, 0, 0.035);
+  color: rgba(17, 17, 19, 0.6);
+}
+
+/* Buy/Sell swap CTAs in light mode: the solid emerald/coral fills live in the
+   winning rules near ~L2630. The subtle-tint variants that used to be here were
+   dead-overridden by them, so they're removed. */
+
+body.theme-light .trade-card {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+body.theme-light .trade-card:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .trade-card.active {
+  background: rgba(0, 0, 0, 0.035);
+}
+
+body.theme-light .card-label {
+  color: rgba(15, 23, 42, 0.35);
+}
+
+body.theme-light .balance-amount {
+  color: rgba(15, 23, 42, 0.35);
+}
+
+body.theme-light .amount-input {
+  color: #0f172a;
+  caret-color: #0f172a;
+}
+
+body.theme-light .amount-input::placeholder {
+  color: rgba(15, 23, 42, 0.15);
+}
+
+body.theme-light .input-usd {
+  color: rgba(15, 23, 42, 0.35);
+}
+
+body.theme-light .trade-card {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+body.theme-light .trade-card:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .trade-card.active {
+  background: rgba(0, 0, 0, 0.035);
+}
+
+body.theme-light .quick-btn {
+  color: rgba(15, 23, 42, 0.25);
+}
+
+body.theme-light .quick-btn:hover {
+  color: rgba(15, 23, 42, 0.6);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .direction-btn {
+  background: transparent;
+  border-color: rgba(0, 0, 0, 0.06);
+  color: rgba(15, 23, 42, 0.25);
+}
+
+body.theme-light .direction-btn:hover {
+  background: rgba(0, 0, 0, 0.03);
+  color: rgba(15, 23, 42, 0.5);
+}
+
+body.theme-light .detail-label {
+  color: rgba(15, 23, 42, 0.2);
+}
+
+body.theme-light .detail-value {
+  color: rgba(15, 23, 42, 0.4);
+}
+
+body.theme-light .cost-label {
+  color: rgba(15, 23, 42, 0.25);
+}
+
+body.theme-light .cost-value {
+  color: rgba(15, 23, 42, 0.45);
+}
+
+body.theme-light .token-dropdown {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+body.theme-light .token-option:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .token-option.selected {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+body.theme-light .token-option-symbol {
+  color: rgba(15, 23, 42, 0.85);
+}
+
+body.theme-light .token-option-name {
+  color: rgba(15, 23, 42, 0.3);
+}
+
+body.theme-light .panel-right .token-name {
+  color: rgba(15, 23, 42, 0.85);
+}
+
+body.theme-light .selector-arrow {
+  color: rgba(15, 23, 42, 0.2);
+}
+
+body.theme-light .token-selector {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .token-selector:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.theme-light .panel-right .token-name {
+  color: #0f172a;
+}
+
+body.theme-light .token-dropdown {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+body.theme-light .token-option:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .token-option.selected {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+body.theme-light .token-option-symbol {
+  color: #0f172a;
+}
+
+body.theme-light .token-option-name {
+  color: #475569;
+}
+
+body.theme-light .quick-btn {
+  color: rgba(15, 23, 42, 0.3);
+}
+
+body.theme-light .quick-btn:hover {
+  color: rgba(15, 23, 42, 0.6);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .direction-btn {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: rgba(15, 23, 42, 0.35);
+}
+
+body.theme-light .direction-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: rgba(15, 23, 42, 0.6);
+}
+
+body.theme-light .detail-value {
+  color: rgba(15, 23, 42, 0.4);
+}
+
+body.theme-light .detail-value.rate {
+  color: rgba(15, 23, 42, 0.4);
+}
+
+body.theme-light .quote-label {
+  color: rgba(15, 23, 42, 0.3);
+}
+
+body.theme-light .quote-value {
+  color: rgba(15, 23, 42, 0.45);
+}
+
+body.theme-light .swap-wallet-chain {
+  color: rgba(15, 23, 42, 0.25);
+}
+
+body.theme-light .swap-wallet-addr {
+  color: rgba(15, 23, 42, 0.25);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .swap-wallet-eye {
+  color: rgba(15, 23, 42, 0.2);
+}
+
+/* Buy CTA, light mode: solid deep-emerald fill, white label. Readable on white,
+   deeper than the mint dark-mode tone so it reads as a committed action. */
+body.theme-light .swap-action-btn.buy {
+  background: var(--up, #059669);
+  color: #ffffff;
+  border: 1px solid var(--up, #059669);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 6px 20px -12px rgba(5, 150, 105, 0.45);
+}
+
+body.theme-light .swap-action-btn.buy:not(:disabled):hover {
+  background: color-mix(in srgb, var(--up, #059669) 88%, #000);
+  border-color: color-mix(in srgb, var(--up, #059669) 88%, #000);
+}
+
+/* Sell CTA, light mode: solid deep-coral fill, white label. */
+body.theme-light .swap-action-btn.sell {
+  background: var(--down, #DC2626);
+  color: #ffffff;
+  border: 1px solid var(--down, #DC2626);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 6px 20px -12px rgba(220, 38, 38, 0.45);
+}
+
+body.theme-light .swap-action-btn.sell:not(:disabled):hover {
+  background: color-mix(in srgb, var(--down, #DC2626) 88%, #000);
+  border-color: color-mix(in srgb, var(--down, #DC2626) 88%, #000);
+}
+
+body.theme-light .swap-action-btn.loading {
+  background: rgba(0, 0, 0, 0.03);
+  color: #475569;
+}
+
+body.theme-light .swap-action-btn.insufficient {
+  background: rgba(239, 68, 68, 0.06);
+  color: #475569;
+}
+
+/* ==================== TRADING PANEL - PREMIUM DARK UI ==================== */
+.trading-compact {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  overflow: visible;
+  z-index: 1;
+  /* No own top hairline — Dossier (or stats grid above) already provides
+     a single bottom rule, removing the duplicate keeps the seam tight. */
+}
+
+.trading-compact.swapping {
+  opacity: 0.85;
+}
+
+.trading-compact.success {
+  opacity: 1;
+}
+
+/* Trade Toggle - Flat text */
+.trade-toggle {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-bottom: 2px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+/* Pre-trade "Simulate" safety button - sits with Details on the right. */
+.trade-toggle .sim-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-2, rgba(245, 245, 247, 0.6));
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  white-space: nowrap;
+}
+.trade-toggle .sim-btn:hover:not(:disabled) {
+  color: var(--text-1, #f5f5f7);
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+}
+.trade-toggle .sim-btn:disabled { opacity: 0.45; cursor: default; }
+.trade-toggle .sim-btn svg { opacity: 0.85; }
+.trade-toggle .sim-btn--ok { color: var(--up, #10B981); border-color: color-mix(in srgb, var(--up, #10B981) 45%, transparent); }
+.trade-toggle .sim-btn--fail { color: var(--down, #EF4444); border-color: color-mix(in srgb, var(--down, #EF4444) 45%, transparent); }
+.trade-toggle .sim-btn--warn { color: var(--amber, #F59E0B); border-color: color-mix(in srgb, var(--amber, #F59E0B) 45%, transparent); }
+/* keep Simulate + Details adjacent on the right (Details' own margin-left:auto would split them) */
+.trade-toggle .sim-btn + .details-toggle { margin-left: 8px; }
+
+/* Verdict strip under the Buy/Sell row. */
+.sim-result {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 5px 0 3px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--text-2, rgba(245, 245, 247, 0.65));
+}
+.sim-result-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  background: var(--text-3, rgba(245, 245, 247, 0.4));
+}
+.sim-result-text { flex: 1; }
+.sim-result--ok {
+  border-color: color-mix(in srgb, var(--up, #10B981) 35%, transparent);
+  background: color-mix(in srgb, var(--up, #10B981) 8%, transparent);
+  color: var(--up-bright, #34D399);
+}
+.sim-result--ok .sim-result-dot { background: var(--up, #10B981); box-shadow: 0 0 8px color-mix(in srgb, var(--up, #10B981) 60%, transparent); }
+.sim-result--fail {
+  border-color: color-mix(in srgb, var(--down, #EF4444) 35%, transparent);
+  background: color-mix(in srgb, var(--down, #EF4444) 8%, transparent);
+  color: var(--down-bright, #F87171);
+}
+.sim-result--fail .sim-result-dot { background: var(--down, #EF4444); box-shadow: 0 0 8px color-mix(in srgb, var(--down, #EF4444) 60%, transparent); }
+.sim-result--warn {
+  border-color: color-mix(in srgb, var(--amber, #F59E0B) 30%, transparent);
+  background: color-mix(in srgb, var(--amber, #F59E0B) 7%, transparent);
+  color: var(--amber, #F59E0B);
+}
+.sim-result--warn .sim-result-dot { background: var(--amber, #F59E0B); }
+/* simulating (no verdict yet) - pulse the neutral dot */
+.sim-result:not(.sim-result--ok):not(.sim-result--fail):not(.sim-result--warn) .sim-result-dot {
+  animation: sim-pulse 1s ease-in-out infinite;
+}
+
+/* Light mode: the *-bright verdict colours (mint #34D399, coral #F87171,
+   amber) are low-contrast/washed on white. Use deep, legible variants on a
+   clean tinted card so "Simulation passed" reads crisp on white. */
+body.theme-light .sim-result {
+  border-color: rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  color: var(--text-2, rgba(15, 23, 42, 0.6));
+}
+body.theme-light .sim-result--ok {
+  border-color: rgba(5, 150, 105, 0.30);
+  background: rgba(5, 150, 105, 0.08);
+  color: #047857;
+}
+body.theme-light .sim-result--fail {
+  border-color: rgba(220, 38, 38, 0.30);
+  background: rgba(220, 38, 38, 0.07);
+  color: #b91c1c;
+}
+body.theme-light .sim-result--warn {
+  border-color: rgba(180, 83, 9, 0.30);
+  background: rgba(217, 119, 6, 0.08);
+  color: #b45309;
+}
+
+/* Light-mode hover repair — the dark rules brighten these to warm-white on
+   hover (stat value / token-name / selector arrow all hardcode rgb(245,245,247)),
+   so they vanished on white. Keep dark; add subtle dark highlights. */
+body.theme-light .panel-right .stat-item:hover .stat-value {
+  color: var(--text-1);
+}
+body.theme-light .token-selector:hover .token-name {
+  color: var(--text-1);
+}
+body.theme-light .token-selector:hover .selector-arrow {
+  color: var(--text-2);
+}
+body.theme-light .spectre-token:hover {
+  background: rgba(17, 17, 19, 0.04);
+}
+body.theme-light .trade-toggle .sim-btn:hover:not(:disabled) {
+  background: rgba(17, 17, 19, 0.06);
+  color: var(--text-1);
+}
+body.theme-light .swap-action-btn.insufficient:hover,
+body.theme-light .swap-action-btn.buy.insufficient:hover {
+  background: rgba(17, 17, 19, 0.05);
+  color: var(--text-2);
+}
+@keyframes sim-pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+/* Wallet inline - right of Buy/Sell */
+.swap-wallet-inline {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+}
+
+.swap-wallet-inline .swap-wallet-indicator {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--bull, #10B981);
+  flex-shrink: 0;
+}
+
+.swap-wallet-inline .swap-wallet-chain {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.swap-wallet-inline .swap-wallet-eye {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  color: rgba(245, 245, 247, 0.50);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.swap-wallet-inline .swap-wallet-eye:hover {
+  color: rgba(245, 245, 247, 0.65);
+}
+
+/* Day mode */
+body.theme-light .swap-wallet-inline .swap-wallet-chain {
+  color: #94a3b8;
+}
+
+body.theme-light .swap-wallet-inline .swap-wallet-eye {
+  color: rgba(15, 23, 42, 0.25);
+}
+
+body.theme-light .swap-wallet-inline .swap-wallet-eye:hover {
+  color: rgba(15, 23, 42, 0.5);
+}
+
+/* Wallet address shown below toggle row */
+.swap-wallet-addr-inline {
+  display: block;
+  width: 100%;
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  color: rgba(245, 245, 247, 0.55);
+  padding: 4px 0;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.swap-wallet-addr-inline:hover {
+  color: rgba(245, 245, 247, 0.65);
+}
+
+body.theme-light .swap-wallet-addr-inline {
+  color: #94a3b8;
+}
+
+body.theme-light .swap-wallet-addr-inline:hover {
+  color: #64748b;
+}
+
+.toggle-slider {
+  display: none;
+}
+
+.toggle-btn {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 0;
+  margin-right: 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  transition: color 100ms ease, border-color 100ms ease;
+  position: relative;
+}
+
+.toggle-btn:hover:not(.active) {
+  color: rgba(245, 245, 247, 0.65);
+}
+
+/* Buy/Sell selection snaps instantly - a trader's mode flip must never ease. */
+.toggle-btn.active {
+  transition: none;
+}
+
+.toggle-btn.active.buy {
+  color: var(--bull, #10B981);
+  border-bottom-color: var(--bull, #10B981);
+}
+
+.toggle-btn.active.sell {
+  color: var(--bear, #EF4444);
+  border-bottom-color: var(--bear, #EF4444);
+}
+
+.toggle-icon-wrapper,
+.toggle-icon,
+.icon-glow {
+  display: none;
+}
+
+/* Swap Container */
+.swap-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+/* Flow Line */
+.flow-line {
+  display: none;
+}
+
+/* Trade Card - Terminal input zone */
+.trade-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.02);
+  border: none;
+  border-radius: 10px;
+  padding: 9px 12px;
+  transition: background 0.2s ease;
+  z-index: 1;
+  overflow: visible;
+}
+
+.trade-card::before {
+  display: none;
+}
+
+.trade-card.pay {
+  z-index: 100;
+}
+
+.trade-card.receive {
+  z-index: 10;
+}
+
+.trade-card:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.trade-card.active {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.trade-card.active::before {
+  display: none;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.card-label {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.50);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.balance-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.balance-text {
+  display: none;
+}
+
+.balance-amount {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.balance-usd {
+  display: none;
+}
+
+.card-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.input-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.amount-input {
+  background: none;
+  border: none;
+  outline: none;
+  /* PAY / RECEIVE input uses the chip-numerals font (Geist sans with
+     rounded zeros) instead of Geist Mono. Same reasoning as the
+     watchlist + trending chips — slashed zero kills readability for
+     numeric input at this size. `tabular-nums` keeps digit alignment
+     stable as the user types, and `'zero' 0` is a defensive guard
+     against any font that has the slashed alternate enabled. */
+  font-family: var(--font-num-chip);
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1;
+  color: rgba(245, 245, 247, 0.95);
+  width: 100%;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 0;
+  caret-color: rgba(245, 245, 247, 0.6);
+  transition: color 0.2s ease;
+}
+
+.amount-input:focus {
+  text-shadow: none;
+}
+
+.amount-input:focus-visible {
+  outline: none;
+}
+
+.amount-input::placeholder {
+  color: rgba(245, 245, 247, 0.50);
+}
+
+.input-usd {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(245, 245, 247, 0.55);
+  margin-top: 4px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  display: inline-block;
+  width: fit-content;
+  box-shadow: none;
+}
+
+/* Token Selector - Black Apple Style */
+.token-selector-wrapper {
+  position: relative;
+  flex-shrink: 0;
+  z-index: 200;
+}
+
+.token-selector-wrapper:has(.token-dropdown) {
+  z-index: 10000;
+}
+
+.token-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px 6px 6px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  position: relative;
+}
+
+.token-selector:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.token-selector:active {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.panel-right .token-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: white;
+  border: none;
+  box-shadow: none;
+  opacity: 0.85;
+}
+
+.panel-right .token-icon img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: contain;
+}
+
+.spectre-icon {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: none;
+  box-shadow: none;
+  padding: 2px;
+}
+
+.spectre-icon img {
+  width: 20px;
+  height: 20px;
+}
+
+.panel-right .token-name {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.7);
+  letter-spacing: 0;
+}
+
+.token-selector:hover .token-name {
+  color: rgba(245, 245, 247, 0.9);
+}
+
+.selector-arrow {
+  width: 10px;
+  height: 10px;
+  color: rgba(245, 245, 247, 0.50);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.token-selector:hover .selector-arrow {
+  color: rgba(245, 245, 247, 0.60);
+}
+
+.selector-arrow.open {
+  transform: rotate(180deg);
+}
+
+/* Token Dropdown - Terminal list */
+.token-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  width: 200px;
+  background: rgba(12, 12, 15, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 3px;
+  z-index: 9999;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  animation: tokenDropdownIn 0.12s ease-out;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+@keyframes tokenDropdownIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.token-dropdown::before {
+  display: none;
+}
+
+.token-dropdown::after {
+  display: none;
+}
+
+/* Custom scrollbar for dropdown */
+.token-dropdown::-webkit-scrollbar {
+  width: 4px;
+}
+
+.token-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.token-dropdown::-webkit-scrollbar-thumb {
+  background: rgba(245, 245, 247, 0.12);
+  border-radius: 2px;
+}
+
+.token-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  text-align: left;
+  position: relative;
+}
+
+.token-option + .token-option {
+  border-top: none;
+}
+
+.token-option:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.token-option.selected {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.token-option:active {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.token-option:focus-visible {
+  outline: 1px solid rgba(245, 245, 247, 0.1);
+  outline-offset: -1px;
+}
+
+.token-option-icon {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+  border: none;
+  box-shadow: none;
+  opacity: 0.8;
+}
+
+.token-option-icon img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: contain;
+}
+
+.token-option-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.token-option-symbol {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.75);
+  letter-spacing: 0;
+}
+
+.token-option:hover .token-option-symbol {
+  color: rgba(245, 245, 247, 0.95);
+}
+
+.token-option-name {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: rgba(245, 245, 247, 0.50);
+}
+
+.token-option-balance {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.token-option-amount {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: rgba(245, 245, 247, 0.7);
+}
+
+.token-option-usd {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+/* SPECTRE Token Selector */
+.spectre-token {
+  cursor: default;
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.04);
+  box-shadow: none;
+}
+
+.spectre-token:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.04);
+  transform: none;
+  box-shadow: none;
+}
+
+/* Quick Amounts - Ghost text */
+.quick-amounts {
+  display: flex;
+  gap: 0;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.quick-btn {
+  flex: 1;
+  padding: 4px 6px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  transition: background-color 100ms ease, color 100ms ease;
+  position: relative;
+}
+
+.quick-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  color: rgba(245, 245, 247, 0.7);
+  transform: none;
+  box-shadow: none;
+}
+
+.quick-btn:active {
+  background: rgba(255, 255, 255, 0.02);
+  transform: none;
+  box-shadow: none;
+  transition: none; /* press feedback lands on the same frame */
+}
+
+/* MAX button - same style */
+.quick-btn:last-child {
+  background: transparent;
+  border: none;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.quick-btn:last-child:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  color: rgba(245, 245, 247, 0.8);
+  box-shadow: none;
+}
+
+/* Swap Direction Button */
+.swap-direction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  height: 0;
+  z-index: 2;
+}
+
+.direction-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 50%;
+  color: rgba(245, 245, 247, 0.50);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  z-index: 2;
+}
+
+.direction-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(245, 245, 247, 0.6);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.direction-btn:active {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.direction-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.direction-glow {
+  display: none !important;
+}
+
+/* Swap Details - Compact rate line */
+.swap-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 4px;
+  margin-top: 2px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.detail-label {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: rgba(245, 245, 247, 0.50);
+}
+
+.detail-value {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: rgba(245, 245, 247, 0.60);
+}
+
+.detail-value.rate {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.rate-pulse {
+  display: none;
+}
+
+/* Cost breakdown - shows price impact, fees, slippage, total cost */
+.swap-cost-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+
+.cost-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cost-label {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.cost-value {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: rgba(245, 245, 247, 0.60);
+}
+
+.cost-row.cost-total {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.cost-row.cost-total .cost-label {
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.60);
+}
+
+.cost-row.cost-total .cost-value {
+  font-weight: 600;
+  color: var(--bear, #EF4444);
+}
+
+/* Day mode */
+body.theme-light .swap-cost-breakdown {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .cost-label {
+  color: #94a3b8;
+}
+
+body.theme-light .cost-value {
+  color: #475569;
+}
+
+body.theme-light .cost-row.cost-total .cost-label {
+  color: #334155;
+}
+
+body.theme-light .cost-row.cost-total .cost-value {
+  color: var(--bear, #EF4444);
+}
+
+.cost-value.cost-warning {
+  color: var(--amber, #F59E0B);
+}
+
+.cost-row.cost-danger {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+.cost-row.cost-danger .cost-label,
+.cost-row.cost-danger .cost-value {
+  color: var(--bear, #EF4444);
+  font-weight: 600;
+}
+
+@keyframes subtlePulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.detail-value.impact.low {
+  color: #4ade80;
+}
+
+.detail-value.impact.medium {
+  color: #fbbf24;
+}
+
+.detail-value.impact.high {
+  color: #f87171;
+}
+
+/* Swap Quote Info */
+.swap-quote-info {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 8px;
+  margin-bottom: 6px;
+  background: transparent;
+  border-radius: 6px;
+  border: none;
+}
+
+.quote-detail {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.quote-label {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.quote-value {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(245, 245, 247, 0.60);
+}
+
+.quote-value.warning {
+  color: #F59E0B;
+}
+
+/* Wallet Address Strip */
+.swap-wallet-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  margin: 4px 0 2px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.swap-wallet-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.swap-wallet-indicator {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--bull, #10B981);
+  flex-shrink: 0;
+  box-shadow: none;
+  animation: none;
+}
+
+@keyframes walletPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(16, 185, 129, 0.35); }
+  50% { opacity: 0.6; box-shadow: 0 0 4px rgba(16, 185, 129, 0.2); }
+}
+
+.swap-wallet-chain {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  flex: 1;
+  letter-spacing: 0.02em;
+}
+
+.swap-wallet-addr {
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.55);
+  word-break: break-all;
+  cursor: pointer;
+  padding: 5px 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  transition: color var(--duration-fast, 150ms) var(--ease-out, ease-out);
+}
+
+.swap-wallet-addr:hover {
+  color: rgba(245, 245, 247, 0.60);
+}
+
+.swap-wallet-eye {
+  flex-shrink: 0;
+  padding: 4px;
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: rgba(245, 245, 247, 0.50);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: all var(--duration-fast, 150ms) var(--ease-out, ease-out);
+}
+
+.swap-wallet-eye:hover {
+  color: rgba(245, 245, 247, 0.60);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Insufficient balance state - muted, no color, premium ghost */
+.swap-action-btn.insufficient,
+.swap-action-btn.buy.insufficient,
+.swap-action-btn.sell.insufficient {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.04) !important;
+  color: rgba(245, 245, 247, 0.55) !important;
+  cursor: not-allowed;
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+}
+
+.swap-action-btn.insufficient:hover,
+.swap-action-btn.buy.insufficient:hover,
+.swap-action-btn.sell.insufficient:hover {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-color: rgba(255, 255, 255, 0.04) !important;
+  color: rgba(245, 245, 247, 0.55) !important;
+}
+
+/* "Fund the wallet to trade" CTA - shown on a BUY with insufficient balance.
+   Unlike .insufficient (a dead-end ghost) this is an inviting primary action, so
+   it borrows the token page's own ACCENT channel (--accent*, re-tinted per token
+   by useAccentTheme) for a soft branded fill + glow that matches the rest of the
+   page. Falls back to warm-white when no token accent is set. */
+.swap-action-btn.deposit,
+.swap-action-btn.buy.deposit {
+  background:
+    linear-gradient(180deg, var(--accent-wash, rgba(245, 245, 247, 0.12)) 0%, color-mix(in srgb, var(--accent, #f5f5f7) 5%, transparent) 100%) !important;
+  color: var(--accent-bright, #f5f5f7) !important;
+  border: 1px solid color-mix(in srgb, var(--accent, #f5f5f7) 26%, transparent) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 6px 22px -10px var(--accent-glow, rgba(245, 245, 247, 0.35)) !important;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: background var(--duration-fast, 150ms) var(--ease-out, ease), border-color var(--duration-fast, 150ms) var(--ease-out, ease), box-shadow var(--duration-fast, 150ms) var(--ease-out, ease), transform var(--duration-fast, 150ms) var(--ease-out, ease);
+}
+.swap-action-btn.deposit:not(:disabled):hover,
+.swap-action-btn.buy.deposit:not(:disabled):hover {
+  background:
+    linear-gradient(180deg, var(--accent-wash, rgba(245, 245, 247, 0.18)) 0%, color-mix(in srgb, var(--accent, #f5f5f7) 11%, transparent) 100%) !important;
+  border-color: color-mix(in srgb, var(--accent, #f5f5f7) 46%, transparent) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 8px 26px -8px var(--accent-glow, rgba(245, 245, 247, 0.45)) !important;
+  transform: translateY(-1px);
+}
+.swap-action-btn.deposit:not(:disabled):active,
+.swap-action-btn.buy.deposit:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 3px 12px -8px var(--accent-glow, rgba(245, 245, 247, 0.3)) !important;
+}
+.swap-action-btn.deposit .btn-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+/* Fund CTA icons: slightly lifted so the wallet + arrow read as one glyph pair. */
+.swap-action-btn.deposit .btn-content svg {
+  opacity: 0.92;
+}
+/* Day mode: keep the accent fill, darken the label for contrast on the light tint. */
+body.theme-light .swap-action-btn.deposit,
+body.theme-light .swap-action-btn.buy.deposit {
+  color: var(--accent-deep, #0f172a) !important;
+  border-color: color-mix(in srgb, var(--accent, #0f172a) 34%, transparent) !important;
+}
+
+/* Swap Action Button - Flat */
+.swap-action-btn {
+  width: 100%;
+  padding: 11px 24px;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #f5f5f7;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out), opacity var(--duration-fast) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+  margin-top: 6px;
+  letter-spacing: -0.01em;
+  box-shadow: none;
+}
+
+.swap-action-btn::before {
+  display: none;
+}
+
+.swap-action-btn:focus-visible {
+  outline: 2px solid rgba(245, 245, 247, 0.3);
+  outline-offset: 2px;
+}
+
+.swap-action-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Locked Coming Soon affordance — applied alongside the .signin
+   variant when the wallet isn't connected. Subtle dim + lock glyph
+   inside the label so the button still reads as a CTA, just gated. */
+.swap-action-btn.is-locked {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.swap-action-btn.is-locked:hover {
+  opacity: 0.9;
+  transform: none;
+}
+
+.swap-action-btn__lock {
+  margin-left: 6px;
+  opacity: 0.7;
+}
+
+/* Sign In - matches trade-card surface + periodic pulse */
+.swap-action-btn.signin {
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(245, 245, 247, 0.60);
+  border: 1px solid transparent;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 0.875rem;
+  letter-spacing: -0.01em;
+  padding: 11px 20px;
+  border-radius: 10px;
+  box-shadow: none;
+  animation: signinPulse 30s cubic-bezier(0.4, 0, 0.2, 1) 5s infinite;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+@keyframes signinPulse {
+  0%, 100% {
+    border-color: transparent;
+    color: rgba(245, 245, 247, 0.60);
+    background: rgba(255, 255, 255, 0.02);
+  }
+  8% {
+    border-color: rgba(255, 255, 255, 0.08);
+    color: rgba(245, 245, 247, 0.6);
+    background: rgba(255, 255, 255, 0.04);
+  }
+  16% {
+    border-color: transparent;
+    color: rgba(245, 245, 247, 0.60);
+    background: rgba(255, 255, 255, 0.02);
+  }
+}
+
+.swap-action-btn.signin:hover {
+  background: rgba(255, 255, 255, 0.035);
+  color: rgba(245, 245, 247, 0.65);
+  border-color: transparent;
+  animation: none;
+}
+
+.swap-action-btn.signin:active {
+  background: rgba(255, 255, 255, 0.015);
+  transition-duration: 0.1s;
+}
+
+/* Buy — the page's primary CTA. Borrows the token's own ACCENT channel
+   (--accent*, re-tinted per token by useAccentTheme) so the hero action
+   harmonizes with the tinted token page, and lands as a bold filled CTA
+   (gradient + colored glow + lift) instead of a flat chip. Shares the exact
+   design language as the "Fund the wallet" (.deposit) CTA so the panel's
+   primary-action look is unified. Falls back to warm-white with no token accent. */
+.swap-action-btn.buy {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent, #f5f5f7) 22%, transparent) 0%, color-mix(in srgb, var(--accent, #f5f5f7) 11%, transparent) 100%);
+  color: var(--accent-bright, #f5f5f7);
+  border: 1px solid color-mix(in srgb, var(--accent, #f5f5f7) 32%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 7px 24px -10px var(--accent-glow, rgba(245, 245, 247, 0.4));
+  transition: background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+}
+
+.swap-action-btn.buy:not(:disabled):hover {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent, #f5f5f7) 30%, transparent) 0%, color-mix(in srgb, var(--accent, #f5f5f7) 16%, transparent) 100%);
+  border-color: color-mix(in srgb, var(--accent, #f5f5f7) 50%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 9px 28px -8px var(--accent-glow, rgba(245, 245, 247, 0.5));
+  transform: translateY(-1px);
+}
+
+.swap-action-btn.buy:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 3px 12px -8px var(--accent-glow, rgba(245, 245, 247, 0.32));
+}
+
+/* Sell — the exit CTA. Bold coral fill matched to Buy's energy (gradient +
+   glow + lift) so the mode toggle reads as one coherent pair. */
+.swap-action-btn.sell {
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.22) 0%, rgba(239, 68, 68, 0.11) 100%);
+  color: var(--bear-bright, #F87171);
+  border: 1px solid rgba(239, 68, 68, 0.30);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 7px 24px -10px rgba(239, 68, 68, 0.45);
+  transition: background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+}
+
+.swap-action-btn.sell:not(:disabled):hover {
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.30) 0%, rgba(239, 68, 68, 0.16) 100%);
+  border-color: rgba(239, 68, 68, 0.46);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 9px 28px -8px rgba(239, 68, 68, 0.55);
+  transform: translateY(-1px);
+}
+
+.swap-action-btn.sell:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 3px 12px -8px rgba(239, 68, 68, 0.38);
+}
+
+/* Idle Buy CTA - wallet connected, no amount typed yet. An enabled, inviting
+   action with a light traveling around the border to pull the eye toward
+   starting a swap. The beam rides the token ACCENT channel so it belongs to the
+   tinted page, and only runs in this idle state (the moment an amount is typed
+   the class drops and the button is the solid CTA). Clicking it focuses the
+   amount input (see onClick), so the invitation leads somewhere.
+   Chrome-first: the animated conic angle needs @property (registered below);
+   without it the ring sits static - graceful degradation. */
+@property --scb-beam {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.swap-action-btn.buy.idle-cta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;                     /* border thickness the beam rides */
+  background: conic-gradient(
+    from var(--scb-beam),
+    transparent 0deg,
+    transparent 235deg,
+    color-mix(in srgb, var(--accent, #f5f5f7) 50%, transparent) 308deg,
+    var(--accent-bright, #ffffff) 348deg,
+    color-mix(in srgb, var(--accent, #f5f5f7) 50%, transparent) 356deg,
+    transparent 360deg
+  );
+  /* Mask to just the padding ring so the conic gradient reads as a border, not a fill. */
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: scbBeam 4.8s linear infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes scbBeam {
+  to { --scb-beam: 360deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swap-action-btn.buy.idle-cta::after { animation: none; }
+}
+
+.swap-action-btn.loading {
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  color: rgba(245, 245, 247, 0.65);
+  box-shadow: none;
+}
+
+.swap-action-btn.success {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  color: #f5f5f7;
+  box-shadow: none;
+}
+
+.btn-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.btn-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.12),
+    transparent
+  );
+  transition: left 0.5s ease;
+  pointer-events: none;
+}
+
+.swap-action-btn:not(:disabled):hover .btn-shine {
+  left: 100%;
+}
+
+/* ==================== SWAP EFFECTS - FUTURISTIC ==================== */
+
+/* Swap Overlay */
+/* ============================================================
+   Swap in-flight strip (compact, terminal-grade). Replaced the old
+   full-panel takeover (absolute inset:0 overlay, orbiting particles,
+   72px icon). The success state is .swap-success-card (below).
+   ============================================================ */
+.swap-overlay {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 10px 0 2px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  overflow: hidden;
+  animation: sea-slide-in 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* In-flight: neutral warm-white */
+.swap-overlay {
+  border: 1px solid rgba(245, 245, 247, 0.10);
+  background: linear-gradient(135deg, rgba(245, 245, 247, 0.05) 0%, rgba(245, 245, 247, 0.02) 100%);
+}
+
+.swap-flow-icon {
+  flex: none;
+  margin-top: 1px;
+  color: rgba(245, 245, 247, 0.85);
+}
+
+/* Pulsing live-dot for the in-flight strip (no spinners) */
+.swap-live-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin: 5px 4px 0 3px;
+  border-radius: 50%;
+  background: rgba(245, 245, 247, 0.85);
+  box-shadow: 0 0 8px rgba(245, 245, 247, 0.45);
+  animation: swapDotPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes swapDotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.8); }
+}
+
+.swap-flow-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.swap-flow-title {
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.75);
+}
+
+.swap-flow-pair {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-family: var(--font-num-chip, inherit);
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.85);
+}
+
+.swap-flow-pair .sfp-usd {
+  color: rgba(245, 245, 247, 0.45);
+  font-size: 11px;
+}
+
+.swap-flow-pair .sfp-arrow {
+  flex: none;
+  color: rgba(245, 245, 247, 0.4);
+}
+
+/* Thin indeterminate progress line along the strip's bottom edge */
+.swap-flow-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.swap-flow-track::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(245, 245, 247, 0.55) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: swapTrackSlide 1.4s linear infinite;
+}
+
+@keyframes swapTrackSlide {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* Day mode - in-flight strip */
+body.theme-light .swap-overlay {
+  border-color: rgba(15, 23, 42, 0.12);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.05) 0%, rgba(15, 23, 42, 0.02) 100%);
+}
+
+body.theme-light .swap-flow-icon {
+  color: rgba(15, 23, 42, 0.8);
+}
+
+body.theme-light .swap-flow-title {
+  color: rgba(15, 23, 42, 0.7);
+}
+
+/* ============================================================
+   Swap success card - token-page language (warm white + accent).
+   Structured: header row, then in-leg -> out-leg with USD sub-values.
+   ============================================================ */
+.swap-success-card {
+  position: relative;
+  margin: 10px 0 2px;
+  padding: 12px 13px;
+  border-radius: 12px;
+  border: 1px solid rgba(245, 245, 247, 0.09);
+  background:
+    radial-gradient(120% 140% at 100% 0%, var(--accent-wash, rgba(245, 245, 247, 0.06)) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(24, 24, 28, 0.6) 0%, rgba(14, 14, 17, 0.6) 100%);
+  animation: sea-slide-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.swap-success-card .ssc-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.swap-success-card .ssc-check {
+  flex: none;
+  color: var(--accent, #f5f5f7);
+}
+
+.swap-success-card .ssc-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+.swap-success-card .ssc-flow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.swap-success-card .ssc-leg {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.swap-success-card .ssc-leg--out {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.swap-success-card .ssc-amt {
+  font-family: var(--font-num-chip, inherit);
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.95);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.swap-success-card .ssc-leg--out .ssc-amt {
+  color: #fff;
+}
+
+.swap-success-card .ssc-usd {
+  font-family: var(--font-num-chip, inherit);
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.4);
+}
+
+.swap-success-card .ssc-arrow {
+  flex: none;
+  color: var(--accent, rgba(245, 245, 247, 0.6));
+  opacity: 0.7;
+}
+
+/* Day mode - success card */
+body.theme-light .swap-success-card {
+  border-color: rgba(15, 23, 42, 0.1);
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(15, 23, 42, 0.04) 0%, transparent 55%),
+    linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+}
+
+body.theme-light .swap-success-card .ssc-check,
+body.theme-light .swap-success-card .ssc-arrow {
+  color: #0f172a;
+}
+
+body.theme-light .swap-success-card .ssc-title {
+  color: rgba(15, 23, 42, 0.55);
+}
+
+body.theme-light .swap-success-card .ssc-amt {
+  color: #1e293b;
+}
+
+body.theme-light .swap-success-card .ssc-leg--out .ssc-amt {
+  color: #0f172a;
+}
+
+body.theme-light .swap-success-card .ssc-usd {
+  color: #64748b;
+}
+
+body.theme-light .swap-flow-pair {
+  color: #0f172a;
+}
+
+body.theme-light .swap-flow-pair .sfp-usd {
+  color: #64748b;
+}
+
+body.theme-light .swap-live-dot {
+  background: #0f172a;
+  box-shadow: 0 0 8px rgba(15, 23, 42, 0.3);
+}
+
+/* Button Spinner */
+.btn-spinner {
+  position: relative;
+  width: 18px;
+  height: 18px;
+}
+
+.spinner-ring {
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-top-color: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  animation: spinSimple 0.7s linear infinite;
+}
+
+.spinner-ring:nth-child(2),
+.spinner-ring:nth-child(3) {
+  display: none;
+}
+
+@keyframes spinSimple {
+  to { transform: rotate(360deg); }
+}
+
+/* Button Success Check */
+.btn-success-check {
+  width: 18px;
+  height: 18px;
+  animation: checkBounce 0.4s ease;
+}
+
+@keyframes checkBounce {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+
+/* Button Icon */
+.btn-icon {
+  font-size: 0.875rem;
+  opacity: 0.7;
+}
+
+/* Button Glow */
+.btn-glow {
+  display: none !important;
+}
+
+/* Swapping state */
+.trading-compact.swapping .trade-card {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.trading-compact.swapping .direction-btn {
+  color: rgba(245, 245, 247, 0.92);
+  border-color: rgba(245, 245, 247, 0.18);
+  animation: none;
+}
+
+@keyframes directionGlow {
+  0%, 100% { 
+    box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
+  50% { 
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* =========================================
+   Responsive RightPanel System
+   ========================================= */
+
+/* Large Desktop (1600px) */
+@media (max-width: 1600px) {
+  .right-panel {
+    gap: var(--sp-2);
+  }
+  
+  .token-banner-section {
+    min-height: 124px;
+    border-radius: 20px;
+  }
+
+  .token-banner-image,
+  .banner-gradient {
+    min-height: 124px;
+  }
+  
+  .banner-content {
+    padding: 16px 20px;
+    gap: 14px;
+  }
+  
+  .banner-token-logo {
+    width: 60px;
+    height: 60px;
+  }
+
+  .banner-symbol {
+    font-size: 1.5rem;
+  }
+
+  .banner-name {
+    font-size: 0.875rem;
+  }
+  
+  .banner-network {
+    font-size: 0.8125rem;
+  }
+}
+
+/* Desktop (1400px) */
+@media (max-width: 1400px) {
+  .token-banner-section {
+    min-height: 110px;
+  }
+  
+  .token-banner-image,
+  .banner-gradient {
+    min-height: 110px;
+  }
+  
+  .banner-content {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+  
+  .banner-token-logo {
+    width: 56px;
+    height: 56px;
+    border-width: 2px;
+  }
+  
+  .banner-symbol {
+    font-size: 1.125rem;
+  }
+  
+  .banner-name {
+    font-size: 0.8125rem;
+  }
+  
+  .banner-customize-btn {
+    padding: 4px 10px;
+    font-size: 0.8125rem;
+    bottom: 8px;
+    right: 8px;
+  }
+  
+  /* Stats section */
+  .stats-grid {
+    gap: var(--sp-2);
+  }
+  
+  .panel-right .stat-item {
+    padding: var(--sp-2);
+  }
+  
+  .panel-right .stat-label {
+    font-size: 0.8125rem;
+  }
+  
+  .panel-right .stat-value {
+    font-size: 0.875rem;
+  }
+  
+  /* Trading section */
+  .trading-compact {
+    border-radius: var(--radius-md);
+  }
+  
+  .trade-card {
+    padding: var(--sp-3);
+    gap: var(--sp-2);
+  }
+  
+  .input-row {
+    gap: var(--sp-2);
+  }
+  
+  .amount-input {
+    font-size: 1.25rem;
+    padding: 10px 14px;
+  }
+  
+  .token-select {
+    padding: 10px 14px;
+  }
+  
+  .panel-right .token-symbol {
+    font-size: 0.875rem;
+  }
+  
+  .token-balance {
+    font-size: 0.8125rem;
+  }
+  
+  .percent-btn {
+    padding: 4px 8px;
+    font-size: 0.8125rem;
+  }
+  
+  .direction-btn {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .direction-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .trade-submit-btn {
+    padding: 12px 16px;
+    font-size: 0.875rem;
+  }
+  
+  .swap-route {
+    gap: var(--sp-2);
+    font-size: 0.8125rem;
+    padding: var(--sp-2);
+  }
+}
+
+/* Small Desktop / Large Tablet (1200px) */
+@media (max-width: 1200px) {
+  .right-panel {
+    gap: var(--sp-2);
+  }
+  
+  .token-banner-section {
+    min-height: 100px;
+    border-radius: 14px;
+  }
+  
+  .token-banner-image,
+  .banner-gradient {
+    min-height: 100px;
+  }
+  
+  .banner-content {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+  
+  .banner-token-logo {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .banner-symbol {
+    font-size: 1rem;
+  }
+  
+  .banner-name {
+    font-size: 0.8125rem;
+  }
+  
+  .banner-network {
+    font-size: 0.8125rem;
+  }
+  
+  /* Stats compact */
+  .panel-right .market-stats-section {
+    border-radius: 14px;
+  }
+  
+  .stats-grid {
+    gap: 8px;
+  }
+  
+  .panel-right .stat-item {
+    padding: 10px;
+    border-radius: 10px;
+  }
+  
+  .panel-right .stat-label {
+    font-size: 0.8125rem;
+  }
+  
+  .panel-right .stat-value {
+    font-size: 0.8125rem;
+  }
+  
+  /* Trading compact */
+  .trading-compact {
+    border-radius: 14px;
+  }
+  
+  .trade-card {
+    padding: var(--sp-2);
+    border-radius: 10px;
+    gap: 10px;
+  }
+  
+  .amount-input {
+    font-size: 1.125rem;
+    padding: 8px 12px;
+    border-radius: 10px;
+  }
+  
+  .token-select {
+    padding: 8px 12px;
+    border-radius: 10px;
+    min-width: 100px;
+  }
+  
+  .panel-right .token-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .panel-right .token-symbol {
+    font-size: 0.8125rem;
+  }
+  
+  .percent-btns {
+    gap: 4px;
+  }
+  
+  .percent-btn {
+    padding: 3px 6px;
+    font-size: 0.8125rem;
+    border-radius: 4px;
+  }
+  
+  .direction-btn {
+    width: 32px;
+    height: 32px;
+    margin: 6px 0;
+  }
+  
+  .trade-submit-btn {
+    padding: 10px 14px;
+    font-size: 0.8125rem;
+    border-radius: 10px;
+  }
+  
+  .swap-route {
+    padding: 8px;
+    font-size: 0.8125rem;
+    border-radius: 8px;
+  }
+  
+  .wallet-connect-btn {
+    padding: 10px 14px;
+    font-size: 0.8125rem;
+  }
+}
+
+/* Tablet (1024px) */
+@media (max-width: 1024px) {
+  .token-banner-section {
+    min-height: 90px;
+  }
+  
+  .token-banner-image,
+  .banner-gradient {
+    min-height: 90px;
+  }
+  
+  .banner-content {
+    padding: 10px 12px;
+  }
+  
+  .banner-token-logo {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .banner-symbol {
+    font-size: 0.9375rem;
+  }
+  
+  .banner-customize-btn {
+    display: none;
+  }
+  
+  /* Stats */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .panel-right .stat-item {
+    padding: 8px;
+  }
+  
+  /* Trading */
+  .trade-card {
+    padding: 10px;
+    gap: 8px;
+  }
+  
+  .amount-input {
+    font-size: 1rem;
+    padding: 8px 10px;
+  }
+  
+  .token-select {
+    padding: 8px 10px;
+    min-width: 90px;
+  }
+  
+  .panel-right .token-icon {
+    width: 22px;
+    height: 22px;
+  }
+  
+  .trade-submit-btn {
+    padding: 10px 12px;
+  }
+}
+
+/* Small Tablet (900px) - RightPanel becomes inline */
+@media (max-width: 900px) {
+  .right-panel {
+    flex-direction: column;
+    gap: var(--sp-3);
+    height: auto;
+    overflow: visible;
+  }
+  
+  .token-banner-section {
+    min-height: 100px;
+    border-radius: 16px;
+  }
+  
+  .token-banner-image,
+  .banner-gradient {
+    min-height: 100px;
+  }
+  
+  .banner-content {
+    padding: 14px 18px;
+    gap: 14px;
+  }
+  
+  .banner-token-logo {
+    width: 56px;
+    height: 56px;
+  }
+  
+  .banner-symbol {
+    font-size: 1.125rem;
+  }
+  
+  .banner-name {
+    font-size: 0.8125rem;
+  }
+  
+  /* Stats grid side by side */
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--sp-2);
+  }
+  
+  .panel-right .stat-item {
+    padding: var(--sp-3);
+    border-radius: 12px;
+  }
+  
+  .panel-right .stat-label {
+    font-size: 0.8125rem;
+  }
+  
+  .panel-right .stat-value {
+    font-size: 0.875rem;
+  }
+  
+  /* Trading compact */
+  .trading-compact {
+    border-radius: 16px;
+  }
+  
+  .trade-card {
+    padding: var(--sp-3);
+    gap: var(--sp-3);
+    border-radius: 12px;
+  }
+  
+  .input-row {
+    gap: var(--sp-3);
+  }
+  
+  .amount-input {
+    font-size: 1.25rem;
+    padding: 12px 16px;
+    border-radius: 12px;
+  }
+  
+  .token-select {
+    padding: 12px 16px;
+    border-radius: 12px;
+    min-width: 110px;
+  }
+  
+  .panel-right .token-icon {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .panel-right .token-symbol {
+    font-size: 0.875rem;
+  }
+  
+  .token-balance {
+    font-size: 0.8125rem;
+  }
+  
+  .percent-btns {
+    gap: 6px;
+  }
+  
+  .percent-btn {
+    padding: 5px 10px;
+    font-size: 0.8125rem;
+    border-radius: 6px;
+  }
+  
+  .direction-btn {
+    width: 40px;
+    height: 40px;
+    margin: 10px 0;
+  }
+  
+  .direction-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .trade-submit-btn {
+    padding: 14px 20px;
+    font-size: 0.875rem;
+    border-radius: 12px;
+  }
+  
+  .swap-route {
+    padding: 10px 12px;
+    font-size: 0.8125rem;
+    border-radius: 10px;
+    gap: var(--sp-2);
+  }
+  
+  .wallet-connect-btn {
+    padding: 14px 20px;
+    font-size: 0.875rem;
+    border-radius: 12px;
+  }
+}
+
+/* Tablet Portrait (768px) */
+@media (max-width: 768px) {
+  .right-panel {
+    gap: var(--sp-2);
+  }
+  
+  .token-banner-section {
+    min-height: 90px;
+    border-radius: 14px;
+  }
+  
+  .token-banner-image,
+  .banner-gradient {
+    min-height: 90px;
+  }
+  
+  .banner-content {
+    padding: 12px 16px;
+  }
+  
+  .banner-token-logo {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .banner-symbol {
+    font-size: 1rem;
+  }
+  
+  .banner-name {
+    font-size: 0.8125rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .panel-right .stat-item {
+    padding: 10px;
+    border-radius: 10px;
+  }
+  
+  .panel-right .stat-label {
+    font-size: 0.8125rem;
+  }
+  
+  .panel-right .stat-value {
+    font-size: 0.875rem;
+  }
+  
+  /* Trading */
+  .trading-compact {
+    border-radius: 14px;
+  }
+  
+  .trade-card {
+    padding: var(--sp-2);
+    gap: var(--sp-2);
+    border-radius: 10px;
+  }
+  
+  .amount-input {
+    font-size: 1.125rem;
+    padding: 10px 14px;
+    border-radius: 10px;
+  }
+  
+  .token-select {
+    padding: 10px 14px;
+    border-radius: 10px;
+    min-width: 100px;
+  }
+  
+  .panel-right .token-icon {
+    width: 26px;
+    height: 26px;
+  }
+  
+  .panel-right .token-symbol {
+    font-size: 0.8125rem;
+  }
+  
+  .percent-btn {
+    padding: 4px 8px;
+    font-size: 0.8125rem;
+  }
+  
+  .direction-btn {
+    width: 36px;
+    height: 36px;
+    margin: 8px 0;
+  }
+  
+  .trade-submit-btn {
+    padding: 12px 18px;
+    font-size: 0.875rem;
+    border-radius: 10px;
+  }
+  
+  .wallet-connect-btn {
+    padding: 12px 18px;
+    font-size: 0.875rem;
+  }
+}
+
+/* Mobile (640px) */
+@media (max-width: 640px) {
+  .right-panel {
+    gap: var(--sp-2);
+  }
+  
+  .token-banner-section {
+    min-height: 80px;
+    border-radius: 12px;
+  }
+  
+  .token-banner-image,
+  .banner-gradient {
+    min-height: 80px;
+  }
+  
+  .banner-content {
+    padding: 10px 14px;
+    gap: 12px;
+  }
+  
+  .banner-logo-wrapper {
+    display: flex;
+    align-items: center;
+  }
+  
+  .banner-token-logo {
+    width: 44px;
+    height: 44px;
+    border-width: 2px;
+  }
+  
+  .banner-symbol {
+    font-size: 0.9375rem;
+  }
+  
+  .banner-name {
+    font-size: 0.8125rem;
+  }
+  
+  .banner-network {
+    font-size: 0.8125rem;
+  }
+  
+  /* Stats */
+  .panel-right .market-stats-section {
+    border-radius: 12px;
+  }
+  
+  .stats-grid {
+    gap: 6px;
+  }
+  
+  .panel-right .stat-item {
+    padding: 8px;
+    border-radius: 8px;
+  }
+  
+  .panel-right .stat-label {
+    font-size: 0.4375rem;
+    margin-bottom: 2px;
+  }
+  
+  .panel-right .stat-value {
+    font-size: 0.8125rem;
+  }
+  
+  /* Trading */
+  .trading-compact {
+    border-radius: 12px;
+  }
+  
+  .trade-card {
+    padding: 10px;
+    gap: 8px;
+    border-radius: 8px;
+  }
+  
+  .input-row {
+    gap: 8px;
+  }
+  
+  .amount-input {
+    font-size: 1rem;
+    padding: 8px 12px;
+    border-radius: 8px;
+  }
+  
+  .token-select {
+    padding: 8px 10px;
+    border-radius: 8px;
+    min-width: 90px;
+    gap: 6px;
+  }
+  
+  .panel-right .token-icon {
+    width: 22px;
+    height: 22px;
+  }
+  
+  .panel-right .token-symbol {
+    font-size: 0.8125rem;
+  }
+  
+  .token-balance {
+    font-size: 0.8125rem;
+  }
+  
+  .percent-btns {
+    gap: 4px;
+  }
+  
+  .percent-btn {
+    padding: 3px 6px;
+    font-size: 0.4375rem;
+    border-radius: 4px;
+  }
+  
+  .direction-btn {
+    width: 32px;
+    height: 32px;
+    margin: 6px 0;
+  }
+  
+  .direction-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .trade-submit-btn {
+    padding: 10px 14px;
+    font-size: 0.8125rem;
+    border-radius: 8px;
+  }
+  
+  .swap-route {
+    padding: 8px 10px;
+    font-size: 0.8125rem;
+    border-radius: 8px;
+    gap: 6px;
+  }
+  
+  .wallet-connect-btn {
+    padding: 10px 14px;
+    font-size: 0.8125rem;
+    border-radius: 8px;
+  }
+  
+  .btn-spinner {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .btn-success-check {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Small Mobile (480px) */
+@media (max-width: 480px) {
+  .right-panel {
+    gap: 8px;
+  }
+  
+  .token-banner-section {
+    min-height: 70px;
+    border-radius: 10px;
+  }
+  
+  .token-banner-image,
+  .banner-gradient {
+    min-height: 70px;
+  }
+  
+  .banner-content {
+    padding: 8px 12px;
+    gap: 10px;
+  }
+  
+  .banner-token-logo {
+    width: 38px;
+    height: 38px;
+  }
+  
+  .banner-symbol {
+    font-size: 0.875rem;
+  }
+  
+  .banner-name {
+    font-size: 0.8125rem;
+  }
+  
+  .banner-network {
+    font-size: 0.4375rem;
+  }
+  
+  /* Stats */
+  .panel-right .market-stats-section {
+    border-radius: 10px;
+    padding: 8px;
+  }
+  
+  .stats-grid {
+    gap: 4px;
+  }
+  
+  .panel-right .stat-item {
+    padding: 6px;
+    border-radius: 6px;
+  }
+  
+  .panel-right .stat-label {
+    font-size: 0.375rem;
+    letter-spacing: 0.03em;
+  }
+  
+  .panel-right .stat-value {
+    font-size: 0.8125rem;
+  }
+  
+  /* Trading */
+  .trading-compact {
+    border-radius: 10px;
+    padding: 8px;
+  }
+  
+  .trade-card {
+    padding: 8px;
+    gap: 6px;
+    border-radius: 6px;
+  }
+  
+  .input-row {
+    gap: 6px;
+  }
+  
+  .amount-input {
+    font-size: 0.9375rem;
+    padding: 6px 10px;
+    border-radius: 6px;
+  }
+  
+  .token-select {
+    padding: 6px 8px;
+    border-radius: 6px;
+    min-width: 80px;
+    gap: 5px;
+  }
+  
+  .panel-right .token-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .panel-right .token-symbol {
+    font-size: 0.8125rem;
+  }
+  
+  .token-balance {
+    font-size: 0.8125rem;
+  }
+  
+  .percent-btns {
+    gap: 3px;
+  }
+  
+  .percent-btn {
+    padding: 2px 4px;
+    font-size: 0.375rem;
+    border-radius: 3px;
+  }
+  
+  .direction-btn {
+    width: 28px;
+    height: 28px;
+    margin: 4px 0;
+  }
+  
+  .direction-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .trade-submit-btn {
+    padding: 8px 12px;
+    font-size: 0.8125rem;
+    border-radius: 6px;
+  }
+  
+  .swap-route {
+    padding: 6px 8px;
+    font-size: 0.8125rem;
+    border-radius: 6px;
+    gap: 4px;
+  }
+  
+  .wallet-connect-btn {
+    padding: 8px 12px;
+    font-size: 0.8125rem;
+    border-radius: 6px;
+  }
+  
+  .btn-spinner {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .btn-success-check {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* Landscape mode */
+@media (orientation: landscape) and (max-height: 500px) {
+  .right-panel {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+  }
+  
+  .token-banner-section {
+    flex: 1 1 45%;
+    min-height: 80px;
+  }
+  
+  .panel-right .market-stats-section {
+    flex: 1 1 50%;
+  }
+  
+  .trading-compact {
+    flex: 1 1 100%;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ==========================================================================
+   Deployer Security - Apple terminal aesthetic, hairline rules, design tokens
+   ========================================================================== */
+.deployer-security {
+  margin-top: 14px;
+  padding: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.018) 0%, rgba(255, 255, 255, 0.004) 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+.dsec-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+.dsec-title-block {
+  display: inline-flex; align-items: center; gap: 7px;
+  color: var(--text-secondary);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.dsec-shield { color: var(--text-tertiary); }
+.dsec-title { color: var(--text-secondary); }
+.dsec-issues {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 9999px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--text-tertiary);
+}
+.dsec-issues.bad { color: var(--bear); border-color: rgba(239, 68, 68, 0.35); }
+.dsec-issues.good { color: var(--bull); border-color: rgba(16, 185, 129, 0.35); }
+.dsec-issues.neutral { color: var(--text-muted); }
+
+.dsec-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.dsec-cell {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  background: transparent;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.dsec-cell:last-child { border-bottom: none; }
+
+/* LP locker chips - who holds the lock, links out to the locker platform */
+.dsec-lockers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.dsec-locker-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border: 1px solid var(--border-default);
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+.dsec-locker-chip:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  background: rgba(255, 255, 255, 0.03);
+}
+.dsec-locker-chip svg { opacity: 0.55; flex-shrink: 0; }
+.dsec-locker-pct { color: var(--text-tertiary); }
+
+body.theme-light .dsec-lockers { border-color: rgba(0, 0, 0, 0.06); }
+body.theme-light .dsec-locker-chip {
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #475569;
+}
+body.theme-light .dsec-locker-chip:hover {
+  color: #0f172a;
+  border-color: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.03);
+}
+body.theme-light .dsec-locker-pct { color: #64748b; }
+
+.dsec-label {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+.dsec-value,
+.ds-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+.ds-value::before {
+  content: '';
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex-shrink: 0;
+}
+.ds-value.good::before { background: var(--bull); }
+.ds-value.bad::before { background: var(--bear); }
+.dsec-value.mono,
+.ds-value.mono { font-family: var(--font-mono); }
+.dsec-value.good,
+.ds-value.good { color: var(--bull); }
+.dsec-value.bad,
+.ds-value.bad { color: var(--bear); }
+
+.dsec-footer {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-top: 12px;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.018);
+  border: 1px solid var(--border-subtle);
+  border-radius: 9999px;
+}
+.dsec-link {
+  flex: 1;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 9999px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+}
+.dsec-link + .dsec-link {
+  position: relative;
+}
+.dsec-link + .dsec-link::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 25%;
+  bottom: 25%;
+  width: 1px;
+  background: var(--border-subtle);
+}
+.dsec-link:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+}
+.dsec-link:hover + .dsec-link::before,
+.dsec-link:has(+ .dsec-link:hover)::before {
+  opacity: 0;
+}
+.dsec-link svg { opacity: 0.5; }
+.dsec-link:hover svg { opacity: 0.85; }
+
+.dsec-warning {
+  margin-top: 8px;
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  font-style: normal;
+}
+
+/* Day mode */
+body.theme-light .deployer-security {
+  border-color: rgba(0, 0, 0, 0.06);
+}
+body.theme-light .dsec-title-block,
+body.theme-light .dsec-title { color: rgba(15, 23, 42, 0.7); }
+body.theme-light .dsec-shield { color: rgba(15, 23, 42, 0.55); }
+body.theme-light .dsec-grid,
+body.theme-light .dsec-cell { border-color: rgba(0, 0, 0, 0.06); }
+body.theme-light .dsec-label { color: rgba(15, 23, 42, 0.55); }
+body.theme-light .dsec-value,
+body.theme-light .ds-value { color: #0f172a; }
+body.theme-light .dsec-value.good,
+body.theme-light .ds-value.good,
+body.theme-light .dsec-issues.good { color: #059669; border-color: rgba(5, 150, 105, 0.35); }
+body.theme-light .dsec-value.bad,
+body.theme-light .ds-value.bad,
+body.theme-light .dsec-issues.bad { color: #dc2626; border-color: rgba(220, 38, 38, 0.35); }
+body.theme-light .dsec-issues { border-color: rgba(0, 0, 0, 0.1); color: rgba(15, 23, 42, 0.6); }
+body.theme-light .dsec-link {
+  border-color: rgba(0, 0, 0, 0.08);
+  color: rgba(15, 23, 42, 0.65);
+}
+body.theme-light .dsec-link:hover {
+  border-color: rgba(0, 0, 0, 0.18);
+  color: #0f172a;
+}
+body.theme-light .dsec-warning { color: rgba(15, 23, 42, 0.5); }
+
+/* ============================================================
+   LIGHT MODE: ported from trading-platform sibling fork
+   ============================================================ */
+
+body.theme-light .market-stats::before {
+  background: linear-gradient(
+    135deg,
+    rgba(17, 17, 19, 0.12) 0%,
+    rgba(17, 17, 19, 0.06) 40%,
+    transparent 100%
+  );
+  opacity: 0.55;
+}
+
+body.theme-light .market-stats::after {
+  background:
+    radial-gradient(ellipse 120% 60% at 50% 0%, rgba(0, 0, 0, 0.04) 0%, transparent 62%);
+  opacity: 0.55;
+}
+
+body.theme-light .stat-item::after {
+  opacity: 0.35;
+}
+
+body.theme-light .stat-indicator {
+  box-shadow:
+    0 0 14px color-mix(in srgb, var(--stat-accent) 35%, transparent),
+    0 0 0 1px rgba(17, 17, 19, 0.10),
+    inset 0 0 2px rgba(255, 255, 255, 0.35);
+}
+
+body.theme-light .token-banner-section {
+  border-color: rgba(17, 17, 19, 0.08);
+}
+
+body.theme-light .token-banner-section:hover {
+  border-color: rgba(17, 17, 19, 0.14);
+}
+
+body.theme-light .banner-content {
+  background: rgba(255, 255, 255, 0.65);
+  border-color: rgba(17, 17, 19, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+body.theme-light .banner-symbol {
+  color: #111113;
+}
+
+body.theme-light .banner-name {
+  color: rgba(17, 17, 19, 0.58);
+}
+
+body.theme-light .banner-network {
+  color: rgba(17, 17, 19, 0.62);
+  background: rgba(17, 17, 19, 0.05);
+  border-color: rgba(17, 17, 19, 0.08);
+}
+
+body.theme-light .banner-customize-btn {
+  background: rgba(255, 255, 255, 0.86);
+  color: rgba(17, 17, 19, 0.85);
+  border-color: rgba(17, 17, 19, 0.10);
+}
+
+body.theme-light .banner-customize-btn:hover {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(17, 17, 19, 0.14);
+  color: #111113;
+}
+
+body.theme-light .banner-customize-btn .premium-badge {
+  background: rgba(17, 17, 19, 0.06);
+  border-color: rgba(17, 17, 19, 0.10);
+  color: rgba(17, 17, 19, 0.72);
+}
+
+body.theme-light .stat-value {
+  color: #111113;
+}
+
+/* Clean underline tabs in white mode too - match the dark treatment, no grey
+   segmented box / white pill (Gleb, white-mode). Active buy/sell = deep
+   emerald/coral text + accent underline, transparent fill. */
+body.theme-light .trade-toggle {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+body.theme-light .toggle-btn.active.buy {
+  background: transparent;
+  border-bottom-color: #059669;
+  color: #059669;
+  box-shadow: none;
+}
+
+body.theme-light .toggle-btn.active.sell {
+  background: transparent;
+  border-bottom-color: #DC2626;
+  color: #DC2626;
+  box-shadow: none;
+}
+
+body.theme-light .toggle-btn.active.buy::before,
+body.theme-light .toggle-btn.active.sell::before {
+  background: transparent;
+}
+
+body.theme-light .trade-card::before {
+  background: radial-gradient(ellipse 120% 70% at 50% 0%, rgba(17, 17, 19, 0.04) 0%, transparent 62%);
+}
+
+body.theme-light .balance-usd {
+  color: rgba(17, 17, 19, 0.58);
+}
+
+body.theme-light .token-name {
+  color: #111113;
+}
+
+body.theme-light .spectre-icon {
+  background: rgba(17, 17, 19, 0.05) !important;
+  border-color: rgba(17, 17, 19, 0.10);
+  box-shadow:
+    0 4px 10px rgba(17, 17, 19, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+body.theme-light .swap-action-btn {
+  color: #ffffff;
+  border-color: rgba(17, 17, 19, 0.18);
+}
+
+body.theme-light .swap-action-btn:disabled {
+  background: rgba(17, 17, 19, 0.08);
+  color: rgba(17, 17, 19, 0.4);
+  box-shadow: none;
+}
+
+body.theme-light .vol-amount,
+body.theme-light .vol-period-label,
+body.theme-light .pressure-title,
+body.theme-light .pressure-ratio,
+body.theme-light .comparison-title,
+body.theme-light .txn-label,
+body.theme-light .txn-count {
+  color: rgba(17, 17, 19, 0.78);
+}
+
+body.theme-light .txn-box {
+  background: rgba(17, 17, 19, 0.04);
+  border-color: rgba(17, 17, 19, 0.08);
+}
+
+body.theme-light .pressure-bar,
+body.theme-light .comp-bar,
+body.theme-light .depth-bar-main,
+body.theme-light .depth-bar-single {
+  background: rgba(17, 17, 19, 0.06);
+}
+
+body.theme-light .tf-pill {
+  background: rgba(17, 17, 19, 0.04);
+  border-color: rgba(17, 17, 19, 0.08);
+  color: rgba(17, 17, 19, 0.62);
+}
+
+body.theme-light .tf-pill:hover {
+  background: rgba(17, 17, 19, 0.07);
+  color: rgba(17, 17, 19, 0.88);
+}
+
+body.theme-light .tf-pill.active {
+  background: #ffffff;
+  color: #111113;
+  border-color: rgba(17, 17, 19, 0.12);
+  box-shadow:
+    0 1px 3px rgba(17, 17, 19, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+body.theme-light .liq-amount,
+body.theme-light .liq-title,
+body.theme-light .liq-card-title,
+body.theme-light .liq-v,
+body.theme-light .liq-k,
+body.theme-light .pool-value,
+body.theme-light .pool-pair,
+body.theme-light .pool-dex,
+body.theme-light .lock-name,
+body.theme-light .lock-amount,
+body.theme-light .activity-value,
+body.theme-light .depth-title,
+body.theme-light .depth-holders,
+body.theme-light .depth-percent {
+  color: #111113;
+}
+
+body.theme-light .liq-k-sub,
+body.theme-light .pool-label,
+body.theme-light .lock-expiry,
+body.theme-light .lock-percent,
+body.theme-light .lock-countdown,
+body.theme-light .activity-label,
+body.theme-light .depth-label {
+  color: rgba(17, 17, 19, 0.58);
+}
+
+body.theme-light .liq-pill {
+  background: rgba(17, 17, 19, 0.05);
+  border-color: rgba(17, 17, 19, 0.10);
+  color: rgba(17, 17, 19, 0.72);
+}
+
+body.theme-light .liq-card {
+  background: rgba(17, 17, 19, 0.025);
+  border-color: rgba(17, 17, 19, 0.08);
+}
+
+body.theme-light .liq-card:hover {
+  border-color: rgba(17, 17, 19, 0.14);
+}
+
+body.theme-light .pool-divider {
+  background: rgba(17, 17, 19, 0.08);
+}
+
+body.theme-light .quick-btn:active {
+  background: linear-gradient(180deg, #f0f0f3 0%, #e6e6ea 100%);
+  box-shadow:
+    0 1px 3px rgba(17, 17, 19, 0.06),
+    inset 0 1px 1px rgba(17, 17, 19, 0.04);
+}
+
+body.theme-light .quick-btn:last-child {
+  background: linear-gradient(180deg, #ffffff 0%, #f4f4f7 100%);
+  border-color: rgba(17, 17, 19, 0.12);
+  color: rgba(17, 17, 19, 0.78);
+}
+
+body.theme-light .quick-btn:last-child:hover {
+  background: linear-gradient(180deg, #ffffff 0%, #ebebef 100%);
+  border-color: rgba(17, 17, 19, 0.18);
+  color: #111113;
+  box-shadow:
+    0 4px 14px rgba(17, 17, 19, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+body.theme-light .token-selector:active {
+  box-shadow:
+    0 4px 10px rgba(17, 17, 19, 0.08),
+    0 1px 3px rgba(17, 17, 19, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+body.theme-light .token-selector::before {
+  background: linear-gradient(
+    135deg,
+    rgba(17, 17, 19, 0.14) 0%,
+    rgba(17, 17, 19, 0.06) 45%,
+    transparent 100%
+  );
+  opacity: 0.6;
+}
+
+body.theme-light .token-icon {
+  border-color: rgba(17, 17, 19, 0.10);
+  box-shadow:
+    0 2px 6px rgba(17, 17, 19, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+body.theme-light .banner-logo-wrapper {
+  background: transparent;
+}
+
+/* ============================================================
+   Swap error / warning alert
+   Severity variants set in RightPanel.jsx classifySwapError():
+   .warn  = user-fixable (insufficient balance, quote expired) - amber
+   .error = real failure (simulation, network, signing) - coral
+   ============================================================ */
+.swap-error-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 10px 0 2px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 81, 105, 0.22);
+  background: linear-gradient(135deg, rgba(255, 81, 105, 0.10) 0%, rgba(255, 81, 105, 0.04) 100%);
+  animation: sea-slide-in 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes sea-slide-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.swap-error-alert .sea-icon {
+  flex: none;
+  margin-top: 1px;
+  color: var(--down, #FF5169);
+}
+
+.swap-error-alert .sea-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.swap-error-alert .sea-title {
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--down, #FF5169);
+}
+
+.swap-error-alert .sea-text {
+  font-size: 12px;
+  line-height: 1.55;
+  color: rgba(245, 245, 247, 0.72);
+  overflow-wrap: anywhere;
+}
+
+.swap-error-alert.warn {
+  border-color: rgba(245, 158, 11, 0.22);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.10) 0%, rgba(245, 158, 11, 0.035) 100%);
+}
+
+.swap-error-alert.warn .sea-icon,
+.swap-error-alert.warn .sea-title {
+  color: #F59E0B;
+}
+
+/* Day mode */
+body.theme-light .swap-error-alert {
+  border-color: rgba(220, 38, 38, 0.25);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.03) 100%);
+}
+
+body.theme-light .swap-error-alert .sea-icon,
+body.theme-light .swap-error-alert .sea-title {
+  color: #DC2626;
+}
+
+body.theme-light .swap-error-alert .sea-text {
+  color: #475569;
+}
+
+body.theme-light .swap-error-alert.warn {
+  border-color: rgba(180, 83, 9, 0.28);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.04) 100%);
+}
+
+body.theme-light .swap-error-alert.warn .sea-icon,
+body.theme-light .swap-error-alert.warn .sea-title {
+  color: #B45309;
+}
+
+/* Trade-details switch (labeled toggle in the Buy/Sell bar).
+   Ghost by default - no chrome until interaction, like the token page's
+   flat controls. Active state rides the token accent channel the way
+   other active markers on the token page do. */
+.trade-toggle .details-toggle {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 6px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.42);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 140ms ease, background 140ms ease;
+  animation: dt-appear 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dt-appear {
+  from { opacity: 0; transform: translateX(4px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.trade-toggle .details-toggle:hover {
+  color: rgba(245, 245, 247, 0.85);
+  background: rgba(245, 245, 247, 0.04);
+}
+
+.trade-toggle .details-toggle .dt-label {
+  font-size: 10px;
+  font-weight: 550;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.trade-toggle .details-toggle .dt-track {
+  flex: none;
+  position: relative;
+  width: 24px;
+  height: 13px;
+  border-radius: 999px;
+  background: rgba(245, 245, 247, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(245, 245, 247, 0.06);
+  transition: background 160ms ease, box-shadow 160ms ease;
+}
+
+.trade-toggle .details-toggle .dt-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(245, 245, 247, 0.5);
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), background 160ms ease;
+}
+
+.trade-toggle .details-toggle.on {
+  color: rgba(245, 245, 247, 0.9);
+}
+
+.trade-toggle .details-toggle.on .dt-track {
+  background: var(--accent-wash, rgba(245, 245, 247, 0.16));
+  box-shadow: inset 0 0 0 1px var(--accent-glow, rgba(245, 245, 247, 0.22));
+}
+
+.trade-toggle .details-toggle.on .dt-knob {
+  transform: translateX(11px);
+  background: var(--accent, #f5f5f7);
+  box-shadow: 0 0 6px var(--accent-glow, rgba(245, 245, 247, 0.3));
+}
+
+/* The switch owns the right-push; the wallet chip loses its auto margin
+   whenever the switch precedes it (two auto margins would split the gap). */
+.trade-toggle .details-toggle ~ .swap-wallet-inline {
+  margin-left: 8px;
+}
+
+body.theme-light .trade-toggle .details-toggle {
+  color: rgba(15, 23, 42, 0.5);
+}
+
+body.theme-light .trade-toggle .details-toggle:hover {
+  color: rgba(15, 23, 42, 0.85);
+  background: rgba(15, 23, 42, 0.04);
+}
+
+body.theme-light .trade-toggle .details-toggle .dt-track {
+  background: rgba(15, 23, 42, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+}
+
+body.theme-light .trade-toggle .details-toggle .dt-knob {
+  background: rgba(15, 23, 42, 0.45);
+}
+
+body.theme-light .trade-toggle .details-toggle.on {
+  color: #0f172a;
+}
+
+body.theme-light .trade-toggle .details-toggle.on .dt-track {
+  background: rgba(15, 23, 42, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.14);
+}
+
+body.theme-light .trade-toggle .details-toggle.on .dt-knob {
+  background: #0f172a;
+  box-shadow: none;
+}
+
+/* ============================================================
+   Swap settings popover (slippage + quick-buy amounts)
+   Anchored to the quick-amounts row; gear chip opens it.
+   ============================================================ */
+.quick-amounts {
+  position: relative;
+}
+
+.quick-amounts .quick-gear {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(245, 245, 247, 0.45);
+}
+
+.quick-amounts .quick-gear:hover,
+.quick-amounts .quick-gear.active {
+  color: rgba(245, 245, 247, 0.9);
+}
+
+.swap-settings-pop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 60;
+  width: 276px;
+  padding: 15px;
+  border-radius: 14px;
+  border: 1px solid rgba(245, 245, 247, 0.09);
+  background: linear-gradient(180deg, rgba(24, 24, 28, 0.97) 0%, rgba(14, 14, 17, 0.98) 100%);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  animation: dt-appear 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.swap-settings-pop .ssp-section + .ssp-section {
+  margin-top: 13px;
+  padding-top: 13px;
+  border-top: 1px solid rgba(245, 245, 247, 0.06);
+}
+
+.swap-settings-pop .ssp-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.swap-settings-pop .ssp-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.6);
+}
+
+.swap-settings-pop .ssp-hint {
+  font-size: 10.5px;
+  color: rgba(245, 245, 247, 0.32);
+}
+
+.swap-settings-pop .ssp-seg + .ssp-amounts {
+  margin-top: 8px;
+}
+
+.swap-settings-pop .ssp-chips {
+  display: flex;
+  gap: 6px;
+}
+
+.swap-settings-pop .ssp-chip {
+  flex: 1;
+  height: 30px;
+  border-radius: 7px;
+  border: 1px solid rgba(245, 245, 247, 0.08);
+  background: transparent;
+  color: rgba(245, 245, 247, 0.6);
+  font-size: 11px;
+  font-family: var(--font-num-chip, inherit);
+  cursor: pointer;
+  transition: color 130ms ease, border-color 130ms ease, background 130ms ease;
+}
+
+.swap-settings-pop .ssp-chip:hover {
+  color: rgba(245, 245, 247, 0.9);
+  border-color: rgba(245, 245, 247, 0.18);
+}
+
+.swap-settings-pop .ssp-chip.active {
+  color: #0a0a0c;
+  background: var(--accent, #f5f5f7);
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.swap-settings-pop .ssp-custom {
+  flex: 1.4;
+  min-width: 62px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: 7px;
+  border: 1px solid rgba(245, 245, 247, 0.08);
+  color: rgba(245, 245, 247, 0.4);
+  font-size: 11px;
+  cursor: text;
+}
+
+.swap-settings-pop .ssp-custom:focus-within {
+  border-color: rgba(245, 245, 247, 0.3);
+  color: rgba(245, 245, 247, 0.6);
+}
+
+.swap-settings-pop .ssp-custom input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.92);
+  font-size: 12px;
+  font-family: var(--font-num-chip, inherit);
+  text-align: center;
+  outline: none;
+}
+
+/* Segmented control - buy chips display mode */
+.swap-settings-pop .ssp-seg {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 8px;
+  background: rgba(245, 245, 247, 0.05);
+}
+
+.swap-settings-pop .ssp-seg button {
+  flex: 1;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.5);
+  font-size: 10.5px;
+  font-weight: 550;
+  cursor: pointer;
+  transition: color 130ms ease, background 130ms ease;
+}
+
+.swap-settings-pop .ssp-seg button:hover {
+  color: rgba(245, 245, 247, 0.85);
+}
+
+.swap-settings-pop .ssp-seg button.active {
+  background: rgba(245, 245, 247, 0.12);
+  color: rgba(245, 245, 247, 0.95);
+}
+
+.swap-settings-pop .ssp-amounts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+
+.swap-settings-pop .ssp-amounts input {
+  width: 100%;
+  height: 30px;
+  padding: 0 6px;
+  border-radius: 7px;
+  border: 1px solid rgba(245, 245, 247, 0.08);
+  background: transparent;
+  color: rgba(245, 245, 247, 0.92);
+  font-size: 11px;
+  font-family: var(--font-num-chip, inherit);
+  text-align: center;
+  outline: none;
+  transition: border-color 130ms ease;
+}
+
+.swap-settings-pop .ssp-amounts input:focus {
+  border-color: rgba(245, 245, 247, 0.25);
+}
+
+/* Day mode */
+body.theme-light .swap-settings-pop {
+  background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.16);
+}
+
+body.theme-light .swap-settings-pop .ssp-section + .ssp-section {
+  border-top-color: rgba(15, 23, 42, 0.07);
+}
+
+body.theme-light .swap-settings-pop .ssp-label { color: rgba(15, 23, 42, 0.6); }
+body.theme-light .swap-settings-pop .ssp-hint { color: rgba(15, 23, 42, 0.35); }
+
+body.theme-light .swap-settings-pop .ssp-chip {
+  border-color: rgba(15, 23, 42, 0.14);
+  color: rgba(15, 23, 42, 0.65);
+}
+
+body.theme-light .swap-settings-pop .ssp-chip:hover {
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.3);
+}
+
+body.theme-light .swap-settings-pop .ssp-chip.active {
+  color: #ffffff;
+  background: #0f172a;
+}
+
+body.theme-light .swap-settings-pop .ssp-custom {
+  border-color: rgba(15, 23, 42, 0.14);
+  color: rgba(15, 23, 42, 0.45);
+}
+
+body.theme-light .swap-settings-pop .ssp-custom input,
+body.theme-light .swap-settings-pop .ssp-amounts input {
+  color: #0f172a;
+}
+
+body.theme-light .swap-settings-pop .ssp-amounts input {
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+body.theme-light .quick-amounts .quick-gear { color: rgba(15, 23, 42, 0.45); }
+body.theme-light .quick-amounts .quick-gear:hover,
+body.theme-light .quick-amounts .quick-gear.active { color: #0f172a; }
+
+body.theme-light .swap-settings-pop .ssp-seg {
+  background: rgba(15, 23, 42, 0.05);
+}
+
+body.theme-light .swap-settings-pop .ssp-seg button {
+  color: rgba(15, 23, 42, 0.55);
+}
+
+body.theme-light .swap-settings-pop .ssp-seg button:hover {
+  color: #0f172a;
+}
+
+body.theme-light .swap-settings-pop .ssp-seg button.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
+
+/* Movable panel sub-parts (Zone Stacks granularity). Flex column matching
+   the panel's card rhythm; order/display come from inline styles. NEVER add
+   transform/filter here (containing-block hazard for the fixed dropdowns). */
+.rp-part {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}

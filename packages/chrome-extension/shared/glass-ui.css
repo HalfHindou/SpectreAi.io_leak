@@ -1,0 +1,347 @@
+/* ═══════════════════════════════════════════════════════════════
+   Spectre AI — Glass UI
+   Single source of truth for the chrome extension surfaces.
+   Mirrors the trading app's landing-page glass language.
+
+   Three surfaces use this file:
+     - popup/popup.html       (imports via <link>)
+     - content/popup-injector.js    (embedded via shadow root)
+     - content/sidebar-injector.js  (embedded via shadow root)
+
+   Both modes are defined inline. Activate light mode on a root
+   by adding either `.theme-light` OR `.day-mode` (legacy alias).
+   ═══════════════════════════════════════════════════════════════ */
+
+/* -----------------------------------------------------------------
+   TOKENS — dark (default)
+   ----------------------------------------------------------------- */
+:root,
+:host,
+.spectre-ext,
+.spectre-popup-app,
+.sp-root,
+.spectre-sidebar-app {
+  /* Surfaces */
+  --sp-bg-void: #000000;
+  --sp-bg-base: #0c0c0e;
+  --sp-bg-surface: #131315;
+  --sp-bg-elevated: #1a1a1d;
+  --sp-bg-hover: #2a2a30;
+
+  /* Glass */
+  --sp-glass-bg: rgba(9, 9, 11, 0.88);
+  --sp-glass-bg-light: rgba(255, 255, 255, 0.03);
+  --sp-glass-border: rgba(255, 255, 255, 0.07);
+  --sp-glass-border-strong: rgba(255, 255, 255, 0.12);
+  --sp-glass-highlight: rgba(255, 255, 255, 0.09);
+  /* Layered glass gradient — top-left light → bottom-right shadow, reads as a real polished surface */
+  --sp-glass-gradient:
+    radial-gradient(ellipse 120% 80% at 20% 0%, rgba(255,255,255,0.10) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.015) 100%);
+
+  /* Text */
+  --sp-text-primary: #f5f5f7;
+  --sp-text-secondary: rgba(245, 245, 247, 0.66);
+  --sp-text-tertiary: rgba(245, 245, 247, 0.48);
+  --sp-text-muted: rgba(245, 245, 247, 0.32);
+  --sp-text-whisper: rgba(245, 245, 247, 0.18);
+
+  /* Semantic trading */
+  --sp-bull: #10B981;
+  --sp-bull-bright: #34D399;
+  --sp-bull-muted: rgba(16, 185, 129, 0.12);
+  --sp-bull-glow: rgba(16, 185, 129, 0.35);
+  --sp-bear: #EF4444;
+  --sp-bear-bright: #F87171;
+  --sp-bear-muted: rgba(239, 68, 68, 0.12);
+  --sp-bear-glow: rgba(239, 68, 68, 0.35);
+  --sp-warning: #F59E0B;
+  --sp-warning-muted: rgba(245, 158, 11, 0.15);
+  --sp-info: #3B82F6;
+  --sp-accent: #f5f5f7;
+
+  /* Token brand */
+  --sp-btc: #F7931A;
+  --sp-eth: #627EEA;
+  --sp-sol: #14F195;
+
+  /* Shadows — material depth: top edge catches light, bottom edge sinks into shadow */
+  --sp-shadow-card:
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+    0 6px 18px rgba(0, 0, 0, 0.38),
+    0 1px 2px rgba(0, 0, 0, 0.25);
+  --sp-shadow-popup:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 32px 80px rgba(0, 0, 0, 0.7),
+    0 0 0 0.5px rgba(255, 255, 255, 0.05);
+  --sp-shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.35);
+
+  /* Type */
+  --sp-font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --sp-font-body: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --sp-font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', ui-monospace, monospace;
+  --sp-font-cinema: 'Playfair Display', 'Times New Roman', Georgia, serif;
+
+  /* Space */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  /* Radii */
+  --sp-r-xs: 6px;
+  --sp-r-sm: 8px;
+  --sp-r-md: 12px;
+  --sp-r-lg: 16px;
+  --sp-r-xl: 20px;
+  --sp-r-pill: 999px;
+
+  /* Motion */
+  --sp-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --sp-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --sp-dur-fast: 150ms;
+  --sp-dur: 250ms;
+  --sp-dur-slow: 400ms;
+}
+
+/* -----------------------------------------------------------------
+   TOKENS — light mode override
+   Activated via `.theme-light` OR the legacy `.day-mode` class.
+   Both selectors are kept equivalent for zero-JS migration.
+   ----------------------------------------------------------------- */
+:host(.theme-light),
+:host(.day-mode),
+.theme-light,
+.day-mode,
+body.theme-light,
+body.day-mode,
+.spectre-popup-app.theme-light,
+.spectre-popup-app.day-mode,
+.spectre-sidebar-app.theme-light,
+.spectre-sidebar-app.day-mode,
+.sp-root.theme-light,
+.sp-root.day-mode {
+  --sp-bg-void: #f5f5f7;
+  --sp-bg-base: #ffffff;
+  --sp-bg-surface: #fafafa;
+  --sp-bg-elevated: #ffffff;
+  --sp-bg-hover: rgba(0, 0, 0, 0.03);
+
+  --sp-glass-bg: rgba(255, 255, 255, 0.82);
+  --sp-glass-bg-light: rgba(0, 0, 0, 0.025);
+  --sp-glass-border: rgba(10, 10, 12, 0.08);
+  --sp-glass-border-strong: rgba(10, 10, 12, 0.14);
+  --sp-glass-highlight: rgba(255, 255, 255, 0.9);
+  --sp-glass-gradient:
+    radial-gradient(ellipse 120% 80% at 20% 0%, rgba(255,255,255,0.9) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 100%);
+
+  --sp-text-primary: #0a0a0c;
+  --sp-text-secondary: rgba(10, 10, 12, 0.66);
+  --sp-text-tertiary: rgba(10, 10, 12, 0.48);
+  --sp-text-muted: rgba(10, 10, 12, 0.32);
+  --sp-text-whisper: rgba(10, 10, 12, 0.16);
+
+  --sp-bull: #059669;
+  --sp-bull-bright: #10B981;
+  --sp-bull-muted: rgba(16, 185, 129, 0.10);
+  --sp-bear: #DC2626;
+  --sp-bear-bright: #EF4444;
+  --sp-bear-muted: rgba(239, 68, 68, 0.08);
+  --sp-warning: #D97706;
+  --sp-warning-muted: rgba(245, 158, 11, 0.12);
+
+  --sp-shadow-card:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(16, 24, 40, 0.05),
+    0 1px 2px rgba(16, 24, 40, 0.04),
+    0 6px 18px rgba(16, 24, 40, 0.08);
+  --sp-shadow-popup:
+    0 24px 64px rgba(0, 0, 0, 0.10),
+    0 0 0 1px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --sp-shadow-soft: 0 1px 3px rgba(16, 24, 40, 0.05);
+}
+
+/* -----------------------------------------------------------------
+   PRIMITIVES
+   These are utility classes you can add to any element in any surface.
+   ----------------------------------------------------------------- */
+
+/* The signature glass card */
+.sp-glass {
+  background: var(--sp-glass-gradient);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--sp-glass-border);
+  border-radius: var(--sp-r-lg);
+  box-shadow: var(--sp-shadow-card);
+  transition: border-color var(--sp-dur) var(--sp-ease-out),
+              transform var(--sp-dur) var(--sp-ease-out);
+}
+.sp-glass:hover {
+  border-color: var(--sp-glass-border-strong);
+}
+
+/* Subtle glass — used for nested cards inside a popup */
+.sp-glass-subtle {
+  background: var(--sp-glass-bg-light);
+  border: 1px solid var(--sp-glass-border);
+  border-radius: var(--sp-r-md);
+}
+
+/* Section label — the all-caps eyebrow text */
+.sp-label {
+  font-family: var(--sp-font-body);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sp-text-tertiary);
+}
+
+/* Mono numeric token class */
+.sp-mono {
+  font-family: var(--sp-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Cinema display (big token name / brand mark) */
+.sp-cinema {
+  font-family: var(--sp-font-cinema);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+/* Pill base */
+.sp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--sp-r-pill);
+  font-family: var(--sp-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.sp-pill--bull   { background: var(--sp-bull-muted); color: var(--sp-bull-bright); }
+.sp-pill--bear   { background: var(--sp-bear-muted); color: var(--sp-bear-bright); }
+.sp-pill--warn   { background: var(--sp-warning-muted); color: var(--sp-warning); }
+.sp-pill--ghost  { background: var(--sp-glass-bg-light); color: var(--sp-text-tertiary); }
+
+/* Icon button (header utilities) */
+.sp-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--sp-glass-border);
+  background: var(--sp-glass-bg-light);
+  border-radius: var(--sp-r-sm);
+  color: var(--sp-text-tertiary);
+  cursor: pointer;
+  transition: color var(--sp-dur-fast) var(--sp-ease-out),
+              border-color var(--sp-dur-fast) var(--sp-ease-out),
+              background var(--sp-dur-fast) var(--sp-ease-out);
+}
+.sp-icon-btn:hover {
+  color: var(--sp-text-primary);
+  border-color: var(--sp-glass-border-strong);
+  background: var(--sp-glass-highlight);
+}
+
+/* Primary CTA — matches the Research Platform pill in the reference */
+.sp-cta-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 20px;
+  border: none;
+  border-radius: var(--sp-r-pill);
+  background: var(--sp-text-primary);
+  color: var(--sp-bg-base);
+  font-family: var(--sp-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: transform var(--sp-dur) var(--sp-ease-out),
+              box-shadow var(--sp-dur) var(--sp-ease-out);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.sp-cta-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* Gradient shimmer on brand display (used sparingly, for TOKEN NAME only) */
+@keyframes sp-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.sp-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--sp-text-primary) 0%,
+    var(--sp-text-primary) 40%,
+    var(--sp-text-secondary) 50%,
+    var(--sp-text-primary) 60%,
+    var(--sp-text-primary) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: sp-shimmer 8s linear infinite;
+}
+
+/* Skeleton shimmer */
+@keyframes sp-skel {
+  0%   { background-position:  200% 0; }
+  100% { background-position: -200% 0; }
+}
+.sp-skel {
+  background: linear-gradient(
+    90deg,
+    var(--sp-glass-bg-light) 25%,
+    var(--sp-glass-highlight) 50%,
+    var(--sp-glass-bg-light) 75%
+  );
+  background-size: 200% 100%;
+  animation: sp-skel 1.8s ease-in-out infinite;
+  border-radius: var(--sp-r-xs);
+}
+
+/* Live dot */
+@keyframes sp-live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.3; transform: scale(0.8); }
+}
+.sp-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sp-bull);
+  box-shadow: 0 0 8px var(--sp-bull-glow);
+  animation: sp-live-pulse 2s ease-in-out infinite;
+}
+
+/* Divider — 1px hairline with warm fade */
+.sp-divider {
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    var(--sp-glass-border-strong),
+    transparent);
+}

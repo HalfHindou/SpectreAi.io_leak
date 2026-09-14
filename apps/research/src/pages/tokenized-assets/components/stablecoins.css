@@ -1,0 +1,405 @@
+/* ═══════════════════════════════════════════════════════════
+   Stablecoins tab — scoped styles (prefix: sc-)
+   Peg Integrity meter (hero) + Peg Stability board (bottom).
+   Consumes the page glass contract (--ta-glass-*) — no new
+   gradients/blur/shadow values are invented here.
+   Every dark rule has an .app.app-day-mode counterpart below.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Status accent, single source (mirrors pegStatus() in JSX) ── */
+.sc-status-good { --sc-accent: var(--bull); --sc-accent-soft: rgba(16, 185, 129, 0.16); }
+.sc-status-warn { --sc-accent: var(--amber, #F59E0B); --sc-accent-soft: rgba(245, 158, 11, 0.18); }
+.sc-status-bad  { --sc-accent: var(--bear); --sc-accent-soft: rgba(239, 68, 68, 0.18); }
+
+/* ═══════════════════════════════════════════════════════════
+   Peg Integrity Meter (hero-right). Lives inside .ta-chart-frame.
+   ═══════════════════════════════════════════════════════════ */
+.sc-meter { height: 100%; }
+
+/* Aggregate health badge in the head */
+.sc-meter__health {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--sc-accent-soft, var(--accent-muted));
+  border: 1px solid var(--ta-glass-border);
+  font-size: 0.6875rem;
+  white-space: nowrap;
+}
+.sc-meter__health .mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.sc-meter__health-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--sc-accent, var(--bull));
+  box-shadow: 0 0 8px var(--sc-accent, var(--bull));
+}
+.sc-meter__health-label {
+  color: var(--text-tertiary);
+  letter-spacing: 0.01em;
+}
+
+.sc-meter__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  flex: 1;
+}
+
+/* Instrument scale rail: -1% … $1.00 … +1% */
+.sc-meter__scale {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 calc(28% + 4px) 0 calc(28% + 4px);
+}
+.sc-meter__scale--skel {
+  height: 14px;
+  border-radius: var(--radius-xs);
+  background: var(--ta-glass-bg-quiet);
+}
+.sc-meter__tick {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+.sc-meter__tick--mid { color: var(--text-tertiary); font-weight: 600; }
+
+/* The lane stack — center axis + status band drawn behind the rows */
+.sc-meter__lanes {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+}
+/* Symbol column is 56px; the track starts after it. Center axis sits at
+   56px + 50% of the remaining track (the dev column is 62px). */
+.sc-meter__axis {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: calc(56px + (100% - 56px - 62px) * 0.5);
+  width: 1px;
+  background: linear-gradient(180deg,
+    rgba(245, 245, 247, 0) 0%,
+    rgba(245, 245, 247, 0.22) 16%,
+    rgba(245, 245, 247, 0.22) 84%,
+    rgba(245, 245, 247, 0) 100%);
+  pointer-events: none;
+}
+/* "in-spec" green band hugging the peg axis */
+.sc-meter__band--good {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: calc(56px + (100% - 56px - 62px) * 0.45);
+  width: calc((100% - 56px - 62px) * 0.10);
+  border-radius: var(--radius-xs);
+  background: rgba(16, 185, 129, 0.06);
+  pointer-events: none;
+}
+
+/* A lane = symbol | track (marker) | dev readout */
+.sc-lane {
+  position: relative;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 62px;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-fast) var(--ease-out);
+}
+.sc-lane:hover { background: var(--accent-muted); }
+.sc-lane:hover .sc-lane__marker { transform: translate(-50%, -50%) scale(1.18); }
+
+.sc-lane__sym {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sc-lane:hover .sc-lane__sym { color: var(--text-primary); }
+
+.sc-lane__track {
+  position: relative;
+  height: 18px;
+  border-radius: var(--radius-full);
+}
+/* faint baseline groove so empty track still reads as an instrument */
+.sc-lane__track::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+  background: rgba(245, 245, 247, 0.04);
+}
+/* stem connecting the center axis to the marker */
+.sc-lane__stem {
+  position: absolute;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, transparent 0%, var(--sc-accent) 100%);
+  opacity: 0.5;
+}
+.sc-lane__stem--under { background: linear-gradient(270deg, transparent 0%, var(--sc-accent) 100%); }
+
+.sc-lane__marker {
+  position: absolute;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  border-radius: var(--radius-full);
+  transform: translate(-50%, -50%);
+  background: var(--sc-marker, var(--bull));
+  box-shadow: 0 0 0 4px var(--sc-accent-soft), 0 2px 6px rgba(0, 0, 0, 0.4);
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.sc-lane__dev {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.sc-meter__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--ta-glass-border);
+}
+.sc-meter__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+.sc-meter__legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--sc-accent, var(--bull));
+}
+
+/* Skeletons — geometry only; the global .animate-shimmer overlay
+   (applied in JSX) supplies the base tint + sliding motion. */
+.sc-lane-skel {
+  height: 18px;
+  border-radius: var(--radius-full);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Peg Stability board (bottom) — glass cards with mini meter
+   ═══════════════════════════════════════════════════════════ */
+.sc-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--sp-3);
+}
+
+.sc-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--ta-pad-card);
+  /* status hairline accent on the left edge */
+  border-left: 2px solid var(--sc-accent, transparent);
+}
+
+.sc-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.sc-card__logo {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-muted);
+  border: 1px solid var(--ta-glass-border);
+}
+.sc-card__logo img { width: 100%; height: 100%; object-fit: cover; }
+.sc-card__logo-fb {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.sc-card__ident {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+.sc-card__sym {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+.sc-card__target {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+.sc-card__pill {
+  font-family: var(--font-body);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  color: var(--sc-accent, var(--text-secondary));
+  background: var(--sc-accent-soft, var(--accent-muted));
+  white-space: nowrap;
+}
+
+/* Mini centered deviation meter */
+.sc-card__meter {
+  position: relative;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: var(--ta-glass-bg-quiet);
+  border: 1px solid var(--ta-glass-border);
+}
+.sc-card__axis {
+  position: absolute;
+  left: 50%;
+  top: 4px;
+  bottom: 4px;
+  width: 1px;
+  background: rgba(245, 245, 247, 0.18);
+}
+.sc-card__stem {
+  position: absolute;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, transparent 0%, var(--sc-accent) 100%);
+  opacity: 0.55;
+}
+.sc-card__stem--under { background: linear-gradient(270deg, transparent 0%, var(--sc-accent) 100%); }
+.sc-card__marker {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  transform: translate(-50%, -50%);
+  background: var(--sc-marker, var(--bull));
+  box-shadow: 0 0 0 4px var(--sc-accent-soft), 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.sc-card__foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.sc-card__price {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+.sc-card__dev {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.sc-card-skel {
+  height: 142px;
+  border-radius: var(--ta-glass-radius);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .sc-board { grid-template-columns: 1fr; }
+  .sc-meter__scale { padding: 0 calc(24% + 4px); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DAY MODE — every dark surface above gets a counterpart.
+   ═══════════════════════════════════════════════════════════ */
+.app.app-day-mode .sc-meter__health { border-color: rgba(0, 0, 0, 0.06); }
+.app.app-day-mode .sc-meter__health .mono { color: #0F172A; }
+.app.app-day-mode .sc-meter__health-label { color: #64748B; }
+.app.app-day-mode .sc-meter__tick { color: #94A3B8; }
+.app.app-day-mode .sc-meter__tick--mid { color: #475569; }
+
+.app.app-day-mode .sc-meter__scale--skel { background: rgba(15, 23, 42, 0.05); }
+.app.app-day-mode .sc-meter__axis {
+  background: linear-gradient(180deg,
+    rgba(15, 23, 42, 0) 0%,
+    rgba(15, 23, 42, 0.18) 16%,
+    rgba(15, 23, 42, 0.18) 84%,
+    rgba(15, 23, 42, 0) 100%);
+}
+.app.app-day-mode .sc-lane:hover { background: rgba(15, 23, 42, 0.04); }
+.app.app-day-mode .sc-lane__sym { color: #475569; }
+.app.app-day-mode .sc-lane:hover .sc-lane__sym { color: #0F172A; }
+.app.app-day-mode .sc-lane__track::before { background: rgba(15, 23, 42, 0.06); }
+.app.app-day-mode .sc-lane__marker,
+.app.app-day-mode .sc-card__marker { box-shadow: 0 0 0 4px var(--sc-accent-soft), 0 1px 4px rgba(15, 23, 42, 0.18); }
+.app.app-day-mode .sc-meter__legend { border-top-color: rgba(0, 0, 0, 0.06); }
+.app.app-day-mode .sc-meter__legend-item { color: #94A3B8; }
+
+.app.app-day-mode .sc-card__logo {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+.app.app-day-mode .sc-card__logo-fb { color: #475569; }
+.app.app-day-mode .sc-card__sym { color: #0F172A; }
+.app.app-day-mode .sc-card__target { color: #94A3B8; }
+.app.app-day-mode .sc-card__price { color: #0F172A; }
+.app.app-day-mode .sc-card__meter {
+  background: #f5f6f8;
+  border-color: rgba(0, 0, 0, 0.06);
+}
+.app.app-day-mode .sc-card__axis { background: rgba(15, 23, 42, 0.18); }

@@ -1,0 +1,736 @@
+/**
+ * MonthView Styles
+ * Traditional calendar grid: 7 columns (Mon-Sun) with day cells,
+ * impact dots, critical event names, and event counts.
+ * Spectre Premium Recipe: gradient bg, multi-layered shadow,
+ * bell-curve dividers, 450/600 font-weights.
+ */
+
+.month-view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* ── Compact ──────────────────────────────────────────────────────────────
+   The Command Center gives this board a ~557px scroll pane, so the page's own
+   112px cells push half the month below the fold. Same material, tighter: one
+   headline instead of two, a smaller coin, a thinner meter. */
+.month-view--compact .month-view__cell {
+  min-height: 74px;
+  padding: 7px 8px 6px;
+  border-radius: 11px;
+  gap: 2px;
+}
+
+.month-view--compact .month-view__grid { gap: 4px; }
+
+.month-view--compact .month-view__day-number {
+  width: 21px;
+  height: 21px;
+  font-size: 11px;
+  margin-bottom: 1px;
+  margin-left: -2px;
+}
+
+.month-view--compact .month-view__critical-name {
+  font-size: 11px;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.month-view--compact .month-view__foot { padding-top: 4px; gap: 6px; }
+.month-view--compact .month-view__meter { height: 2px; }
+.month-view--compact .month-view__event-count { font-size: 10px; }
+.month-view--compact .month-view__today-chip { top: 8px; right: 8px; }
+.month-view--compact .month-view__header-cell { padding: 5px 8px; font-size: 11px; }
+
+/* Day name headers */
+.month-view__header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+}
+
+.month-view__header-cell {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 450;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+/* Calendar grid — a BOARD OF CARDS, not a ruled table. The 1px gap made the
+   month one flat sheet divided by hairlines; real gutters let each day carry
+   its own surface, its own light and its own shadow. */
+.month-view__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+/* Staggered entrance for month cells — by row (every 7 cells) */
+.month-view__cell {
+  animation: ec-blur-entrance 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.month-view__cell:nth-child(-n+7)   { animation-delay: 0ms; }
+.month-view__cell:nth-child(n+8):nth-child(-n+14)  { animation-delay: 60ms; }
+.month-view__cell:nth-child(n+15):nth-child(-n+21) { animation-delay: 120ms; }
+.month-view__cell:nth-child(n+22):nth-child(-n+28) { animation-delay: 180ms; }
+.month-view__cell:nth-child(n+29):nth-child(-n+35) { animation-delay: 240ms; }
+.month-view__cell:nth-child(n+36)   { animation-delay: 300ms; }
+
+/* Day cells — Spectre premium transitions */
+.month-view__cell {
+  min-height: 112px;
+  padding: 9px 10px 8px;
+  border: 1px solid rgba(var(--pro-ink, 255, 255, 255), 0.05);
+  border-radius: 14px;
+  /* Glass by FILL, never by backdrop-filter: 42 blurred cells re-filter the
+     backdrop every scroll frame (the documented jank engine). A two-stop
+     gradient plus an inset top highlight reads as the same material. */
+  background:
+    linear-gradient(158deg,
+      rgba(var(--pro-ink, 255, 255, 255), 0.045) 0%,
+      rgba(var(--pro-ink, 255, 255, 255), 0.014) 46%,
+      rgba(var(--pro-ink, 255, 255, 255), 0.008) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    0 1px 2px rgba(0, 0, 0, 0.32),
+    0 8px 22px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+  overflow: hidden;
+  isolation: isolate;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  text-align: left;
+  color: inherit;
+  font-family: inherit;
+  transition: background var(--duration-base) var(--ease-out),
+              border-color var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out),
+              transform var(--duration-base) var(--ease-out);
+}
+
+.month-view__cell:hover {
+  border-color: rgba(var(--pro-ink, 255, 255, 255), 0.11);
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 2px 4px rgba(0, 0, 0, 0.34),
+    0 16px 34px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Tier light ───────────────────────────────────────────────────────────
+   The day's heaviest tier as a bloom in the corner of its own glass. This is
+   where colour comes from — a lighting condition on the surface, not a sticker
+   stuck to it, so the board reads as a heat map of the month at a glance. */
+.month-view__glow {
+  position: absolute;
+  top: -34%;
+  right: -26%;
+  width: 72%;
+  height: 92%;
+  border-radius: 50%;
+  pointer-events: none;
+  /* Negative z-index inside the cell's own stacking context (isolation:
+     isolate) paints the bloom above the card's background and below its
+     content — no positioning rule on the children, which is what was silently
+     resetting the TODAY chip from absolute back to relative. */
+  z-index: -1;
+  opacity: 0;
+  filter: blur(16px);
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.month-view__cell--tier-critical .month-view__glow {
+  opacity: 1;
+  background: radial-gradient(circle at 62% 38%, rgba(239, 68, 68, 0.5) 0%, rgba(239, 68, 68, 0.14) 42%, transparent 72%);
+}
+
+.month-view__cell--tier-high .month-view__glow {
+  opacity: 1;
+  background: radial-gradient(circle at 62% 38%, rgba(249, 115, 22, 0.42) 0%, rgba(249, 115, 22, 0.11) 44%, transparent 72%);
+}
+
+.month-view__cell--tier-medium .month-view__glow {
+  opacity: 1;
+  background: radial-gradient(circle at 62% 38%, rgba(245, 158, 11, 0.24) 0%, rgba(245, 158, 11, 0.06) 46%, transparent 72%);
+}
+
+.month-view__cell:hover .month-view__glow { opacity: 1; filter: blur(13px); }
+
+/* A settled day keeps its colour, at a whisper — enough to read the month's
+   shape in hindsight, quiet enough that the week ahead owns the eye. */
+.month-view__cell--past .month-view__glow { opacity: 0.24; }
+
+/* Today — white accent glow */
+/* TODAY — the cell is LIFTED, not underlined. The 2px top rule was a sticker:
+   it said "today" in the language of a debug outline instead of making the
+   surface itself read as the near one. Brighter glass, a full inner ring and
+   a deeper shadow put it a layer above the board. */
+.month-view__cell--today {
+  border-color: rgba(255, 255, 255, 0.14);
+  background:
+    linear-gradient(158deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.035) 48%,
+      rgba(255, 255, 255, 0.018) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    0 2px 6px rgba(0, 0, 0, 0.4),
+    0 18px 40px rgba(0, 0, 0, 0.34);
+}
+
+.month-view__cell--today:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background:
+    linear-gradient(158deg,
+      rgba(255, 255, 255, 0.13) 0%,
+      rgba(255, 255, 255, 0.05) 48%,
+      rgba(255, 255, 255, 0.02) 100%);
+}
+
+/* The date reads as a struck coin: filled warm-white, dark numeral. */
+.month-view__cell--today .month-view__day-number {
+  color: #09090b;
+  font-weight: 700;
+  background: #f5f5f7;
+  box-shadow: 0 2px 10px rgba(245, 245, 247, 0.28);
+}
+
+.month-view__today-chip {
+  position: absolute;
+  top: 11px;
+  right: 11px;
+}
+
+/* ── The next big one ─────────────────────────────────────────────────────
+   Exactly one cell on the board breathes, and only ever the next critical
+   print still ahead. A board where everything pulses is a slot machine. */
+.month-view__cell--next {
+  animation: month-next-breathe 4.5s ease-in-out infinite;
+}
+
+@keyframes month-next-breathe {
+  0%, 100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 1px 2px rgba(0, 0, 0, 0.32),
+      0 8px 22px rgba(0, 0, 0, 0.22),
+      0 0 0 0 rgba(239, 68, 68, 0);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      0 1px 2px rgba(0, 0, 0, 0.32),
+      0 10px 28px rgba(0, 0, 0, 0.26),
+      0 0 26px 1px rgba(239, 68, 68, 0.2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .month-view__cell--next { animation: none; }
+}
+
+/* A day carrying a critical print is warm glass — the week of a PCE and a
+   Jackson Hole should be visibly hotter than the week around it. */
+.month-view__cell--critical {
+  background:
+    linear-gradient(158deg,
+      rgba(239, 68, 68, 0.1) 0%,
+      rgba(239, 68, 68, 0.03) 44%,
+      rgba(var(--pro-ink, 255, 255, 255), 0.01) 100%);
+  border-color: rgba(239, 68, 68, 0.16);
+}
+
+.month-view__cell--critical:hover {
+  border-color: rgba(239, 68, 68, 0.28);
+  background:
+    linear-gradient(158deg,
+      rgba(239, 68, 68, 0.14) 0%,
+      rgba(239, 68, 68, 0.045) 44%,
+      rgba(var(--pro-ink, 255, 255, 255), 0.015) 100%);
+}
+
+/* PAST — settled, not deleted. Faded with ink so the printed RESULT stays at
+   full strength: `opacity: 0.35` on the cell dimmed the actual value too, and
+   the result is the only reason to look back at a day. A past day also drops
+   the red "critical ahead" wash — history shouldn't compete with what's
+   coming. */
+.month-view__cell--past {
+  background: linear-gradient(158deg, rgba(var(--pro-ink, 255, 255, 255), 0.022) 0%, rgba(var(--pro-ink, 255, 255, 255), 0.006) 100%);
+  border-color: rgba(var(--pro-ink, 255, 255, 255), 0.032);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.022),
+    0 1px 2px rgba(0, 0, 0, 0.22);
+}
+
+.month-view__cell--past .month-view__day-number {
+  color: var(--cal-past-ink-dim);
+  text-decoration: line-through;
+  text-decoration-color: rgba(255, 255, 255, 0.15);
+  text-decoration-thickness: 1px;
+}
+
+.month-view__cell--past .month-view__critical-name {
+  color: var(--cal-past-ink);
+  font-weight: 500;
+}
+
+.month-view__cell--past .month-view__critical-name--high {
+  color: var(--cal-past-ink-dim);
+}
+
+.month-view__cell--past .month-view__event-count,
+.month-view__cell--past .month-view__dot-overflow {
+  color: var(--cal-past-ink-dim);
+}
+
+.month-view__cell--past .month-view__impact-dot {
+  opacity: var(--cal-past-dot);
+}
+
+/* The pulse is a "this is coming" signal — a landed event never pulses. */
+.month-view__cell--past .month-view__impact-dot--pulse {
+  animation: none;
+}
+
+.month-view__cell--past:hover {
+  background: linear-gradient(158deg, rgba(var(--pro-ink, 255, 255, 255), 0.05) 0%, rgba(var(--pro-ink, 255, 255, 255), 0.015) 100%);
+}
+
+/* A day that has already happened is history even if it held a critical
+   print: the red "big one ahead" wash belongs to the future only. */
+.month-view__cell--past.month-view__cell--critical,
+.month-view__cell--past.month-view__cell--critical:hover {
+  background: linear-gradient(158deg, rgba(239, 68, 68, 0.03) 0%, rgba(var(--pro-ink, 255, 255, 255), 0.006) 100%);
+  border-color: rgba(239, 68, 68, 0.07);
+}
+
+/* An empty day is not a card. Without this the board reads as 42 identical
+   boxes and the eye has nothing to catch — the quiet days have to actually be
+   quiet for the loud ones to land. */
+.month-view__cell--empty {
+  background: rgba(var(--pro-ink, 255, 255, 255), 0.012);
+  border-color: rgba(var(--pro-ink, 255, 255, 255), 0.028);
+  box-shadow: none;
+}
+
+.month-view__cell--empty:hover {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 6px 16px rgba(0, 0, 0, 0.18);
+}
+
+/* Other month (padding days) */
+.month-view__cell--other {
+  opacity: 0.34;
+  box-shadow: none;
+}
+
+.month-view__cell--other:hover {
+  opacity: 0.5;
+}
+
+/* Day number */
+.month-view__day-number {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  margin-bottom: 3px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  /* Every date sits in the same coin-shaped slot, so today's filled version
+     changes only its FILL — nothing on the row shifts when the month turns. */
+  width: 26px;
+  height: 26px;
+  margin-left: -3px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out);
+}
+
+.month-view__cell:hover .month-view__day-number {
+  color: var(--text-primary);
+  background: rgba(var(--pro-ink, 255, 255, 255), 0.06);
+}
+
+.month-view__cell--today .month-view__day-number {
+  color: #f5f5f7;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.08);
+}
+
+/* ── Footer: the weight meter + the count ────────────────────────────────
+   A proportional read of the day's tiers. Four identical dots said nothing
+   about a 26-event Friday vs a 4-event Tuesday; a filled bar says it without
+   a single word. */
+.month-view__foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.month-view__meter {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 3px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.month-view__meter-seg {
+  display: block;
+  flex-basis: 0;
+  min-width: 3px;
+  border-radius: 999px;
+}
+
+.month-view__meter-seg--critical {
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.55);
+}
+
+.month-view__meter-seg--high {
+  background: #f97316;
+  box-shadow: 0 0 7px rgba(249, 115, 22, 0.4);
+}
+
+.month-view__meter-seg--medium { background: rgba(245, 158, 11, 0.75); }
+.month-view__meter-seg--low { background: rgba(var(--pro-ink, 255, 255, 255), 0.16); }
+
+.month-view__cell--past .month-view__meter-seg {
+  box-shadow: none;
+  opacity: 0.5;
+}
+
+/* legacy dot row — kept for any surface still rendering it */
+.month-view__impact-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.month-view__impact-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3),
+              0 0 8px currentColor;
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+/* Critical dots pulse with expanding ring */
+.month-view__impact-dot--pulse {
+  animation: month-dot-critical-pulse 2s ease-in-out infinite;
+}
+
+@keyframes month-dot-critical-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6), 0 0 6px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0), 0 0 6px rgba(239, 68, 68, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6), 0 0 6px rgba(239, 68, 68, 0.4);
+  }
+}
+
+/* Overflow dot count */
+.month-view__dot-overflow {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.month-view__cell:hover .month-view__impact-dot {
+  transform: scale(1.15);
+}
+
+/* Headline event name. WRAPS to two lines: a month cell is ~120px wide beside
+   the intel rail, so a nowrap name is guaranteed to end in an ellipsis — the
+   old layout only looked complete because names overflowed into the next cell,
+   which the card treatment (overflow: hidden) exposed. */
+.month-view__critical-name {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  width: 100%;
+  line-height: 1.28;
+  letter-spacing: -0.005em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+/* A 'high' headline reads one notch quieter than a critical one, so the tier
+   is still legible when both are named in the same cell. */
+.month-view__critical-name--high {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* Past event result value */
+.month-view__result {
+  /* colour comes from .cal-result / .cal-result--beat|miss */
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.month-view__result--bull {
+  color: var(--bull);
+}
+
+.month-view__result--bear {
+  color: var(--bear);
+}
+
+/* Event count — a numeral now, not a sentence. The meter beside it already
+   says "events", and 42 cells repeating the word was 42 cells of noise. */
+.month-view__event-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+  flex-shrink: 0;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.month-view__cell:hover .month-view__event-count { color: var(--text-secondary); }
+
+/* =============================================
+   Day Mode Overrides — Full Coverage
+   ============================================= */
+.app-day-mode .month-view__header-cell {
+  color: #334155;
+}
+
+.app-day-mode .month-view__cell {
+  background: linear-gradient(158deg, #ffffff 0%, #fbfcfd 100%);
+  border-color: rgba(15, 23, 42, 0.07);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px rgba(15, 23, 42, 0.05),
+    0 8px 20px rgba(15, 23, 42, 0.05);
+}
+
+.app-day-mode .month-view__cell:hover {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 2px 4px rgba(15, 23, 42, 0.07),
+    0 16px 30px rgba(15, 23, 42, 0.09);
+}
+
+/* On white the bloom has to sit far lower or it turns the card into a stain. */
+.app-day-mode .month-view__cell--tier-critical .month-view__glow {
+  background: radial-gradient(circle at 62% 38%, rgba(239, 68, 68, 0.22) 0%, rgba(239, 68, 68, 0.06) 44%, transparent 72%);
+}
+.app-day-mode .month-view__cell--tier-high .month-view__glow {
+  background: radial-gradient(circle at 62% 38%, rgba(234, 88, 12, 0.15) 0%, rgba(234, 88, 12, 0.04) 46%, transparent 72%);
+}
+.app-day-mode .month-view__cell--tier-medium .month-view__glow {
+  background: radial-gradient(circle at 62% 38%, rgba(217, 119, 6, 0.09) 0%, transparent 60%);
+}
+
+.app-day-mode .month-view__cell--today {
+  border-color: rgba(15, 23, 42, 0.22);
+  background: linear-gradient(158deg, #ffffff 0%, #f4f6f9 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(15, 23, 42, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 2px 6px rgba(15, 23, 42, 0.1),
+    0 18px 36px rgba(15, 23, 42, 0.12);
+}
+
+.app-day-mode .month-view__cell--today:hover {
+  border-color: rgba(15, 23, 42, 0.3);
+  background: #ffffff;
+}
+
+/* The same struck coin, inverted for paper. */
+.app-day-mode .month-view__cell--today .month-view__day-number {
+  color: #ffffff;
+  background: #0f172a;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.28);
+}
+
+.app-day-mode .month-view__cell:hover .month-view__day-number {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.05);
+}
+
+.app-day-mode .month-view__cell--next {
+  animation-name: month-next-breathe-day;
+}
+
+@keyframes month-next-breathe-day {
+  0%, 100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 1px 2px rgba(15, 23, 42, 0.05),
+      0 8px 20px rgba(15, 23, 42, 0.05),
+      0 0 0 0 rgba(239, 68, 68, 0);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 1px 2px rgba(15, 23, 42, 0.05),
+      0 10px 26px rgba(15, 23, 42, 0.08),
+      0 0 22px 1px rgba(239, 68, 68, 0.24);
+  }
+}
+
+.app-day-mode .month-view__cell--critical {
+  background: linear-gradient(158deg, rgba(254, 242, 242, 1) 0%, #ffffff 62%);
+  border-color: rgba(239, 68, 68, 0.18);
+}
+
+.app-day-mode .month-view__cell--critical:hover {
+  background: linear-gradient(158deg, rgba(254, 235, 235, 1) 0%, #ffffff 62%);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Ink-faded, not opacity-faded — the result has to stay readable (the same
+   reason the dark theme stopped using a blanket opacity here). */
+.app-day-mode .month-view__cell--past {
+  background: linear-gradient(158deg, #fafbfc 0%, #f7f8fa 100%);
+  border-color: rgba(15, 23, 42, 0.05);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.app-day-mode .month-view__cell--past .month-view__critical-name { color: #94a3b8; }
+.app-day-mode .month-view__cell--past .month-view__event-count { color: #b3bfcd; }
+.app-day-mode .month-view__meter-seg--medium { background: rgba(217, 119, 6, 0.8); }
+.app-day-mode .month-view__meter-seg--low { background: rgba(15, 23, 42, 0.14); }
+
+.app-day-mode .month-view__cell--past .month-view__day-number {
+  text-decoration-color: rgba(0, 0, 0, 0.12);
+}
+
+.app-day-mode .month-view__cell--other {
+  opacity: 0.35;
+}
+
+.app-day-mode .month-view__day-number {
+  color: #334155;
+}
+
+.app-day-mode .month-view__impact-dot {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1),
+              0 0 6px currentColor;
+}
+
+.app-day-mode .month-view__critical-name {
+  color: #0f172a;
+}
+
+.app-day-mode .month-view__critical-name--high {
+  color: #475569;
+}
+
+.app-day-mode .month-view__result {
+  color: #334155;
+}
+
+.app-day-mode .month-view__event-count {
+  color: #64748b;
+}
+
+.app-day-mode .month-view__dot-overflow {
+  color: #94a3b8;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .month-view__cell {
+    min-height: 72px;
+    padding: 6px;
+  }
+
+  .month-view__day-number {
+    font-size: 14px;
+  }
+
+  .month-view__critical-name {
+    font-size: 10px;
+  }
+
+  .month-view__event-count {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 600px) {
+  .month-view__header-cell {
+    font-size: 9px;
+    padding: 6px 2px;
+  }
+
+  .month-view__cell {
+    min-height: 56px;
+    padding: 4px;
+  }
+
+  .month-view__day-number {
+    font-size: 12px;
+    margin-bottom: 2px;
+  }
+
+  .month-view__critical-name {
+    display: none;
+  }
+
+  .month-view__impact-dot {
+    width: 4px;
+    height: 4px;
+  }
+
+  .month-view__event-count {
+    font-size: 8px;
+  }
+}

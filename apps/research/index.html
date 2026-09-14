@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- TEMP diagnostic overlay - only when ?vhdebug is in the URL. Invisible to
+         normal users. Remove after diagnosing the Safari bottom nav. -->
+    <script>
+      (function () {
+        if (!/[?&]vhdebug/.test(location.search)) return;
+        var box = document.createElement('div');
+        box.style.cssText = 'position:fixed;left:6px;right:6px;top:96px;z-index:2147483647;background:rgba(0,0,0,0.92);color:#0f0;font:11px/1.4 monospace;padding:8px;border:1px solid #0f0;border-radius:6px;white-space:pre;pointer-events:none;';
+        var vhMin = 99999, vhMax = 0;
+        function upd() {
+          var vv = window.visualViewport;
+          var app = document.querySelector('.app');
+          var hdr = document.querySelector('.mobile-header');
+          var hdrR = hdr ? hdr.getBoundingClientRect() : null;
+          var appR = app ? app.getBoundingClientRect() : null;
+          var first = document.querySelector('.app-main-content > * > *') || document.querySelector('.app-main-content > *');
+          var firstR = first ? first.getBoundingClientRect() : null;
+          var vh = vv ? Math.round(vv.height) : 0;
+          if (vh) { vhMin = Math.min(vhMin, vh); vhMax = Math.max(vhMax, vh); }
+          var appvh = getComputedStyle(document.documentElement).getPropertyValue('--app-vh').trim();
+          box.textContent =
+            'innerH=' + window.innerHeight + '  vv.h=' + vh + '  vv.offTop=' + (vv ? Math.round(vv.offsetTop) : '-') +
+            '\nvv.h min=' + (vhMin===99999?'-':vhMin) + ' max=' + vhMax + '  --app-vh=' + (appvh||'unset') +
+            '\n.app cssH=' + (app ? getComputedStyle(app).height : '?') + '  inlineH=' + (app ? (app.style.height || 'NONE') : '-') + '  rectTop=' + (appR ? Math.round(appR.top) : '-') +
+            '\n.app scrollTop=' + (app ? Math.round(app.scrollTop) : '-') +
+            '\nHEADER top=' + (hdrR ? Math.round(hdrR.top) : 'none') + ' bottom=' + (hdrR ? Math.round(hdrR.bottom) : '-') + ' h=' + (hdrR ? Math.round(hdrR.height) : '-') +
+            '\nFIRST content top=' + (firstR ? Math.round(firstR.top) : '-') + ' (should be >= header bottom)' +
+            '\nfirst cls=' + (first ? String(first.className||first.tagName).slice(0,26) : '-');
+        }
+        function start(){ document.body.appendChild(box); upd();
+          window.addEventListener('resize', upd, true); window.addEventListener('scroll', upd, true);
+          if (window.visualViewport){ visualViewport.addEventListener('resize', upd); visualViewport.addEventListener('scroll', upd); }
+          setInterval(upd, 400); }
+        if (document.body) start(); else window.addEventListener('DOMContentLoaded', start);
+      })();
+    </script>
+    <!--
+      iOS Safari mobile viewport fix - set .app height to the REAL visible height.
+      On mobile the whole UI scrolls inside .app (height + overflow-y:auto). On
+      iOS Safari `100dvh` for that INNER scroller resolves to the LARGE viewport
+      (measured live: 956px) while the actually-visible area is only 742px - so
+      the bottom ~214px of every page sits below the fold, behind the toolbar,
+      and cannot be scrolled to. window.visualViewport.height is the true visible
+      height (742).
+      IMPORTANT (root cause, found on-device): App.css `.app { min-height: 100vh }`
+      floors the USED height back to the large viewport (max(height, min-height)),
+      which is why height rules - even inline !important - "did not win". So we
+      set BOTH height AND min-height:0 directly on .app as inline !important
+      styles, which beats every stylesheet rule and does not depend on the CSS
+      chunk. Gated to <=768px so desktop is never touched
+      (height cleared above the breakpoint). Retries until .app mounts (React).
+      Nav is viewport-fixed (verified GAP=0) so a shorter .app does NOT move it.
+    -->
+    <script>
+      (function () {
+        // THE KEYBOARD IS NOT THE TOOLBAR.
+        // Everything below exists to beat the iOS *toolbar* (dvh resolving to
+        // the LARGE viewport). But the software keyboard is also a
+        // visualViewport resize, so opening it drove the same code path and set
+        // `.app` — THE mobile scroller — to the leftover ~380px. Two symptoms,
+        // both reported (founder 08-07, "random pages… keyboard pops up, lag
+        // and page cut"): the page visibly cuts in half, and because the
+        // scroller's height changes the whole tree re-lays-out on every frame
+        // of the keyboard animation, then again on dismiss.
+        // So: learn the tallest height seen WITHOUT a keyboard (per
+        // orientation) and, when an editable element is focused and the
+        // viewport has lost a big chunk, hold the last good height instead of
+        // chasing it. `kb-open` + `--kb-h` are published so CSS can react
+        // (e.g. drop the bottom nav out of the keyboard's way) without anyone
+        // else having to re-derive this.
+        var baseH = 0;
+        var layoutW = 0;
+        var wasKb = false;
+        function editableFocused() {
+          var a = document.activeElement;
+          if (!a) return false;
+          var t = (a.tagName || '').toLowerCase();
+          return t === 'input' || t === 'textarea' || a.isContentEditable === true;
+        }
+        function apply() {
+          var viewport = window.visualViewport;
+          // User zoom changes the visual viewport, not the page layout. Leave
+          // the scroller and keyboard state alone until normal scale returns.
+          if (viewport && Math.abs((viewport.scale || 1) - 1) > 0.01) return;
+          var h = Math.round((viewport && viewport.height) || window.innerHeight);
+          if (!h) return;
+          // Fold/unfold and split-window resizing can change width without an
+          // orientation event. A height learned at another width is not a
+          // keyboard baseline. Use layout width, which pinch zoom does not shrink.
+          var w = document.documentElement.clientWidth || window.innerWidth;
+          if (layoutW && Math.abs(w - layoutW) > 2) {
+            baseH = 0;
+            wasKb = false;
+          }
+          layoutW = w;
+          // >=120px missing is a keyboard, not a toolbar (the Safari toolbar is
+          // ~44-60px). Focus opens the state; only the viewport coming BACK
+          // closes it — iOS fires focusout while the keyboard is still
+          // animating away, so clearing on focus alone would resize .app to a
+          // mid-animation height and flash the cut for a few frames on dismiss.
+          var shrunk = baseH > 0 && h < baseH - 120;
+          // Software keyboards live on coarse-pointer devices. Without this
+          // gate, a DESKTOP window resized >=120px while an input is focused
+          // (devtools, split view) enters the hold and freezes --app-vh until
+          // the window grows back — a keyboard-hold on a machine with no
+          // software keyboard. iPads are coarse, so the real fix is kept.
+          var coarse = !window.matchMedia || window.matchMedia('(pointer: coarse)').matches;
+          var kbOpen = coarse && shrunk && (editableFocused() || wasKb);
+          wasKb = kbOpen;
+          if (!kbOpen && h > baseH) baseH = h;
+          var docEl = document.documentElement;
+          if (kbOpen) {
+            docEl.classList.add('kb-open');
+            docEl.style.setProperty('--kb-h', (baseH - h) + 'px');
+            return; // hold every height as-is; the keyboard overlays, it does not resize the app
+          }
+          docEl.classList.remove('kb-open');
+          docEl.style.setProperty('--kb-h', '0px');
+          docEl.style.setProperty('--app-vh', h + 'px');
+          var mobile = !window.matchMedia || window.matchMedia('(max-width: 768px)').matches;
+          var app = document.querySelector('.app');
+          if (!app) return;
+          if (mobile) {
+            app.style.setProperty('height', h + 'px', 'important');
+            // CRITICAL: used height = max(height, min-height). App.css sets
+            // .app { min-height: 100vh } which on iOS Safari = the LARGE
+            // viewport (956px) and silently floors ANY height back up - this
+            // was why the height fixes "didn't win". Kill the floor inline too
+            // so the fix doesn't depend on the CSS chunk.
+            app.style.setProperty('min-height', '0px', 'important');
+          } else {
+            app.style.removeProperty('height'); // restore desktop stylesheet height
+            app.style.removeProperty('min-height');
+          }
+        }
+        apply();
+        window.addEventListener('resize', apply);
+        // Rotating changes what "full height" means, so the learned baseline
+        // must go with it or portrait's 742 would read as a keyboard in
+        // landscape. Cleared, not recomputed — apply() relearns on the next tick.
+        window.addEventListener('orientationchange', function () { baseH = 0; apply() });
+        window.addEventListener('load', apply);
+        // Blur does not always fire a visualViewport resize (iOS dismisses the
+        // keyboard on scroll), so the class could stick and freeze the height.
+        window.addEventListener('focusout', function () { setTimeout(apply, 50) });
+        if (window.visualViewport) {
+          // resize only (fires on toolbar/keyboard show-hide). NOT scroll -
+          // resizing .app mid-scroll made the opposite edge jump.
+          window.visualViewport.addEventListener('resize', apply);
+        }
+        // .app mounts after React boots - keep applying until it exists (~5s cap).
+        var tries = 0;
+        var iv = setInterval(function () {
+          apply();
+          if (document.querySelector('.app') || ++tries > 50) clearInterval(iv);
+        }, 100);
+        // React can REPLACE the .app element later (auth gate -> shell, error
+        // boundary remount). The new node has NO inline height, and if the
+        // viewport size didn't change no resize event re-fires apply() - the
+        // page silently goes back to the cut 100dvh height. Persistent cheap
+        // watchdog: re-assert only when the inline value drifted.
+        setInterval(function () {
+          var app = document.querySelector('.app');
+          if (!app) return;
+          if (window.matchMedia && !window.matchMedia('(max-width: 768px)').matches) return;
+          // While the keyboard is up the inline height is DELIBERATELY stale —
+          // without this guard the watchdog would notice the "drift" twice a
+          // second and re-apply the cut height the block above just refused to
+          // set, which is the same bug on a 500ms timer.
+          if (document.documentElement.classList.contains('kb-open')) return;
+          var h = Math.round((window.visualViewport && window.visualViewport.height) || window.innerHeight);
+          if (h && (app.style.height !== h + 'px' || app.style.minHeight !== '0px')) apply();
+        }, 500);
+      })();
+    </script>
+    <!--
+      Build marker — bump this when a fix only changes an HTTP response HEADER
+      (e.g. CSP in vercel.json) rather than build output. index.html is workbox-
+      precached WITH its response headers, so a header-only change won't change
+      this file's precache revision and the service worker would keep replaying
+      the old cached document (old CSP) forever. Changing this content forces a
+      new precache revision -> autoUpdate re-fetches index.html with fresh headers.
+    -->
+    <meta name="x-spectre-build" content="2026-06-30-rwa-early-fetch" />
+
+    <!-- ══════════════════════════════════════════════════════════════
+         EARLY DATA FETCH (PR-3 perf)
+         Fire the page's critical API requests at HTML-parse time - seconds
+         before React boots on a cold load. Promises are stored on
+         window.__EARLY_FETCH keyed by exact URL; the service layer adopts
+         them via src/lib/early-fetch.js (consume-once, fall through to a
+         normal fetch on failure). The auth-gate cookie (spectre-gate /
+         spectre-beta) rides automatically on same-origin requests; the
+         rz bootstrap route is demo-safe for anonymous visitors.
+         Keep this dependency-free ES5 and wrapped in try/catch - it must
+         never break boot.
+         ══════════════════════════════════════════════════════════════ -->
+    <script>
+      (function () {
+        try {
+          if (navigator.connection && navigator.connection.saveData) return
+          var wrap = function (p) {
+            return p.then(function (r) {
+              return r.json().catch(function () { return null }).then(function (j) {
+                return { ok: r.ok, status: r.status, json: j }
+              })
+            }).catch(function () { return null })
+          }
+          var map = {}
+          var add = function (url, credentials, priority) {
+            map[url] = wrap(fetch(url, {
+              credentials: credentials || 'same-origin',
+              headers: { Accept: 'application/json' },
+              // Priority hint: heavy payloads ride 'low' so they never compete
+              // with the JS chunks for bandwidth on slow connections (ignored
+              // by browsers without Priority Hints support).
+              priority: priority || 'auto'
+            }))
+          }
+          // Gate check - every page needs it before children mount
+          add('/api/auth-gate?action=check', 'include')
+          // Theme wallpaper - the backdrop catalog is code-split, so on a cold
+          // themed load the photo request otherwise waits for React + the lazy
+          // chunk and the page pops from graphite to the scene (reads as a
+          // clunky load). The last shown URL is cached by ProThemeBackdrop;
+          // preloading it here starts the download at parse time.
+          try {
+            var bg = localStorage.getItem('spectre-pro-bg-url-v1')
+            if (bg && /^https:\/\//.test(bg)) {
+              var bgl = document.createElement('link')
+              bgl.rel = 'preload'; bgl.as = 'image'; bgl.href = bg
+              document.head.appendChild(bgl)
+            }
+          } catch (e) {}
+          var path = location.pathname
+          var m = path.match(/^\/research-zone\/([A-Za-z0-9-]{1,60})\/?$/)
+          if (m) {
+            var sym = null
+            var qs = new URLSearchParams(location.search)
+            var t = (qs.get('tokenSymbol') || '').trim()
+            if (/^[A-Za-z0-9.$-]{1,15}$/.test(t)) sym = t.toUpperCase()
+            if (!sym) {
+              // Majors slug -> ticker map (mirror of SYMBOL_TO_COINGECKO_ID
+              // inverse for the top deep-link targets); unknown slugs pass
+              // through uppercased - the bridge matches cgIds too.
+              var slugMap = {
+                'bitcoin': 'BTC', 'ethereum': 'ETH', 'solana': 'SOL',
+                'binancecoin': 'BNB', 'ripple': 'XRP', 'cardano': 'ADA',
+                'dogecoin': 'DOGE', 'avalanche-2': 'AVAX', 'chainlink': 'LINK',
+                'polkadot': 'DOT', 'matic-network': 'MATIC', 'uniswap': 'UNI',
+                'litecoin': 'LTC', 'tron': 'TRX', 'shiba-inu': 'SHIB',
+                'pepe': 'PEPE', 'aave': 'AAVE', 'arbitrum': 'ARB',
+                'optimism': 'OP', 'spectre-ai': 'SPECTRE'
+              }
+              sym = slugMap[m[1].toLowerCase()] || m[1].toUpperCase()
+            }
+            add('/data-api/v1/rz/' + encodeURIComponent(sym) + '/bootstrap')
+          } else if (path === '/tokenized-assets') {
+            // RWA page: fire both bundle tiers at parse time. URLs must match
+            // the hook's fetch strings EXACTLY (useRwaData.js fetchData /
+            // fetchHistory) so consumeEarlyFetch adopts them. With the KV warm
+            // layer the bundle often resolves before React mounts the page.
+            add('/api/rwa/bundle?tier=core')
+            add('/api/rwa/bundle?tier=history&range=2y')
+          } else if (path === '/' || path === '/home') {
+            // Skip a URL when spectreMarketApi already holds a fresh (<10min)
+            // localStorage seed for it - the app paints from the seed and the
+            // early fetch would be pure wasted bandwidth (the 250-row markets
+            // payload is ~480KB). Seed key format mirrors persistKey().
+            var seedFresh = function (url) {
+              try {
+                var raw = localStorage.getItem('spectre-market-seed-v1:' + url)
+                if (!raw) return false
+                var p = JSON.parse(raw)
+                return !!p && typeof p.ts === 'number' && (Date.now() - p.ts) < 600000
+              } catch (e) { return false }
+            }
+            var addUnlessSeeded = function (url, priority) { if (!seedFresh(url)) add(url, null, priority) }
+            add('/data-api/v1/market/fear-greed')
+            add('/data-api/v1/discovery/hot?limit=20')
+            // Top Coins table + discovery grid (the page's largest payload) +
+            // the slim-intel hero bar (market cap / dominance). URLs must match
+            // the fetchV1Json keys EXACTLY (getSpectreCoinsMarketsPage /
+            // getSpectreGlobalMarket / getSpectreMarketDominance) or the early
+            // fetch simply goes unconsumed - no breakage.
+            addUnlessSeeded('/data-api/v1/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=true&price_change_percentage=1h%2C24h%2C7d%2C30d', 'low')
+            addUnlessSeeded('/data-api/v1/market/global')
+            addUnlessSeeded('/data-api/v1/market/dominance')
+            // Hero ticker prices: the home Binance price store fetches the
+            // pinned majors (welcome-page TOP_COINS) via getSpectrePricesBySymbols,
+            // which uppercases+dedupes+SORTS the symbol set, so the first chunk
+            // URL is deterministic when the user has no watchlist (the cold-
+            // first-visit case). This exact string MUST match the consume key
+            // built by spectreMarketApi.fetchV1Json (URLSearchParams encodes the
+            // commas as %2C). If it ever drifts, the early-fetch simply goes
+            // unconsumed and a normal request fires — no breakage.
+            add('/data-api/v1/prices?symbols=ARB%2CAVAX%2CBNB%2CBTC%2CETH%2CLINK%2CMATIC%2COP%2CSOL%2CUNI%2CUSDC%2CUSDT')
+            // Trending ticker + On-Chain tab feed (codexApi.fetchTrendingTokens).
+            // Primary = the onchain bridge (2 chains); when the client recently
+            // saw it dead (Cloudflare challenge stamps
+            // spectre-onchain-bridge-down-until) skip it and start the Codex
+            // fallback instead - URL form differs dev vs prod (apiRequest).
+            // URLs must match the service's fetch strings EXACTLY or the early
+            // fetch simply goes unconsumed - no breakage.
+            var bridgeDown = false
+            try { bridgeDown = Date.now() < Number(localStorage.getItem('spectre-onchain-bridge-down-until') || 0) } catch (e) {}
+            var isLocalDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+            if (!bridgeDown) {
+              add('/api/onchain/tokens/trending?chainId=1&sort=volume_24h&limit=100&sparklines=1&quality=1')
+              add('/api/onchain/tokens/trending?chainId=56&sort=volume_24h&limit=100&sparklines=1&quality=1')
+            }
+            if (bridgeDown || isLocalDev) {
+              // Dev bridge is currently always CF-blocked, so localhost also
+              // pre-fires the fallback; prod only pays the extra Codex query
+              // when the bridge is known-down.
+              var trendingQs = 'networks=1%2C56%2C137%2C42161%2C8453%2C1399811149&limit=100'
+              add(isLocalDev ? '/api/tokens/trending?' + trendingQs : '/api/codex?action=trending&' + trendingQs)
+            }
+          }
+          window.__EARLY_FETCH = map
+        } catch (e) { /* never break boot */ }
+      })()
+    </script>
+
+    <script>
+      /* ══════════════════════════════════════════════════════════════
+         BOOT WATCHDOG (2026-06-11)
+         If the entry module script fails to load — the classic case being
+         an edge-cached index.html that references hashed /assets/ chunks a
+         newer deploy rotated away (entry 404) — NOTHING executes: main.jsx
+         never runs, so lazy-with-retry/chunk-recovery (which live inside
+         the failed bundle) can never fire, and #boot-skeleton sits on
+         screen forever until a manual refresh. This inline guard mirrors
+         chunk-recovery's purge+reload from OUTSIDE the bundle, sharing the
+         same sessionStorage attempt budget so the two layers can't
+         compound reloads.
+         Belt: if the skeleton is still up after 20s with no entry error
+         (slow link, module exec error), reveal a manual reload pill —
+         never auto-reload on slowness alone.
+         ══════════════════════════════════════════════════════════════ */
+      ;(function () {
+        try {
+          var KEY = '__spectre_chunk_recover' // shared with src/lib/chunk-recovery.js
+          var MAX = 2
+          function attempts () { try { return Number(sessionStorage.getItem(KEY) || 0) } catch (e) { return 0 } }
+          function bump () { try { sessionStorage.setItem(KEY, String(attempts() + 1)) } catch (e) { /* quota */ } }
+          var reloading = false
+          function purgeAndReload () {
+            if (reloading) return
+            reloading = true
+            var done = function () {
+              if (!reloading) return
+              reloading = false
+              try {
+                var u = new URL(window.location.href)
+                u.searchParams.set('_reload', '1')
+                u.searchParams.set('_cbust', String(Date.now()))
+                window.location.replace(u.toString())
+              } catch (e) { window.location.reload() }
+            }
+            var jobs = []
+            try {
+              if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+                jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) {
+                  return Promise.all(rs.map(function (r) { return r.unregister()['catch'](function () {}) }))
+                })['catch'](function () {}))
+              }
+            } catch (e) { /* ignore */ }
+            try {
+              if (window.caches && caches.keys) {
+                jobs.push(caches.keys().then(function (ks) {
+                  return Promise.all(ks.map(function (k) { return caches['delete'](k)['catch'](function () {}) }))
+                })['catch'](function () {}))
+              }
+            } catch (e) { /* ignore */ }
+            Promise.all(jobs).then(done, done)
+            setTimeout(done, 3000) // never hang on purge
+          }
+          function showPill () {
+            try {
+              var sk = document.getElementById('boot-skeleton')
+              if (!sk || sk.className.indexOf('bk-leaving') !== -1) return
+              var pill = document.getElementById('bk-retry')
+              if (!pill || pill.__wired) return
+              pill.__wired = true
+              sk.setAttribute('aria-hidden', 'false')
+              pill.style.display = 'flex'
+              pill.querySelector('button').addEventListener('click', function () {
+                bump()
+                purgeAndReload()
+              })
+            } catch (e) { /* ignore */ }
+          }
+          // Definitive entry-script load failure (404 / network / stale graph).
+          // '/assets/' filter keeps Vite dev (src=/src/main.jsx) out of this path.
+          window.addEventListener('error', function (e) {
+            var t = e && e.target
+            if (!t || t.tagName !== 'SCRIPT' || t.type !== 'module') return
+            if (String(t.src || '').indexOf('/assets/') === -1) return
+            if (attempts() >= MAX) { showPill(); return }
+            bump()
+            purgeAndReload()
+          }, true)
+          // Slow-or-stuck belt: manual affordance only, no auto-reload.
+          setTimeout(showPill, 20000)
+        } catch (e) { /* never break boot */ }
+      })()
+    </script>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         DNS-PREFETCH for the trading iframe origin (used only on /token).
+         Downgraded from preconnect 2026-06-03 — Lighthouse "use sparingly
+         (>4 preconnects)" warning + most users hit the welcome page first
+         where these origins aren't needed at all. The /token route will
+         still get DNS resolution warmed; the TCP+TLS handshake only fires
+         when the iframe actually loads (saves ~1 round-trip on cold users
+         who never visit /token).
+         ══════════════════════════════════════════════════════════════ -->
+    <link rel="dns-prefetch" href="https://spectre-trading.vercel.app">
+    <link rel="dns-prefetch" href="https://trade.spectreai.io">
+
+    <!-- ══════════════════════════════════════════════════════════════
+         PRIMARY META
+         ══════════════════════════════════════════════════════════════ -->
+    <title>Spectre AI — Crypto Market Intelligence Platform</title>
+    <meta name="description" content="Real-time crypto intelligence combining on-chain analytics, AI market analysis, social sentiment, and trading tools for 10,000+ tokens. 500+ API endpoints, MCP server for AI agents, x402 micropayments. Backed by Google for Startups and NVIDIA Inception." />
+    <meta name="keywords" content="crypto intelligence, cryptocurrency analytics, bitcoin market data, ethereum analytics, DeFi analytics, on-chain data, crypto fear and greed index, AI crypto analysis, token research, crypto API, MCP server crypto, x402 payments, crypto trading tools, market sentiment, crypto news, whale tracking, liquidity analysis, crypto dashboard, alternative to Nansen, alternative to DeFiLlama, alternative to Dune, alternative to Messari" />
+    <meta name="author" content="Spectre AI" />
+    <meta name="publisher" content="Spectre AI" />
+    <!--
+      noindex on this staging subdomain (spectre-app-research.vercel.app).
+      The research app is embedded as an iframe in spectreai.io's homepage
+      showcase, and Google's crawler was capturing the iframe's JSON-LD
+      schemas as part of spectreai.io's schema graph, causing duplicate
+      FAQPage + Product errors in Rich Results Test.
+
+      Remove this noindex and restore "index, follow" once the research app
+      moves to the public production domain (app.spectreai.io) post-beta.
+      At that point the app is canonically served from its own subdomain
+      and should be indexed independently.
+    -->
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="bingbot" content="index, follow" />
+    <meta name="rating" content="general" />
+    <meta name="distribution" content="global" />
+    <meta name="revisit-after" content="1 days" />
+
+    <!-- Canonical + Hreflang -->
+    <link rel="canonical" href="https://spectreai.io/" />
+    <meta name="language" content="English" />
+    <meta http-equiv="content-language" content="en" />
+    <link rel="alternate" hreflang="en" href="https://spectreai.io/" />
+    <link rel="alternate" hreflang="x-default" href="https://spectreai.io/" />
+
+    <!-- ══════════════════════════════════════════════════════════════
+         OPEN GRAPH
+         ══════════════════════════════════════════════════════════════ -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://spectreai.io/" />
+    <meta property="og:title" content="Spectre AI — Crypto Market Intelligence Platform" />
+    <meta property="og:description" content="Real-time crypto intelligence combining on-chain analytics, AI analysis, social sentiment, and trading tools. 500+ API endpoints. MCP server for AI agents. $SPECT utility token." />
+    <meta property="og:image" content="https://spectreai.io/og-image.png" />
+    <meta property="og:image:secure_url" content="https://spectreai.io/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Spectre AI — Crypto Market Intelligence Platform" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:site_name" content="Spectre AI" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- ══════════════════════════════════════════════════════════════
+         TWITTER / X
+         ══════════════════════════════════════════════════════════════ -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@Spectre__AI" />
+    <meta name="twitter:creator" content="@Spectre__AI" />
+    <meta name="twitter:url" content="https://spectreai.io/" />
+    <meta name="twitter:title" content="Spectre AI — Crypto Market Intelligence Platform" />
+    <meta name="twitter:description" content="Real-time crypto intelligence. On-chain analytics, AI analysis, social sentiment, trading tools. 500+ API endpoints. MCP server for AI agents." />
+    <meta name="twitter:image" content="https://spectreai.io/og-image.png" />
+    <meta name="twitter:image:alt" content="Spectre AI Dashboard" />
+    <meta name="twitter:domain" content="spectreai.io" />
+
+    <!-- ══════════════════════════════════════════════════════════════
+         FAVICONS + PWA
+         ══════════════════════════════════════════════════════════════ -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <meta name="msapplication-TileColor" content="#0a0a0f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <!-- Standards-track equivalent; Chrome deprecated the apple-prefixed form in M132. -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Spectre AI" />
+    <meta name="application-name" content="Spectre AI" />
+
+    <!-- ══════════════════════════════════════════════════════════════
+         PERFORMANCE — Preconnects / DNS prefetch
+         (Removed api.spectreai.io / ws.spectreai.io hints: those domains
+          are not used directly from the browser - all API traffic goes
+          via /api/* on the same origin. Keeping them advertised internal
+          infra unnecessarily.)
+         ══════════════════════════════════════════════════════════════ -->
+    <link rel="dns-prefetch" href="https://us.i.posthog.com" />
+    <link rel="dns-prefetch" href="https://us-assets.i.posthog.com" />
+    <link rel="dns-prefetch" href="https://api.coingecko.com" />
+    <link rel="dns-prefetch" href="https://api.binance.com" />
+    <link rel="dns-prefetch" href="https://graph.codex.io" />
+
+    <!-- CoinGecko CDNs serve every token logo on the welcome page. Warming
+         the TCP+TLS handshake removes ~100-200ms from the first logo fetch
+         (the token list row renders dozens of logos in a tight burst). -->
+    <link rel="preconnect" href="https://coin-images.coingecko.com" crossorigin />
+    <link rel="dns-prefetch" href="https://coin-images.coingecko.com" />
+    <link rel="preconnect" href="https://assets.coingecko.com" crossorigin />
+    <link rel="dns-prefetch" href="https://assets.coingecko.com" />
+
+    <!-- GM Dashboard rotates 5 photos from Unsplash. The Spectre News page
+         also pulls Unsplash placeholder thumbnails when an article has no
+         cover image — 18 cards on initial paint. Downgraded from preconnect
+         → dns-prefetch (Lighthouse "use sparingly" warning). -->
+    <link rel="dns-prefetch" href="https://images.unsplash.com">
+
+    <!-- Spectre News uses Google's favicon service (s2/favicons) for the
+         source logos on every news card — typically 15-20 distinct domains
+         per render. dns-prefetch warms the lookup so each favicon doesn't
+         pay a fresh DNS round-trip on its first paint. -->
+    <link rel="dns-prefetch" href="https://www.google.com">
+
+    <!-- Twitter/X avatar CDN — research-zone KOL bubbles, feed panel, and
+         X-Bubbles all render avatar circles from pbs.twimg.com. dns-prefetch
+         is enough (avatars are below-fold + loading=lazy, so we don't need
+         the TCP handshake upfront — just want to skip DNS lookup latency
+         when they finally request). -->
+    <link rel="dns-prefetch" href="https://pbs.twimg.com">
+
+    <!-- Removed `<link rel="preload" href="/round-logo.png">` 2026-06-04.
+         The file is 812 KB (uncompressed brand asset) but displays at 30x30
+         in the boot skeleton. Preloading it competed with critical CSS/JS
+         for bandwidth and pushed LCP past Lighthouse's measurement window
+         on slow connections (prod was reporting NO_LCP error).
+         The <img> in the boot skeleton still has fetchpriority="high" so
+         the logo loads with high priority — it just no longer blocks the
+         document's other critical resources.
+         DONE 2026-06-11: public/round-logo.png re-compressed 33 KB -> 4.5 KB
+         (256x256 PNG-8 palette, alpha preserved). Cold-visit boot cost is
+         now negligible; the asset is no longer a meaningful LCP factor. -->
+
+    <!--
+      Preload LCP-critical assets. Removed previous preload of /og-image.png
+      and /round-logo.png — they fired "preloaded but not used within a few
+      seconds" warnings because no <img> referenced them on first paint.
+      Add back only when an above-the-fold component actually consumes them.
+
+      Fonts (Inter, Space Grotesk, Instrument Serif, Playfair Display,
+      JetBrains Mono) are self-hosted via @fontsource/* imported in
+      src/main.jsx since 2026-05-19 (post-ZAP-rescan). Closes SRI alert,
+      drops fonts.googleapis.com from CSP script-src/style-src and
+      fonts.gstatic.com from font-src.
+    -->
+
+    <!-- Discovery / verification placeholders — replace values after verification -->
+    <!-- <meta name="google-site-verification" content="REPLACE_WITH_TOKEN" /> -->
+    <!-- <meta name="msvalidate.01" content="REPLACE_WITH_BING_TOKEN" /> -->
+    <!-- <meta name="yandex-verification" content="REPLACE_WITH_YANDEX_TOKEN" /> -->
+
+    <!-- Sitemaps discovery hint (most crawlers use robots.txt, this is belt-and-suspenders) -->
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
+
+    <!--
+      CSP is set ONLY as an HTTP response header in vercel.json. The prior
+      <meta http-equiv="Content-Security-Policy"> here was removed on
+      2026-05-19 because ZAP flagged "CSP: Header & Meta" - browsers and
+      auditors can't union the two policies cleanly. The header covers
+      initial doc load and can't be overridden by injected <meta>, so it's
+      the single source of truth.
+
+      Local Vite dev (npm run dev) has no CSP at all, which is fine for
+      localhost (no real attack surface). Prod headers apply through the
+      vercel.json rule.
+    -->
+
+    <!--
+      Telegram Mini App SDK - lazy-loaded only when actually running inside
+      Telegram. Detected via UA ("Telegram") or URL hash/query (tgWebAppData).
+      Externalized so we can drop 'unsafe-inline' from script-src CSP.
+    -->
+    <script src="/telegram-detect.js" defer></script>
+
+    <!--
+      Premium Silicon Valley Startup Typography - now self-hosted via
+      @fontsource/* in src/main.jsx (Inter, Space Grotesk, Instrument Serif,
+      Playfair Display, JetBrains Mono). Closes SRI alert, drops two
+      external DNS lookups, lets CSP drop the Google Fonts host entries.
+    -->
+
+    <!-- ══════════════════════════════════════════════════════════════
+         JSON-LD STRUCTURED DATA — Organization
+         ══════════════════════════════════════════════════════════════ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "@id": "https://spectreai.io/#organization",
+      "name": "Spectre AI",
+      "legalName": "Spectre AI",
+      "alternateName": ["Spectre AI Research", "SpectreAI", "spectreai.io", "$SPECTRE"],
+      "url": "https://spectreai.io",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://spectreai.io/icon-512x512.png",
+        "width": 512,
+        "height": 512
+      },
+      "image": "https://spectreai.io/og-image.png",
+      "description": "AI-first market intelligence platform unifying real-time on-chain data, AI-driven analysis, social sentiment, news, and non-custodial trading across crypto, equities, commodities, and macro research. UI is an interface on top of the AI agent, not a static dashboard.",
+      "disambiguatingDescription": "Spectre AI (spectreai.io) is a crypto market intelligence platform founded in November 2023. It is distinct from and unrelated to: (1) the defunct Spectre.ai binary options/forex platform from 2017 which ceased operations, (2) Spectre Ltd (spectre.uk.com), a UK-based instruction generation software company, (3) any legacy SPECTRE token listed on LBank or other exchanges predating this project, and (4) the fictional SPECTRE organization from James Bond. Our official domain is spectreai.io, our official token is $SPECTRE on Ethereum at contract 0x9cf0ed013e67db12ca3af8e7506fe401aa14dad6, and our official social handle is @Spectre__AI on X/Twitter.",
+      "foundingDate": "2023-11",
+      "slogan": "AI market intelligence. One screen. Every signal.",
+      "identifier": [
+        {
+          "@type": "PropertyValue",
+          "propertyID": "domain",
+          "value": "spectreai.io"
+        },
+        {
+          "@type": "PropertyValue",
+          "propertyID": "token-contract-ethereum",
+          "value": "0x9cf0ed013e67db12ca3af8e7506fe401aa14dad6"
+        },
+        {
+          "@type": "PropertyValue",
+          "propertyID": "token-symbol",
+          "value": "$SPECTRE"
+        }
+      ],
+      "sameAs": [
+        "https://x.com/Spectre__AI",
+        "https://telegram.me/AI_SPECTRE",
+        "https://www.youtube.com/@ai-spectre",
+        "https://www.linkedin.com/company/ai-spectre",
+        "https://github.com/spectreaibot",
+        "https://docs.spectreai.io",
+        "https://etherscan.io/token/0x9cf0ed013e67db12ca3af8e7506fe401aa14dad6",
+        "https://www.coingecko.com/en/coins/spectre-ai",
+        "https://www.dextools.io/app/en/ether/pair-explorer/0x9cf0ed013e67db12ca3af8e7506fe401aa14dad6",
+        "https://dexscreener.com/ethereum/0x9cf0ed013e67db12ca3af8e7506fe401aa14dad6"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "email": "spectre@spectreai.io",
+        "url": "https://spectreai.io",
+        "availableLanguage": ["English"]
+      },
+      "knowsAbout": [
+        "Cryptocurrency",
+        "Equities and stock market research",
+        "Commodities markets",
+        "Macroeconomic research",
+        "Blockchain analytics",
+        "On-chain data",
+        "DeFi",
+        "AI market analysis",
+        "Model Context Protocol",
+        "x402 micropayments",
+        "Social sentiment analysis"
+      ],
+      "award": [
+        "Google for Startups",
+        "NVIDIA Inception"
+      ]
+    }
+    </script>
+
+    <!--
+      SoftwareApplication, FAQPage, and Product schemas intentionally removed.
+      The research app is embedded as an iframe in spectreai.io's homepage
+      showcase. When Google crawls spectreai.io and renders JavaScript, it
+      captures this index.html's JSON-LD schemas from inside the iframe and
+      attributes them to spectreai.io. That caused duplicate FAQPage + phantom
+      Product (#spect-token) errors in Google's Rich Results Test.
+
+      These schemas are the website repo's (Spectre-AI-Bot/spectre-website)
+      responsibility and live canonically at spectreai.io. The research app
+      only keeps Organization (entity disambiguation), WebSite (for the
+      SearchAction on search-engine), ItemList (Key Takeaways unique to /facts),
+      and VideoObject (hero showcase).
+
+      When the research app moves to app.spectreai.io post-beta, re-add the
+      schemas with app-specific content that does NOT overlap with spectreai.io.
+    -->
+
+    <!-- JSON-LD: WebSite + SearchAction -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "@id": "https://spectreai.io/#website",
+      "name": "Spectre AI",
+      "url": "https://spectreai.io",
+      "description": "Crypto market intelligence platform",
+      "publisher": { "@id": "https://spectreai.io/#organization" },
+      "inLanguage": "en-US",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://spectreai.io/search-engine?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
+    <!-- JSON-LD: ItemList — Key Takeaways / Quick Recap for AI snippets -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "@id": "https://spectreai.io/#key-takeaways",
+      "name": "Spectre AI - Key Takeaways",
+      "description": "A five-bullet summary of what Spectre AI is and how to access it, optimized for AI search snippet extraction.",
+      "numberOfItems": 5,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "What Spectre AI is",
+          "description": "Spectre AI (spectreai.io) is an AI-first market intelligence platform founded in November 2023. It unifies on-chain data, AI analysis, social sentiment, news, and non-custodial trading across crypto (10,000+ tokens), equities, commodities, and macro research - not just crypto."
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "How to get access",
+          "description": "Two access paths: (a) token-gated - hold 500 $SPECTRE for Pro, 1,000 for Max, 7,000 for Enterprise; or (b) traditional monthly subscription in fiat or stablecoin for users who prefer not to hold the token. Free tier includes market overview and one watchlist. Autonomous agents can also use x402 pay-per-request."
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Core differentiators",
+          "description": "AI-first, not a static dashboard. The UI is an interface on top of the AI agent - users ask questions in natural language and Spectre composes the answer, supporting charts, and when appropriate the trade. Competitors ship fixed dashboards; Spectre ships an agent over a unified multi-asset data layer."
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "Entity disambiguation",
+          "description": "Spectre AI (spectreai.io) is NOT: the defunct 2017 Spectre.ai binary options platform, the UK company Spectre Ltd at spectre.uk.com, any legacy SPECTRE token on LBank with a different contract, the James Bond SPECTRE, or the 2018 Spectre CPU vulnerability. Our official contract on Ethereum is 0x9cf0ed013e67db12ca3af8e7506fe401aa14dad6."
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "name": "Beta and timeline",
+          "description": "Closed beta opens in May 2026 for 100 testers who secured seats via the website form. Applications are still open at spectreai.io. Press and partnership inquiries: spectre@spectreai.io."
+        }
+      ]
+    }
+    </script>
+
+    <!-- JSON-LD: VideoObject — hero showcase video -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      "@id": "https://spectreai.io/#hero-video",
+      "name": "Spectre AI - Platform Showcase",
+      "description": "Spectre AI crypto market intelligence platform walkthrough - research, trading, AI analysis, and API in one surface.",
+      "thumbnailUrl": "https://spectreai.io/og-image.png",
+      "uploadDate": "2026-01-01",
+      "contentUrl": "https://spectreai.io/spectre-hero.mp4",
+      "embedUrl": "https://spectreai.io/website2",
+      "publisher": { "@id": "https://spectreai.io/#organization" },
+      "inLanguage": "en-US"
+    }
+    </script>
+
+    <!-- JSON-LD: WebAPI -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebAPI",
+      "@id": "https://spectreai.io/#api",
+      "name": "Spectre AI API",
+      "description": "500+ REST API endpoints for real-time cryptocurrency market data, on-chain analytics, social intelligence, and AI-generated insights. Includes MCP server for AI agents and x402 micropayment access.",
+      "url": "https://spectreai.io/website2/api",
+      "documentation": "https://docs.spectreai.io",
+      "provider": { "@id": "https://spectreai.io/#organization" },
+      "termsOfService": "https://docs.spectreai.io/terms",
+      "category": ["Financial Data", "Cryptocurrency", "Market Intelligence", "AI Integration"],
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Free Tier",
+          "price": "0",
+          "priceCurrency": "USD",
+          "description": "Limited API access with rate limiting"
+        },
+        {
+          "@type": "Offer",
+          "name": "x402 Micropayments",
+          "description": "Pay-per-request API access via HTTP 402 cryptocurrency micropayments"
+        },
+        {
+          "@type": "Offer",
+          "name": "$SPECT Token Access",
+          "description": "Hold $SPECT tokens for tiered API access: 500 (Pro), 1,000 (Max), 7,000 (Enterprise)"
+        }
+      ]
+    }
+    </script>
+    <!-- ══════════════════════════════════════════════════════════════
+         BOOT SKELETON STYLES
+         Paints the app chrome at TTFB, before the JS bundle executes, so
+         first paint is instant (no blank screen) and the <h1> below is a
+         strong LCP candidate in the system font (never waits on a webfont).
+         Lives OUTSIDE #root (sibling div), so React's createRoot().render()
+         does NOT wipe it on mount — the skeleton stays on top until the
+         first lazy route chunk resolves and lazy-with-retry adds .bk-leaving
+         (fade-out) + removes the node. This is what kills the duplicate
+         loader cascade (skeleton → Suspense orb → page); user now sees ONE
+         loading state on cold load. Every node is position:fixed/absolute
+         (zero document flow) so removal -> no CLS.
+         ══════════════════════════════════════════════════════════════ -->
+    <style>
+      /* z-index sits ABOVE any in-app Suspense fallback (route-fallback uses
+         z-index:1) so the orb pulse never flashes through the skeleton on
+         cold load. main.jsx + lazy-with-retry fade this out + remove it the
+         moment the first route chunk resolves, handing off to the real UI. */
+      #boot-skeleton{position:fixed;inset:0;background:#09090b;z-index:2147483646;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;overflow:hidden;transition:opacity 280ms cubic-bezier(0.16,1,0.3,1)}
+      #boot-skeleton.bk-leaving{opacity:0;pointer-events:none}
+      #bk-retry{display:none;position:fixed;left:50%;bottom:48px;transform:translateX(-50%);align-items:center;gap:16px;padding:8px 8px 8px 22px;border-radius:16px;background:rgba(16,16,20,.92);border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.035);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:2147483647}
+      #bk-retry span{color:rgba(255,255,255,.72);font-size:15px;white-space:nowrap}
+      #bk-retry button{height:44px;padding:0 22px;border-radius:11px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.07);color:#fff;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer}
+      #boot-skeleton .bk-header{position:fixed;top:0;left:0;right:0;height:74px;display:flex;align-items:center;gap:16px;padding:0 20px;box-sizing:border-box;border-bottom:1px solid rgba(255,255,255,.04)}
+      #boot-skeleton .bk-logo{width:30px;height:30px;border-radius:8px;background:#18181b;flex:none;object-fit:contain}
+      #boot-skeleton .bk-search{flex:1;max-width:440px;height:38px;border-radius:10px;background:#111113}
+      #boot-skeleton .bk-actions{width:140px;height:32px;border-radius:8px;background:#111113;flex:none}
+      #boot-skeleton .bk-rail{position:fixed;top:70px;left:0;bottom:0;width:220px;background:rgba(8,8,12,.97);border-right:1px solid rgba(255,255,255,.06);padding:18px 14px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px}
+      #boot-skeleton .bk-railitem{height:34px;border-radius:8px;background:#141417;flex:none}
+      #boot-skeleton .bk-content{position:absolute;top:74px;left:220px;right:0;bottom:0;padding:34px 30px;box-sizing:border-box}
+      #boot-skeleton .bk-lcp{font-size:2rem;font-weight:700;letter-spacing:-.025em;color:#f5f5f7;margin:6px 0}
+      #boot-skeleton .bk-sub{font-size:.95rem;color:rgba(245,245,247,.5);margin:0 0 28px}
+      #boot-skeleton .bk-cardrow{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:28px}
+      #boot-skeleton .bk-card{height:118px;border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,.04),rgba(255,255,255,.015))}
+      /* Tab bar row — mimics the Welcome page tab pills (Brief / News / Liquidation / ...). */
+      #boot-skeleton .bk-tabs{display:flex;gap:10px;margin-bottom:20px;overflow:hidden}
+      #boot-skeleton .bk-tab{height:34px;border-radius:9999px;background:linear-gradient(135deg,rgba(255,255,255,.04),rgba(255,255,255,.015));flex:none}
+      /* Main content layout — left tab panel + right discovery sidebar. */
+      #boot-skeleton .bk-body{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px}
+      #boot-skeleton .bk-panel{display:flex;flex-direction:column;gap:10px}
+      #boot-skeleton .bk-row{height:62px;border-radius:14px;background:linear-gradient(135deg,rgba(255,255,255,.04),rgba(255,255,255,.015))}
+      #boot-skeleton .bk-aside{display:flex;flex-direction:column;gap:14px}
+      #boot-skeleton .bk-aside-card{border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,.04),rgba(255,255,255,.015))}
+      #boot-skeleton .bk-aside-card--sm{height:90px}
+      #boot-skeleton .bk-aside-card--lg{height:240px}
+      /* Composite-only pulse: opacity stays on the compositor thread (was
+         a background-position slide which Lighthouse flagged as non-
+         composited paint-on-every-frame for 7 visible skeleton blocks,
+         on EVERY cold page load). opacity dip from 1 -> 0.6 -> 1 reads
+         identically as a "live" skeleton at the <1s window before React
+         clears #root. */
+      #boot-skeleton .bk-search,#boot-skeleton .bk-actions,#boot-skeleton .bk-railitem,#boot-skeleton .bk-card,#boot-skeleton .bk-tab,#boot-skeleton .bk-row,#boot-skeleton .bk-aside-card{animation:bkPulse 1.6s ease-in-out infinite}
+      @keyframes bkPulse{0%,100%{opacity:1}50%{opacity:.6}}
+      @media (max-width:1100px){#boot-skeleton .bk-body{grid-template-columns:minmax(0,1fr)}#boot-skeleton .bk-aside{display:none}}
+      @media (max-width:768px){#boot-skeleton .bk-rail{display:none}#boot-skeleton .bk-header{height:60px}#boot-skeleton .bk-content{left:0;top:60px;padding:18px 14px}#boot-skeleton .bk-tabs{margin-bottom:14px}}
+      @media (prefers-reduced-motion:reduce){#boot-skeleton .bk-search,#boot-skeleton .bk-actions,#boot-skeleton .bk-railitem,#boot-skeleton .bk-card,#boot-skeleton .bk-tab,#boot-skeleton .bk-row,#boot-skeleton .bk-aside-card{animation:none}}
+      /* CRITICAL mobile-chrome fallback: on a slow cold PWA start the entry
+         stylesheet can land AFTER React mounts (waitForEntryCss has a safety
+         timeout) — one unstyled frame made the nav/header icons render huge
+         ("icons pop"). These few rules pin the chrome's geometry so a late
+         stylesheet only refines colors, never layout. Real CSS overrides via
+         its !important rules once loaded. */
+      @media (max-width:768px){
+        .mobile-bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:1000}
+        .mobile-bottom-nav-icon{display:flex;align-items:center;justify-content:center;width:24px;height:24px;overflow:hidden}
+        .mobile-bottom-nav-icon svg{width:22px;height:22px}
+        .mobile-header{position:fixed;top:0;left:0;right:0;z-index:1000}
+        .mobile-header svg,.mobile-header img{max-width:44px;max-height:44px}
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!--
+      Boot skeleton is OUTSIDE #root so React's createRoot().render() does
+      not wipe it on mount. It sits position:fixed at z-index 2147483646
+      (above the in-app Suspense fallback orb), covering the viewport until
+      the first lazy route chunk resolves — at which point lazy-with-retry
+      adds .bk-leaving (opacity 0) and removes the node 280ms later.
+      Result: cold-load shows ONE loading state (the skeleton), not the
+      skeleton -> orb -> page cascade that produced the duplicate loaders.
+    -->
+    <div id="boot-skeleton" aria-hidden="true">
+      <!-- Hidden by default; revealed by the boot watchdog (head script)
+           when the entry script fails after the reload budget, or after
+           20s of undismissed skeleton. -->
+      <div id="bk-retry">
+        <span>Taking longer than expected</span>
+        <button type="button">Reload</button>
+      </div>
+      <div class="bk-header">
+        <!-- Boot skeleton logo. fetchpriority dropped from "high" to default
+             so the 812 KB asset (TODO: compress to ~10 KB) doesn't compete
+             with critical CSS/JS for cold-load bandwidth. The skeleton is
+             <1s visible; a slightly later logo paint is fine. -->
+        <img class="bk-logo" src="/round-logo.png" alt="Spectre AI" width="30" height="30" decoding="async" />
+        <div class="bk-search"></div>
+        <div class="bk-actions"></div>
+      </div>
+      <nav class="bk-rail">
+        <div class="bk-railitem" style="width:72%"></div>
+        <div class="bk-railitem" style="width:86%"></div>
+        <div class="bk-railitem" style="width:60%"></div>
+        <div class="bk-railitem" style="width:80%"></div>
+        <div class="bk-railitem" style="width:54%"></div>
+        <div class="bk-railitem" style="width:76%"></div>
+        <div class="bk-railitem" style="width:66%"></div>
+      </nav>
+      <main class="bk-content">
+        <h1 class="bk-lcp">Spectre AI</h1>
+        <div class="bk-sub">AI-Native Market Intelligence</div>
+        <div class="bk-cardrow">
+          <div class="bk-card"></div>
+          <div class="bk-card"></div>
+          <div class="bk-card"></div>
+          <div class="bk-card"></div>
+        </div>
+        <!-- Tab pills (Brief / News / Liquidation / Heatmap / Sectors / ...). -->
+        <div class="bk-tabs">
+          <div class="bk-tab" style="width:78px"></div>
+          <div class="bk-tab" style="width:90px"></div>
+          <div class="bk-tab" style="width:108px"></div>
+          <div class="bk-tab" style="width:96px"></div>
+          <div class="bk-tab" style="width:84px"></div>
+          <div class="bk-tab" style="width:112px"></div>
+          <div class="bk-tab" style="width:96px"></div>
+        </div>
+        <!-- Two-column body: list of token rows on the left, discovery side panel on the right. -->
+        <div class="bk-body">
+          <div class="bk-panel">
+            <div class="bk-row"></div>
+            <div class="bk-row"></div>
+            <div class="bk-row"></div>
+            <div class="bk-row"></div>
+            <div class="bk-row"></div>
+            <div class="bk-row"></div>
+            <div class="bk-row"></div>
+            <div class="bk-row"></div>
+          </div>
+          <aside class="bk-aside">
+            <div class="bk-aside-card bk-aside-card--lg"></div>
+            <div class="bk-aside-card bk-aside-card--sm"></div>
+            <div class="bk-aside-card bk-aside-card--sm"></div>
+            <div class="bk-aside-card bk-aside-card--sm"></div>
+          </aside>
+        </div>
+      </main>
+    </div>
+
+    <!-- Crawler-friendly noscript fallback: gives bots that don't run JS a crawlable skeleton -->
+    <noscript>
+      <header>
+        <h1>Spectre AI — Crypto Market Intelligence Platform</h1>
+        <p>Real-time cryptocurrency market intelligence combining on-chain analytics, AI-powered market analysis, social sentiment tracking, and trading tools for 10,000+ tokens. 500+ API endpoints. MCP server for AI agents. x402 micropayments.</p>
+      </header>
+      <nav>
+        <ul>
+          <li><a href="/website2">Platform overview</a></li>
+          <li><a href="/website2/api">API &amp; developer tools</a></li>
+          <li><a href="/research-zone">Research Zone</a></li>
+          <li><a href="/intelligence">Intelligence Hub</a></li>
+          <li><a href="/fear-greed">Fear &amp; Greed Index</a></li>
+          <li><a href="/economic-calendar">Economic Calendar</a></li>
+          <li><a href="/heatmaps">Heatmaps</a></li>
+          <li><a href="/bubbles">Bubbles</a></li>
+          <li><a href="/monarch-chat">Monarch AI</a></li>
+          <li><a href="/token">Trading Terminal</a></li>
+          <li><a href="https://docs.spectreai.io">Documentation</a></li>
+        </ul>
+      </nav>
+      <section>
+        <h2>Backed by</h2>
+        <p>Google for Startups. NVIDIA Inception. Partners: TradingView, Bitquery.</p>
+      </section>
+      <p>Please enable JavaScript to access the full Spectre AI dashboard.</p>
+    </noscript>
+
+    <script type="module" src="/src/main.jsx"></script>
+    <!-- Secondary scripts - always deferred so they never block the main thread pre-LCP -->
+    <script src="/error-beacon.js" defer></script>
+  </body>
+</html>

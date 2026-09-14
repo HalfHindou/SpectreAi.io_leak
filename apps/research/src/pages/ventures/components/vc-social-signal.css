@@ -1,0 +1,139 @@
+/* Social Signal — smart money × social mindshare matrix. */
+
+.vss { display: flex; flex-direction: column; padding: 18px; gap: 16px; }
+
+.vss-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.vss-headline { display: flex; flex-direction: column; gap: 3px; }
+.vss-title { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-primary); }
+.vss-sub { font-size: 12px; color: rgba(245, 245, 247, 0.42); }
+.vss-legend { display: flex; gap: 14px; }
+.vss-leg { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(245, 245, 247, 0.5); }
+.vss-dot { width: 8px; height: 8px; border-radius: 50%; }
+.vss-dot.is-bull { background: var(--bull-bright); }
+.vss-dot.is-bear { background: var(--bear); }
+
+/* ── the matrix ───────────────────────────────────────────────────────── */
+.vss-matrix {
+  position: relative;
+  width: 100%;
+  border-radius: 18px;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,0.012) 0%, transparent 50%, rgba(255,255,255,0.012) 100%),
+    rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+/* quadrant backgrounds */
+.vss-quad {
+  position: absolute;
+  width: 50%; height: 50%;
+  padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 2px;
+  pointer-events: none;
+}
+.vss-quad span { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.vss-quad em { font-size: 10.5px; font-style: normal; color: rgba(245, 245, 247, 0.3); max-width: 180px; }
+.vss-quad--hype { top: 0; left: 0; align-items: flex-start; background: radial-gradient(120% 120% at 0% 0%, rgba(245, 158, 11, 0.07), transparent 60%); }
+.vss-quad--hype span { color: rgba(245, 200, 100, 0.75); }
+.vss-quad--consensus { top: 0; right: 0; align-items: flex-end; text-align: right; background: radial-gradient(120% 120% at 100% 0%, rgba(52, 211, 153, 0.07), transparent 60%); }
+.vss-quad--consensus span { color: rgba(52, 211, 153, 0.8); }
+.vss-quad--cold { bottom: 0; left: 0; justify-content: flex-end; align-items: flex-start; background: radial-gradient(120% 120% at 0% 100%, rgba(255,255,255,0.02), transparent 60%); }
+.vss-quad--cold span { color: rgba(245, 245, 247, 0.35); }
+.vss-quad--alpha { bottom: 0; right: 0; justify-content: flex-end; align-items: flex-end; text-align: right; background: radial-gradient(130% 130% at 100% 100%, rgba(255, 255, 255, 0.08), transparent 62%); }
+.vss-quad--alpha span { color: rgba(245, 245, 247, 0.9); }
+.vss-quad--alpha::after { content: ''; position: absolute; inset: 0; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 0 0 18px 0; pointer-events: none; }
+
+/* crosshair dividers */
+.vss-matrix::before, .vss-matrix::after {
+  content: ''; position: absolute; background: rgba(255, 255, 255, 0.05); pointer-events: none; z-index: 1;
+}
+.vss-matrix::before { left: 50%; top: 0; bottom: 0; width: 1px; }
+.vss-matrix::after { top: 50%; left: 0; right: 0; height: 1px; }
+
+.vss-axis-x { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(245, 245, 247, 0.3); z-index: 2; }
+.vss-axis-y { position: absolute; left: 8px; top: 50%; transform: translateY(-50%) rotate(-90deg); transform-origin: left center; font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(245, 245, 247, 0.3); z-index: 2; white-space: nowrap; }
+
+/* plotted token */
+.vss-pt {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center;
+  z-index: 3;
+  transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.vss-pt:hover { transform: translate(-50%, -50%) scale(1.25); z-index: 20; }
+.vss-pt .smu-token-logo { border-radius: 50%; box-shadow: 0 0 0 1.5px rgba(255,255,255,0.2); }
+.vss-pt--bull .smu-token-logo { box-shadow: 0 0 0 1.5px rgba(52, 211, 153, 0.7), 0 0 14px rgba(52, 211, 153, 0.4); }
+.vss-pt--bear .smu-token-logo { box-shadow: 0 0 0 1.5px rgba(248, 113, 113, 0.65), 0 0 12px rgba(248, 113, 113, 0.3); }
+.vss-pt--alpha .smu-token-logo { box-shadow: 0 0 0 2px rgba(245, 245, 247, 0.8), 0 0 18px rgba(255, 255, 255, 0.35); }
+.vss-pt-label {
+  position: absolute; top: calc(100% + 2px);
+  font-size: 9.5px; font-weight: 600; color: rgba(245, 245, 247, 0.85);
+  white-space: nowrap; opacity: 0; transition: opacity 140ms ease;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+}
+.vss-pt:hover .vss-pt-label { opacity: 1; }
+
+/* ── alpha callout ────────────────────────────────────────────────────── */
+.vss-alpha {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 13px 16px; border-radius: 14px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255,255,255,0.012));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.vss-alpha-label { font-size: 12px; font-weight: 600; color: rgba(245, 245, 247, 0.85); flex: 0 0 auto; }
+.vss-alpha-list { display: flex; gap: 8px; flex-wrap: wrap; }
+.vss-alpha-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--text-primary); padding: 4px 10px 4px 4px; border-radius: 999px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14); }
+.vss-alpha-n { font-size: 10px; font-family: var(--font-mono); color: rgba(245, 245, 247, 0.55); }
+
+/* ── narratives + voices ──────────────────────────────────────────────── */
+.vss-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 900px) { .vss-cols { grid-template-columns: 1fr; } }
+.vss-panel { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.006)); border: 1px solid rgba(255,255,255,0.05); }
+.vss-panel-head { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(245, 245, 247, 0.5); }
+.vss-live { font-size: 8.5px; font-weight: 700; letter-spacing: 0.06em; color: var(--bull-bright); background: rgba(52,211,153,0.12); padding: 2px 6px; border-radius: 999px; }
+
+.vss-narr-list { display: flex; flex-direction: column; gap: 9px; }
+.vss-narr { display: flex; flex-direction: column; gap: 5px; padding: 10px 12px; border-radius: 11px; background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05); }
+.vss-narr-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.vss-narr-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.vss-narr-mom { font-size: 10.5px; text-transform: capitalize; color: rgba(245,245,247,0.45); font-family: var(--font-mono); }
+.vss-narr-mom.is-bull { color: var(--bull-bright); }
+.vss-narr-assets { display: flex; gap: 5px; flex-wrap: wrap; }
+.vss-narr-chip { font-size: 10.5px; font-weight: 600; font-family: var(--font-mono); color: rgba(245,245,247,0.62); padding: 2px 7px; border-radius: 999px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.07); }
+
+.vss-kol-list { display: flex; flex-direction: column; gap: 8px; }
+.vss-kol { display: flex; align-items: center; gap: 11px; padding: 9px 11px; border-radius: 11px; background: rgba(255,255,255,0.022); border: 1px solid rgba(255,255,255,0.05); text-decoration: none; transition: background 160ms ease, transform 160ms ease; }
+.vss-kol:hover { background: rgba(255,255,255,0.05); transform: translateX(2px); }
+.vss-kol-av { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; background: rgba(255,255,255,0.06); }
+.vss-kol-av--fb { display: inline-flex; align-items: center; justify-content: center; font-weight: 700; color: rgba(245,245,247,0.7); }
+.vss-kol-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.vss-kol-name { font-size: 13px; font-weight: 600; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vss-kol-meta { font-size: 10.5px; color: rgba(245,245,247,0.42); font-family: var(--font-mono); }
+.vss-kol-score { font-size: 13px; font-weight: 700; font-family: var(--font-mono); color: rgba(245, 245, 247, 0.85); flex: 0 0 auto; }
+
+.vss-empty { font-size: 12px; color: rgba(245,245,247,0.4); padding: 10px 2px; }
+
+/* day mode */
+.app.app-day-mode .vss-matrix, .app.app-day-mode .vss-panel { background: #f8f9fa; border-color: rgba(0,0,0,0.06); }
+.app.app-day-mode .vss-title, .app.app-day-mode .vss-narr-name, .app.app-day-mode .vss-kol-name { color: #0f172a; }
+.app.app-day-mode .vss-kol, .app.app-day-mode .vss-narr { background: #fff; border-color: rgba(0,0,0,0.06); }
+.app.app-day-mode .vss-quad--alpha { background: radial-gradient(130% 130% at 100% 100%, rgba(0,0,0,0.05), transparent 62%); }
+.app.app-day-mode .vss-quad--alpha span { color: #334155; }
+.app.app-day-mode .vss-quad--alpha::after { border-color: rgba(0,0,0,0.08); }
+.app.app-day-mode .vss-alpha { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.08); }
+.app.app-day-mode .vss-alpha-label { color: #334155; }
+.app.app-day-mode .vss-alpha-n { color: #64748b; }
+.app.app-day-mode .vss-alpha-chip { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.12); color: #0f172a; }
+.app.app-day-mode .vss-panel-head, .app.app-day-mode .vss-sub { color: #64748b; }
+.app.app-day-mode .vss-kol-meta, .app.app-day-mode .vss-narr-mom:not(.is-bull):not(.is-bear) { color: #64748b; }
+.app.app-day-mode .vss-narr-chip { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); color: #475569; }
+.app.app-day-mode .vss-axis-x, .app.app-day-mode .vss-axis-y { color: #94a3b8; }
+.app.app-day-mode .vss-quad--cold span { color: #94a3b8; }
+.app.app-day-mode .vss-pt-label { color: #0f172a; text-shadow: none; }
+.app.app-day-mode .vss-empty { color: #64748b; }
+.app.app-day-mode .vss-kol-av--fb { color: #475569; background: rgba(0,0,0,0.05); }
+.app.app-day-mode .vss-leg { color: #64748b; }
+.app.app-day-mode .vss-kol-score { color: #334155; }
+.app.app-day-mode .vss-pt--alpha .smu-token-logo { box-shadow: 0 0 0 2px rgba(15,23,42,0.55), 0 0 14px rgba(15,23,42,0.18); }
